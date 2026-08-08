@@ -3,20 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Scroll-reveal visibility helper.
- * Content must never remain permanently hidden if observation fails.
- * Threshold stays at 0 so tall sections still reveal when any part enters view.
+ * Scroll-reveal helper with progressive enhancement.
+ * Content stays visible unless JS successfully arms a pending animation.
  */
 export function useReveal<T extends HTMLElement = HTMLElement>() {
   const ref = useRef<T | null>(null);
+  const [pending, setPending] = useState(false);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
-
     if (!node) {
-      const frame = window.requestAnimationFrame(() => setVisible(true));
-      return () => window.cancelAnimationFrame(frame);
+      return;
     }
 
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -25,31 +23,40 @@ export function useReveal<T extends HTMLElement = HTMLElement>() {
       return () => window.cancelAnimationFrame(frame);
     }
 
+    let armed = false;
+    const armFrame = window.requestAnimationFrame(() => {
+      armed = true;
+      setPending(true);
+    });
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
           setVisible(true);
+          setPending(false);
           observer.disconnect();
         }
       },
-      // threshold: 0 — tall homepage sections can never reach 18% visibility
-      // inside the viewport, which previously left them stuck at opacity: 0.
       { threshold: 0, rootMargin: "0px 0px -40px 0px" },
     );
 
     observer.observe(node);
 
-    // Fail-open so a missed intersection can never blank the homepage.
     const failOpen = window.setTimeout(() => {
       setVisible(true);
+      setPending(false);
       observer.disconnect();
-    }, 800);
+    }, 600);
 
     return () => {
-      observer.disconnect();
+      window.cancelAnimationFrame(armFrame);
       window.clearTimeout(failOpen);
+      observer.disconnect();
+      if (!armed) {
+        return;
+      }
     };
   }, []);
 
-  return { ref, visible };
+  return { ref, pending, visible };
 }
