@@ -23,13 +23,31 @@ Before making any changes, always read:
 
 docs/STUDIOJEKER_AI_DEVELOPMENT_KIT.md
 
-The AI Development Kit is the single source of truth.
+DESIGN_SPECIFICATION.md
 
-If conflicts exist:
+Approved mockups in docs/design/mockups/
+
+Documentation authority:
+
+- Developer Kit — content, structure, SEO, CMS and technical requirements
+- DESIGN_SPECIFICATION.md — visual design, UI, UX, responsive behavior and motion
+- Approved mockups — visual reference only; never production content
+
+If content conflicts exist:
 
 Follow the Development Kit.
 
+If visual conflicts exist between mockups and DESIGN_SPECIFICATION.md:
+
+Follow DESIGN_SPECIFICATION.md, using mockups as proportion and rhythm reference.
+
 Never invent your own design decisions.
+
+Target architecture:
+
+Next.js frontend + Headless WordPress CMS.
+
+WordPress must not control the visual frontend through a theme or page builder.
 
 ---
 
@@ -230,11 +248,23 @@ Use reusable motion tokens.
 
 # CMS
 
-Never hardcode editable content.
+CMS / content backend:
 
-Prefer reusable content models.
+Headless WordPress
+
+Frontend:
+
+Next.js
+
+Never hardcode editable content in the Next.js frontend.
+
+Prefer reusable WordPress content models.
+
+Retrieve editable content from WordPress through an API.
 
 Keep content independent from presentation.
+
+Follow the HEADLESS WORDPRESS CMS MODEL in the Developer Kit.
 
 ---
 

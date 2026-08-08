@@ -45,24 +45,89 @@ Every technical and design decision should strengthen this positioning.
 
 ---
 
+# Target Architecture
+
+The Studiojeker website uses a **Next.js frontend** with a **Headless WordPress CMS**.
+
+## Frontend — Next.js
+
+Next.js is responsible for the public website experience:
+
+- public frontend rendering
+- visual design and approved brand presentation
+- responsive layouts
+- navigation
+- motion and interactions
+- project grids
+- case-study presentation
+- frontend SEO output
+- performance
+- accessibility
+- DE/EN frontend routing
+
+The approved Studiojeker design is implemented exclusively in the Next.js frontend.
+
+WordPress must **not** control the visual frontend through a WordPress theme or page builder.
+
+## CMS / Content Backend — Headless WordPress
+
+WordPress is the editorial backend for Studiojeker.
+
+It is responsible for editable content, including:
+
+- pages and page content
+- projects / case studies
+- team members
+- services
+- competence centers
+- customer logos
+- testimonials
+- "Sichtbarkeit im Abo"
+- news / blog content if implemented
+- SEO metadata where appropriate
+- images and media
+
+Content must be retrieved from WordPress through an API.
+
+Presentation stays in Next.js. Content stays in WordPress.
+
+## Separation of Concerns
+
+| Layer | Responsibility |
+| --- | --- |
+| Next.js | Rendering, design system, UI, UX, motion, routing, performance, accessibility, frontend SEO |
+| Headless WordPress | Structured editorial content, media, SEO metadata fields, publishing workflow |
+| Developer Kit | Content, structure, SEO rules, technical and functional requirements |
+| DESIGN_SPECIFICATION.md | Visual design, UI, UX, responsive behavior, motion |
+| Approved mockups | Visual reference for proportions, imagery and rhythm — not production content |
+
+Never hardcode editable production content in the frontend.
+
+---
+
 # Repository Structure
 
 ```text
 /
 ├── docs/
-│   └── STUDIOJEKER_AI_DEVELOPMENT_KIT.md
+│   ├── STUDIOJEKER_AI_DEVELOPMENT_KIT.md
+│   ├── design/mockups/
+│   └── sources/
 │
-├── app/
+├── app/                 # Next.js frontend (to be implemented)
 ├── components/
 ├── hooks/
-├── lib/
-├── public/
+├── lib/                 # includes WordPress API integration
+├── public/              # static frontend assets only
 ├── styles/
 │
 ├── AGENTS.md
+├── DESIGN_SPECIFICATION.md
 ├── README.md
 └── package.json
 ```
+
+WordPress itself is the separate editorial backend. It is not a classic theme-driven frontend in this repository.
 
 ---
 
@@ -72,17 +137,20 @@ Before modifying any code, read:
 
 1. AGENTS.md
 2. docs/STUDIOJEKER_AI_DEVELOPMENT_KIT.md
+3. DESIGN_SPECIFICATION.md
+4. approved mockups in docs/design/mockups/
+5. relevant documents in docs/sources/
 
-The AI Development Kit is the single source of truth for:
+Documentation authority:
 
-- Brand
-- UX
-- Design
-- Copywriting
-- SEO
-- Animation
-- CMS
-- Development standards
+- **Developer Kit** — content, information architecture, navigation intent, SEO, CMS models, technical and functional requirements
+- **DESIGN_SPECIFICATION.md** — visual design, layout, UI, UX, responsive behavior and motion
+- **Approved mockups** — visual reference for proportions, image impact, rhythm and overall feel
+- **docs/sources/** — source material for approved copy, SEO titles/metas and brand inputs
+
+Mockup example texts, names, projects, clients, prices or addresses are not production content.
+
+If mockup example content conflicts with the Developer Kit, the Developer Kit wins for content.
 
 ---
 
@@ -262,13 +330,18 @@ Before completing work:
 
 # Future Roadmap
 
-The platform is designed to support:
+Core architecture already includes:
 
-- multilingual content
-- landing pages
-- case studies
-- insights
-- visibility subscription
+- Next.js frontend + Headless WordPress CMS
+- DE/EN content and frontend routing
+- case studies / projects
+- visibility subscription ("Sichtbarkeit im Abo")
+- structured SEO metadata from WordPress, rendered by Next.js
+
+The platform is also designed to support later growth:
+
+- insights / news when implemented
+- landing pages and campaign pages
 - CRM integration
 - newsletter integration
 - client portals
