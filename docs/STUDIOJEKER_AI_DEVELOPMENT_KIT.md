@@ -9844,6 +9844,54 @@ Content should be editable without changing code.
 
 ---
 
+# TARGET ARCHITECTURE
+
+Final architecture decision:
+
+Next.js frontend + Headless WordPress CMS
+
+Next.js is responsible for:
+
+- public frontend rendering
+- visual design
+- responsive layouts
+- navigation
+- motion and interactions
+- project grids
+- case-study presentation
+- frontend SEO output
+- performance
+- accessibility
+- DE/EN frontend routing
+
+WordPress is responsible for editable content including:
+
+- pages and page content
+- projects / case studies
+- team members
+- services
+- competence centers
+- customer logos
+- testimonials
+- "Sichtbarkeit im Abo"
+- news / blog content if implemented
+- SEO metadata where appropriate
+- images and media
+
+Content must be retrieved from WordPress through an API.
+
+WordPress must not control the visual frontend through a WordPress theme or page builder.
+
+The approved Studiojeker design is implemented exclusively in the Next.js frontend.
+
+WordPress remains the editorial backend for Studiojeker.
+
+The content models below remain presentation-independent.
+
+The dedicated section HEADLESS WORDPRESS CMS MODEL defines the structured WordPress implementation of these models.
+
+---
+
 # CORE PRINCIPLE
 
 Structure before content.
@@ -9851,6 +9899,10 @@ Structure before content.
 Components before pages.
 
 Consistency before flexibility.
+
+Content before presentation.
+
+API before hardcoded copy.
 
 ---
 
@@ -10442,19 +10494,19 @@ Optimized Formats
 
 ---
 
-# FILE STRUCTURE
+# FRONTEND STATIC ASSETS VS CMS MEDIA
 
-/public
+Next.js may contain static frontend assets required by the application, for example:
 
-/images
+/public/logos
 
-/videos
+/public/icons
 
-/icons
+/public/images used only as temporary placeholders during development
 
-/logos
+Editable production media belongs in the WordPress media library and is delivered to Next.js through the API.
 
-/documents
+Do not treat the Next.js /public folder as the long-term CMS media store.
 
 ---
 
@@ -10471,6 +10523,10 @@ Lazy loading
 Video compression
 
 CDN support
+
+WordPress stores and manages media.
+
+Next.js optimizes delivery and frontend performance.
 
 ---
 
@@ -10494,7 +10550,7 @@ Keyword search
 
 The architecture should support:
 
-Additional languages
+Additional languages beyond DE/EN
 
 Landing pages
 
@@ -10514,15 +10570,231 @@ Video library
 
 ---
 
-# HEADLESS READY
+# HEADLESS WORDPRESS
 
-The content model should be independent of the frontend.
+The Studiojeker CMS is Headless WordPress.
 
-API-first thinking.
+The content model is independent of the frontend presentation layer.
 
-Structured content.
+API-first thinking is mandatory.
 
-Reusable fields.
+Structured content is mandatory.
+
+Reusable fields are mandatory.
+
+WordPress provides content.
+
+Next.js provides presentation.
+
+No classic WordPress theme rendering for the public website.
+
+No page-builder-driven public frontend.
+
+---
+
+# HEADLESS WORDPRESS CMS MODEL
+
+This section defines the structured WordPress content models for the Studiojeker website.
+
+These models implement the CMS architecture above.
+
+They do not replace the brand, SEO, accessibility, performance or page-structure rules defined elsewhere in this Developer Kit.
+
+They also do not override DESIGN_SPECIFICATION.md or the approved mockups as visual authorities.
+
+Presentation, layout, motion and UI remain exclusively in Next.js.
+
+WordPress stores structured editorial content and media.
+
+All listed content types must support German and English as independent editorial content.
+
+No automatic translation.
+
+Localized SEO fields are required where the content type is publicly routable.
+
+---
+
+## PROJECT / CASE STUDY
+
+WordPress content type for projects and case studies.
+
+Fields:
+
+- title
+- slug
+- client
+- year
+- competence center / category
+- short introduction
+- hero image / video
+- services provided
+- challenge
+- approach / solution
+- result
+- gallery
+- video
+- metrics (optional; only real and approved values)
+- testimonial (optional; only real and approved quotes)
+- related projects
+- featured project toggle
+- DE / EN content
+- SEO metadata
+
+Rules:
+
+- Never invent clients, results, metrics or testimonials.
+- Competence center / category must map to the defined Studiojeker solution areas.
+- Featured projects may appear on the homepage and selected overview modules.
+- Related projects are editorial relationships, rendered by Next.js.
+- Mockup placeholder projects are not production content.
+
+---
+
+## TEAM MEMBER
+
+WordPress content type for people shown on the About / Team experience.
+
+Fields:
+
+- name
+- role
+- portrait
+- biography
+- specialties
+- contact information where required
+- sort order
+- DE / EN content
+
+Rules:
+
+- Use only approved names, roles and portraits.
+- Sort order controls frontend display sequence.
+- Partner network entries may be modeled separately or as a clearly distinguished team/network entry if required by approved content.
+
+---
+
+## SERVICE
+
+WordPress content type for services within competence centers.
+
+Fields:
+
+- title
+- competence center
+- introduction
+- body content
+- images / video
+- related projects
+- CTA
+- SEO metadata
+- DE / EN content
+
+Rules:
+
+- Services belong to one competence center.
+- Related projects strengthen proof and internal linking.
+- CTA should lead to contact or the most relevant next step.
+- Service presentation uses shared Next.js templates; WordPress does not define visual layout.
+
+---
+
+## CLIENT
+
+WordPress content type for customer logo and trust modules.
+
+Fields:
+
+- company name
+- logo
+- website (optional)
+- featured toggle
+- sort order
+
+Rules:
+
+- Use only approved client names and logos.
+- Featured clients may appear in logo grids on selected pages.
+- Do not invent client relationships or endorsements.
+- A logo appearance is not a testimonial.
+
+---
+
+## CONTENT SUBSCRIPTION – "Sichtbarkeit im Abo"
+
+WordPress content model for the visibility subscription offering.
+
+Fields:
+
+- headline
+- introduction
+- benefits
+- process
+- packages
+- package features
+- pricing only if approved for publication
+- CTA
+- testimonial (optional; only real and approved)
+- DE / EN content
+- SEO metadata for the landing page
+
+Rules:
+
+- This is a distinct conversion product, not a fifth ordinary service card.
+- Pricing must remain unpublished until explicitly approved.
+- Package details from mockups are placeholders unless separately approved.
+- Homepage module content and landing-page content should stay structurally consistent.
+
+---
+
+## GENERAL SITE SETTINGS
+
+WordPress options / global settings for site-wide editorial values.
+
+Fields:
+
+- contact details
+- social links
+- footer content
+- global CTA
+- customer logo selection
+- navigation-related editorial settings where appropriate
+- default SEO values where appropriate
+
+Rules:
+
+- Contact details must come from approved production data only.
+- Navigation structure remains governed by the Developer Kit.
+- Editorial labels may be managed in WordPress where useful, but information architecture changes still require approval.
+- Global CTA content is editorial; button styling and placement remain frontend concerns.
+
+---
+
+## ADDITIONAL STRUCTURED TYPES
+
+The existing CMS architecture still applies for:
+
+- Homepage modular sections
+- Solution / competence-center pages
+- About page modules
+- Contact page modules
+- Insight / news content if implemented
+- Legal pages
+
+These remain structured WordPress content consumed by Next.js.
+
+Do not recreate them as hardcoded frontend pages when they contain editable content.
+
+---
+
+## API AND RENDERING RULES
+
+- Next.js fetches WordPress content through an API.
+- Next.js owns routing, including DE/EN frontend routes.
+- Next.js owns frontend SEO rendering based on WordPress metadata fields.
+- WordPress owns draft, review, publish, update and archive workflow.
+- Editors must not depend on a WordPress theme or page builder to shape the public website.
+- If content is missing, leave placeholders or request approved content.
+- Never promote mockup fantasy content into WordPress production data.
 
 ---
 
@@ -10542,6 +10814,10 @@ Does it support SEO?
 
 Does it work in both languages?
 
+Can editors manage it in WordPress without touching Next.js code?
+
+Does Next.js remain responsible for presentation?
+
 ---
 
 # FINAL PRINCIPLE
@@ -10551,6 +10827,10 @@ A good CMS makes publishing easy.
 A great CMS makes consistency inevitable.
 
 The Studiojeker CMS should always encourage quality, structure and long-term maintainability.
+
+Headless WordPress makes content editable.
+
+Next.js makes the brand visible.
 
 ---
 
@@ -10847,11 +11127,23 @@ Respect prefers-reduced-motion.
 
 Follow 20_CMS_ARCHITECTURE.
 
-Never hardcode editable content.
+Follow HEADLESS WORDPRESS CMS MODEL.
 
-Use reusable content models.
+Target architecture:
+
+Next.js frontend + Headless WordPress CMS
+
+Never hardcode editable content in the frontend.
+
+Use reusable WordPress content models.
+
+Retrieve editable content from WordPress through an API.
 
 Keep structured data clean.
+
+Keep content independent from presentation.
+
+WordPress must not control the visual frontend through a theme or page builder.
 
 ---
 
@@ -11113,7 +11405,7 @@ Explain your reasoning briefly.
 
 The platform should support:
 
-Additional languages
+Additional languages beyond the required DE/EN architecture
 
 Landing pages
 
@@ -11131,7 +11423,11 @@ Marketing automation
 
 AI-assisted content
 
-Future CMS migration
+Optional future CMS-provider migration only if the headless content model and Next.js presentation layer remain intact
+
+Do not treat Headless WordPress as undecided.
+
+WordPress is the approved editorial backend.
 
 ---
 
