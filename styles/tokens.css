@@ -1,0 +1,110 @@
+:root {
+  /* Colors — Developer Kit design tokens */
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-cyan: #00c8ff;
+  --color-silver: #c8ccd0;
+  --color-neutral: #f5f5f5;
+  --color-dark: #1f1f1f;
+
+  --color-text: var(--color-black);
+  --color-text-inverse: var(--color-white);
+  --color-background: var(--color-white);
+  --color-background-muted: var(--color-neutral);
+  --color-background-dark: var(--color-black);
+  --color-border: var(--color-silver);
+  --color-focus: var(--color-cyan);
+  --color-link: var(--color-black);
+  --color-link-hover: var(--color-cyan);
+
+  /* Typography */
+  --font-sans: var(--font-inter), var(--font-manrope), system-ui, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --text-body-size: 1.125rem; /* 18px */
+  --text-body-line: 1.6;
+  --text-body-max: 45rem; /* ~70ch / 720px */
+
+  --text-subheadline-size: 1.5rem; /* 24px */
+  --text-headline-size: 2.25rem; /* 36px mobile */
+
+  /* Spacing — 8px base */
+  --space-1: 0.5rem; /* 8 */
+  --space-2: 1rem; /* 16 */
+  --space-3: 1.5rem; /* 24 */
+  --space-4: 2rem; /* 32 */
+  --space-5: 2.5rem; /* 40 */
+  --space-6: 3rem; /* 48 */
+  --space-8: 4rem; /* 64 */
+  --space-10: 5rem; /* 80 */
+  --space-15: 7.5rem; /* 120 */
+  --space-20: 10rem; /* 160 */
+
+  --section-padding-y: var(--space-10);
+  --component-gap: var(--space-4);
+  --card-gap: var(--space-3);
+  --headline-margin: var(--space-5);
+
+  /* Layout */
+  --container-max: 90rem; /* 1440px */
+  --container-padding-x: var(--space-2);
+  --grid-columns: 4;
+  --header-height: 4.5rem; /* compact mobile */
+
+  /* Radii */
+  --radius-button: 0.5rem; /* 8px */
+  --radius-card: 0.75rem; /* 12px */
+  --radius-image: 1rem; /* 16px */
+  --radius-section: 1.5rem; /* 24px */
+
+  /* Motion */
+  --duration-fast: 200ms;
+  --duration-base: 250ms;
+  --duration-header: 300ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Breakpoints documented for reference (used in media queries) */
+  --bp-tablet-portrait: 48rem; /* 768px */
+  --bp-tablet-landscape: 64rem; /* 1024px */
+  --bp-desktop: 80rem; /* 1280px */
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --text-body-size: 1.25rem; /* 20px */
+    --text-subheadline-size: 1.75rem; /* 28px */
+    --text-headline-size: 3rem; /* 48px tablet */
+    --section-padding-y: var(--space-15);
+    --container-padding-x: var(--space-4);
+    --grid-columns: 8;
+    --header-height: 5.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --text-headline-size: 4rem; /* 64px */
+    --grid-columns: 12;
+    --header-height: 6rem; /* 96px */
+  }
+}
+
+@media (min-width: 80rem) {
+  :root {
+    --text-headline-size: 5rem; /* 80px toward desktop range */
+    --section-padding-y: var(--space-20);
+    --container-padding-x: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-header: 0ms;
+  }
+}
