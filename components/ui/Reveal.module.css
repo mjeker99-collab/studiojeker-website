@@ -5,6 +5,7 @@
     opacity 600ms var(--ease-standard),
     transform 600ms var(--ease-standard);
   will-change: opacity, transform;
+  overflow: visible;
 }
 
 .visible {

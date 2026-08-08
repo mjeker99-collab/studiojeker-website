@@ -17,6 +17,8 @@ function getWordpressHostname(): string | null {
 const wordpressHostname = getWordpressHostname();
 
 const nextConfig: NextConfig = {
+  // Keep repository AGENTS.md authoritative; do not let Next overwrite it.
+  agentRules: false,
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: wordpressHostname

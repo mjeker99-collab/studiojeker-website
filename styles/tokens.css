@@ -44,7 +44,7 @@
   --space-15: 7.5rem; /* 120 */
   --space-20: 10rem; /* 160 */
 
-  --section-padding-y: var(--space-10);
+  --section-padding-y: 4.5rem;
   --component-gap: var(--space-4);
   --card-gap: var(--space-3);
   --headline-margin: var(--space-5);
@@ -78,7 +78,7 @@
     --text-body-size: 1.25rem; /* 20px */
     --text-subheadline-size: 1.75rem; /* 28px */
     --text-headline-size: 3rem; /* 48px tablet */
-    --section-padding-y: var(--space-15);
+    --section-padding-y: 6.5rem; /* tuned toward mockup rhythm; kit base 120px */
     --container-padding-x: var(--space-4);
     --grid-columns: 8;
     --header-height: 5.5rem;
@@ -96,7 +96,7 @@
 @media (min-width: 80rem) {
   :root {
     --text-headline-size: 5rem; /* 80px toward desktop range */
-    --section-padding-y: var(--space-20);
+    --section-padding-y: 8rem; /* tuned toward mockup rhythm; kit base 160px */
     --container-padding-x: var(--space-5);
   }
 }

@@ -121,7 +121,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             category: "Product Communication",
             href: references,
             image: {
-              src: "/images/product/Produktfotografie-scaled.jpg",
+              src: "/images/product/Watch_3-057ab44a.jpg",
               alt: "Product communication placeholder image",
               width: 1200,
               height: 800,
@@ -134,7 +134,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             category: "Business Communication",
             href: references,
             image: {
-              src: "/images/business/Business_1-03e4abec.jpg",
+              src: "/images/business/Business_3-e21f49d5.jpg",
               alt: "Business communication placeholder image",
               width: 1200,
               height: 800,
@@ -147,7 +147,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             category: "Digital Marketing",
             href: references,
             image: {
-              src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
+              src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
               alt: "Digital marketing placeholder image",
               width: 1200,
               height: 800,
@@ -316,7 +316,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           category: "Product Communication",
           href: references,
           image: {
-            src: "/images/product/Produktfotografie-scaled.jpg",
+            src: "/images/product/Watch_3-057ab44a.jpg",
             alt: "Platzhalterbild Product Communication",
             width: 1200,
             height: 800,
@@ -329,7 +329,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           category: "Business Communication",
           href: references,
           image: {
-            src: "/images/business/Business_1-03e4abec.jpg",
+            src: "/images/business/Business_3-e21f49d5.jpg",
             alt: "Platzhalterbild Business Communication",
             width: 1200,
             height: 800,
@@ -342,7 +342,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           category: "Digital Marketing",
           href: references,
           image: {
-            src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
+            src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
             alt: "Platzhalterbild Digital Marketing",
             width: 1200,
             height: 800,

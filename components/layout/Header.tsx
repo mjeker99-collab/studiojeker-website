@@ -52,11 +52,11 @@ export function Header({ locale, dictionary }: HeaderProps) {
 
         const nextTheme = visible?.target.getAttribute("data-header-theme");
         if (nextTheme === "dark" || nextTheme === "light") {
-          setTheme(window.scrollY <= 24 && nextTheme === "light" ? "hero" : nextTheme);
+          setTheme(nextTheme);
         }
       },
       {
-        rootMargin: "-10% 0px -70% 0px",
+        rootMargin: "-12% 0px -70% 0px",
         threshold: [0.15, 0.35, 0.6],
       },
     );
@@ -65,15 +65,18 @@ export function Header({ locale, dictionary }: HeaderProps) {
     return () => observer.disconnect();
   }, []);
 
+  const resolvedTheme: HeaderTheme =
+    !scrolled && theme === "light" ? "hero" : theme === "dark" ? "dark" : "light";
+
   const themeClass =
-    theme === "dark"
+    resolvedTheme === "dark"
       ? styles.themeDark
-      : theme === "light"
-        ? styles.themeLight
-        : styles.themeHero;
+      : resolvedTheme === "hero"
+        ? styles.themeHero
+        : styles.themeLight;
 
   const logoSrc =
-    theme === "dark"
+    resolvedTheme === "dark"
       ? "/logos/RZ_Studiojeker_Logo_1992_RGB_neg_8.png"
       : "/logos/RZ_Studiojeker_Logo_RGB.svg";
 
@@ -108,13 +111,13 @@ export function Header({ locale, dictionary }: HeaderProps) {
             <LanguageSwitcher
               locale={locale}
               label={dictionary.nav.language}
-              inverse={theme === "dark"}
+              inverse={resolvedTheme === "dark"}
             />
             <div className={styles.ctaDesktop}>
               <Button
                 href={getContactHref(locale)}
                 showArrow
-                variant={theme === "dark" ? "cyan" : "primary"}
+                variant={resolvedTheme === "dark" ? "cyan" : "primary"}
               >
                 {dictionary.nav.cta}
               </Button>

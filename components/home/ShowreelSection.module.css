@@ -15,6 +15,7 @@
   align-content: center;
   gap: var(--space-3);
   max-width: 32rem;
+  overflow: visible;
 }
 
 .headline {
@@ -71,17 +72,18 @@
 
 .play {
   position: absolute;
-  inset: 50% auto auto 50%;
-  z-index: 1;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
   display: grid;
   place-items: center;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 4.75rem;
+  height: 4.75rem;
   border: 2px solid var(--color-white);
   border-radius: 50%;
-  background: rgb(0 0 0 / 35%);
+  background: rgb(0 0 0 / 40%);
   color: var(--color-cyan);
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   transform: translate(-50%, -50%);
   transition:
     transform 300ms var(--ease-standard),
