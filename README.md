@@ -165,6 +165,27 @@ If mockup example content conflicts with the Developer Kit, the Developer Kit wi
 
 ---
 
+# Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Useful scripts:
+
+- `npm run dev` — local development server
+- `npm run lint` — ESLint
+- `npm run typecheck` — TypeScript check
+- `npm run build` — production build
+- `npm run start` — start production server
+
+Environment variables are documented in `.env.example`.
+
+The Next.js app builds without a live WordPress connection. Set `WORDPRESS_API_BASE_URL` when integrating the Metanet-hosted CMS.
+
+---
+
 # Development Principles
 
 Every decision should improve:

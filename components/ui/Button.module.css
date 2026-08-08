@@ -1,0 +1,79 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 3.5rem; /* 56px */
+  padding: 1.125rem 2rem; /* 18px 32px */
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.primary {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-color: var(--color-black);
+}
+
+.primary:hover {
+  background: var(--color-cyan);
+  border-color: var(--color-cyan);
+  color: var(--color-black);
+}
+
+.secondary {
+  background: transparent;
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+.secondary:hover {
+  background: var(--color-black);
+  border-color: var(--color-black);
+  color: var(--color-white);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-black);
+  border-color: var(--color-black);
+}
+
+.ghost:hover {
+  background: var(--color-cyan);
+  border-color: var(--color-cyan);
+  color: var(--color-black);
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.button:hover .arrow {
+  transform: translateX(0.25rem);
+}
+
+@media (max-width: 47.9375rem) {
+  .fullWidthMobile {
+    width: 100%;
+  }
+}

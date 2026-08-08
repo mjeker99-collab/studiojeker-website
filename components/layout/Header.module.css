@@ -1,0 +1,113 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--header-height);
+  border-bottom: 1px solid transparent;
+  background: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(10px);
+  transition:
+    background-color var(--duration-header) var(--ease-standard),
+    border-color var(--duration-header) var(--ease-standard),
+    height var(--duration-header) var(--ease-standard);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: inherit;
+}
+
+.logo {
+  width: auto;
+  height: 1.75rem;
+}
+
+@media (min-width: 48rem) {
+  .logo {
+    height: 2.125rem;
+  }
+}
+
+.desktopNav {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.menuToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-button);
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuToggle span,
+.menuToggle span::before,
+.menuToggle span::after {
+  display: block;
+  width: 1.125rem;
+  height: 1px;
+  background: var(--color-black);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.menuToggle span {
+  position: relative;
+}
+
+.menuToggle span::before,
+.menuToggle span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.menuToggle span::before {
+  top: -0.35rem;
+}
+
+.menuToggle span::after {
+  top: 0.35rem;
+}
+
+.ctaDesktop {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .desktopNav {
+    display: block;
+    flex: 1;
+  }
+
+  .menuToggle {
+    display: none;
+  }
+
+  .ctaDesktop {
+    display: inline-flex;
+  }
+}
