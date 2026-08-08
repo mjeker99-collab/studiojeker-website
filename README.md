@@ -83,11 +83,11 @@ It is responsible for editable content, including:
 - customer logos
 - testimonials
 - "Sichtbarkeit im Abo"
-- news / blog content if implemented
+- news / blog content when Insights/News is approved for implementation
 - SEO metadata where appropriate
 - images and media
 
-Content must be retrieved from WordPress through an API.
+Content must be retrieved from WordPress through the native WordPress REST API.
 
 Presentation stays in Next.js. Content stays in WordPress.
 
@@ -102,6 +102,17 @@ Presentation stays in Next.js. Content stays in WordPress.
 | Approved mockups | Visual reference for proportions, imagery and rhythm — not production content |
 
 Never hardcode editable production content in the frontend.
+
+## Authoritative Architecture Decisions
+
+These decisions are approved and binding:
+
+1. **WordPress API** — Use the native WordPress REST API. Do not introduce GraphQL / WPGraphQL unless a concrete technical requirement later justifies it.
+2. **Multilingual** — Use Polylang for the DE/EN WordPress content architecture. German is primary. English is secondary.
+3. **WordPress hosting** — The existing WordPress installation remains hosted at Metanet and becomes the headless editorial CMS. The Next.js frontend is hosted separately. The production domain `studiojeker.ch` will ultimately serve the Next.js frontend.
+4. **WordPress content model** — Use structured Custom Post Types + Advanced Custom Fields (ACF). Avoid page-builder-dependent content structures.
+5. **Insights / News** — Prepare the architecture for Insights/News, but do not implement it in V1 unless explicitly approved later.
+6. **Sichtbarkeit im Abo** — Do not publish package prices in V1. Present the offer, benefits, process and CTA. Optional pricing fields may exist in the CMS for future use.
 
 ---
 
@@ -127,7 +138,7 @@ Never hardcode editable production content in the frontend.
 └── package.json
 ```
 
-WordPress itself is the separate editorial backend. It is not a classic theme-driven frontend in this repository.
+WordPress itself remains the separate Metanet-hosted editorial backend. It is not a classic theme-driven frontend in this repository.
 
 ---
 
@@ -333,14 +344,18 @@ Before completing work:
 Core architecture already includes:
 
 - Next.js frontend + Headless WordPress CMS
-- DE/EN content and frontend routing
+- native WordPress REST API integration
+- Polylang DE/EN content architecture (German primary, English secondary)
+- Custom Post Types + ACF content models
 - case studies / projects
-- visibility subscription ("Sichtbarkeit im Abo")
+- visibility subscription ("Sichtbarkeit im Abo") without published prices in V1
 - structured SEO metadata from WordPress, rendered by Next.js
+- Metanet-hosted WordPress as headless CMS; separately hosted Next.js frontend
+- `studiojeker.ch` ultimately serving the Next.js frontend
 
 The platform is also designed to support later growth:
 
-- insights / news when implemented
+- Insights / News after explicit V1+ approval
 - landing pages and campaign pages
 - CRM integration
 - newsletter integration

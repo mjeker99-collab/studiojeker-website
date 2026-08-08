@@ -49,6 +49,16 @@ Next.js frontend + Headless WordPress CMS.
 
 WordPress must not control the visual frontend through a theme or page builder.
 
+Authoritative architecture decisions:
+
+- Native WordPress REST API only; no GraphQL / WPGraphQL unless later justified
+- Polylang for DE/EN; German primary, English secondary
+- Existing Metanet WordPress remains the headless editorial CMS
+- Next.js is hosted separately; `studiojeker.ch` ultimately serves Next.js
+- Custom Post Types + ACF for structured content; no page-builder content structures
+- Insights / News: architecture ready, not in V1 unless explicitly approved
+- Sichtbarkeit im Abo: no published package prices in V1; optional CMS pricing fields allowed for later use
+
 ---
 
 # PRIMARY OBJECTIVE
@@ -260,11 +270,19 @@ Never hardcode editable content in the Next.js frontend.
 
 Prefer reusable WordPress content models.
 
-Retrieve editable content from WordPress through an API.
+Use Custom Post Types + Advanced Custom Fields (ACF).
+
+Retrieve editable content from WordPress through the native REST API.
+
+Use Polylang for DE/EN content. German is primary. English is secondary.
 
 Keep content independent from presentation.
 
 Follow the HEADLESS WORDPRESS CMS MODEL in the Developer Kit.
+
+Do not implement Insights/News in V1 unless explicitly approved.
+
+Do not publish Sichtbarkeit-im-Abo package prices in V1.
 
 ---
 

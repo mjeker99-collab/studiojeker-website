@@ -3467,6 +3467,14 @@ Primärer Header-CTA:
 
 Let's Talk
 
+V1 note:
+
+Insights remains part of the target information architecture.
+
+Do not implement Insights / News in V1 unless explicitly approved later.
+
+V1 navigation may omit Insights until that approval is given.
+
 ---
 
 # 3. SOLUTIONS-NAVIGATION
@@ -9874,11 +9882,11 @@ WordPress is responsible for editable content including:
 - customer logos
 - testimonials
 - "Sichtbarkeit im Abo"
-- news / blog content if implemented
+- Insights / News content when explicitly approved for implementation
 - SEO metadata where appropriate
 - images and media
 
-Content must be retrieved from WordPress through an API.
+Content must be retrieved from WordPress through the native WordPress REST API.
 
 WordPress must not control the visual frontend through a WordPress theme or page builder.
 
@@ -9886,9 +9894,79 @@ The approved Studiojeker design is implemented exclusively in the Next.js fronte
 
 WordPress remains the editorial backend for Studiojeker.
 
+The existing WordPress installation remains hosted at Metanet and operates as the headless editorial CMS.
+
+The Next.js frontend is hosted separately.
+
+The production domain studiojeker.ch will ultimately serve the Next.js frontend.
+
 The content models below remain presentation-independent.
 
 The dedicated section HEADLESS WORDPRESS CMS MODEL defines the structured WordPress implementation of these models.
+
+---
+
+# AUTHORITATIVE ARCHITECTURE DECISIONS
+
+The following decisions are approved and binding.
+
+They are no longer open architecture questions.
+
+## 1. WORDPRESS API
+
+Use the native WordPress REST API.
+
+Do not introduce GraphQL or WPGraphQL unless a concrete technical requirement later justifies it.
+
+## 2. MULTILINGUAL
+
+Use Polylang for the DE/EN WordPress content architecture.
+
+German is the primary language.
+
+English is the secondary language.
+
+Content remains independently editable per language.
+
+No automatic translation.
+
+## 3. WORDPRESS HOSTING
+
+The existing WordPress installation remains hosted at Metanet.
+
+It becomes the headless editorial CMS.
+
+The Next.js frontend is hosted separately.
+
+The production domain studiojeker.ch will ultimately serve the Next.js frontend.
+
+## 4. WORDPRESS CONTENT MODEL
+
+Use structured Custom Post Types and Advanced Custom Fields (ACF) for the defined content models.
+
+Avoid page-builder-dependent content structures.
+
+Editors manage structured fields.
+
+Next.js renders the approved design.
+
+## 5. INSIGHTS / NEWS
+
+Prepare the architecture for Insights / News.
+
+Do not implement Insights / News in V1 unless explicitly approved later.
+
+Navigation, URL concepts and CMS models may reserve space for Insights, but V1 delivery must not depend on Insights content.
+
+## 6. SICHTBARKEIT IM ABO
+
+Do not publish package prices in V1.
+
+Present the offer, benefits, process and CTA.
+
+The CMS architecture may contain optional pricing fields for future use.
+
+Frontend V1 must not display pricing unless a later explicit publication approval is given.
 
 ---
 
@@ -10322,6 +10400,16 @@ No automatic translation.
 
 Localized SEO.
 
+Approved implementation:
+
+Polylang for WordPress DE/EN content architecture.
+
+German is primary.
+
+English is secondary.
+
+Next.js owns public DE/EN frontend routing.
+
 ---
 
 # SEO FIELDS
@@ -10574,11 +10662,29 @@ Video library
 
 The Studiojeker CMS is Headless WordPress.
 
+Hosting:
+
+Existing WordPress installation at Metanet.
+
+Role:
+
+Headless editorial CMS only.
+
 The content model is independent of the frontend presentation layer.
 
 API-first thinking is mandatory.
 
+Approved API:
+
+Native WordPress REST API.
+
+Do not introduce GraphQL or WPGraphQL unless a concrete technical requirement later justifies it.
+
 Structured content is mandatory.
+
+Approved modeling approach:
+
+Custom Post Types + Advanced Custom Fields (ACF).
 
 Reusable fields are mandatory.
 
@@ -10589,6 +10695,8 @@ Next.js provides presentation.
 No classic WordPress theme rendering for the public website.
 
 No page-builder-driven public frontend.
+
+No page-builder-dependent content structures.
 
 ---
 
@@ -10604,9 +10712,13 @@ They also do not override DESIGN_SPECIFICATION.md or the approved mockups as vis
 
 Presentation, layout, motion and UI remain exclusively in Next.js.
 
-WordPress stores structured editorial content and media.
+WordPress stores structured editorial content and media through Custom Post Types and ACF fields.
 
-All listed content types must support German and English as independent editorial content.
+All listed content types must support German and English as independent editorial content via Polylang.
+
+German is the primary language.
+
+English is the secondary language.
 
 No automatic translation.
 
@@ -10731,7 +10843,7 @@ Fields:
 - process
 - packages
 - package features
-- pricing only if approved for publication
+- pricing (optional CMS fields for future use; not published in V1)
 - CTA
 - testimonial (optional; only real and approved)
 - DE / EN content
@@ -10740,7 +10852,9 @@ Fields:
 Rules:
 
 - This is a distinct conversion product, not a fifth ordinary service card.
-- Pricing must remain unpublished until explicitly approved.
+- V1 presents the offer, benefits, process and CTA.
+- Do not publish package prices in V1.
+- Optional pricing fields may exist in ACF for later use, but Next.js must not render them in V1.
 - Package details from mockups are placeholders unless separately approved.
 - Homepage module content and landing-page content should stay structurally consistent.
 
@@ -10777,24 +10891,36 @@ The existing CMS architecture still applies for:
 - Solution / competence-center pages
 - About page modules
 - Contact page modules
-- Insight / news content if implemented
+- Insight / news content prepared architecturally, not implemented in V1 unless explicitly approved
 - Legal pages
 
 These remain structured WordPress content consumed by Next.js.
 
 Do not recreate them as hardcoded frontend pages when they contain editable content.
 
+Insights / News may be modeled as a future Custom Post Type with ACF fields and Polylang support.
+
+V1 must not depend on Insights / News pages, navigation delivery or content publishing.
+
 ---
 
 ## API AND RENDERING RULES
 
-- Next.js fetches WordPress content through an API.
+- Next.js fetches WordPress content through the native WordPress REST API.
+- Do not introduce GraphQL or WPGraphQL unless a concrete technical requirement later justifies it.
+- Content models are implemented with Custom Post Types and ACF.
+- Polylang manages DE/EN WordPress content relationships; German is primary, English is secondary.
 - Next.js owns routing, including DE/EN frontend routes.
 - Next.js owns frontend SEO rendering based on WordPress metadata fields.
 - WordPress owns draft, review, publish, update and archive workflow.
+- WordPress remains hosted at Metanet as the headless editorial CMS.
+- Next.js is hosted separately; studiojeker.ch ultimately serves the Next.js frontend.
 - Editors must not depend on a WordPress theme or page builder to shape the public website.
+- Avoid page-builder-dependent content structures.
 - If content is missing, leave placeholders or request approved content.
 - Never promote mockup fantasy content into WordPress production data.
+- Do not render Sichtbarkeit-im-Abo prices in V1.
+- Do not implement Insights / News in V1 unless explicitly approved.
 
 ---
 
