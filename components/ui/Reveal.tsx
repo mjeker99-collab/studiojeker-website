@@ -20,15 +20,17 @@ export function Reveal({
   const { ref, visible } = useReveal<HTMLDivElement>();
   const Tag = as ?? "div";
 
+  // Always observe a real div ref. Polymorphic refs were unreliable and could
+  // leave homepage sections stuck at opacity: 0.
   return (
-    <Tag
-      ref={ref as never}
-      className={[styles.reveal, visible ? styles.visible : "", className]
+    <div
+      ref={ref}
+      className={[styles.reveal, visible ? styles.visible : ""]
         .filter(Boolean)
         .join(" ")}
       style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
     >
-      {children}
-    </Tag>
+      <Tag className={className}>{children}</Tag>
+    </div>
   );
 }
