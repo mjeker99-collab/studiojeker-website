@@ -4,12 +4,38 @@
   z-index: 50;
   height: var(--header-height);
   border-bottom: 1px solid transparent;
-  background: rgb(255 255 255 / 92%);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  color: var(--color-black);
   transition:
     background-color var(--duration-header) var(--ease-standard),
     border-color var(--duration-header) var(--ease-standard),
-    height var(--duration-header) var(--ease-standard);
+    color var(--duration-header) var(--ease-standard),
+    height var(--duration-header) var(--ease-standard),
+    box-shadow var(--duration-header) var(--ease-standard);
+}
+
+.scrolled {
+  height: calc(var(--header-height) - 0.5rem);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 4%);
+}
+
+.themeLight {
+  background: rgb(255 255 255 / 94%);
+  color: var(--color-black);
+  border-bottom-color: rgb(0 0 0 / 6%);
+  backdrop-filter: blur(10px);
+}
+
+.themeDark {
+  background: rgb(0 0 0 / 88%);
+  color: var(--color-white);
+  border-bottom-color: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(10px);
+}
+
+.themeHero {
+  background: transparent;
+  color: var(--color-black);
 }
 
 .inner {
@@ -24,6 +50,7 @@
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  color: inherit;
 }
 
 .brand:hover {
@@ -32,13 +59,7 @@
 
 .logo {
   width: auto;
-  height: 1.75rem;
-}
-
-@media (min-width: 48rem) {
-  .logo {
-    height: 2.125rem;
-  }
+  height: 1.85rem;
 }
 
 .desktopNav {
@@ -58,9 +79,10 @@
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--color-black);
+  border: 1px solid currentColor;
   border-radius: var(--radius-button);
   background: transparent;
+  color: inherit;
   cursor: pointer;
 }
 
@@ -70,7 +92,7 @@
   display: block;
   width: 1.125rem;
   height: 1px;
-  background: var(--color-black);
+  background: currentColor;
   transition: transform var(--duration-fast) var(--ease-standard);
 }
 
@@ -97,6 +119,12 @@
   display: none;
 }
 
+@media (min-width: 48rem) {
+  .logo {
+    height: 2.25rem;
+  }
+}
+
 @media (min-width: 64rem) {
   .desktopNav {
     display: block;
@@ -109,5 +137,9 @@
 
   .ctaDesktop {
     display: inline-flex;
+  }
+
+  .logo {
+    height: 2.5rem;
   }
 }

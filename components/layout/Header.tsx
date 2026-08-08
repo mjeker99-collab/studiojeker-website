@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Dictionary, Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
 import { getContactHref } from "@/lib/i18n/navigation";
@@ -18,12 +18,72 @@ type HeaderProps = {
   dictionary: Dictionary;
 };
 
+type HeaderTheme = "hero" | "light" | "dark";
+
 export function Header({ locale, dictionary }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [theme, setTheme] = useState<HeaderTheme>("hero");
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const sections = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-header-theme]"),
+    );
+
+    if (sections.length === 0) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        const nextTheme = visible?.target.getAttribute("data-header-theme");
+        if (nextTheme === "dark" || nextTheme === "light") {
+          setTheme(window.scrollY <= 24 && nextTheme === "light" ? "hero" : nextTheme);
+        }
+      },
+      {
+        rootMargin: "-10% 0px -70% 0px",
+        threshold: [0.15, 0.35, 0.6],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  const themeClass =
+    theme === "dark"
+      ? styles.themeDark
+      : theme === "light"
+        ? styles.themeLight
+        : styles.themeHero;
+
+  const logoSrc =
+    theme === "dark"
+      ? "/logos/RZ_Studiojeker_Logo_1992_RGB_neg_8.png"
+      : "/logos/RZ_Studiojeker_Logo_RGB.svg";
 
   return (
     <>
-      <header className={styles.header}>
+      <header
+        className={[styles.header, themeClass, scrolled ? styles.scrolled : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <Container className={styles.inner}>
           <Link
             href={localizePathname("/", locale)}
@@ -31,10 +91,10 @@ export function Header({ locale, dictionary }: HeaderProps) {
             aria-label={dictionary.brand.name}
           >
             <Image
-              src="/logos/RZ_Studiojeker_Logo_RGB.svg"
+              src={logoSrc}
               alt={dictionary.brand.name}
-              width={180}
-              height={34}
+              width={200}
+              height={40}
               className={styles.logo}
               priority
             />
@@ -45,9 +105,17 @@ export function Header({ locale, dictionary }: HeaderProps) {
           </div>
 
           <div className={styles.actions}>
-            <LanguageSwitcher locale={locale} label={dictionary.nav.language} />
+            <LanguageSwitcher
+              locale={locale}
+              label={dictionary.nav.language}
+              inverse={theme === "dark"}
+            />
             <div className={styles.ctaDesktop}>
-              <Button href={getContactHref(locale)} showArrow>
+              <Button
+                href={getContactHref(locale)}
+                showArrow
+                variant={theme === "dark" ? "cyan" : "primary"}
+              >
                 {dictionary.nav.cta}
               </Button>
             </div>

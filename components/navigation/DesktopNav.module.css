@@ -13,6 +13,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 2.75rem;
+  color: inherit;
   text-decoration: none;
   font-size: 0.9375rem;
   font-weight: var(--font-weight-medium);
@@ -34,7 +35,7 @@
 
 .link:hover,
 .link[aria-current="page"] {
-  color: var(--color-black);
+  color: inherit;
 }
 
 .link:hover::after,

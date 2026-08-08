@@ -1,0 +1,129 @@
+.section {
+  background: var(--color-black);
+  color: var(--color-white);
+  padding-block: var(--section-padding-y);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+.copy {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  max-width: 32rem;
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.accent {
+  color: var(--color-cyan);
+}
+
+.body {
+  margin: 0;
+  color: var(--color-silver);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.mediaWrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-height: 18rem;
+}
+
+.mediaButton {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 18rem;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--color-dark);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.image {
+  object-fit: cover;
+  transition:
+    transform 350ms var(--ease-standard),
+    filter 350ms var(--ease-standard);
+}
+
+.mediaButton:hover .image,
+.mediaButton:focus-visible .image {
+  transform: scale(1.04);
+  filter: brightness(0.78);
+}
+
+.play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 2px solid var(--color-white);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 35%);
+  color: var(--color-cyan);
+  font-size: 1.25rem;
+  transform: translate(-50%, -50%);
+  transition:
+    transform 300ms var(--ease-standard),
+    background-color 300ms var(--ease-standard),
+    border-color 300ms var(--ease-standard);
+}
+
+.mediaButton:hover .play,
+.mediaButton:focus-visible .play {
+  transform: translate(-50%, -50%) scale(1.06);
+  border-color: var(--color-cyan);
+  background: rgb(0 200 255 / 18%);
+}
+
+@media (min-width: 48rem) {
+  .mediaWrap,
+  .mediaButton {
+    min-height: 24rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+    gap: var(--space-6);
+  }
+
+  .mediaWrap,
+  .mediaButton {
+    min-height: 28rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .play {
+    transition: none;
+  }
+
+  .mediaButton:hover .image,
+  .mediaButton:focus-visible .image {
+    transform: none;
+    filter: none;
+  }
+}

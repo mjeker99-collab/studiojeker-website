@@ -1,0 +1,57 @@
+.bar {
+  display: block;
+  background: var(--color-cyan);
+  flex-shrink: 0;
+}
+
+.vertical {
+  width: 4px;
+  align-self: stretch;
+  transform-origin: top center;
+}
+
+.horizontal {
+  width: 1.75rem;
+  height: 3px;
+  transform-origin: left center;
+}
+
+.animated {
+  animation: grow 700ms var(--ease-standard) both;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.horizontal.animated {
+  animation-name: growX;
+}
+
+@keyframes growX {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 47.9375rem) {
+  .vertical {
+    width: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated {
+    animation: none;
+  }
+}

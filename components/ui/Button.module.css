@@ -42,13 +42,13 @@
 .secondary {
   background: transparent;
   color: var(--color-white);
-  border-color: var(--color-white);
+  border-color: var(--color-cyan);
 }
 
 .secondary:hover {
-  background: var(--color-black);
-  border-color: var(--color-black);
-  color: var(--color-white);
+  background: var(--color-cyan);
+  border-color: var(--color-cyan);
+  color: var(--color-black);
 }
 
 .ghost {
@@ -60,6 +60,30 @@
 .ghost:hover {
   background: var(--color-cyan);
   border-color: var(--color-cyan);
+  color: var(--color-black);
+}
+
+.outline {
+  background: var(--color-white);
+  color: var(--color-black);
+  border-color: var(--color-cyan);
+}
+
+.outline:hover {
+  background: var(--color-cyan);
+  border-color: var(--color-cyan);
+  color: var(--color-black);
+}
+
+.cyan {
+  background: var(--color-cyan);
+  color: var(--color-black);
+  border-color: var(--color-cyan);
+}
+
+.cyan:hover {
+  background: var(--color-white);
+  border-color: var(--color-white);
   color: var(--color-black);
 }
 

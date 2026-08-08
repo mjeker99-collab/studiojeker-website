@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import { FoundationPage } from "@/components/foundation/FoundationPage";
+import { HomePage } from "@/components/home/HomePage";
+import { getHomepageContent } from "@/lib/content/homepage";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+
+const content = getHomepageContent("de");
 
 export const metadata: Metadata = buildPageMetadata({
   locale: "de",
   pathname: "/",
-  title: "Studiojeker | Foundation",
-  description: "Next.js foundation for the Studiojeker website.",
+  title: content.seo.title,
+  description: content.seo.description,
 });
 
 export default function GermanHomePage() {
   return (
     <SiteChrome locale="de">
-      <FoundationPage locale="de" />
+      <HomePage locale="de" />
     </SiteChrome>
   );
 }
