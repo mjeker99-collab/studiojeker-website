@@ -87,7 +87,7 @@
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+    grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
     min-height: 32rem;
   }
 

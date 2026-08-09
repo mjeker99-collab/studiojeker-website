@@ -13,9 +13,10 @@ type FooterProps = {
 export function Footer({ locale, dictionary }: FooterProps) {
   const items = getPrimaryNav(locale);
   const labels = {
-    solutions: dictionary.nav.solutions,
-    references: dictionary.nav.references,
     about: dictionary.nav.about,
+    services: dictionary.nav.services,
+    work: dictionary.nav.work,
+    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
 
@@ -53,8 +54,11 @@ export function Footer({ locale, dictionary }: FooterProps) {
               <h2 className={styles.columnTitle}>{dictionary.footer.services}</h2>
               <ul className={styles.list}>
                 <li>
-                  <TextLink href={items[0]?.href ?? "#"} inverse>
-                    {dictionary.nav.solutions}
+                  <TextLink
+                    href={items.find((item) => item.id === "services")?.href ?? "#"}
+                    inverse
+                  >
+                    {dictionary.nav.services}
                   </TextLink>
                 </li>
               </ul>

@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import type { Dictionary, Locale } from "@/types/i18n";
-import { getContactHref, getPrimaryNav } from "@/lib/i18n/navigation";
-import { Button } from "@/components/ui/Button";
+import { getPrimaryNav } from "@/lib/i18n/navigation";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 import { NavLink } from "@/components/navigation/NavLink";
 import styles from "./MobileNav.module.css";
@@ -18,9 +17,10 @@ type MobileNavProps = {
 export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps) {
   const items = getPrimaryNav(locale);
   const labels = {
-    solutions: dictionary.nav.solutions,
-    references: dictionary.nav.references,
     about: dictionary.nav.about,
+    services: dictionary.nav.services,
+    work: dictionary.nav.work,
+    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
 
@@ -81,12 +81,6 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
           ))}
         </ul>
       </nav>
-
-      <div className={styles.bottom}>
-        <Button href={getContactHref(locale)} fullWidthMobile onClick={onClose}>
-          {dictionary.nav.cta}
-        </Button>
-      </div>
     </div>
   );
 }

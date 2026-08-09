@@ -12,6 +12,10 @@ type LanguageSwitcherProps = {
   inverse?: boolean;
 };
 
+/**
+ * Master mockup shows a single locale code (e.g. DE).
+ * Clicking switches to the other locale.
+ */
 export function LanguageSwitcher({
   locale,
   label,
@@ -19,6 +23,7 @@ export function LanguageSwitcher({
 }: LanguageSwitcherProps) {
   const pathname = usePathname() || "/";
   const pathWithoutLocale = stripLocalePrefix(pathname);
+  const nextLocale: Locale = locale === "de" ? "en" : "de";
 
   return (
     <div
@@ -26,23 +31,12 @@ export function LanguageSwitcher({
       aria-label={label}
     >
       <Link
-        href={localizePathname(pathWithoutLocale, "de")}
+        href={localizePathname(pathWithoutLocale, nextLocale)}
         className={styles.link}
-        hrefLang="de-CH"
-        aria-current={locale === "de" ? "true" : undefined}
+        hrefLang={nextLocale === "de" ? "de-CH" : "en"}
+        aria-label={`${label}: ${localeLabels[nextLocale]}`}
       >
-        {localeLabels.de}
-      </Link>
-      <span className={styles.separator} aria-hidden="true">
-        /
-      </span>
-      <Link
-        href={localizePathname(pathWithoutLocale, "en")}
-        className={styles.link}
-        hrefLang="en"
-        aria-current={locale === "en" ? "true" : undefined}
-      >
-        {localeLabels.en}
+        {localeLabels[locale]}
       </Link>
     </div>
   );

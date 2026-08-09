@@ -11,9 +11,10 @@ type DesktopNavProps = {
 export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
   const items = getPrimaryNav(locale);
   const labels = {
-    solutions: dictionary.nav.solutions,
-    references: dictionary.nav.references,
     about: dictionary.nav.about,
+    services: dictionary.nav.services,
+    work: dictionary.nav.work,
+    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
 

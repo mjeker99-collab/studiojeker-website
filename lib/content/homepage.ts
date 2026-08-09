@@ -40,10 +40,10 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         ],
         primaryCta: { label: "View our work", href: references },
         media: {
-          src: "/images/architecture/3D_2.jpg",
+          src: "/images/architecture/hero-villa-master.jpg",
           alt: "Architectural visualization by Studiojeker",
-          width: 1200,
-          height: 606,
+          width: 1785,
+          height: 1020,
         },
       },
       services: {
@@ -229,10 +229,10 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       ],
       primaryCta: { label: "Unsere Arbeit ansehen", href: references },
       media: {
-        src: "/images/architecture/3D_2.jpg",
+        src: "/images/architecture/hero-villa-master.jpg",
         alt: "Architekturvisualisierung von Studiojeker",
-        width: 1200,
-        height: 606,
+        width: 1785,
+        height: 1020,
       },
     },
     services: {

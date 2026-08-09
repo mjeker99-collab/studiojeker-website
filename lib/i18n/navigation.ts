@@ -2,19 +2,20 @@ import type { Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
 
 export type NavItem = {
-  id: "solutions" | "references" | "about" | "contact";
+  id: "about" | "services" | "work" | "insights" | "contact";
   href: string;
 };
 
 /**
- * V1 navigation from Developer Kit.
- * Insights is reserved architecturally and omitted until approved.
+ * Homepage-master navigation (visual SSoT).
+ * Insights is reserved in IA/URL space; content page not implemented in V1.
  */
 export function getPrimaryNav(locale: Locale): NavItem[] {
   return [
-    { id: "solutions", href: localizePathname("/solutions", locale) },
-    { id: "references", href: localizePathname("/references", locale) },
     { id: "about", href: localizePathname("/about", locale) },
+    { id: "services", href: localizePathname("/solutions", locale) },
+    { id: "work", href: localizePathname("/references", locale) },
+    { id: "insights", href: localizePathname("/insights", locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
   ];
 }
