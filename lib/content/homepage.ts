@@ -4,8 +4,8 @@ import { localizePathname } from "@/lib/i18n/config";
 
 /**
  * Homepage content prepared for later WordPress REST replacement.
- * Copy sources: Website Texte D&E, SEO Titles&Metas, Developer Kit.
- * Mockup-only names/prices/projects are intentionally excluded.
+ * Visual structure follows approved homepage master mockup.
+ * Project titles remain placeholders until approved WordPress content exists.
  */
 export function getHomepageContent(locale: Locale): HomepageContent {
   const contact = localizePathname("/contact", locale);
@@ -32,18 +32,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           "Since 1992 Studiojeker has created photography, film, 3D visualization and marketing solutions for businesses, products and architecture.",
       },
       hero: {
-        headline: "We Create Visibility",
+        headline: "We create visibility",
         headlineAccent: ".",
-        subheadline:
-          "Your Visibility Partner for businesses, products and architecture.",
+        subheadline: "Photo. Video. 3D. Content. Strategy. Distribution.",
         body: [
-          "Visibility doesn’t happen by chance.",
-          "It is created when strategy, premium content and meaningful communication come together.",
-          "Since 1992, we have helped businesses strengthen their brands, communicate products with clarity and bring projects to life.",
-          "From the first idea to the final result.",
+          "We stage brands, products and architecture — visually strong, strategically considered, effectively executed.",
         ],
-        primaryCta: { label: "Let's Talk", href: contact },
-        secondaryCta: { label: "Explore our work", href: references },
+        primaryCta: { label: "View our work", href: references },
         media: {
           src: "/images/architecture/Architekturvisualisierung.jpg",
           alt: "Architectural visualization by Studiojeker",
@@ -52,44 +47,44 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         },
       },
       services: {
-        label: "Our solutions",
-        headline: "How can we support you?",
+        label: "Our services",
+        headline: "Our services",
         items: [
           {
             id: "architecture",
             title: "Architecture",
             description:
-              "Every successful project starts with a vision. Photorealistic visualizations, animations and virtual tours help clients experience architecture before it is built.",
+              "3D visualizations, animations and drone footage for architecture and real estate.",
             href: architectureHref,
           },
           {
             id: "product",
             title: "Product Communication",
             description:
-              "Communicate complex products with clarity. Photography, video and 3D solutions that explain products and support sales.",
+              "Product photography, video and 3D for convincing products and brands.",
             href: productHref,
           },
           {
             id: "business",
             title: "Business Communication",
             description:
-              "Authentic communication for companies, organisations and brands. Business portraits, corporate films, explainer videos, employee photography and social media that build trust and strengthen your brand.",
+              "Corporate films, portraits and reportage that make values visible.",
             href: businessHref,
           },
           {
             id: "digital",
             title: "Digital Marketing",
             description:
-              "Marketing strategy, websites, social media, newsletters and content marketing for sustainable business growth.",
+              "Strategy, content and social media for more reach and results.",
             href: digitalHref,
           },
         ],
       },
       showreel: {
         label: "Showreel",
-        headline: "Our work speaks for itself",
-        body: "Short showreels, selected projects and case studies demonstrate how we help businesses, products and architecture become more visible.",
-        cta: { label: "Explore our work", href: references },
+        headline: "Stories that move",
+        body: "Moving images are our passion. Discover a selection of our latest projects.",
+        cta: { label: "Watch showreel", href: references },
         media: {
           src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
           alt: "Film production at Studiojeker",
@@ -98,8 +93,8 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         },
       },
       projects: {
-        label: "Selected work",
-        headline: "Selected work",
+        label: "Selected projects",
+        headline: "Selected projects",
         viewAll: { label: "View all projects", href: references },
         items: [
           {
@@ -157,30 +152,29 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         ],
       },
       abo: {
-        headline: "Visibility is not a project. It is a process.",
-        introduction:
-          "The Visibility Subscription offers businesses a long-term partnership for continuous communication. Planning, production, publishing and optimization from one partner.",
-        cta: { label: "Discover Visibility Subscription", href: abo },
+        headline: "Visibility subscription",
+        introduction: "Continuous content. Predictable costs.",
+        cta: { label: "Discover subscription", href: abo },
         benefits: [
           {
             id: "continuous",
-            title: "Continuous visibility",
+            title: "Continuous content",
             description: "Professional content created on a regular basis.",
+          },
+          {
+            id: "system",
+            title: "One system",
+            description: "Planning, production and publishing from one partner.",
+          },
+          {
+            id: "visibility",
+            title: "More visibility",
+            description: "Presence that builds over time — not by chance.",
           },
           {
             id: "planning",
             title: "Predictable costs",
             description: "A clear content process with planable investment.",
-          },
-          {
-            id: "quality",
-            title: "Premium content",
-            description: "Photography, film and digital content with one partner.",
-          },
-          {
-            id: "focus",
-            title: "One contact",
-            description: "No internal production effort for your team.",
           },
         ],
         media: {
@@ -192,13 +186,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       },
       about: {
         label: "About Studiojeker",
-        headline: "More than 30 years of experience.",
-        subheadline: "Personal. Creative. Reliable.",
+        headline: "Strategy. Creativity. Production. Impact",
+        headlineAccent: ".",
+        subheadline: "",
         body: [
-          "Studiojeker combines decades of experience with modern technology and a trusted network of specialists.",
-          "As a small and dedicated team, we create premium communication solutions with a personal approach and a strong commitment to quality.",
+          "Since 1992 the partner for visual communication with substance and style. For brands that want to be seen.",
         ],
-        cta: { label: "About Studiojeker", href: about },
+        cta: { label: "About us", href: about },
         media: {
           src: "/images/business/Industrie_5-fb0c83d5.jpg",
           alt: "Studiojeker production environment",
@@ -207,14 +201,14 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         },
       },
       clients: {
-        label: "Selected clients",
+        label: "Brands that trust us",
         logos: getClientLogos(),
       },
       finalCta: {
-        headlineBefore: "Let's create ",
+        headlineBefore: "Let’s create ",
         headlineAccent: "visibility",
         headlineAfter: " together.",
-        text: "Whether you are looking for business communication, product marketing or architectural visualization, we would love to hear about your project.",
+        text: "We look forward to your project.",
         cta: { label: "Get in touch", href: contact },
       },
     };
@@ -227,18 +221,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         "Studiojeker entwickelt seit 1992 Foto-, Film-, 3D- und Marketinglösungen für Unternehmen, Produkte und Architektur. We Create Visibility.",
     },
     hero: {
-      headline: "We Create Visibility",
+      headline: "We create visibility",
       headlineAccent: ".",
-      subheadline:
-        "Ihr Visibility Partner für Unternehmen, Produkte und Architektur.",
+      subheadline: "Photo. Video. 3D. Content. Strategy. Distribution.",
       body: [
-        "Sichtbarkeit entsteht nicht durch Zufall.",
-        "Sie entsteht, wenn Strategie, hochwertiger Content und die richtige Kommunikation zusammenkommen.",
-        "Seit 1992 begleiten wir Unternehmen dabei, ihre Marke zu stärken, Produkte überzeugend zu präsentieren und Projekte erlebbar zu machen.",
-        "Von der ersten Idee bis zur erfolgreichen Umsetzung.",
+        "Wir inszenieren Marken, Produkte und Architektur – visuell stark, strategisch durchdacht, wirkungsvoll umgesetzt.",
       ],
-      primaryCta: { label: "Projekt besprechen", href: contact },
-      secondaryCta: { label: "Unsere Arbeiten entdecken", href: references },
+      primaryCta: { label: "Unsere Arbeit ansehen", href: references },
       media: {
         src: "/images/architecture/Architekturvisualisierung.jpg",
         alt: "Architekturvisualisierung von Studiojeker",
@@ -248,43 +237,43 @@ export function getHomepageContent(locale: Locale): HomepageContent {
     },
     services: {
       label: "Unsere Leistungen",
-      headline: "Wobei dürfen wir Sie unterstützen?",
+      headline: "Unsere Leistungen",
       items: [
         {
           id: "architecture",
           title: "Architecture",
           description:
-            "Architektur beginnt mit einer Vision. Fotorealistische Visualisierungen, Animationen und virtuelle Rundgänge machen Projekte bereits vor ihrer Realisierung erlebbar.",
+            "3D-Visualisierungen, Animationen und Drohnenaufnahmen für Architektur und Immobilien.",
           href: architectureHref,
         },
         {
           id: "product",
           title: "Product Communication",
           description:
-            "Komplexe Produkte verständlich kommunizieren. Mit Fotografie, Film und 3D entwickeln wir Inhalte, die Produkte erklären, begeistern und den Vertrieb unterstützen.",
+            "Produktfotografie, Videos und 3D für überzeugende Produkte und Marken.",
           href: productHref,
         },
         {
           id: "business",
           title: "Business Communication",
           description:
-            "Authentische Kommunikation für Unternehmen, Organisationen und Marken. Businessportraits, Unternehmensfilme, Erklärvideos, Mitarbeiterfotografie und Social Media schaffen Vertrauen und geben Ihrem Unternehmen ein Gesicht.",
+            "Unternehmensfilme, Porträts und Reportagen, die Werte sichtbar machen.",
           href: businessHref,
         },
         {
           id: "digital",
           title: "Digital Marketing",
           description:
-            "Marketingstrategien, Social Media, Websites, Newsletter und Content-Marketing für nachhaltige Sichtbarkeit und mehr Reichweite.",
+            "Strategie, Content und Social Media für mehr Reichweite und Resultate.",
           href: digitalHref,
         },
       ],
     },
     showreel: {
       label: "Showreel",
-      headline: "Unsere Arbeiten sprechen für sich",
-      body: "Kurze Showreels, ausgewählte Referenzen und Case Studies zeigen, wie wir Unternehmen, Produkte und Architektur sichtbar machen.",
-      cta: { label: "Unsere Arbeiten entdecken", href: references },
+      headline: "Stories, die bewegen",
+      body: "Bewegtbild ist unsere Leidenschaft. Entdecken Sie eine Auswahl unserer neuesten Projekte.",
+      cta: { label: "Showreel ansehen", href: references },
       media: {
         src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
         alt: "Filmproduktion bei Studiojeker",
@@ -352,30 +341,29 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       ],
     },
     abo: {
-      headline: "Sichtbarkeit ist kein Projekt. Sie ist ein Prozess.",
-      introduction:
-        "Sichtbarkeit im Abo bietet Unternehmen eine langfristige Partnerschaft für kontinuierliche Kommunikation. Planung, Produktion, Publishing und Optimierung aus einer Hand.",
+      headline: "Sichtbarkeit im Abo",
+      introduction: "Kontinuierlicher Content. Planbare Kosten.",
       cta: { label: "Abo entdecken", href: abo },
       benefits: [
         {
           id: "continuous",
-          title: "Kontinuierliche Sichtbarkeit",
+          title: "Kontinuierlicher Content",
           description: "Professioneller Content entsteht regelmässig.",
+        },
+        {
+          id: "system",
+          title: "Ein System",
+          description: "Planung, Produktion und Publishing aus einer Hand.",
+        },
+        {
+          id: "visibility",
+          title: "Mehr Sichtbarkeit",
+          description: "Präsenz, die wächst — nicht durch Zufall.",
         },
         {
           id: "planning",
           title: "Planbare Kosten",
           description: "Ein klarer Content-Prozess mit planbarem Aufwand.",
-        },
-        {
-          id: "quality",
-          title: "Professioneller Content",
-          description: "Foto, Film und digitaler Content mit einem Partner.",
-        },
-        {
-          id: "focus",
-          title: "Ein Ansprechpartner",
-          description: "Kein interner Produktionsaufwand für Ihr Team.",
         },
       ],
       media: {
@@ -387,11 +375,11 @@ export function getHomepageContent(locale: Locale): HomepageContent {
     },
     about: {
       label: "Über Studiojeker",
-      headline: "Mehr als 30 Jahre Erfahrung.",
-      subheadline: "Persönlich. Kreativ. Zuverlässig.",
+      headline: "Strategie. Kreativität. Produktion. Wirkung",
+      headlineAccent: ".",
+      subheadline: "",
       body: [
-        "Studiojeker verbindet langjährige Erfahrung mit modernster Technologie und einem starken Partnernetzwerk.",
-        "Mit einem kleinen, engagierten Team entwickeln wir hochwertige Kommunikationslösungen – flexibel, persönlich und mit dem Anspruch, jedes Projekt zu etwas Besonderem zu machen.",
+        "Seit 1992 der Partner für visuelle Kommunikation mit Substanz und Stil. Für Marken, die gesehen werden wollen.",
       ],
       cta: { label: "Mehr über uns", href: about },
       media: {
@@ -402,15 +390,15 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       },
     },
     clients: {
-      label: "Ausgewählte Kunden",
+      label: "Brands, die uns vertrauen",
       logos: getClientLogos(),
     },
     finalCta: {
-      headlineBefore: "Lassen Sie uns über Ihr Projekt sprechen",
-      headlineAccent: ".",
-      headlineAfter: "",
-      text: "Ganz gleich, ob Unternehmenskommunikation, Produktmarketing oder Architekturprojekt – gemeinsam entwickeln wir Lösungen, die nachhaltig wirken und Sichtbarkeit schaffen.",
-      cta: { label: "Kontakt aufnehmen", href: contact },
+      headlineBefore: "Lassen Sie uns gemeinsam ",
+      headlineAccent: "Sichtbarkeit",
+      headlineAfter: " schaffen.",
+      text: "Wir freuen uns auf Ihr Projekt.",
+      cta: { label: "Jetzt Kontakt aufnehmen", href: contact },
     },
   };
 }
@@ -457,20 +445,6 @@ function getClientLogos() {
       name: "Raiffeisen",
       src: "/images/Client logos/Raiffeisen-2.svg",
       width: 150,
-      height: 48,
-    },
-    {
-      id: "scott",
-      name: "Scott",
-      src: "/images/Client logos/Scott-2.svg",
-      width: 120,
-      height: 48,
-    },
-    {
-      id: "eta",
-      name: "ETA",
-      src: "/images/Client logos/ETA-2.svg",
-      width: 100,
       height: 48,
     },
   ];

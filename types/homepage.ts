@@ -49,7 +49,7 @@ export type HomepageContent = {
     subheadline: string;
     body: string[];
     primaryCta: { label: string; href: string };
-    secondaryCta: { label: string; href: string };
+    secondaryCta?: { label: string; href: string };
     media: HomepageMedia;
   };
   services: {
@@ -80,6 +80,7 @@ export type HomepageContent = {
   about: {
     label: string;
     headline: string;
+    headlineAccent?: string;
     subheadline: string;
     body: string[];
     cta: { label: string; href: string };

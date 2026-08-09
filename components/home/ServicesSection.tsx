@@ -20,7 +20,7 @@ export function ServicesSection({ content }: ServicesSectionProps) {
       <Container>
         <Reveal className={styles.header}>
           <SectionLabel>{content.label}</SectionLabel>
-          <h2 id="home-services-title" className={styles.headline}>
+          <h2 id="home-services-title" className="visually-hidden">
             {content.headline}
           </h2>
         </Reveal>

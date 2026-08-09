@@ -2,6 +2,7 @@
   background: var(--color-black);
   color: var(--color-white);
   padding-block: var(--space-10);
+  padding-inline: var(--container-padding-x);
 }
 
 .inner {
@@ -9,6 +10,8 @@
   grid-template-columns: auto 1fr;
   gap: var(--space-4);
   align-items: center;
+  width: min(100%, var(--container-max));
+  margin-inline: auto;
 }
 
 .content {
@@ -38,14 +41,14 @@
 
 .text {
   margin: 0;
-  color: var(--color-silver);
-  font-size: 1.0625rem;
+  color: var(--color-white);
+  font-size: 1rem;
   line-height: 1.55;
 }
 
 @media (min-width: 64rem) {
   .section {
-    padding-block: var(--space-15);
+    padding-block: var(--space-12, 6rem);
   }
 }
 

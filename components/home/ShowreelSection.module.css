@@ -1,13 +1,25 @@
 .section {
+  position: relative;
   background: var(--color-black);
   color: var(--color-white);
-  padding-block: var(--section-padding-y);
+  overflow: hidden;
+}
+
+.edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--cyan-bar-thin);
+  background: var(--color-cyan);
+  pointer-events: none;
 }
 
 .grid {
   display: grid;
-  gap: var(--space-5);
   align-items: stretch;
+  min-height: 28rem;
 }
 
 .copy {
@@ -15,12 +27,12 @@
   align-content: center;
   gap: var(--space-3);
   max-width: 32rem;
-  overflow: visible;
+  padding: var(--section-padding-y) var(--container-padding-x);
 }
 
 .headline {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
   font-weight: var(--font-weight-extrabold);
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -32,9 +44,10 @@
 
 .body {
   margin: 0;
-  color: var(--color-silver);
+  max-width: 28rem;
+  color: var(--color-white);
   font-size: 1.0625rem;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .mediaWrap {
@@ -77,25 +90,31 @@
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 4.75rem;
-  height: 4.75rem;
+  width: 5rem;
+  height: 5rem;
   border: 2px solid var(--color-white);
   border-radius: 50%;
-  background: rgb(0 0 0 / 40%);
-  color: var(--color-cyan);
-  font-size: 1.35rem;
+  background: transparent;
   transform: translate(-50%, -50%);
   transition:
     transform 300ms var(--ease-standard),
-    background-color 300ms var(--ease-standard),
     border-color 300ms var(--ease-standard);
+}
+
+.playTriangle {
+  display: block;
+  width: 0;
+  height: 0;
+  margin-left: 0.2rem;
+  border-top: 0.55rem solid transparent;
+  border-bottom: 0.55rem solid transparent;
+  border-left: 0.9rem solid var(--color-cyan);
 }
 
 .mediaButton:hover .play,
 .mediaButton:focus-visible .play {
   transform: translate(-50%, -50%) scale(1.06);
   border-color: var(--color-cyan);
-  background: rgb(0 200 255 / 18%);
 }
 
 @media (min-width: 48rem) {
@@ -107,13 +126,18 @@
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
-    gap: var(--space-6);
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+    min-height: 32rem;
+  }
+
+  .copy {
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
   }
 
   .mediaWrap,
   .mediaButton {
-    min-height: 28rem;
+    min-height: 100%;
   }
 }
 

@@ -9,30 +9,40 @@ export function ServiceIcon({ id }: ServiceIconProps) {
     <span className={styles.icon} aria-hidden="true">
       {id === "architecture" ? (
         <svg viewBox="0 0 48 48" fill="none">
-          <path d="M10 34V14l14-8 14 8v20H10Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M18 34V22h12v12" stroke="currentColor" strokeWidth="2" />
+          <path
+            d="M24 8l14 8v16L24 40 10 32V16l14-8Z"
+            stroke="currentColor"
+            strokeWidth="1.75"
+          />
+          <path d="M24 8v32M10 16l14 8 14-8" stroke="currentColor" strokeWidth="1.75" />
         </svg>
       ) : null}
       {id === "product" ? (
         <svg viewBox="0 0 48 48" fill="none">
-          <rect x="10" y="14" width="28" height="20" rx="3" stroke="currentColor" strokeWidth="2" />
-          <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="2" />
-          <path d="M32 14l4-4h4" stroke="currentColor" strokeWidth="2" />
+          <rect x="10" y="14" width="28" height="20" stroke="currentColor" strokeWidth="1.75" />
+          <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="1.75" />
+          <circle cx="24" cy="24" r="2" fill="currentColor" />
+          <path d="M30 14h6v4" stroke="currentColor" strokeWidth="1.75" />
         </svg>
       ) : null}
       {id === "business" ? (
         <svg viewBox="0 0 48 48" fill="none">
-          <circle cx="18" cy="18" r="5" stroke="currentColor" strokeWidth="2" />
-          <circle cx="30" cy="18" r="5" stroke="currentColor" strokeWidth="2" />
-          <path d="M8 36c2.5-6 7-9 10-9s7.5 3 10 9" stroke="currentColor" strokeWidth="2" />
-          <path d="M28 27c2 .4 5.2 2.2 8 9" stroke="currentColor" strokeWidth="2" />
+          <circle cx="18" cy="16" r="5" stroke="currentColor" strokeWidth="1.75" />
+          <circle cx="30" cy="18" r="4" stroke="currentColor" strokeWidth="1.75" />
+          <path
+            d="M8 36c2.2-7 7-10.5 10-10.5S28 29 30 36"
+            stroke="currentColor"
+            strokeWidth="1.75"
+          />
+          <path d="M28 28c2.2.5 6 2.8 8 8" stroke="currentColor" strokeWidth="1.75" />
         </svg>
       ) : null}
       {id === "digital" ? (
         <svg viewBox="0 0 48 48" fill="none">
-          <path d="M8 34V14h28v20H8Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M14 28l6-8 6 5 6-9" stroke="currentColor" strokeWidth="2" />
-          <path d="M36 20h4v14H12" stroke="currentColor" strokeWidth="2" />
+          <rect x="10" y="10" width="22" height="28" stroke="currentColor" strokeWidth="1.75" />
+          <path d="M15 28l5-7 4 4 5-8" stroke="currentColor" strokeWidth="1.75" />
+          <circle cx="34" cy="34" r="6" stroke="currentColor" strokeWidth="1.75" />
+          <path d="M38.5 38.5L43 43" stroke="currentColor" strokeWidth="1.75" />
         </svg>
       ) : null}
     </span>

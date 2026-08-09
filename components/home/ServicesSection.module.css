@@ -7,14 +7,6 @@
   margin-bottom: var(--space-6);
 }
 
-.headline {
-  margin: 0;
-  max-width: 20ch;
-  font-size: clamp(1.75rem, 3vw, 2.75rem);
-  font-weight: var(--font-weight-bold);
-  line-height: 1.15;
-}
-
 .grid {
   display: grid;
   gap: var(--space-5);
@@ -29,16 +21,16 @@
 
 .title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: var(--font-weight-bold);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .description {
   margin: 0;
-  color: var(--color-dark);
-  font-size: 1rem;
+  color: var(--color-black);
+  font-size: 0.9375rem;
   line-height: 1.55;
 }
 
@@ -61,12 +53,41 @@
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4) var(--space-5);
+    gap: 0;
+  }
+
+  .card {
+    padding: 0 var(--space-4) var(--space-2);
+    border-right: 1px solid rgb(0 0 0 / 10%);
+  }
+
+  .card:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .card:nth-child(2n + 1) {
+    padding-left: 0;
   }
 }
 
 @media (min-width: 64rem) {
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .card {
+    border-right: 1px solid rgb(0 0 0 / 10%);
+  }
+
+  .card:nth-child(2n) {
+    border-right: 1px solid rgb(0 0 0 / 10%);
+  }
+
+  .card:last-child {
+    border-right: 0;
+  }
+
+  .card:not(:first-child) {
+    padding-left: var(--space-4);
   }
 }

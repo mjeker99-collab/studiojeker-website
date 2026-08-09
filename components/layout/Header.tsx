@@ -5,12 +5,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Dictionary, Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
-import { getContactHref } from "@/lib/i18n/navigation";
 import { Container } from "@/components/layout/Container";
 import { DesktopNav } from "@/components/navigation/DesktopNav";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 import { MobileNav } from "@/components/navigation/MobileNav";
-import { Button } from "@/components/ui/Button";
 import styles from "./Header.module.css";
 
 type HeaderProps = {
@@ -113,15 +111,6 @@ export function Header({ locale, dictionary }: HeaderProps) {
               label={dictionary.nav.language}
               inverse={resolvedTheme === "dark"}
             />
-            <div className={styles.ctaDesktop}>
-              <Button
-                href={getContactHref(locale)}
-                showArrow
-                variant={resolvedTheme === "dark" ? "cyan" : "primary"}
-              >
-                {dictionary.nav.cta}
-              </Button>
-            </div>
             <button
               type="button"
               className={styles.menuToggle}

@@ -3,7 +3,6 @@ import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Container } from "@/components/layout/Container";
 import { Reveal } from "@/components/ui/Reveal";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import styles from "./ClientsSection.module.css";
 
 type ClientsSectionProps = {
@@ -19,7 +18,7 @@ export function ClientsSection({ content }: ClientsSectionProps) {
     >
       <Container>
         <Reveal className={styles.header}>
-          <SectionLabel>{content.label}</SectionLabel>
+          <p className={styles.label}>{content.label}</p>
           <h2 id="home-clients-title" className="visually-hidden">
             {content.label}
           </h2>

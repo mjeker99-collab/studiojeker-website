@@ -1,12 +1,24 @@
 .section {
+  position: relative;
   background: var(--color-white);
-  padding-block: var(--section-padding-y);
+  overflow: hidden;
+}
+
+.edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--cyan-bar-thin);
+  background: var(--color-cyan);
+  pointer-events: none;
 }
 
 .grid {
   display: grid;
-  gap: var(--space-5);
   align-items: stretch;
+  min-height: 28rem;
 }
 
 .copy {
@@ -14,6 +26,7 @@
   align-content: center;
   gap: var(--space-3);
   max-width: 34rem;
+  padding: var(--section-padding-y) var(--container-padding-x);
 }
 
 .headline {
@@ -22,6 +35,10 @@
   font-weight: var(--font-weight-extrabold);
   line-height: 1.08;
   letter-spacing: -0.02em;
+}
+
+.accent {
+  color: var(--color-cyan);
 }
 
 .subheadline {
@@ -37,9 +54,10 @@
 
 .body p {
   margin: 0;
-  color: var(--color-dark);
+  max-width: 28rem;
+  color: var(--color-black);
   font-size: 1.0625rem;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .mediaWrap {
@@ -69,12 +87,17 @@
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
-    gap: var(--space-6);
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+    min-height: 32rem;
+  }
+
+  .copy {
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
   }
 
   .mediaWrap,
   .media {
-    min-height: 28rem;
+    min-height: 100%;
   }
 }

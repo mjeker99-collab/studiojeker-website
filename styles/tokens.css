@@ -55,11 +55,15 @@
   --grid-columns: 4;
   --header-height: 4.5rem; /* compact mobile */
 
-  /* Radii */
-  --radius-button: 0.5rem; /* 8px */
-  --radius-card: 0.75rem; /* 12px */
-  --radius-image: 1rem; /* 16px */
-  --radius-section: 1.5rem; /* 24px */
+  /* Radii — homepage master uses sharp geometry intentionally */
+  --radius-button: 0;
+  --radius-card: 0;
+  --radius-image: 0;
+  --radius-section: 0;
+
+  /* Signature cyan bar — proportional to approved master (~3% viewport) */
+  --cyan-bar-thin: 1px;
+  --cyan-bar-width: clamp(0.75rem, 2.2vw, 2.125rem);
 
   /* Motion */
   --duration-fast: 200ms;

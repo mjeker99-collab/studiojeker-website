@@ -3,13 +3,14 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  min-height: 3.5rem; /* 56px */
-  padding: 1.125rem 2rem; /* 18px 32px */
+  min-height: 3.25rem;
+  padding: 1rem 1.75rem;
   border-radius: var(--radius-button);
   border: 1px solid transparent;
-  font-size: 1rem;
+  font-size: 0.8125rem;
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -41,7 +42,7 @@
 
 .secondary {
   background: transparent;
-  color: var(--color-white);
+  color: var(--color-cyan);
   border-color: var(--color-cyan);
 }
 
@@ -64,8 +65,8 @@
 }
 
 .outline {
-  background: var(--color-white);
-  color: var(--color-black);
+  background: transparent;
+  color: var(--color-cyan);
   border-color: var(--color-cyan);
 }
 
@@ -77,7 +78,7 @@
 
 .cyan {
   background: var(--color-cyan);
-  color: var(--color-black);
+  color: var(--color-white);
   border-color: var(--color-cyan);
 }
 

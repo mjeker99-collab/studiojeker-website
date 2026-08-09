@@ -4,7 +4,8 @@
   gap: 0.35rem;
   font-size: 0.8125rem;
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .link {
