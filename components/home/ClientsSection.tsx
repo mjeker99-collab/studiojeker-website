@@ -20,6 +20,8 @@ const logoWeightClass: Record<string, string> = {
 };
 
 export function ClientsSection({ content }: ClientsSectionProps) {
+  const logos = content.logos;
+
   return (
     <section
       className={styles.section}
@@ -33,25 +35,51 @@ export function ClientsSection({ content }: ClientsSectionProps) {
             {content.label}
           </h2>
         </Reveal>
-
-        <Reveal>
-          <ul className={styles.list}>
-            {content.logos.map((logo) => (
-              <li key={logo.id} className={styles.item}>
-                <Image
-                  src={mediaPath(logo.src)}
-                  alt={logo.name}
-                  width={logo.width}
-                  height={logo.height}
-                  className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
-                    .filter(Boolean)
-                    .join(" ")}
-                />
-              </li>
-            ))}
-          </ul>
-        </Reveal>
       </Container>
+
+      <Reveal>
+        <div className={styles.marquee} aria-label={content.label}>
+          <div className={styles.track}>
+            <ul className={styles.group}>
+              {logos.map((logo) => (
+                <li key={logo.id} className={styles.item}>
+                  <Image
+                    src={mediaPath(logo.src)}
+                    alt={logo.name}
+                    width={logo.width}
+                    height={logo.height}
+                    className={[
+                      styles.logo,
+                      logoWeightClass[logo.id] ?? styles.weightLight,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                </li>
+              ))}
+            </ul>
+            {/* Duplicate sequence for seamless infinite loop */}
+            <ul className={styles.group} aria-hidden="true">
+              {logos.map((logo) => (
+                <li key={`${logo.id}-dup`} className={styles.item}>
+                  <Image
+                    src={mediaPath(logo.src)}
+                    alt=""
+                    width={logo.width}
+                    height={logo.height}
+                    className={[
+                      styles.logo,
+                      logoWeightClass[logo.id] ?? styles.weightLight,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Reveal>
     </section>
   );
 }
