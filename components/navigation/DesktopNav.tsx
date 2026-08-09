@@ -28,7 +28,6 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
     about: dictionary.nav.about,
     services: dictionary.nav.services,
     work: dictionary.nav.work,
-    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
   const servicesActive = isServicesPath(pathname);
@@ -67,14 +66,14 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
             );
           }
 
-          if (!item.href) {
+          if (!item.href || !(item.id in labels)) {
             return null;
           }
 
           return (
             <li key={item.id}>
               <NavLink href={item.href} className={styles.link}>
-                {labels[item.id]}
+                {labels[item.id as keyof typeof labels]}
               </NavLink>
             </li>
           );

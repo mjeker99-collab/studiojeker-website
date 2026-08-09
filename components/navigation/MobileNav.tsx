@@ -22,7 +22,6 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
     about: dictionary.nav.about,
     services: dictionary.nav.services,
     work: dictionary.nav.work,
-    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
 
@@ -63,11 +62,6 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
       aria-label={dictionary.nav.primaryNav}
     >
       <div className={styles.top}>
-        <LanguageSwitcher
-          locale={locale}
-          label={dictionary.nav.language}
-          inverse
-        />
         <button
           type="button"
           className={styles.close}
@@ -117,20 +111,32 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
               );
             }
 
-            if (!item.href) {
+            if (!item.href || !(item.id in labels)) {
               return null;
             }
 
             return (
               <li key={item.id}>
-                <NavLink href={item.href} className={styles.link} onClick={handleClose}>
-                  {labels[item.id]}
+                <NavLink
+                  href={item.href}
+                  className={styles.link}
+                  onClick={handleClose}
+                >
+                  {labels[item.id as keyof typeof labels]}
                 </NavLink>
               </li>
             );
           })}
         </ul>
       </nav>
+
+      <div className={styles.bottom}>
+        <LanguageSwitcher
+          locale={locale}
+          label={dictionary.nav.language}
+          inverse
+        />
+      </div>
     </div>
   );
 }

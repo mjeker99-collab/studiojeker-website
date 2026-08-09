@@ -15,9 +15,11 @@ export type ServiceNavLink = {
 };
 
 /**
- * Homepage-master navigation (visual SSoT).
+ * Final primary navigation:
+ * ABOUT | SERVICES | WORK | CONTACT | DE
+ *
  * Services is a dropdown trigger only — no /services overview.
- * Insights remains in IA; page may be a content placeholder until CMS content exists.
+ * Insights remains routed/available but is not shown in the main nav.
  */
 export function getPrimaryNav(locale: Locale): NavItem[] {
   return [
@@ -27,17 +29,21 @@ export function getPrimaryNav(locale: Locale): NavItem[] {
       hasChildren: true,
     },
     { id: "work", href: localizePathname("/work", locale) },
-    { id: "insights", href: localizePathname("/insights", locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
   ];
 }
 
-/** Footer NAVIGATION column — no standalone Services entry. */
-export function getFooterNav(locale: Locale): NavItem[] {
-  return getPrimaryNav(locale).filter(
-    (item): item is NavItem & { href: string } =>
-      item.id !== "services" && typeof item.href === "string",
-  );
+/**
+ * Footer NAVIGATION column — no standalone Services entry.
+ * Insights stays available in the footer while hidden from primary nav.
+ */
+export function getFooterNav(locale: Locale): Array<NavItem & { href: string }> {
+  return [
+    { id: "about", href: localizePathname("/about", locale) },
+    { id: "work", href: localizePathname("/work", locale) },
+    { id: "insights", href: localizePathname("/insights", locale) },
+    { id: "contact", href: localizePathname("/contact", locale) },
+  ];
 }
 
 export function getServiceNavLinks(
