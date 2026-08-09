@@ -79,16 +79,16 @@
   opacity: 0.92;
 }
 
-/* Lighter wordmarks — larger optical presence (~+40%) */
+/* Lighter wordmarks — ~50% larger optical presence */
 .weightLight {
-  height: 4.9rem;
-  max-width: 17.5rem;
+  height: 5.25rem;
+  max-width: 18.75rem;
 }
 
-/* Dense marks (UBS, Raiffeisen) — slightly less scale, still +40% */
+/* Dense marks (UBS, Raiffeisen) — slightly less scale, still ~50% */
 .weightStrong {
-  height: 4.2rem;
-  max-width: 13.25rem;
+  height: 4.5rem;
+  max-width: 14.25rem;
 }
 
 @keyframes clients-marquee {
@@ -108,13 +108,13 @@
   }
 
   .weightLight {
-    height: 5.4rem;
-    max-width: 19rem;
+    height: 5.8rem;
+    max-width: 20.25rem;
   }
 
   .weightStrong {
-    height: 4.7rem;
-    max-width: 14.75rem;
+    height: 5rem;
+    max-width: 15.75rem;
   }
 }
 
@@ -128,23 +128,23 @@
   }
 
   .item {
-    min-height: 7.5rem;
-    padding: 0.65rem 2.75rem;
+    min-height: 8rem;
+    padding: 0.65rem 3rem;
   }
 
   .rail {
-    animation-duration: 48s;
+    animation-duration: 50s;
   }
 
-  /* Desktop: ~40% larger than previous 5.5 / 4.5 rem heights */
+  /* Desktop: ~50% larger than previous 5.5 / 4.5 rem heights */
   .weightLight {
-    height: 7.7rem;
-    max-width: 21.75rem;
+    height: 8.25rem;
+    max-width: 23.25rem;
   }
 
   .weightStrong {
-    height: 6.3rem;
-    max-width: 16rem;
+    height: 6.75rem;
+    max-width: 17.25rem;
   }
 }
 
