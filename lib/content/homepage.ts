@@ -1,6 +1,7 @@
 import type { Locale } from "@/types/i18n";
 import type { HomepageContent } from "@/types/homepage";
 import { localizePathname } from "@/lib/i18n/config";
+import { getClientLogos } from "@/lib/content/clients";
 
 /**
  * Homepage content prepared for later WordPress REST replacement.
@@ -403,49 +404,3 @@ export function getHomepageContent(locale: Locale): HomepageContent {
   };
 }
 
-function getClientLogos() {
-  return [
-    {
-      id: "hirslanden",
-      name: "Hirslanden",
-      src: "/images/Client logos/Hirslanden-01-2.svg",
-      width: 160,
-      height: 48,
-    },
-    {
-      id: "ubs",
-      name: "UBS",
-      src: "/images/Client logos/UBS-2.svg",
-      width: 120,
-      height: 48,
-    },
-    {
-      id: "certina",
-      name: "Certina",
-      src: "/images/Client logos/Certina-2.svg",
-      width: 140,
-      height: 48,
-    },
-    {
-      id: "bossard",
-      name: "Bossard",
-      src: "/images/Client logos/Bossard-2.svg",
-      width: 140,
-      height: 48,
-    },
-    {
-      id: "endress",
-      name: "Endress+Hauser",
-      src: "/images/Client logos/Endress-Hauser-2.svg",
-      width: 180,
-      height: 48,
-    },
-    {
-      id: "raiffeisen",
-      name: "Raiffeisen",
-      src: "/images/Client logos/Raiffeisen-2.svg",
-      width: 150,
-      height: 48,
-    },
-  ];
-}
