@@ -69,26 +69,10 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0;
+  align-items: stretch;
   align-self: stretch;
   height: 100%;
   min-height: 18rem;
-}
-
-/*
- * Cyan starts below the top of the hero image (reference gap).
- * Image column stays full-height; only the bar is inset from the top.
- */
-.cyanRail {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  padding-top: clamp(4.5rem, 12vh, 7.25rem);
-  min-height: 100%;
-}
-
-.cyanRail > * {
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
 .media {

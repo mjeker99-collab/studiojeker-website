@@ -85,16 +85,8 @@
   min-height: 100%;
   padding: var(--space-3) var(--space-2);
   text-align: center;
-  border-right: 1px solid rgb(0 200 255 / 35%);
-  border-bottom: 1px solid rgb(0 200 255 / 35%);
-}
-
-.benefit:nth-child(2n) {
-  border-right: 0;
-}
-
-.benefit:nth-last-child(-n + 2) {
-  border-bottom: 0;
+  /* No cyan divider lines — benefits separated by whitespace only */
+  border: 0;
 }
 
 .icon {
@@ -162,13 +154,7 @@
   }
 
   .benefit {
-    border-bottom: 0;
-    border-right: 1px solid rgb(0 200 255 / 35%);
     align-content: center;
-  }
-
-  .benefit:last-child {
-    border-right: 0;
   }
 
   .benefitText {
