@@ -34,6 +34,72 @@ const nextConfig: NextConfig = {
         ]
       : [],
   },
+  async redirects() {
+    return [
+      // No standalone services overview — homepage is the overview.
+      {
+        source: "/services",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/en/services",
+        destination: "/en",
+        permanent: true,
+      },
+      {
+        source: "/solutions",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/en/solutions",
+        destination: "/en",
+        permanent: true,
+      },
+      // Legacy kit/solutions URLs → public /services/* URLs
+      {
+        source: "/solutions/brand-business",
+        destination: "/services/business-communication",
+        permanent: true,
+      },
+      {
+        source: "/en/solutions/brand-business",
+        destination: "/en/services/business-communication",
+        permanent: true,
+      },
+      {
+        source: "/solutions/products-industry",
+        destination: "/services/product-communication",
+        permanent: true,
+      },
+      {
+        source: "/en/solutions/products-industry",
+        destination: "/en/services/product-communication",
+        permanent: true,
+      },
+      {
+        source: "/solutions/architecture-real-estate",
+        destination: "/services/architecture",
+        permanent: true,
+      },
+      {
+        source: "/en/solutions/architecture-real-estate",
+        destination: "/en/services/architecture",
+        permanent: true,
+      },
+      {
+        source: "/solutions/social-digital-marketing",
+        destination: "/services/digital-marketing",
+        permanent: true,
+      },
+      {
+        source: "/en/solutions/social-digital-marketing",
+        destination: "/en/services/digital-marketing",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -13,7 +13,7 @@ export function getBusinessCommunicationContent(
 
   if (locale === "en") {
     return {
-      slug: "brand-business",
+      slug: "business-communication",
       seo: {
         title: "Corporate Films, Business Portraits & Explainer Videos",
         description:
@@ -174,7 +174,7 @@ export function getBusinessCommunicationContent(
   }
 
   return {
-    slug: "brand-business",
+    slug: "business-communication",
     seo: {
       title: "Unternehmensfilme, Businessportraits & Erklärvideos | Studiojeker",
       description:

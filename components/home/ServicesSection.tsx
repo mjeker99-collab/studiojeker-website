@@ -14,6 +14,7 @@ type ServicesSectionProps = {
 export function ServicesSection({ content }: ServicesSectionProps) {
   return (
     <section
+      id="services"
       className={styles.section}
       data-header-theme="light"
       aria-labelledby="home-services-title"

@@ -15,13 +15,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
   const abo = localizePathname("/solutions/sichtbarkeit-im-abo", locale);
 
   const architectureHref = localizePathname(
-    "/solutions/architecture-real-estate",
+    "/services/architecture",
     locale,
   );
-  const productHref = localizePathname("/solutions/products-industry", locale);
-  const businessHref = localizePathname("/solutions/brand-business", locale);
+  const productHref = localizePathname("/services/product-communication", locale);
+  const businessHref = localizePathname("/services/business-communication", locale);
   const digitalHref = localizePathname(
-    "/solutions/social-digital-marketing",
+    "/services/digital-marketing",
     locale,
   );
 

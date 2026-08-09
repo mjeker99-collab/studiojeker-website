@@ -10,7 +10,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
 
   if (locale === "en") {
     return {
-      slug: "architecture-real-estate",
+      slug: "architecture",
       seo: {
         title: "Architectural Visualization & Real Estate Marketing",
         description:
@@ -169,7 +169,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
   }
 
   return {
-    slug: "architecture-real-estate",
+    slug: "architecture",
     seo: {
       title: "Architekturvisualisierung, Drohnen & Immobilienmarketing",
       description:

@@ -1,13 +1,21 @@
 import type { HomepageContent, HomepageMedia, HomepageProject } from "@/types/homepage";
 
 export const servicePageSlugs = [
-  "brand-business",
-  "products-industry",
-  "architecture-real-estate",
-  "social-digital-marketing",
+  "business-communication",
+  "product-communication",
+  "architecture",
+  "digital-marketing",
 ] as const;
 
 export type ServicePageSlug = (typeof servicePageSlugs)[number];
+
+/** Legacy kit/solutions URLs → current public service URLs */
+export const legacyServiceRedirects: Record<string, ServicePageSlug> = {
+  "brand-business": "business-communication",
+  "products-industry": "product-communication",
+  "architecture-real-estate": "architecture",
+  "social-digital-marketing": "digital-marketing",
+};
 
 export type ServiceSolutionItem = {
   id: string;

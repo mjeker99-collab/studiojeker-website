@@ -22,20 +22,20 @@ export function Footer({ locale, dictionary }: FooterProps) {
 
   const serviceLinks = [
     {
-      label: dictionary.footer.architecture,
-      href: localizePathname("/solutions/architecture-real-estate", locale),
+      label: dictionary.footer.businessCommunication,
+      href: localizePathname("/services/business-communication", locale),
     },
     {
       label: dictionary.footer.productCommunication,
-      href: localizePathname("/solutions/products-industry", locale),
+      href: localizePathname("/services/product-communication", locale),
     },
     {
-      label: dictionary.footer.businessCommunication,
-      href: localizePathname("/solutions/brand-business", locale),
+      label: dictionary.footer.architecture,
+      href: localizePathname("/services/architecture", locale),
     },
     {
       label: dictionary.footer.digitalMarketing,
-      href: localizePathname("/solutions/social-digital-marketing", locale),
+      href: localizePathname("/services/digital-marketing", locale),
     },
   ];
 

@@ -12,7 +12,7 @@ export function getProductCommunicationContent(
 
   if (locale === "en") {
     return {
-      slug: "products-industry",
+      slug: "product-communication",
       seo: {
         title: "Product Photography, Video & 3D Visualization | Studiojeker",
         description:
@@ -172,7 +172,7 @@ export function getProductCommunicationContent(
   }
 
   return {
-    slug: "products-industry",
+    slug: "product-communication",
     seo: {
       title: "Produktfotografie, Produktvideos & 3D Visualisierung | Studiojeker",
       description:

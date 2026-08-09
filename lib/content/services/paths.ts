@@ -7,20 +7,19 @@ export function getServicePaths(locale: Locale) {
     contact: localizePathname("/contact", locale),
     references: localizePathname("/references", locale),
     about: localizePathname("/about", locale),
+    /** Abo landing remains under /solutions until that page is built. */
     abo: localizePathname("/solutions/sichtbarkeit-im-abo", locale),
-    architecture: localizePathname(
-      "/solutions/architecture-real-estate",
-      locale,
-    ),
-    product: localizePathname("/solutions/products-industry", locale),
-    business: localizePathname("/solutions/brand-business", locale),
-    digital: localizePathname("/solutions/social-digital-marketing", locale),
+    architecture: localizePathname("/services/architecture", locale),
+    product: localizePathname("/services/product-communication", locale),
+    business: localizePathname("/services/business-communication", locale),
+    digital: localizePathname("/services/digital-marketing", locale),
+    servicesAnchor: `${localizePathname("/", locale)}#services`,
   };
 }
 
 export const serviceSlugToPath: Record<ServicePageSlug, string> = {
-  "brand-business": "/solutions/brand-business",
-  "products-industry": "/solutions/products-industry",
-  "architecture-real-estate": "/solutions/architecture-real-estate",
-  "social-digital-marketing": "/solutions/social-digital-marketing",
+  "business-communication": "/services/business-communication",
+  "product-communication": "/services/product-communication",
+  architecture: "/services/architecture",
+  "digital-marketing": "/services/digital-marketing",
 };

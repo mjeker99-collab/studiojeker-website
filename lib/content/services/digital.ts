@@ -14,7 +14,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
 
   if (locale === "en") {
     return {
-      slug: "social-digital-marketing",
+      slug: "digital-marketing",
       seo: {
         title: "Marketing Strategy, Social Media & Content Marketing",
         description:
@@ -173,7 +173,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
   }
 
   return {
-    slug: "social-digital-marketing",
+    slug: "digital-marketing",
     seo: {
       title: "Marketingstrategie, Social Media & Content Marketing",
       description:

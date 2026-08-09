@@ -18,13 +18,13 @@ export function getServicePageContent(
   locale: Locale,
 ): ServicePageContent {
   switch (slug) {
-    case "brand-business":
+    case "business-communication":
       return getBusinessCommunicationContent(locale);
-    case "products-industry":
+    case "product-communication":
       return getProductCommunicationContent(locale);
-    case "architecture-real-estate":
+    case "architecture":
       return getArchitectureContent(locale);
-    case "social-digital-marketing":
+    case "digital-marketing":
       return getDigitalMarketingContent(locale);
     default: {
       const _exhaustive: never = slug;

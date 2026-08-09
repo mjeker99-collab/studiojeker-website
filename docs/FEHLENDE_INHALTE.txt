@@ -1,0 +1,117 @@
+FEHLENDE INHALTE — STUDIOJEKER WEBSITE
+======================================
+Stand: Branch cursor/homepage-phase-2-0079
+
+
+1. SEITEN (VERLINKT, NOCH NICHT GEBAUT)
+--------------------------------------
+About                          /about  |  /en/about
+Work / Referenzen              /references  |  /en/references
+Projekt-Detail / Case Study    /references/[slug]
+Kontakt                        /contact  |  /en/contact
+Sichtbarkeit im Abo            /solutions/sichtbarkeit-im-abo
+Insights                       /insights  (IA reserviert, kein Inhalt)
+Impressum                      /impressum
+Datenschutz                    /datenschutz
+
+
+2. FEHLENDE / UNVOLLSTÄNDIGE COPY
+---------------------------------
+Digital Marketing (DE/EN Body)
+  - Kein vollständiger Text in "Website Texte D&E_2026.docx"
+  - Derzeit abgeleitet aus Kit §10 + SEO
+
+Architecture EN Abschluss-CTA
+  - Im Quelldokument unvollständig / abgeschnitten
+
+Business "Reportagen" / "Intern & Kommunikation"
+  - Im Mockup-/4er-Raster vorgesehen
+  - Im Website-Texte-Lösungsblock so nicht 1:1 benannt
+    (dort u. a. Erklärvideos, Mitarbeiterfotografie, Social Media)
+
+Insights
+  - Keine freigegebenen Inhalte
+
+Abo-Landingpage
+  - Texte/Pakete/Preise nur soweit final freigegeben
+  - Preise aus Mockups nicht übernehmen
+
+Team
+  - Seite noch nicht gebaut
+  - Namen/Rollen/Fotos nur aus freigegebenen Daten
+
+
+3. PROJEKTE / CASE STUDIES
+--------------------------
+Homepage "Ausgewählte Projekte"
+  - 4x Kategorie-Platzhalter, keine echten Projektnamen
+
+Alle 4 Service-Seiten
+  - je 4x Platzhalter (nur Kategorie + Bild)
+
+Freigegebene Case Studies fehlen:
+  - Titel
+  - Kunde
+  - Jahr
+  - Leistungen
+  - Texte
+  - Galerie
+
+Testimonials / Kennzahlen
+  - bewusst nicht erfunden
+  - nur bei realer Freigabe
+
+
+4. MEDIEN / ASSETS
+------------------
+Showreel-Video
+  - keine .mp4 / .webm in public/
+  - nur Standbild + Play-Affordance
+
+Service-/Homepage-Showreels
+  - finales Filmfile je Thema fehlt
+
+Finale Produktionsbilder
+  - teils bestehende Studiojeker-Bilder vorhanden
+  - Mockup-Motive sind keine Content-Quelle
+
+Kontakt-Standort / Karte
+  - keine freigegebenen Adress-/Kartendaten eingebunden
+
+
+5. RECHTLICHES & KONTAKTDATEN
+-----------------------------
+Impressum
+  - vollständiger Rechtstext fehlt
+
+Datenschutz
+  - vollständiger Rechtstext fehlt
+
+Kontaktformular
+  - Felder, Privacy-Hinweis, Backend/Mail fehlen
+
+Telefon / E-Mail / Adresse
+  - nur verbindliche Produktionsdaten verwenden
+  - noch nicht eingebunden
+
+
+6. CMS / WORDPRESS
+------------------
+Headless-WP-Anbindung
+  - Content noch hardcoded in lib/content/*
+
+Editierbare Projekte, Seiten, Medien
+  - noch nicht angebunden
+
+Polylang-Live-Inhalte
+  - Struktur vorbereitet, Inhalte lokal
+
+
+7. PRIORITÄT (EMPFEHLUNG)
+-------------------------
+1. Echte Projekte (Homepage + Service-Seiten)
+2. Digital-Marketing-Volltext freigeben
+3. About / Contact / References
+4. Sichtbarkeit im Abo Landingpage
+5. Showreel-Videos
+6. Impressum / Datenschutz
