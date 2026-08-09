@@ -18,12 +18,40 @@
   text-transform: uppercase;
 }
 
-.list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
+.marquee {
+  overflow: hidden;
+  width: 100%;
+  /* Subtle edge fade — barely perceptible */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+}
+
+.track {
+  display: flex;
+  width: max-content;
   align-items: center;
-  justify-items: center;
+  animation: clients-marquee 40s linear infinite;
+}
+
+.marquee:hover .track {
+  animation-play-state: paused;
+}
+
+.group {
+  display: flex;
+  align-items: center;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -32,15 +60,9 @@
 .item {
   display: grid;
   place-items: center;
-  width: 100%;
+  flex: 0 0 auto;
   min-height: 4.25rem;
-  padding: 0.5rem 0.75rem;
-  border-right: 1px solid rgb(0 0 0 / 10%);
-  border-bottom: 1px solid rgb(0 0 0 / 10%);
-}
-
-.item:nth-child(2n) {
-  border-right: 0;
+  padding: 0.5rem 1.75rem;
 }
 
 .logo {
@@ -63,17 +85,20 @@
   max-height: 3rem;
 }
 
+@keyframes clients-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    /* Track holds two identical groups; -50% lands on the duplicate start */
+    transform: translateX(-50%);
+  }
+}
+
 @media (min-width: 48rem) {
-  .list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .item:nth-child(2n) {
-    border-right: 1px solid rgb(0 0 0 / 10%);
-  }
-
-  .item:nth-child(3n) {
-    border-right: 0;
+  .item {
+    padding-inline: 2rem;
   }
 
   .weightLight {
@@ -96,23 +121,9 @@
     margin-bottom: 0.75rem;
   }
 
-  .list {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
   .item {
-    border-bottom: 0;
-    border-right: 1px solid rgb(0 0 0 / 10%);
     min-height: 5.25rem;
-    padding: 0.5rem 0.85rem;
-  }
-
-  .item:nth-child(3n) {
-    border-right: 1px solid rgb(0 0 0 / 10%);
-  }
-
-  .item:last-child {
-    border-right: 0;
+    padding: 0.5rem 2.25rem;
   }
 
   /* ~50% larger light marks vs previous ~3.85rem height lock */
@@ -125,5 +136,35 @@
   .weightStrong {
     max-width: 11.5rem;
     max-height: 4.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .track {
+    display: flex;
+    width: 100%;
+    max-width: var(--container-max, 80rem);
+    margin-inline: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: none;
+  }
+
+  .group:last-child {
+    display: none;
+  }
+
+  .group {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .item {
+    padding-inline: 1.25rem;
   }
 }
