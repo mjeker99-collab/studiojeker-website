@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { Dictionary, Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
 import { getPrimaryNav } from "@/lib/i18n/navigation";
@@ -56,13 +55,6 @@ export function Footer({ locale, dictionary }: FooterProps) {
       <Container>
         <div className={styles.grid}>
           <div className={styles.brandBlock}>
-            <Image
-              src="/logos/RZ_Studiojeker_Logo_1992_RGB_neg_8.png"
-              alt={dictionary.brand.name}
-              width={200}
-              height={40}
-              className={styles.logo}
-            />
             <p className={styles.claim}>{dictionary.brand.claim}</p>
             <p className={styles.positioning}>{dictionary.brand.positioning}</p>
           </div>

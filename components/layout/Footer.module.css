@@ -15,11 +15,6 @@
   max-width: 26rem;
 }
 
-.logo {
-  width: auto;
-  height: 2rem;
-}
-
 .claim {
   margin: 0;
   color: var(--color-cyan);
@@ -85,9 +80,5 @@
   .grid {
     grid-template-columns: 1.4fr 2fr;
     gap: var(--space-8);
-  }
-
-  .logo {
-    height: 2.15rem;
   }
 }
