@@ -29,6 +29,8 @@ export type AboutPageContent = {
   };
   values: {
     label: string;
+    /** Short positioning line for the cyan column */
+    lead: string;
     items: Array<{ id: string; title: string; description: string }>;
   };
   services: HomepageContent["services"];
@@ -119,6 +121,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       },
       values: {
         label: "Our approach",
+        lead: "Personal. Creative. Reliable.",
         items: [
           {
             id: "personal",
@@ -276,6 +279,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
     },
     values: {
       label: "Unser Anspruch",
+      lead: "Persönlich. Kreativ. Zuverlässig.",
       items: [
         {
           id: "personal",
