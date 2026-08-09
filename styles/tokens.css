@@ -62,7 +62,7 @@
   --radius-section: 0;
 
   /* Signature cyan bar — proportional to approved master (~3% viewport) */
-  --cyan-bar-thin: 1px;
+  --cyan-bar-thin: 2px;
   --cyan-bar-width: clamp(0.75rem, 2.2vw, 2.125rem);
 
   /* Motion */
