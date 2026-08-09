@@ -74,7 +74,8 @@
 .benefits {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: auto;
+  /* Cycle: icon track (fixed) → title → text — keeps icons on one line */
+  grid-auto-rows: 2.25rem auto auto;
   gap: 0;
   align-items: stretch;
   padding: var(--space-4) var(--space-2);
@@ -166,6 +167,8 @@
 
   .benefits {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* Icon + title only — fixed icon track shared across all 4 columns */
+    grid-auto-rows: 2.25rem auto;
     padding-inline: var(--space-2);
   }
 

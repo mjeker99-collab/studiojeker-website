@@ -20,9 +20,10 @@ const benefitIcons: Record<string, ReactNode> = {
   ),
   system: (
     <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-      <path d="M12 30l12-6 12 6-12 6-12-6Z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 22l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 16l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
+      {/* Centered stack — same optical middle as sibling icons */}
+      <path d="M12 28l12-6 12 6-12 6-12-6Z" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M12 20l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M12 14l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
     </svg>
   ),
   visibility: (
