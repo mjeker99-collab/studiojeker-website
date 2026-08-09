@@ -98,3 +98,32 @@
     min-height: 22rem;
   }
 }
+
+/* About-page density — homepage keeps default .section spacing above */
+.compact .copy {
+  padding-block: 2.5rem;
+}
+
+.compact .mediaWrap,
+.compact .media {
+  min-height: 14rem;
+}
+
+@media (min-width: 48rem) {
+  .compact .mediaWrap,
+  .compact .media {
+    min-height: 18rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .compact .copy {
+    padding-top: 3.25rem;
+    padding-bottom: 2.75rem;
+  }
+
+  .compact .mediaWrap,
+  .compact .media {
+    min-height: 20rem;
+  }
+}

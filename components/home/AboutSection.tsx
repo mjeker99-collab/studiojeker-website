@@ -9,12 +9,16 @@ import styles from "./AboutSection.module.css";
 
 type AboutSectionProps = {
   content: HomepageContent["about"];
+  /** Tighter vertical rhythm for pages that reuse this block (e.g. About). */
+  compact?: boolean;
 };
 
-export function AboutSection({ content }: AboutSectionProps) {
+export function AboutSection({ content, compact = false }: AboutSectionProps) {
   return (
     <section
-      className={styles.section}
+      className={[styles.section, compact ? styles.compact : ""]
+        .filter(Boolean)
+        .join(" ")}
       data-header-theme="light"
       aria-labelledby="home-about-title"
     >

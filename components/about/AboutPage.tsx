@@ -109,7 +109,9 @@ export function AboutPage({ content }: AboutPageProps) {
         </Container>
       </section>
 
-      <ServicesSection content={content.services} />
+      <div className={styles.servicesWrap}>
+        <ServicesSection content={content.services} />
+      </div>
 
       <section
         id="team"
@@ -192,7 +194,7 @@ export function AboutPage({ content }: AboutPageProps) {
         </Container>
       </section>
 
-      <AboutSection content={content.approach} />
+      <AboutSection content={content.approach} compact />
       <ClientsSection content={content.clients} />
       <FinalCtaSection content={content.finalCta} />
     </>
