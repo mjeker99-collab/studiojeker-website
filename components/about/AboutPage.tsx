@@ -1,17 +1,16 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { AboutPageContent } from "@/lib/content/about-page";
 import { mediaPath } from "@/lib/media/paths";
 import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { FinalCtaSection } from "@/components/home/FinalCtaSection";
-import { ServiceIcon } from "@/components/home/ServiceIcon";
+import { ServicesSection } from "@/components/home/ServicesSection";
 import { Container } from "@/components/layout/Container";
-import { Arrow } from "@/components/ui/Arrow";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import heroStyles from "@/components/home/HeroSection.module.css";
 import styles from "./AboutPage.module.css";
 
 type AboutPageProps = {
@@ -19,8 +18,8 @@ type AboutPageProps = {
 };
 
 /**
- * About page — approved mockup composition.
- * White-dominant, homepage density, cyan only as media accent / arrows / dots.
+ * About page rebuilt from homepage visual system.
+ * Homepage = master template. About mockup = content sequence.
  */
 export function AboutPage({ content }: AboutPageProps) {
   const headlineLines = content.hero.headline.split("\n").filter(Boolean);
@@ -28,21 +27,21 @@ export function AboutPage({ content }: AboutPageProps) {
   return (
     <>
       <section
-        className={styles.hero}
+        className={[heroStyles.section, styles.hero].join(" ")}
         data-header-theme="light"
         aria-labelledby="about-hero-title"
       >
-        <div className={styles.heroGrid}>
-          <Reveal className={styles.heroCopy}>
+        <div className={heroStyles.grid}>
+          <Reveal className={[heroStyles.copy, styles.heroCopy].join(" ")}>
             <SectionLabel>{content.hero.label}</SectionLabel>
-            <h1 id="about-hero-title" className={styles.heroHeadline}>
+            <h1 id="about-hero-title" className={heroStyles.headline}>
               {headlineLines.map((line, index) => {
                 const isLast = index === headlineLines.length - 1;
                 return (
                   <span key={`${line}-${index}`}>
                     {line}
                     {isLast && content.hero.headlineAccent ? (
-                      <span className={styles.accent}>
+                      <span className={heroStyles.accent}>
                         {content.hero.headlineAccent}
                       </span>
                     ) : null}
@@ -51,13 +50,13 @@ export function AboutPage({ content }: AboutPageProps) {
                 );
               })}
             </h1>
-            <p className={styles.heroSubheadline}>{content.hero.subheadline}</p>
-            <div className={styles.heroBody}>
+            <p className={heroStyles.subheadline}>{content.hero.subheadline}</p>
+            <div className={heroStyles.body}>
               {content.hero.body.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
-            <div>
+            <div className={heroStyles.actions}>
               <Button
                 href={content.hero.primaryCta.href}
                 variant="outline"
@@ -68,16 +67,16 @@ export function AboutPage({ content }: AboutPageProps) {
             </div>
           </Reveal>
 
-          <Reveal className={styles.heroMediaWrap} delayMs={100}>
+          <Reveal className={heroStyles.mediaWrap} delayMs={120}>
             <CyanBar />
-            <div className={styles.heroMedia}>
+            <div className={heroStyles.media}>
               <Image
                 src={mediaPath(content.hero.media.src)}
                 alt={content.hero.media.alt}
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 58vw"
-                className={styles.heroImage}
+                sizes="(max-width: 1024px) 100vw, 64vw"
+                className={[heroStyles.image, styles.heroImage].join(" ")}
               />
             </div>
           </Reveal>
@@ -90,7 +89,7 @@ export function AboutPage({ content }: AboutPageProps) {
         aria-labelledby="about-values-title"
       >
         <Container>
-          <Reveal className={styles.valuesHeader}>
+          <Reveal className={styles.sectionHeader}>
             <SectionLabel>{content.values.label}</SectionLabel>
             <h2 id="about-values-title" className="visually-hidden">
               {content.values.label}
@@ -112,39 +111,7 @@ export function AboutPage({ content }: AboutPageProps) {
         </Container>
       </section>
 
-      <section
-        id="services"
-        className={styles.services}
-        data-header-theme="light"
-        aria-labelledby="about-services-title"
-      >
-        <Container>
-          <Reveal className={styles.servicesHeader}>
-            <SectionLabel>{content.services.label}</SectionLabel>
-            <h2 id="about-services-title" className="visually-hidden">
-              {content.services.headline}
-            </h2>
-          </Reveal>
-          <div className={styles.servicesGrid}>
-            {content.services.items.map((item, index) => (
-              <Reveal key={item.id} as="article" delayMs={index * 40}>
-                <Link
-                  href={item.href}
-                  className={styles.serviceLink}
-                  aria-label={item.title}
-                >
-                  <ServiceIcon id={item.id} />
-                  <h3 className={styles.serviceTitle}>{item.title}</h3>
-                  <p className={styles.serviceText}>{item.description}</p>
-                  <span className={styles.serviceArrow} aria-hidden="true">
-                    <Arrow />
-                  </span>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
+      <ServicesSection content={content.services} />
 
       <section
         id="team"
@@ -169,26 +136,34 @@ export function AboutPage({ content }: AboutPageProps) {
                 className={styles.member}
                 delayMs={index * 40}
               >
-                <div className={styles.portrait}>
-                  <Image
-                    src={mediaPath(member.image.src)}
-                    alt={member.image.alt}
-                    fill
-                    sizes="140px"
-                    className={styles.portraitImage}
+                {member.isPlaceholder || !member.image ? (
+                  <div
+                    className={styles.portraitPlaceholder}
+                    aria-hidden="true"
                   />
-                </div>
+                ) : (
+                  <div className={styles.portrait}>
+                    <Image
+                      src={mediaPath(member.image.src)}
+                      alt={member.image.alt}
+                      fill
+                      sizes="120px"
+                      className={styles.portraitImage}
+                    />
+                  </div>
+                )}
                 <div className={styles.memberMeta}>
                   <p className={styles.memberName}>{member.name}</p>
                   <p className={styles.memberRole}>{member.role}</p>
                 </div>
               </Reveal>
             ))}
-            <Reveal as="li" className={styles.network} delayMs={80}>
-              <p className={styles.networkTitle}>{content.team.network.title}</p>
-              <p className={styles.networkBody}>{content.team.network.body}</p>
-            </Reveal>
           </ul>
+
+          <Reveal className={styles.network}>
+            <p className={styles.networkTitle}>{content.team.network.title}</p>
+            <p className={styles.networkBody}>{content.team.network.body}</p>
+          </Reveal>
         </Container>
       </section>
 

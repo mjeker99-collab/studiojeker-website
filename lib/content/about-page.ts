@@ -8,7 +8,11 @@ export type AboutTeamMember = {
   id: string;
   name: string;
   role: string;
-  image: {
+  /**
+   * When true, render a neutral placeholder tile — no invented person.
+   */
+  isPlaceholder?: boolean;
+  image?: {
     src: string;
     alt: string;
     width: number;
@@ -29,8 +33,6 @@ export type AboutPageContent = {
   };
   values: {
     label: string;
-    /** Short positioning line for the cyan column */
-    lead: string;
     items: Array<{ id: string; title: string; description: string }>;
   };
   services: HomepageContent["services"];
@@ -38,6 +40,8 @@ export type AboutPageContent = {
     label: string;
     headline: string;
     introduction: string;
+    placeholderLabel: string;
+    placeholderRole: string;
     members: AboutTeamMember[];
     network: {
       title: string;
@@ -49,7 +53,6 @@ export type AboutPageContent = {
       id: string;
       value: string;
       label: string;
-      href?: string;
     }>;
   };
   approach: HomepageContent["about"];
@@ -62,9 +65,8 @@ export type AboutPageContent = {
 
 /**
  * About page content.
- * Team members limited to people with both a local portrait asset and a
- * verified name/role from the live studiojeker.ch/team page.
- * No invented statistics, biographies or LinkedIn URLs.
+ * Team: verified people with portraits + neutral placeholders for open slots.
+ * No invented names, roles, statistics or LinkedIn URLs.
  */
 export function getAboutPageContent(locale: Locale): AboutPageContent {
   const paths = getServicePaths(locale);
@@ -106,7 +108,8 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         label: "About Studiojeker",
         headline: "We create\nvisibility",
         headlineAccent: ".",
-        subheadline: "Your Visibility Partner for businesses, products and architecture.",
+        subheadline:
+          "Your Visibility Partner for businesses, products and architecture.",
         body: [
           "Visibility doesn’t happen by chance. It is created when strategy, premium content and meaningful communication come together.",
           "Since 1992, we have helped businesses strengthen their brands through photography, film, 3D visualisation, design and digital marketing.",
@@ -121,7 +124,6 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       },
       values: {
         label: "Our approach",
-        lead: "Personal. Creative. Reliable.",
         items: [
           {
             id: "personal",
@@ -173,7 +175,9 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         label: "Our team",
         headline: "People behind the work.",
         introduction:
-          "Studiojeker works with a focused team and a trusted network of specialists. Every project is assembled with the right expertise.",
+          "Studiojeker works with a focused team and a trusted network of specialists.",
+        placeholderLabel: "Team member",
+        placeholderRole: "Name / role to follow",
         members: [
           {
             id: "martin",
@@ -196,6 +200,24 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
               width: 1920,
               height: 1080,
             },
+          },
+          {
+            id: "placeholder-1",
+            name: "Team member",
+            role: "Name / role to follow",
+            isPlaceholder: true,
+          },
+          {
+            id: "placeholder-2",
+            name: "Team member",
+            role: "Name / role to follow",
+            isPlaceholder: true,
+          },
+          {
+            id: "placeholder-3",
+            name: "Team member",
+            role: "Name / role to follow",
+            isPlaceholder: true,
           },
         ],
         network: {
@@ -279,7 +301,6 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
     },
     values: {
       label: "Unser Anspruch",
-      lead: "Persönlich. Kreativ. Zuverlässig.",
       items: [
         {
           id: "personal",
@@ -331,7 +352,9 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       label: "Unser Team",
       headline: "Die Menschen hinter der Arbeit.",
       introduction:
-        "Studiojeker arbeitet mit einem fokussierten Team und einem Netzwerk spezialisierter Partner. Für jedes Projekt wird die passende Expertise zusammengestellt.",
+        "Studiojeker arbeitet mit einem fokussierten Team und einem Netzwerk spezialisierter Partner.",
+      placeholderLabel: "Teammitglied",
+      placeholderRole: "Name / Funktion folgt",
       members: [
         {
           id: "martin",
@@ -354,6 +377,24 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             width: 1920,
             height: 1080,
           },
+        },
+        {
+          id: "placeholder-1",
+          name: "Teammitglied",
+          role: "Name / Funktion folgt",
+          isPlaceholder: true,
+        },
+        {
+          id: "placeholder-2",
+          name: "Teammitglied",
+          role: "Name / Funktion folgt",
+          isPlaceholder: true,
+        },
+        {
+          id: "placeholder-3",
+          name: "Teammitglied",
+          role: "Name / Funktion folgt",
+          isPlaceholder: true,
         },
       ],
       network: {
