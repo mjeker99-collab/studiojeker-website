@@ -18,7 +18,7 @@ export function CyanBar({
   const isHorizontal = !isEdge && orientation === "horizontal";
 
   return (
-    <span
+    <div
       className={[
         styles.bar,
         isEdge ? styles.edge : "",

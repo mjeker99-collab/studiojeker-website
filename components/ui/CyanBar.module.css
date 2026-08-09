@@ -4,12 +4,15 @@
   flex-shrink: 0;
 }
 
-/* Thick signature bar beside media / CTA modules — height from parent */
+/* Thick signature bar beside media — same height as sibling media via stretch */
 .vertical {
+  display: block;
   width: var(--cyan-bar-width);
+  flex: 0 0 auto;
   align-self: stretch;
   height: auto;
-  min-height: 100%;
+  min-height: 0;
+  max-height: none;
   transform-origin: top center;
 }
 

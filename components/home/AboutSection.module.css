@@ -53,8 +53,10 @@
 }
 
 .mediaWrap {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  /* Flex row: cyan + image share one stretched height exactly */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   align-self: stretch;
   height: 100%;
   min-height: 16rem;
@@ -62,8 +64,10 @@
 
 .media {
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
   min-height: 16rem;
-  height: 100%;
   overflow: hidden;
   background: var(--color-neutral);
 }
