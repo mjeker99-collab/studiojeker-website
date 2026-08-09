@@ -34,14 +34,13 @@ export function getPrimaryNav(locale: Locale): NavItem[] {
 }
 
 /**
- * Footer NAVIGATION column — no standalone Services entry.
- * Insights stays available in the footer while hidden from primary nav.
+ * Footer NAVIGATION column — matches primary IA.
+ * No standalone Services overview. Insights omitted for now (route retained).
  */
 export function getFooterNav(locale: Locale): Array<NavItem & { href: string }> {
   return [
     { id: "about", href: localizePathname("/about", locale) },
     { id: "work", href: localizePathname("/work", locale) },
-    { id: "insights", href: localizePathname("/insights", locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
   ];
 }

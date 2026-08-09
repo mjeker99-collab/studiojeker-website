@@ -5,7 +5,7 @@ Stand: Branch cursor/homepage-phase-2-0079
 
 1. SEITEN (VERLINKT, NOCH NICHT GEBAUT)
 --------------------------------------
-About                          /about  |  /en/about  (destination page live; full Team mockup pending approved portraits)
+About                          /about  |  /en/about  (page live; team: Martin+Nora verified; Sabine.jpg + JONATHAN.jpg identity missing)
 Work                           /work  |  /en/work  (overview live; project detail pages pending)
 Projekt-Detail / Case Study    /work/[slug] (not built)
 Kontakt                        /contact  |  /en/contact  (form + verified contact links live)
@@ -37,8 +37,11 @@ Abo-Landingpage
   - Preise aus Mockups nicht übernehmen
 
 Team
-  - Seite noch nicht gebaut
-  - Namen/Rollen/Fotos nur aus freigegebenen Daten
+  - Seite gebaut mit verifizierten Personen (Martin Jeker, Nora Jeker)
+  - Fehlend: Rollen/Namen zu Sabine.jpg und JONATHAN.jpg
+  - Weitere Live-Team-Mitglieder ohne lokale Portraits
+  - Keine verifizierten LinkedIn-URLs
+  - "300+ Projekte" nicht verifiziert — nicht verwendet
 
 
 3. PROJEKTE / CASE STUDIES

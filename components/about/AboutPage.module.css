@@ -1,159 +1,250 @@
-.hero {
-  position: relative;
-  background: var(--color-white);
-  overflow: hidden;
-}
-
-.heroGrid {
-  display: grid;
-  align-items: stretch;
-}
-
-.heroCopy {
-  display: grid;
-  align-content: center;
-  gap: var(--space-3);
-  max-width: 36rem;
-  padding: var(--section-padding-y-compact) var(--container-padding-x);
-}
-
-.headline {
-  margin: 0;
-  font-size: clamp(1.875rem, 3.4vw, 3.125rem);
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-}
-
-.subheadline {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-medium);
-}
-
-.body {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.body p {
-  margin: 0;
-  max-width: 28rem;
-  color: var(--color-black);
-  font-size: 1.0625rem;
-  line-height: 1.55;
-}
-
-.mediaWrap {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-self: stretch;
-  min-height: 16rem;
-}
-
-.media {
-  position: relative;
-  min-height: 16rem;
-  height: 100%;
-  overflow: hidden;
-  background: var(--color-neutral);
-}
-
-.image {
-  object-fit: cover;
+.heroImage {
   filter: grayscale(1);
 }
 
-.story,
-.services,
-.work,
-.network {
+.values {
   background: var(--color-white);
   padding-block: var(--section-padding-y-compact);
 }
 
-.sectionHeadline {
-  margin: 0.75rem 0 0;
-  max-width: 28rem;
-  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.servicesHeader {
+.valuesHeader {
   margin-bottom: var(--space-3);
 }
 
-.servicesText {
-  margin: 0.75rem 0 0;
-  max-width: 28rem;
+.valuesGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.valueCard {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+  min-height: 100%;
+}
+
+.valueTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.valueText {
+  margin: 0;
+  max-width: 22rem;
+  color: var(--color-black);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.team {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.teamHeader {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  max-width: 40rem;
+}
+
+.sectionHeadline {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.teamIntro {
+  margin: 0;
+  max-width: 36rem;
   font-size: 1.0625rem;
   line-height: 1.55;
 }
 
-.serviceList {
+.teamGrid {
   display: grid;
-  gap: 0;
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.serviceLink,
-.workLink {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-height: 3.25rem;
-  padding-block: 0.85rem;
-  border-bottom: 1px solid rgb(0 0 0 / 10%);
-  color: inherit;
+.member {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.portrait {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--color-neutral);
+}
+
+.portraitImage {
+  object-fit: cover;
+  object-position: center top;
+  filter: grayscale(1);
+}
+
+.memberName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.memberRole {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: rgb(0 0 0 / 78%);
+}
+
+.network {
+  display: grid;
+  min-height: 100%;
+}
+
+.networkInner {
+  display: grid;
+  align-content: center;
+  gap: 0.75rem;
+  min-height: 100%;
+  padding: var(--space-4);
+  border: 1px solid rgb(0 0 0 / 12%);
+}
+
+.networkTitle {
+  margin: 0;
   font-size: 0.875rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-decoration: none;
-}
-
-.serviceLink:hover .serviceArrow,
-.serviceLink:focus-visible .serviceArrow,
-.workLink:hover .serviceArrow,
-.workLink:focus-visible .serviceArrow {
-  transform: translateX(0.25rem);
-}
-
-.serviceArrow {
-  color: var(--color-cyan);
-  flex-shrink: 0;
 }
 
 .networkBody {
-  margin: 0.75rem 0 0;
-  max-width: 36rem;
-  font-size: 1.0625rem;
-  line-height: 1.55;
+  margin: 0;
+  max-width: 18rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.facts {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+  border-block: 1px solid rgb(0 0 0 / 10%);
+}
+
+.factsGrid {
+  display: grid;
+  gap: 0;
+}
+
+.fact {
+  min-height: 100%;
+}
+
+.factStatic,
+.factLink {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  min-height: 100%;
+  padding: var(--space-3) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.factLink {
+  position: relative;
+}
+
+.factValue {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.factLabel {
+  margin: 0;
+  max-width: 14rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.factArrow {
+  color: var(--color-cyan);
+  margin-top: 0.35rem;
+}
+
+.factLink:hover .factArrow,
+.factLink:focus-visible .factArrow {
+  transform: translateX(0.25rem);
 }
 
 @media (min-width: 48rem) {
-  .heroGrid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  .valuesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
   }
 
-  .mediaWrap,
-  .media {
-    min-height: 28rem;
+  .valueCard {
+    padding: 0 var(--space-4);
+    border-right: 1px solid rgb(0 0 0 / 10%);
   }
 
-  .serviceList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--space-6);
+  .valueCard:first-child {
+    padding-left: 0;
+  }
+
+  .valueCard:last-child {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .teamGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .factsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .factStatic,
+  .factLink {
+    padding: 0 var(--space-4);
+    border-right: 1px solid rgb(0 0 0 / 10%);
+  }
+
+  .fact:first-child .factStatic,
+  .fact:first-child .factLink {
+    padding-left: 0;
+  }
+
+  .fact:last-child .factStatic,
+  .fact:last-child .factLink {
+    border-right: 0;
+    padding-right: 0;
   }
 }
 
 @media (min-width: 64rem) {
-  .heroCopy {
+  .values,
+  .team,
+  .facts {
     padding-block: var(--section-padding-y);
+  }
+
+  .networkInner {
+    min-height: 100%;
   }
 }

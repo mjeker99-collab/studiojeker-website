@@ -16,7 +16,6 @@ export function Footer({ locale, dictionary }: FooterProps) {
   const labels = {
     about: dictionary.nav.about,
     work: dictionary.nav.work,
-    insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
 
