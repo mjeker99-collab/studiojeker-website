@@ -94,7 +94,9 @@
   }
 
   .copy {
-    padding-block: 4.5rem;
+    /* Keep layout; tighten only bottom into clients strip */
+    padding-top: 4.5rem;
+    padding-bottom: 3.25rem;
     padding-right: var(--space-5);
     padding-left: max(var(--container-padding-x), 3.5%);
   }

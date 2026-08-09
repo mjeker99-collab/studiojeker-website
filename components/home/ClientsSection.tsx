@@ -9,6 +9,16 @@ type ClientsSectionProps = {
   content: HomepageContent["clients"];
 };
 
+/** Visual-weight classes: light wordmarks need more scale than dense marks. */
+const logoWeightClass: Record<string, string> = {
+  hirslanden: styles.weightLight,
+  certina: styles.weightLight,
+  bossard: styles.weightLight,
+  endress: styles.weightLight,
+  ubs: styles.weightStrong,
+  raiffeisen: styles.weightStrong,
+};
+
 export function ClientsSection({ content }: ClientsSectionProps) {
   return (
     <section
@@ -33,7 +43,9 @@ export function ClientsSection({ content }: ClientsSectionProps) {
                   alt={logo.name}
                   width={logo.width}
                   height={logo.height}
-                  className={styles.logo}
+                  className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
+                    .filter(Boolean)
+                    .join(" ")}
                 />
               </li>
             ))}
