@@ -9,6 +9,8 @@ type ClientsSectionProps = {
   content: HomepageContent["clients"];
 };
 
+type ClientLogo = HomepageContent["clients"]["logos"][number];
+
 /** Visual-weight classes: light wordmarks need more scale than dense marks. */
 const logoWeightClass: Record<string, string> = {
   hirslanden: styles.weightLight,
@@ -18,6 +20,45 @@ const logoWeightClass: Record<string, string> = {
   ubs: styles.weightStrong,
   raiffeisen: styles.weightStrong,
 };
+
+function LogoItem({
+  logo,
+  decorative = false,
+  filler = false,
+}: {
+  logo: ClientLogo;
+  decorative?: boolean;
+  filler?: boolean;
+}) {
+  return (
+    <li className={[styles.item, filler ? styles.filler : ""].filter(Boolean).join(" ")}>
+      <Image
+        src={mediaPath(logo.src)}
+        alt={decorative ? "" : logo.name}
+        width={logo.width}
+        height={logo.height}
+        className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
+          .filter(Boolean)
+          .join(" ")}
+      />
+    </li>
+  );
+}
+
+function renderSequence(
+  logos: ClientLogo[],
+  keyPrefix: string,
+  options: { decorative?: boolean; filler?: boolean } = {},
+) {
+  return logos.map((logo, index) => (
+    <LogoItem
+      key={`${keyPrefix}-${logo.id}-${index}`}
+      logo={logo}
+      decorative={options.decorative}
+      filler={options.filler}
+    />
+  ));
+}
 
 export function ClientsSection({ content }: ClientsSectionProps) {
   const logos = content.logos;
@@ -40,42 +81,17 @@ export function ClientsSection({ content }: ClientsSectionProps) {
       <Reveal>
         <div className={styles.marquee} aria-label={content.label}>
           <div className={styles.track}>
+            {/*
+              Each half repeats the set so group width exceeds desktop viewport.
+              Required for a gap-free translateX(-50%) seamless loop at ~1440px.
+            */}
             <ul className={styles.group}>
-              {logos.map((logo) => (
-                <li key={logo.id} className={styles.item}>
-                  <Image
-                    src={mediaPath(logo.src)}
-                    alt={logo.name}
-                    width={logo.width}
-                    height={logo.height}
-                    className={[
-                      styles.logo,
-                      logoWeightClass[logo.id] ?? styles.weightLight,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  />
-                </li>
-              ))}
+              {renderSequence(logos, "a")}
+              {renderSequence(logos, "a-fill", { decorative: true, filler: true })}
             </ul>
-            {/* Duplicate sequence for seamless infinite loop */}
             <ul className={styles.group} aria-hidden="true">
-              {logos.map((logo) => (
-                <li key={`${logo.id}-dup`} className={styles.item}>
-                  <Image
-                    src={mediaPath(logo.src)}
-                    alt=""
-                    width={logo.width}
-                    height={logo.height}
-                    className={[
-                      styles.logo,
-                      logoWeightClass[logo.id] ?? styles.weightLight,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  />
-                </li>
-              ))}
+              {renderSequence(logos, "b", { decorative: true })}
+              {renderSequence(logos, "b-fill", { decorative: true, filler: true })}
             </ul>
           </div>
         </div>

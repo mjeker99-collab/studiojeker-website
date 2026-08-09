@@ -66,8 +66,11 @@
 }
 
 .logo {
+  display: block;
   width: auto;
-  height: auto;
+  /* Explicit height required in flex marquee (auto+max collapses to 0) */
+  height: 3.5rem;
+  max-width: 12.5rem;
   object-fit: contain;
   filter: grayscale(1) contrast(1.08);
   opacity: 0.9;
@@ -75,14 +78,14 @@
 
 /* Default / lighter wordmarks — more presence */
 .weightLight {
+  height: 3.5rem;
   max-width: 12.5rem;
-  max-height: 3.5rem;
 }
 
 /* Dense marks (UBS, Raiffeisen) — slightly less scale */
 .weightStrong {
+  height: 3rem;
   max-width: 9.5rem;
-  max-height: 3rem;
 }
 
 @keyframes clients-marquee {
@@ -102,13 +105,13 @@
   }
 
   .weightLight {
+    height: 3.85rem;
     max-width: 13.5rem;
-    max-height: 3.85rem;
   }
 
   .weightStrong {
+    height: 3.35rem;
     max-width: 10.5rem;
-    max-height: 3.35rem;
   }
 }
 
@@ -128,14 +131,14 @@
 
   /* ~50% larger light marks vs previous ~3.85rem height lock */
   .weightLight {
+    height: 5.5rem;
     max-width: 15.5rem;
-    max-height: 5.5rem;
   }
 
   /* ~30% larger strong marks — already denser */
   .weightStrong {
+    height: 4.5rem;
     max-width: 11.5rem;
-    max-height: 4.5rem;
   }
 }
 
@@ -148,14 +151,16 @@
   .track {
     display: flex;
     width: 100%;
-    max-width: var(--container-max, 80rem);
+    max-width: var(--container-max);
     margin-inline: auto;
     justify-content: center;
     flex-wrap: wrap;
     animation: none;
   }
 
-  .group:last-child {
+  /* Static centered row: one logo set only */
+  .group:last-child,
+  .filler {
     display: none;
   }
 
