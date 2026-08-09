@@ -89,7 +89,13 @@
 }
 
 .arrow {
-  display: inline-block;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: inherit;
+  font-size: var(--arrow-size);
+  font-weight: var(--arrow-weight);
+  line-height: 1;
   transition: transform var(--duration-base) var(--ease-standard);
 }
 

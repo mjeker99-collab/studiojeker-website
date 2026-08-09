@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HomepageContent } from "@/types/homepage";
 import { Container } from "@/components/layout/Container";
+import { Arrow } from "@/components/ui/Arrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ServiceIcon } from "@/components/home/ServiceIcon";
@@ -32,7 +33,7 @@ export function ServicesSection({ content }: ServicesSectionProps) {
               <h3 className={styles.title}>{item.title}</h3>
               <p className={styles.description}>{item.description}</p>
               <Link href={item.href} className={styles.link} aria-label={item.title}>
-                <span aria-hidden="true">→</span>
+                <Arrow className={styles.arrow} />
               </Link>
             </Reveal>
           ))}

@@ -4,17 +4,6 @@
   overflow: hidden;
 }
 
-.edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  width: var(--cyan-bar-thin);
-  background: var(--color-cyan);
-  pointer-events: none;
-}
-
 .grid {
   display: grid;
   align-items: stretch;
@@ -66,12 +55,15 @@
 .mediaWrap {
   display: grid;
   grid-template-columns: auto 1fr;
+  align-self: stretch;
+  height: 100%;
   min-height: 16rem;
 }
 
 .media {
   position: relative;
   min-height: 16rem;
+  height: 100%;
   overflow: hidden;
   background: var(--color-neutral);
 }

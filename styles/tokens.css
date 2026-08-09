@@ -64,9 +64,18 @@
   --radius-image: 0;
   --radius-section: 0;
 
-  /* Signature cyan bar — proportional to approved master (~3% viewport) */
-  --cyan-bar-thin: 2px;
+  /* Cyan bars — shared brand system
+     edge: page/module left accent (~5–6px desktop)
+     width: thick signature bar beside media modules */
+  --cyan-bar-edge: 4px;
+  --cyan-bar-thin: var(--cyan-bar-edge); /* alias for legacy usages */
   --cyan-bar-width: clamp(0.75rem, 2.2vw, 2.125rem);
+
+  /* Card/link arrows */
+  --arrow-size: 1.25rem;
+  --arrow-weight: 400;
+  --arrow-inset-inline-end: 0;
+  --arrow-inset-block-end: 0;
 
   /* Motion */
   --duration-fast: 200ms;
@@ -91,6 +100,7 @@
     --grid-columns: 8;
     --header-height: 4.75rem;
     --header-height-sticky: 4rem;
+    --cyan-bar-edge: 5px;
   }
 }
 
@@ -102,6 +112,7 @@
     --header-height-sticky: 4.25rem;
     --section-padding-y: 5rem; /* 80 */
     --section-padding-y-compact: 4.5rem; /* 72 */
+    --cyan-bar-edge: 6px;
   }
 }
 

@@ -11,25 +11,30 @@ type RevealProps = {
   delayMs?: number;
 };
 
+/**
+ * Single-element reveal wrapper so layout classes (e.g. mediaWrap grids)
+ * apply to the same node that participates in the parent layout — critical
+ * for cyan bars that stretch to parent height.
+ */
 export function Reveal({
   children,
   className,
   as,
   delayMs = 0,
 }: RevealProps) {
-  const { ref, pending, visible } = useReveal<HTMLDivElement>();
+  const { ref, pending, visible } = useReveal<HTMLElement>();
   const Tag = as ?? "div";
 
   return (
-    <div
+    <Tag
       ref={ref}
-      className={[styles.reveal, visible ? styles.visible : ""]
+      className={[styles.reveal, visible ? styles.visible : "", className]
         .filter(Boolean)
         .join(" ")}
       data-pending={pending && !visible ? "true" : "false"}
       style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
     >
-      <Tag className={className}>{children}</Tag>
-    </div>
+      {children}
+    </Tag>
   );
 }

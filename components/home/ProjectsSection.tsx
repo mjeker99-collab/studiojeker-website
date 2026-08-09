@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Container } from "@/components/layout/Container";
+import { Arrow } from "@/components/ui/Arrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import styles from "./ProjectsSection.module.css";
@@ -28,7 +29,7 @@ export function ProjectsSection({ content }: ProjectsSectionProps) {
           </div>
           <Link href={content.viewAll.href} className={styles.viewAll}>
             {content.viewAll.label}
-            <span aria-hidden="true">→</span>
+            <Arrow className={styles.viewAllArrow} />
           </Link>
         </Reveal>
 
@@ -37,7 +38,7 @@ export function ProjectsSection({ content }: ProjectsSectionProps) {
             const displayTitle = item.isPlaceholder ? item.category : item.title;
 
             return (
-              <Reveal key={item.id} delayMs={index * 60}>
+              <Reveal key={item.id} className={styles.cardShell} delayMs={index * 60}>
                 <Link
                   href={item.href}
                   className={styles.card}
@@ -53,7 +54,7 @@ export function ProjectsSection({ content }: ProjectsSectionProps) {
                     />
                   </div>
                   <div className={styles.meta}>
-                    <div>
+                    <div className={styles.metaCopy}>
                       <h3
                         className={
                           item.isPlaceholder ? styles.categoryAsTitle : styles.title
@@ -65,9 +66,7 @@ export function ProjectsSection({ content }: ProjectsSectionProps) {
                         <p className={styles.category}>{item.category}</p>
                       ) : null}
                     </div>
-                    <span className={styles.arrow} aria-hidden="true">
-                      →
-                    </span>
+                    <Arrow className={styles.arrow} />
                   </div>
                 </Link>
               </Reveal>

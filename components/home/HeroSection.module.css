@@ -6,17 +6,6 @@
   overflow: hidden;
 }
 
-.edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  width: var(--cyan-bar-thin);
-  background: var(--color-cyan);
-  pointer-events: none;
-}
-
 .grid {
   display: grid;
   min-height: inherit;
@@ -80,6 +69,8 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0;
+  align-self: stretch;
+  height: 100%;
   min-height: 18rem;
 }
 
@@ -87,6 +78,7 @@
   position: relative;
   overflow: hidden;
   min-height: 18rem;
+  height: 100%;
   background: var(--color-neutral);
 }
 

@@ -1,7 +1,7 @@
 .section {
   background: var(--color-white);
   /* Compact credibility strip — logos grow inside, section stays lean */
-  padding-block: 2rem;
+  padding-block: 2.25rem;
 }
 
 .header {
@@ -45,7 +45,7 @@
   display: flex;
   width: max-content;
   align-items: center;
-  animation: clients-marquee 40s linear infinite;
+  animation: clients-marquee 46s linear infinite;
   will-change: transform;
 }
 
@@ -67,8 +67,8 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  min-height: 4.25rem;
-  padding: 0.5rem 1.75rem;
+  min-height: 5.5rem;
+  padding: 0.5rem 2.25rem;
 }
 
 .logo {
@@ -76,19 +76,19 @@
   width: auto;
   object-fit: contain;
   filter: grayscale(1) contrast(1.08);
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-/* Default / lighter wordmarks — more presence */
+/* Lighter wordmarks — larger optical presence (~+40%) */
 .weightLight {
-  height: 3.5rem;
-  max-width: 12.5rem;
+  height: 4.9rem;
+  max-width: 17.5rem;
 }
 
-/* Dense marks (UBS, Raiffeisen) — slightly less scale */
+/* Dense marks (UBS, Raiffeisen) — slightly less scale, still +40% */
 .weightStrong {
-  height: 3rem;
-  max-width: 9.5rem;
+  height: 4.2rem;
+  max-width: 13.25rem;
 }
 
 @keyframes clients-marquee {
@@ -103,47 +103,48 @@
 
 @media (min-width: 48rem) {
   .item {
-    padding-inline: 2rem;
+    min-height: 6.25rem;
+    padding-inline: 2.5rem;
   }
 
   .weightLight {
-    height: 3.85rem;
-    max-width: 13.5rem;
+    height: 5.4rem;
+    max-width: 19rem;
   }
 
   .weightStrong {
-    height: 3.35rem;
-    max-width: 10.5rem;
+    height: 4.7rem;
+    max-width: 14.75rem;
   }
 }
 
 @media (min-width: 64rem) {
   .section {
-    padding-block: 2.25rem 2.5rem; /* compact; do not grow section height */
+    padding-block: 2.5rem 2.75rem;
   }
 
   .header {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
   }
 
   .item {
-    min-height: 5.25rem;
-    padding: 0.5rem 2.25rem;
+    min-height: 7.5rem;
+    padding: 0.65rem 2.75rem;
   }
 
   .rail {
-    animation-duration: 42s;
+    animation-duration: 48s;
   }
 
-  /* Maintain approx. previous desktop logo scale */
+  /* Desktop: ~40% larger than previous 5.5 / 4.5 rem heights */
   .weightLight {
-    height: 5.5rem;
-    max-width: 15.5rem;
+    height: 7.7rem;
+    max-width: 21.75rem;
   }
 
   .weightStrong {
-    height: 4.5rem;
-    max-width: 11.5rem;
+    height: 6.3rem;
+    max-width: 16rem;
   }
 }
 
@@ -173,6 +174,6 @@
   }
 
   .item {
-    padding-inline: 1.25rem;
+    padding-inline: 1.5rem;
   }
 }

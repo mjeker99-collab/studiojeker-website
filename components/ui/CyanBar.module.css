@@ -4,10 +4,25 @@
   flex-shrink: 0;
 }
 
+/* Thick signature bar beside media / CTA modules — height from parent */
 .vertical {
   width: var(--cyan-bar-width);
   align-self: stretch;
+  height: auto;
+  min-height: 100%;
   transform-origin: top center;
+}
+
+/* Left page/module accent — always fills parent height */
+.edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--cyan-bar-edge);
+  height: auto;
+  pointer-events: none;
 }
 
 .horizontal {
@@ -46,7 +61,8 @@
 
 @media (max-width: 47.9375rem) {
   .vertical {
-    width: clamp(0.5rem, 2vw, 0.875rem);
+    /* Keep signature bar clearly visible on small screens */
+    width: clamp(0.625rem, 2.4vw, 0.875rem);
   }
 }
 

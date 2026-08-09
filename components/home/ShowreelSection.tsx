@@ -18,7 +18,7 @@ export function ShowreelSection({ content }: ShowreelSectionProps) {
       data-header-theme="dark"
       aria-labelledby="home-showreel-title"
     >
-      <span className={styles.edge} aria-hidden="true" />
+      <CyanBar variant="edge" />
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <SectionLabel inverse>{content.label}</SectionLabel>
