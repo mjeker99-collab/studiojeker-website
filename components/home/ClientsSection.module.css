@@ -18,12 +18,37 @@
   text-transform: uppercase;
 }
 
-.list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
+.marquee {
+  width: 100%;
+}
+
+.viewport {
+  overflow: hidden;
+  /* Soft edge exit — barely perceptible */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+}
+
+.rail {
+  display: flex;
+  width: max-content;
   align-items: center;
-  justify-items: center;
+  animation: clients-marquee 40s linear infinite;
+}
+
+.viewport:hover .rail {
+  animation-play-state: paused;
+}
+
+.track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -32,15 +57,9 @@
 .item {
   display: grid;
   place-items: center;
-  width: 100%;
+  flex-shrink: 0;
   min-height: 4.25rem;
-  padding: 0.5rem 0.75rem;
-  border-right: 1px solid rgb(0 0 0 / 10%);
-  border-bottom: 1px solid rgb(0 0 0 / 10%);
-}
-
-.item:nth-child(2n) {
-  border-right: 0;
+  padding: 0.5rem 1.75rem;
 }
 
 .logo {
@@ -63,17 +82,19 @@
   max-height: 3rem;
 }
 
+@keyframes clients-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 @media (min-width: 48rem) {
-  .list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .item:nth-child(2n) {
-    border-right: 1px solid rgb(0 0 0 / 10%);
-  }
-
-  .item:nth-child(3n) {
-    border-right: 0;
+  .item {
+    padding-inline: 2rem;
   }
 
   .weightLight {
@@ -96,23 +117,13 @@
     margin-bottom: 0.75rem;
   }
 
-  .list {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
   .item {
-    border-bottom: 0;
-    border-right: 1px solid rgb(0 0 0 / 10%);
     min-height: 5.25rem;
-    padding: 0.5rem 0.85rem;
+    padding: 0.5rem 2.25rem;
   }
 
-  .item:nth-child(3n) {
-    border-right: 1px solid rgb(0 0 0 / 10%);
-  }
-
-  .item:last-child {
-    border-right: 0;
+  .rail {
+    animation-duration: 42s;
   }
 
   /* ~50% larger light marks vs previous ~3.85rem height lock */
@@ -125,5 +136,33 @@
   .weightStrong {
     max-width: 11.5rem;
     max-height: 4.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    mask-image: none;
+    overflow: visible;
+  }
+
+  .rail {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Hide duplicated sequence — show a single static centered row */
+  .rail > .track:last-child {
+    display: none;
+  }
+
+  .track {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .item {
+    padding-inline: 1.25rem;
   }
 }

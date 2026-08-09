@@ -9,6 +9,8 @@ type ClientsSectionProps = {
   content: HomepageContent["clients"];
 };
 
+type Logo = HomepageContent["clients"]["logos"][number];
+
 /** Visual-weight classes: light wordmarks need more scale than dense marks. */
 const logoWeightClass: Record<string, string> = {
   hirslanden: styles.weightLight,
@@ -18,6 +20,32 @@ const logoWeightClass: Record<string, string> = {
   ubs: styles.weightStrong,
   raiffeisen: styles.weightStrong,
 };
+
+function LogoTrack({
+  logos,
+  duplicate = false,
+}: {
+  logos: Logo[];
+  duplicate?: boolean;
+}) {
+  return (
+    <ul className={styles.track} aria-hidden={duplicate || undefined}>
+      {logos.map((logo) => (
+        <li key={`${duplicate ? "dup-" : ""}${logo.id}`} className={styles.item}>
+          <Image
+            src={mediaPath(logo.src)}
+            alt={duplicate ? "" : logo.name}
+            width={logo.width}
+            height={logo.height}
+            className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
+              .filter(Boolean)
+              .join(" ")}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function ClientsSection({ content }: ClientsSectionProps) {
   return (
@@ -33,25 +61,18 @@ export function ClientsSection({ content }: ClientsSectionProps) {
             {content.label}
           </h2>
         </Reveal>
-
-        <Reveal>
-          <ul className={styles.list}>
-            {content.logos.map((logo) => (
-              <li key={logo.id} className={styles.item}>
-                <Image
-                  src={mediaPath(logo.src)}
-                  alt={logo.name}
-                  width={logo.width}
-                  height={logo.height}
-                  className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
-                    .filter(Boolean)
-                    .join(" ")}
-                />
-              </li>
-            ))}
-          </ul>
-        </Reveal>
       </Container>
+
+      <Reveal>
+        <div className={styles.marquee}>
+          <div className={styles.viewport}>
+            <div className={styles.rail}>
+              <LogoTrack logos={content.logos} />
+              <LogoTrack logos={content.logos} duplicate />
+            </div>
+          </div>
+        </div>
+      </Reveal>
     </section>
   );
 }

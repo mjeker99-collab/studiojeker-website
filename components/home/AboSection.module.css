@@ -1,6 +1,7 @@
 .section {
   background: var(--color-white);
-  padding-block: 3.75rem; /* compact transition from projects */
+  /* Top spacing from projects; no bottom gap — flows into About */
+  padding-block: 3.75rem 0;
 }
 
 .grid {
