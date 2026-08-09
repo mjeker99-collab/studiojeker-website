@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { AboutPageContent } from "@/lib/content/about-page";
 import { mediaPath } from "@/lib/media/paths";
+import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { FinalCtaSection } from "@/components/home/FinalCtaSection";
 import { ServiceIcon } from "@/components/home/ServiceIcon";
@@ -17,12 +18,15 @@ type AboutPageProps = {
   content: AboutPageContent;
 };
 
+/**
+ * About page — approved mockup composition.
+ * White-dominant, homepage density, cyan only as media accent / arrows / dots.
+ */
 export function AboutPage({ content }: AboutPageProps) {
   const headlineLines = content.hero.headline.split("\n").filter(Boolean);
 
   return (
     <>
-      {/* HERO — dense service-page rhythm, not full-viewport stretch */}
       <section
         className={styles.hero}
         data-header-theme="light"
@@ -38,7 +42,9 @@ export function AboutPage({ content }: AboutPageProps) {
                   <span key={`${line}-${index}`}>
                     {line}
                     {isLast && content.hero.headlineAccent ? (
-                      <span className={styles.accent}>{content.hero.headlineAccent}</span>
+                      <span className={styles.accent}>
+                        {content.hero.headlineAccent}
+                      </span>
                     ) : null}
                     {!isLast ? <br /> : null}
                   </span>
@@ -78,28 +84,19 @@ export function AboutPage({ content }: AboutPageProps) {
         </div>
       </section>
 
-      {/* UNSER ANSPRUCH — substantial cyan column + supporting content */}
       <section
         className={styles.values}
         data-header-theme="light"
         aria-labelledby="about-values-title"
       >
-        <div className={styles.valuesGrid}>
-          <Reveal className={styles.valuesCyan}>
-            <p className={styles.valuesLabel}>
-              <CyanBar
-                orientation="horizontal"
-                animated={false}
-                className={styles.valuesLabelBar}
-              />
-              <span>{content.values.label}</span>
-            </p>
-            <h2 id="about-values-title" className={styles.valuesHeadline}>
-              {content.values.lead}
+        <Container>
+          <Reveal className={styles.valuesHeader}>
+            <SectionLabel>{content.values.label}</SectionLabel>
+            <h2 id="about-values-title" className="visually-hidden">
+              {content.values.label}
             </h2>
           </Reveal>
-
-          <div className={styles.valuesItems}>
+          <div className={styles.valuesGrid}>
             {content.values.items.map((item, index) => (
               <Reveal
                 key={item.id}
@@ -112,10 +109,9 @@ export function AboutPage({ content }: AboutPageProps) {
               </Reveal>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
-      {/* FOUR SERVICES — compact 2×2, no boxes/borders */}
       <section
         id="services"
         className={styles.services}
@@ -125,7 +121,7 @@ export function AboutPage({ content }: AboutPageProps) {
         <Container>
           <Reveal className={styles.servicesHeader}>
             <SectionLabel>{content.services.label}</SectionLabel>
-            <h2 id="about-services-title" className={styles.servicesHeadline}>
+            <h2 id="about-services-title" className="visually-hidden">
               {content.services.headline}
             </h2>
           </Reveal>
@@ -150,7 +146,6 @@ export function AboutPage({ content }: AboutPageProps) {
         </Container>
       </section>
 
-      {/* TEAM — compact editorial grid */}
       <section
         id="team"
         className={styles.team}
@@ -163,6 +158,7 @@ export function AboutPage({ content }: AboutPageProps) {
             <h2 id="about-team-title" className={styles.teamHeadline}>
               {content.team.headline}
             </h2>
+            <p className={styles.teamIntro}>{content.team.introduction}</p>
           </Reveal>
 
           <ul className={styles.teamGrid}>
@@ -171,14 +167,14 @@ export function AboutPage({ content }: AboutPageProps) {
                 key={member.id}
                 as="li"
                 className={styles.member}
-                delayMs={index * 50}
+                delayMs={index * 40}
               >
                 <div className={styles.portrait}>
                   <Image
                     src={mediaPath(member.image.src)}
                     alt={member.image.alt}
                     fill
-                    sizes="(max-width: 768px) 40vw, 12vw"
+                    sizes="140px"
                     className={styles.portraitImage}
                   />
                 </div>
@@ -188,20 +184,17 @@ export function AboutPage({ content }: AboutPageProps) {
                 </div>
               </Reveal>
             ))}
-            <Reveal as="li" className={styles.network} delayMs={100}>
-              <div className={styles.networkInner}>
-                <p className={styles.networkTitle}>{content.team.network.title}</p>
-                <p className={styles.networkBody}>{content.team.network.body}</p>
-              </div>
+            <Reveal as="li" className={styles.network} delayMs={80}>
+              <p className={styles.networkTitle}>{content.team.network.title}</p>
+              <p className={styles.networkBody}>{content.team.network.body}</p>
             </Reveal>
           </ul>
         </Container>
       </section>
 
-      {/* FACTS — dark band, three facts, no grey rules */}
       <section
         className={styles.facts}
-        data-header-theme="dark"
+        data-header-theme="light"
         aria-labelledby="about-facts-title"
       >
         <Container>
@@ -219,67 +212,8 @@ export function AboutPage({ content }: AboutPageProps) {
         </Container>
       </section>
 
-      {/* HOW WE WORK — black / image split with cyan bar */}
-      <section
-        className={styles.approach}
-        data-header-theme="dark"
-        aria-labelledby="about-approach-title"
-      >
-        <div className={styles.approachGrid}>
-          <Reveal className={styles.approachCopy}>
-            <SectionLabel inverse>{content.approach.label}</SectionLabel>
-            <h2 id="about-approach-title" className={styles.approachHeadline}>
-              {content.approach.headline
-                .split(/(?<=\.)\s+/)
-                .filter(Boolean)
-                .map((line, index, lines) => {
-                  const isLast = index === lines.length - 1;
-                  return (
-                    <span key={line}>
-                      {line}
-                      {isLast && content.approach.headlineAccent ? (
-                        <span className={styles.accent}>
-                          {content.approach.headlineAccent}
-                        </span>
-                      ) : null}
-                      {!isLast ? <br /> : null}
-                    </span>
-                  );
-                })}
-            </h2>
-            {content.approach.subheadline ? (
-              <p className={styles.approachSub}>{content.approach.subheadline}</p>
-            ) : null}
-            <div className={styles.approachBody}>
-              {content.approach.body.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <div>
-              <Button href={content.approach.cta.href} variant="secondary">
-                {content.approach.cta.label}
-              </Button>
-            </div>
-          </Reveal>
-
-          <Reveal className={styles.approachMediaWrap} delayMs={80}>
-            <CyanBar />
-            <div className={styles.approachMedia}>
-              <Image
-                src={mediaPath(content.approach.media.src)}
-                alt={content.approach.media.alt}
-                fill
-                sizes="(max-width: 1024px) 100vw, 58vw"
-                className={styles.approachImage}
-              />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <div className={styles.clientsWrap}>
-        <ClientsSection content={content.clients} />
-      </div>
+      <AboutSection content={content.approach} compact />
+      <ClientsSection content={content.clients} />
       <FinalCtaSection content={content.finalCta} />
     </>
   );
