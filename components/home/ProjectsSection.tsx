@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Locale } from "@/types/i18n";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Container } from "@/components/layout/Container";
@@ -10,10 +9,9 @@ import styles from "./ProjectsSection.module.css";
 
 type ProjectsSectionProps = {
   content: HomepageContent["projects"];
-  locale: Locale;
 };
 
-export function ProjectsSection({ content, locale }: ProjectsSectionProps) {
+export function ProjectsSection({ content }: ProjectsSectionProps) {
   return (
     <section
       className={styles.section}
@@ -35,37 +33,47 @@ export function ProjectsSection({ content, locale }: ProjectsSectionProps) {
         </Reveal>
 
         <div className={styles.grid}>
-          {content.items.map((item, index) => (
-            <Reveal key={item.id} delayMs={index * 60}>
-              <Link href={item.href} className={styles.card}>
-                <div className={styles.media}>
-                  <Image
-                    src={mediaPath(item.image.src)}
-                    alt={item.image.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className={styles.image}
-                  />
-                </div>
-                <div className={styles.meta}>
-                  <div>
-                    <h3 className={styles.title}>{item.title}</h3>
-                    <p className={styles.category}>{item.category}</p>
-                  </div>
-                  <span className={styles.arrow} aria-hidden="true">
-                    →
-                  </span>
-                </div>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
+          {content.items.map((item, index) => {
+            const displayTitle = item.isPlaceholder ? item.category : item.title;
 
-        <p className={styles.placeholderNote}>
-          {locale === "de"
-            ? "Entwicklungshinweis: Projektitel und Case Studies werden durch freigegebene WordPress-Inhalte ersetzt."
-            : "Development note: Project titles and case studies will be replaced by approved WordPress content."}
-        </p>
+            return (
+              <Reveal key={item.id} delayMs={index * 60}>
+                <Link
+                  href={item.href}
+                  className={styles.card}
+                  aria-label={displayTitle}
+                >
+                  <div className={styles.media}>
+                    <Image
+                      src={mediaPath(item.image.src)}
+                      alt={item.image.alt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      className={styles.image}
+                    />
+                  </div>
+                  <div className={styles.meta}>
+                    <div>
+                      <h3
+                        className={
+                          item.isPlaceholder ? styles.categoryAsTitle : styles.title
+                        }
+                      >
+                        {displayTitle}
+                      </h3>
+                      {!item.isPlaceholder ? (
+                        <p className={styles.category}>{item.category}</p>
+                      ) : null}
+                    </div>
+                    <span className={styles.arrow} aria-hidden="true">
+                      →
+                    </span>
+                  </div>
+                </Link>
+              </Reveal>
+            );
+          })}
+        </div>
       </Container>
     </section>
   );

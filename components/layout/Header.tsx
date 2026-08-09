@@ -94,8 +94,8 @@ export function Header({ locale, dictionary }: HeaderProps) {
             <Image
               src={logoSrc}
               alt={dictionary.brand.name}
-              width={200}
-              height={40}
+              width={280}
+              height={56}
               className={styles.logo}
               priority
             />

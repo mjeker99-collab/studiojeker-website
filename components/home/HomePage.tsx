@@ -21,7 +21,7 @@ export function HomePage({ locale }: HomePageProps) {
       <HeroSection content={content.hero} />
       <ServicesSection content={content.services} />
       <ShowreelSection content={content.showreel} />
-      <ProjectsSection content={content.projects} locale={locale} />
+      <ProjectsSection content={content.projects} />
       <AboSection content={content.abo} />
       <AboutSection content={content.about} />
       <ClientsSection content={content.clients} />

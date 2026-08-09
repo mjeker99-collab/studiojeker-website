@@ -1,7 +1,7 @@
 .section {
   background: var(--color-black);
   color: var(--color-white);
-  padding-block: var(--space-8);
+  padding-block: 4rem;
   padding-inline: var(--container-padding-x);
 }
 
@@ -49,7 +49,7 @@
 
 @media (min-width: 64rem) {
   .section {
-    padding-block: var(--space-10);
+    padding-block: 4.5rem;
   }
 
   .content {

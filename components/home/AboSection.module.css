@@ -1,6 +1,6 @@
 .section {
   background: var(--color-white);
-  padding-block: var(--space-8);
+  padding-block: 3.75rem; /* compact transition from projects */
 }
 
 .grid {

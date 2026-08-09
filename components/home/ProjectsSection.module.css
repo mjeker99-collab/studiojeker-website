@@ -1,6 +1,6 @@
 .section {
   background: var(--color-white);
-  padding-block: var(--section-padding-y) var(--space-8);
+  padding-block: var(--section-padding-y-compact);
 }
 
 .header {
@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .viewAll {
@@ -43,7 +43,7 @@
 
 .card {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
   text-decoration: none;
   color: inherit;
 }
@@ -69,7 +69,7 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--space-1);
-  align-items: end;
+  align-items: center;
 }
 
 .title {
@@ -87,6 +87,15 @@
   text-transform: uppercase;
 }
 
+.categoryAsTitle {
+  margin: 0;
+  color: var(--color-cyan);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .arrow {
   color: var(--color-cyan);
   font-size: 1.25rem;
@@ -99,12 +108,6 @@
   transform: translateX(0.25rem);
 }
 
-.placeholderNote {
-  margin: var(--space-3) 0 0;
-  color: rgb(0 0 0 / 40%);
-  font-size: 0.75rem;
-}
-
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -113,8 +116,12 @@
 }
 
 @media (min-width: 64rem) {
+  .section {
+    padding-block: 4.5rem 3.75rem; /* compact into subscription */
+  }
+
   .header {
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-3);
   }
 
   .grid {
