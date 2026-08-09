@@ -6,10 +6,6 @@
 }
 
 .inner {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-4);
-  align-items: stretch;
   width: min(100%, var(--container-max));
   margin-inline: auto;
 }
@@ -20,7 +16,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4) var(--space-6);
-  align-self: center;
 }
 
 .copy {

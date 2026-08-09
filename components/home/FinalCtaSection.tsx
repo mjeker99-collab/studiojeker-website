@@ -1,6 +1,5 @@
 import type { HomepageContent } from "@/types/homepage";
 import { Button } from "@/components/ui/Button";
-import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import styles from "./FinalCtaSection.module.css";
 
@@ -16,7 +15,6 @@ export function FinalCtaSection({ content }: FinalCtaSectionProps) {
       aria-labelledby="home-final-cta-title"
     >
       <Reveal className={styles.inner}>
-        <CyanBar />
         <div className={styles.content}>
           <div className={styles.copy}>
             <h2 id="home-final-cta-title" className={styles.headline}>

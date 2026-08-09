@@ -18,7 +18,6 @@ export function AboutSection({ content }: AboutSectionProps) {
       data-header-theme="light"
       aria-labelledby="home-about-title"
     >
-      <CyanBar variant="edge" />
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <SectionLabel>{content.label}</SectionLabel>

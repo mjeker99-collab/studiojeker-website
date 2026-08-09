@@ -13,7 +13,6 @@ type HeroSectionProps = {
 export function HeroSection({ content }: HeroSectionProps) {
   return (
     <section className={styles.section} data-header-theme="light" aria-labelledby="home-hero-title">
-      <CyanBar variant="edge" />
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <h1 id="home-hero-title" className={styles.headline}>
