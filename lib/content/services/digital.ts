@@ -4,7 +4,7 @@ import { getClientLogos } from "@/lib/content/clients";
 import { getServicePaths } from "@/lib/content/services/paths";
 
 /**
- * Digital Marketing — SEO + kit §10 outline.
+ * Content & Digital Marketing — SEO + kit §10 outline.
  * Full Website Texte body for this page is not yet available in sources.
  */
 export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
@@ -21,7 +21,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           "Marketing strategy, websites, social media, newsletters and content marketing for sustainable business growth.",
       },
       hero: {
-        label: "Digital Marketing",
+        label: "Content & Digital Marketing",
         headline: "Turn attention into action",
         headlineAccent: ".",
         subheadline: "Continuous content. Continuous visibility.",
@@ -93,7 +93,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         items: [
           {
             id: "dig-1",
-            title: "Digital Marketing",
+            title: "Content & Digital Marketing",
             category: "Content",
             href: paths.work,
             image: {
@@ -106,7 +106,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           },
           {
             id: "dig-2",
-            title: "Digital Marketing",
+            title: "Content & Digital Marketing",
             category: "Social Media",
             href: paths.work,
             image: {
@@ -119,7 +119,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           },
           {
             id: "dig-3",
-            title: "Digital Marketing",
+            title: "Content & Digital Marketing",
             category: "Strategy",
             href: paths.work,
             image: {
@@ -132,7 +132,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           },
           {
             id: "dig-4",
-            title: "Digital Marketing",
+            title: "Content & Digital Marketing",
             category: "Content",
             href: paths.abo,
             image: {
@@ -180,7 +180,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         "Marketingstrategien, Social Media, Websites, Newsletter und Content-Marketing für nachhaltige Sichtbarkeit und mehr Reichweite.",
     },
     hero: {
-      label: "Digital Marketing",
+      label: "Content & Digital Marketing",
       headline: "Aus Aufmerksamkeit wird Wirkung",
       headlineAccent: ".",
       subheadline: "Kontinuierlicher Content. Kontinuierliche Sichtbarkeit.",
@@ -252,7 +252,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
       items: [
         {
           id: "dig-1",
-          title: "Digital Marketing",
+          title: "Content & Digital Marketing",
           category: "Content",
           href: paths.work,
           image: {
@@ -265,7 +265,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         },
         {
           id: "dig-2",
-          title: "Digital Marketing",
+          title: "Content & Digital Marketing",
           category: "Social Media",
           href: paths.work,
           image: {
@@ -278,7 +278,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         },
         {
           id: "dig-3",
-          title: "Digital Marketing",
+          title: "Content & Digital Marketing",
           category: "Strategie",
           href: paths.work,
           image: {
@@ -291,7 +291,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         },
         {
           id: "dig-4",
-          title: "Digital Marketing",
+          title: "Content & Digital Marketing",
           category: "Sichtbarkeit im Abo",
           href: paths.abo,
           image: {

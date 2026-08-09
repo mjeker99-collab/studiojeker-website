@@ -49,16 +49,12 @@ export function getServiceNavLinks(
   locale: Locale,
   dictionary: Dictionary,
 ): ServiceNavLink[] {
+  /* Final service order: 01 Content & Digital → 02 Business → 03 Product → 04 Architecture */
   return [
     {
-      id: "architecture",
-      label: dictionary.footer.architecture,
-      href: localizePathname("/services/architecture", locale),
-    },
-    {
-      id: "product",
-      label: dictionary.footer.productCommunication,
-      href: localizePathname("/services/product-communication", locale),
+      id: "digital",
+      label: dictionary.footer.digitalMarketing,
+      href: localizePathname("/services/digital-marketing", locale),
     },
     {
       id: "business",
@@ -66,9 +62,14 @@ export function getServiceNavLinks(
       href: localizePathname("/services/business-communication", locale),
     },
     {
-      id: "digital",
-      label: dictionary.footer.digitalMarketing,
-      href: localizePathname("/services/digital-marketing", locale),
+      id: "product",
+      label: dictionary.footer.productCommunication,
+      href: localizePathname("/services/product-communication", locale),
+    },
+    {
+      id: "architecture",
+      label: dictionary.footer.architecture,
+      href: localizePathname("/services/architecture", locale),
     },
   ];
 }

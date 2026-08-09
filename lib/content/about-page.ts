@@ -81,14 +81,9 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
 
   const serviceItems = [
     {
-      id: "architecture" as const,
-      title: "Architecture",
-      href: paths.architecture,
-    },
-    {
-      id: "product" as const,
-      title: "Product Communication",
-      href: paths.product,
+      id: "digital" as const,
+      title: "Content & Digital Marketing",
+      href: paths.digital,
     },
     {
       id: "business" as const,
@@ -96,9 +91,14 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       href: paths.business,
     },
     {
-      id: "digital" as const,
-      title: "Digital Marketing",
-      href: paths.digital,
+      id: "product" as const,
+      title: "Product Communication",
+      href: paths.product,
+    },
+    {
+      id: "architecture" as const,
+      title: "Architecture & Real Estate",
+      href: paths.architecture,
     },
   ];
 
@@ -157,22 +157,22 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           {
             ...serviceItems[0],
             description:
-              "Photorealistic visualisation, animation and immersive experiences for architecture and real estate.",
+              "Content and campaigns that build presence with clarity and continuity.",
           },
           {
             ...serviceItems[1],
             description:
-              "Photography, film and 3D that explain products and support sales.",
+              "Authentic communication for companies, organisations and brands.",
           },
           {
             ...serviceItems[2],
             description:
-              "Authentic communication for companies, organisations and brands.",
+              "Photography, film and 3D that explain products and support sales.",
           },
           {
             ...serviceItems[3],
             description:
-              "Content and campaigns that build presence with clarity and continuity.",
+              "Photorealistic visualisation, animation and immersive experiences for architecture and real estate.",
           },
         ],
       },
@@ -340,22 +340,22 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         {
           ...serviceItems[0],
           description:
-            "Fotorealistische Visualisierungen, Animationen und immersive Erlebnisse für Architektur und Immobilien.",
+            "Content und Kampagnen, die Präsenz mit Klarheit und Kontinuität aufbauen.",
         },
         {
           ...serviceItems[1],
           description:
-            "Fotografie, Film und 3D, die Produkte erklären und den Vertrieb unterstützen.",
+            "Authentische Kommunikation für Unternehmen, Organisationen und Marken.",
         },
         {
           ...serviceItems[2],
           description:
-            "Authentische Kommunikation für Unternehmen, Organisationen und Marken.",
+            "Fotografie, Film und 3D, die Produkte erklären und den Vertrieb unterstützen.",
         },
         {
           ...serviceItems[3],
           description:
-            "Content und Kampagnen, die Präsenz mit Klarheit und Kontinuität aufbauen.",
+            "Fotorealistische Visualisierungen, Animationen und immersive Erlebnisse für Architektur und Immobilien.",
         },
       ],
     },

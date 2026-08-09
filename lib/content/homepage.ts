@@ -52,18 +52,11 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         headline: "Our services",
         items: [
           {
-            id: "architecture",
-            title: "Architecture",
+            id: "digital",
+            title: "Content & Digital Marketing",
             description:
-              "3D visualizations, animations and drone footage for architecture and real estate.",
-            href: architectureHref,
-          },
-          {
-            id: "product",
-            title: "Product Communication",
-            description:
-              "Product photography, video and 3D for convincing products and brands.",
-            href: productHref,
+              "Strategy, content and social media for more reach and results.",
+            href: digitalHref,
           },
           {
             id: "business",
@@ -73,11 +66,18 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             href: businessHref,
           },
           {
-            id: "digital",
-            title: "Digital Marketing",
+            id: "product",
+            title: "Product Communication",
             description:
-              "Strategy, content and social media for more reach and results.",
-            href: digitalHref,
+              "Product photography, video and 3D for convincing products and brands.",
+            href: productHref,
+          },
+          {
+            id: "architecture",
+            title: "Architecture & Real Estate",
+            description:
+              "3D visualizations, animations and drone footage for architecture and real estate.",
+            href: architectureHref,
           },
         ],
       },
@@ -99,26 +99,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         viewAll: { label: "View all projects", href: work },
         items: [
           {
-            id: "placeholder-architecture",
+            id: "placeholder-digital",
             title: "[Project placeholder]",
-            category: "Architecture",
+            category: "Content & Digital Marketing",
             href: work,
             image: {
-              src: "/images/architecture/v5_02_korr.jpg",
-              alt: "Architecture project placeholder image",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "placeholder-product",
-            title: "[Project placeholder]",
-            category: "Product Communication",
-            href: work,
-            image: {
-              src: "/images/product/Watch_3-057ab44a.jpg",
-              alt: "Product communication placeholder image",
+              src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
+              alt: "Content & Digital Marketing placeholder image",
               width: 1200,
               height: 800,
             },
@@ -138,13 +125,26 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             isPlaceholder: true,
           },
           {
-            id: "placeholder-digital",
+            id: "placeholder-product",
             title: "[Project placeholder]",
-            category: "Digital Marketing",
+            category: "Product Communication",
             href: work,
             image: {
-              src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
-              alt: "Digital marketing placeholder image",
+              src: "/images/product/Watch_3-057ab44a.jpg",
+              alt: "Product communication placeholder image",
+              width: 1200,
+              height: 800,
+            },
+            isPlaceholder: true,
+          },
+          {
+            id: "placeholder-architecture",
+            title: "[Project placeholder]",
+            category: "Architecture & Real Estate",
+            href: work,
+            image: {
+              src: "/images/architecture/v5_02_korr.jpg",
+              alt: "Architecture & Real Estate placeholder image",
               width: 1200,
               height: 800,
             },
@@ -241,18 +241,11 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       headline: "Unsere Leistungen",
       items: [
         {
-          id: "architecture",
-          title: "Architecture",
+          id: "digital",
+          title: "Content & Digital Marketing",
           description:
-            "3D-Visualisierungen, Animationen und Drohnenaufnahmen für Architektur und Immobilien.",
-          href: architectureHref,
-        },
-        {
-          id: "product",
-          title: "Product Communication",
-          description:
-            "Produktfotografie, Videos und 3D für überzeugende Produkte und Marken.",
-          href: productHref,
+            "Strategie, Content und Social Media für mehr Reichweite und Resultate.",
+          href: digitalHref,
         },
         {
           id: "business",
@@ -262,11 +255,18 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           href: businessHref,
         },
         {
-          id: "digital",
-          title: "Digital Marketing",
+          id: "product",
+          title: "Product Communication",
           description:
-            "Strategie, Content und Social Media für mehr Reichweite und Resultate.",
-          href: digitalHref,
+            "Produktfotografie, Videos und 3D für überzeugende Produkte und Marken.",
+          href: productHref,
+        },
+        {
+          id: "architecture",
+          title: "Architecture & Real Estate",
+          description:
+            "3D-Visualisierungen, Animationen und Drohnenaufnahmen für Architektur und Immobilien.",
+          href: architectureHref,
         },
       ],
     },
@@ -288,26 +288,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       viewAll: { label: "Alle Projekte ansehen", href: work },
       items: [
         {
-          id: "placeholder-architecture",
+          id: "placeholder-digital",
           title: "[Projektplatzhalter]",
-          category: "Architecture",
+          category: "Content & Digital Marketing",
           href: work,
           image: {
-            src: "/images/architecture/v5_02_korr.jpg",
-            alt: "Platzhalterbild Architektur",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "placeholder-product",
-          title: "[Projektplatzhalter]",
-          category: "Product Communication",
-          href: work,
-          image: {
-            src: "/images/product/Watch_3-057ab44a.jpg",
-            alt: "Platzhalterbild Product Communication",
+            src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
+            alt: "Platzhalterbild Content & Digital Marketing",
             width: 1200,
             height: 800,
           },
@@ -327,13 +314,26 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           isPlaceholder: true,
         },
         {
-          id: "placeholder-digital",
+          id: "placeholder-product",
           title: "[Projektplatzhalter]",
-          category: "Digital Marketing",
+          category: "Product Communication",
           href: work,
           image: {
-            src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
-            alt: "Platzhalterbild Digital Marketing",
+            src: "/images/product/Watch_3-057ab44a.jpg",
+            alt: "Platzhalterbild Product Communication",
+            width: 1200,
+            height: 800,
+          },
+          isPlaceholder: true,
+        },
+        {
+          id: "placeholder-architecture",
+          title: "[Projektplatzhalter]",
+          category: "Architecture & Real Estate",
+          href: work,
+          image: {
+            src: "/images/architecture/v5_02_korr.jpg",
+            alt: "Platzhalterbild Architecture & Real Estate",
             width: 1200,
             height: 800,
           },

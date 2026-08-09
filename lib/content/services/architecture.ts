@@ -17,7 +17,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           "Architectural visualization, drone footage, virtual tours and premium marketing content for architects and real estate companies.",
       },
       hero: {
-        label: "Architecture",
+        label: "Architecture & Real Estate",
         headline: "Great architecture starts with inspiration",
         headlineAccent: ".",
         subheadline:
@@ -89,7 +89,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         items: [
           {
             id: "arch-1",
-            title: "Architecture",
+            title: "Architecture & Real Estate",
             category: "Visualization",
             href: paths.work,
             image: {
@@ -102,7 +102,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           },
           {
             id: "arch-2",
-            title: "Architecture",
+            title: "Architecture & Real Estate",
             category: "3D Animation",
             href: paths.work,
             image: {
@@ -115,7 +115,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           },
           {
             id: "arch-3",
-            title: "Architecture",
+            title: "Architecture & Real Estate",
             category: "Real Estate",
             href: paths.work,
             image: {
@@ -128,7 +128,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           },
           {
             id: "arch-4",
-            title: "Architecture",
+            title: "Architecture & Real Estate",
             category: "Visualization",
             href: paths.work,
             image: {
@@ -176,7 +176,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         "Fotorealistische Architekturvisualisierungen, Animationen, Drohnenaufnahmen und virtuelle Rundgänge für Architektur und Immobilien.",
     },
     hero: {
-      label: "Architecture",
+      label: "Architecture & Real Estate",
       headline: "Bevor Architektur entsteht, muss Begeisterung entstehen",
       headlineAccent: ".",
       subheadline:
@@ -248,7 +248,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
       items: [
         {
           id: "arch-1",
-          title: "Architecture",
+          title: "Architecture & Real Estate",
           category: "Visualisierung",
           href: paths.work,
           image: {
@@ -261,7 +261,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         },
         {
           id: "arch-2",
-          title: "Architecture",
+          title: "Architecture & Real Estate",
           category: "3D-Animation",
           href: paths.work,
           image: {
@@ -274,7 +274,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         },
         {
           id: "arch-3",
-          title: "Architecture",
+          title: "Architecture & Real Estate",
           category: "Immobilien",
           href: paths.work,
           image: {
@@ -287,7 +287,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         },
         {
           id: "arch-4",
-          title: "Architecture",
+          title: "Architecture & Real Estate",
           category: "Visualisierung",
           href: paths.work,
           image: {
