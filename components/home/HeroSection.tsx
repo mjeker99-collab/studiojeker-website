@@ -35,8 +35,8 @@ export function HeroSection({ content }: HeroSectionProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={120}>
-          {/* Same grid row as .media — bar height = image height automatically */}
-          <CyanBar />
+          {/* Bar + image share .mediaWrap bounds → identical top/bottom */}
+          <CyanBar boundToMedia />
           <div className={styles.media}>
             <Image
               src={mediaPath(content.media.src)}

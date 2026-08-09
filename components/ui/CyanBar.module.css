@@ -16,6 +16,27 @@
   transform-origin: top center;
 }
 
+/*
+ * Bound to the shared media frame (.mediaWrap):
+ * top/bottom identical to the image box — no independent height.
+ * Parent .mediaWrap must be position:relative and set --media-bar-width.
+ */
+.mediaBound {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--media-bar-width, var(--cyan-bar-width));
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: none !important;
+  align-self: auto !important;
+  animation: none !important;
+  transform: none !important;
+}
+
 /* Left page/module accent — always fills parent height */
 .edge {
   position: absolute;
@@ -63,7 +84,7 @@
 }
 
 @media (max-width: 47.9375rem) {
-  .vertical {
+  .vertical:not(.mediaBound) {
     /* Keep signature bar clearly visible on small screens */
     width: clamp(0.625rem, 2.4vw, 0.875rem);
   }

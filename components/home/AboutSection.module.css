@@ -52,22 +52,24 @@
   line-height: 1.55;
 }
 
+/*
+ * Shared frame for cyan bar + image.
+ * Both absolutely pinned → cyan top/bottom = image top/bottom.
+ */
 .mediaWrap {
-  /* Flex row: cyan + image share one stretched height exactly */
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
+  position: relative;
   align-self: stretch;
   height: 100%;
   min-height: 16rem;
+  --media-bar-width: var(--cyan-bar-width);
 }
 
 .media {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  align-self: stretch;
-  min-height: 16rem;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--media-bar-width);
   overflow: hidden;
   background: var(--color-neutral);
 }
@@ -77,9 +79,14 @@
   filter: grayscale(1);
 }
 
+@media (max-width: 47.9375rem) {
+  .mediaWrap {
+    --media-bar-width: clamp(0.625rem, 2.4vw, 0.875rem);
+  }
+}
+
 @media (min-width: 48rem) {
-  .mediaWrap,
-  .media {
+  .mediaWrap {
     min-height: 22rem;
   }
 }
@@ -97,8 +104,7 @@
     padding-left: max(var(--container-padding-x), 3.5%);
   }
 
-  .mediaWrap,
-  .media {
+  .mediaWrap {
     min-height: 22rem;
   }
 }
@@ -108,14 +114,12 @@
   padding-block: 2rem;
 }
 
-.compact .mediaWrap,
-.compact .media {
+.compact .mediaWrap {
   min-height: 14rem;
 }
 
 @media (min-width: 48rem) {
-  .compact .mediaWrap,
-  .compact .media {
+  .compact .mediaWrap {
     min-height: 18rem;
   }
 }
@@ -126,8 +130,7 @@
     padding-bottom: 2.75rem;
   }
 
-  .compact .mediaWrap,
-  .compact .media {
+  .compact .mediaWrap {
     min-height: 20rem;
   }
 }
