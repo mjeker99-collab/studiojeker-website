@@ -19,7 +19,7 @@ type AboutPageProps = {
 
 /**
  * About page — homepage visual system.
- * Middle stack: Anspruch → Team → Facts (compact, coherent).
+ * Middle: Anspruch → Team+Image (40/60) → Facts → So arbeiten wir.
  */
 export function AboutPage({ content }: AboutPageProps) {
   const headlineLines = content.hero.headline.split("\n").filter(Boolean);
@@ -83,7 +83,6 @@ export function AboutPage({ content }: AboutPageProps) {
         </div>
       </section>
 
-      {/* Coherent middle: Anspruch → Team → Facts */}
       <div className={styles.middleStack}>
         <section
           className={styles.values}
@@ -113,58 +112,67 @@ export function AboutPage({ content }: AboutPageProps) {
           </Container>
         </section>
 
+        {/* Homepage AboutSection proportions: ~40% copy / ~60% media + CyanBar */}
         <section
           id="team"
           className={styles.team}
           data-header-theme="light"
           aria-labelledby="about-team-title"
         >
-          <Container>
-            <Reveal className={styles.teamHeader}>
+          <div className={styles.teamSplit}>
+            <Reveal className={styles.teamCopy}>
               <SectionLabel>{content.team.label}</SectionLabel>
               <h2 id="about-team-title" className={styles.teamHeadline}>
                 {content.team.headline}
               </h2>
               <p className={styles.teamIntro}>{content.team.introduction}</p>
-            </Reveal>
 
-            <ul className={styles.teamGrid}>
-              {content.team.members.map((member, index) => (
-                <Reveal
-                  key={member.id}
-                  as="li"
-                  className={styles.member}
-                  delayMs={index * 40}
-                >
-                  {member.isPlaceholder || !member.image ? (
-                    <div
-                      className={styles.portraitPlaceholder}
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <div className={styles.portrait}>
-                      <Image
-                        src={mediaPath(member.image.src)}
-                        alt={member.image.alt}
-                        fill
-                        sizes="120px"
-                        className={styles.portraitImage}
+              <ul className={styles.teamGrid}>
+                {content.team.members.map((member, index) => (
+                  <li key={member.id} className={styles.member}>
+                    {member.isPlaceholder || !member.image ? (
+                      <div
+                        className={styles.portraitPlaceholder}
+                        aria-hidden="true"
                       />
+                    ) : (
+                      <div className={styles.portrait}>
+                        <Image
+                          src={mediaPath(member.image.src)}
+                          alt={member.image.alt}
+                          fill
+                          sizes="96px"
+                          className={styles.portraitImage}
+                        />
+                      </div>
+                    )}
+                    <div className={styles.memberMeta}>
+                      <p className={styles.memberName}>{member.name}</p>
+                      <p className={styles.memberRole}>{member.role}</p>
                     </div>
-                  )}
-                  <div className={styles.memberMeta}>
-                    <p className={styles.memberName}>{member.name}</p>
-                    <p className={styles.memberRole}>{member.role}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </ul>
-
-            <Reveal className={styles.network}>
-              <p className={styles.networkTitle}>{content.team.network.title}</p>
-              <p className={styles.networkBody}>{content.team.network.body}</p>
+                  </li>
+                ))}
+              </ul>
             </Reveal>
-          </Container>
+
+            <Reveal className={styles.mediaWrap} delayMs={100}>
+              <CyanBar />
+              <div
+                className={styles.mediaPlaceholder}
+                role="img"
+                aria-label={content.team.featureMedia.ariaLabel}
+              >
+                <span className={styles.mediaPlaceholderLabel}>
+                  <span className={styles.mediaPlaceholderTitle}>
+                    {content.team.featureMedia.title}
+                  </span>
+                  <span className={styles.mediaPlaceholderCaption}>
+                    {content.team.featureMedia.caption}
+                  </span>
+                </span>
+              </div>
+            </Reveal>
+          </div>
         </section>
 
         <section
@@ -194,7 +202,7 @@ export function AboutPage({ content }: AboutPageProps) {
 
       <AboutSection content={content.approach} compact />
 
-      {/* Service destinations retained; kept outside the compact middle stack */}
+      {/* Service destinations retained; outside the compact middle stack */}
       <ServicesSection content={content.services} />
 
       <ClientsSection content={content.clients} />

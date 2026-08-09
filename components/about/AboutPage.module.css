@@ -1,6 +1,6 @@
 /**
  * About page — homepage visual system.
- * Only About-scoped offsets/density. No invented color bands or grey rules.
+ * Team+Image mirrors AboutSection 40/60 + CyanBar. No grey rules / gradients.
  */
 
 /*
@@ -9,15 +9,12 @@
  * cover logo/navigation. Section offset + reduced copy top padding.
  */
 .hero {
-  /* Start entire composition (text + image) below the fixed header */
   padding-top: var(--header-height);
-  /* Denser than homepage full-viewport hero — not full-screen */
   min-height: min(70svh, 38rem);
   z-index: 0;
 }
 
 .heroCopy {
-  /* Header offset already applied on .hero — avoid double spacing */
   padding-top: var(--space-3);
   padding-bottom: var(--space-4);
 }
@@ -26,16 +23,16 @@
   filter: grayscale(1);
 }
 
-/* Coherent middle: Anspruch → Team → Facts (tight rhythm) */
+/* Coherent middle: Anspruch → Team+Image → Facts */
 .middleStack {
   display: grid;
   gap: 0;
 }
 
-/* Values — tighter bottom into Team */
+/* Values — tight into Team split */
 .values {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact) var(--space-4);
+  padding-block: var(--section-padding-y-compact) var(--space-3);
 }
 
 .sectionHeader {
@@ -67,17 +64,27 @@
   line-height: 1.5;
 }
 
-/* Team — compact 5-column editorial grid, reduced vertical whitespace */
+/*
+ * Team + large image — same visual logic as homepage AboutSection:
+ * stretch grid, left copy ~40%, right media ~60%, CyanBar beside media.
+ */
 .team {
+  position: relative;
   background: var(--color-white);
-  padding-block: var(--space-4) var(--space-3);
+  overflow: hidden;
 }
 
-.teamHeader {
+.teamSplit {
   display: grid;
-  gap: 0.5rem;
-  margin-bottom: var(--space-3);
-  max-width: 36rem;
+  align-items: stretch;
+}
+
+.teamCopy {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  max-width: 32rem;
+  padding: var(--space-4) var(--container-padding-x);
 }
 
 .teamHeadline {
@@ -90,23 +97,25 @@
 
 .teamIntro {
   margin: 0;
-  max-width: 32rem;
+  max-width: 26rem;
   font-size: 1rem;
   line-height: 1.5;
 }
 
+/* Compact editorial portraits — must not dominate the split */
 .teamGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
+  max-width: 22rem;
 }
 
 .member {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
   align-content: start;
 }
 
@@ -114,7 +123,7 @@
 .portraitPlaceholder {
   position: relative;
   width: 100%;
-  max-width: 7.25rem;
+  max-width: 4.75rem;
   aspect-ratio: 1 / 1.15;
   overflow: hidden;
   background: var(--color-neutral);
@@ -133,46 +142,63 @@
 
 .memberName {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
+  line-height: 1.25;
 }
 
 .memberRole {
   margin: 0;
-  max-width: 9rem;
-  font-size: 0.6875rem;
-  line-height: 1.35;
+  max-width: 7.5rem;
+  font-size: 0.625rem;
+  line-height: 1.3;
   color: rgb(0 0 0 / 72%);
 }
 
-/* Partner Netzwerk — secondary, inside Team (not a large section) */
-.network {
+/* Media column — matches AboutSection.mediaWrap / .media */
+.mediaWrap {
   display: grid;
-  gap: 0.25rem;
-  margin-top: var(--space-2);
-  max-width: 28rem;
+  grid-template-columns: auto 1fr;
+  align-self: stretch;
+  height: 100%;
+  min-height: 16rem;
 }
 
-.networkTitle {
-  margin: 0;
+.mediaPlaceholder {
+  position: relative;
+  min-height: 16rem;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-neutral);
+  display: grid;
+  align-content: end;
+  padding: var(--space-3);
+}
+
+.mediaPlaceholderLabel {
+  display: grid;
+  gap: 0.2rem;
+  max-width: 16rem;
+}
+
+.mediaPlaceholderTitle {
   font-size: 0.6875rem;
   font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgb(0 0 0 / 62%);
+  color: rgb(0 0 0 / 45%);
 }
 
-.networkBody {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: rgb(0 0 0 / 72%);
+.mediaPlaceholderCaption {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgb(0 0 0 / 40%);
 }
 
-/* Facts — one compact typographic row, minimal whitespace */
+/* Facts — compact typographic row (4 items), minimal whitespace */
 .facts {
   background: var(--color-white);
-  padding-block: var(--space-3) var(--space-4);
+  padding-block: var(--space-3) var(--space-3);
 }
 
 .factsGrid {
@@ -187,7 +213,7 @@
 
 .factValue {
   margin: 0;
-  font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
   font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.02em;
   text-transform: uppercase;
@@ -195,9 +221,9 @@
 
 .factLabel {
   margin: 0;
-  max-width: 16rem;
-  font-size: 0.9375rem;
-  line-height: 1.45;
+  max-width: 14rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 @media (min-width: 48rem) {
@@ -208,8 +234,8 @@
 
   .teamGrid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--space-3);
-    max-width: 48rem;
+    gap: 0.65rem;
+    max-width: 26rem;
   }
 
   .portrait,
@@ -217,9 +243,14 @@
     max-width: none;
   }
 
+  .mediaWrap,
+  .mediaPlaceholder {
+    min-height: 22rem;
+  }
+
   .factsGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-5);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
     align-items: start;
   }
 }
@@ -230,24 +261,27 @@
   }
 
   .values {
-    padding-block: 3.25rem var(--space-4);
+    padding-block: 3.25rem var(--space-3);
   }
 
-  .team {
-    padding-block: var(--space-4) var(--space-3);
+  .teamSplit {
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+  }
+
+  .teamCopy {
+    padding-top: 2.5rem;
+    padding-bottom: 2.25rem;
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
+  }
+
+  .mediaWrap,
+  .mediaPlaceholder {
+    min-height: 22rem;
   }
 
   .facts {
-    padding-block: var(--space-3) var(--space-4);
-  }
-
-  .teamGrid {
-    max-width: 52rem;
-  }
-
-  .portrait,
-  .portraitPlaceholder {
-    max-height: 8.75rem;
+    padding-block: var(--space-3);
   }
 }
 
@@ -256,13 +290,15 @@
     min-height: auto;
   }
 
+  /* Mobile: Team first, image second (document order). Portraits stay small. */
   .teamGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.65rem;
+    max-width: 20rem;
   }
 
   .portrait,
   .portraitPlaceholder {
-    max-width: none;
+    max-width: 4.5rem;
   }
 }

@@ -43,9 +43,14 @@ export type AboutPageContent = {
     placeholderLabel: string;
     placeholderRole: string;
     members: AboutTeamMember[];
-    network: {
+    /**
+     * Neutral large-media placeholder (making-of / production photo later).
+     * Same crop intent as homepage AboutSection media.
+     */
+    featureMedia: {
+      ariaLabel: string;
       title: string;
-      body: string;
+      caption: string;
     };
   };
   facts: {
@@ -220,9 +225,10 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             isPlaceholder: true,
           },
         ],
-        network: {
-          title: "Partner network",
-          body: "For specialised tasks and larger productions we work with a trusted network of experienced partners.",
+        featureMedia: {
+          ariaLabel: "Image placeholder for Studiojeker studio, making-of or team at work",
+          title: "Image placeholder",
+          caption: "Studio / Making-of / Team at work",
         },
       },
       facts: {
@@ -241,6 +247,11 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             id: "partner",
             value: "1 partner",
             label: "From strategy to delivery",
+          },
+          {
+            id: "network",
+            value: "Partner network",
+            label: "Specialists for larger and specific productions.",
           },
         ],
       },
@@ -397,9 +408,10 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           isPlaceholder: true,
         },
       ],
-      network: {
-        title: "Partner Netzwerk",
-        body: "Für spezialisierte Aufgaben und grössere Produktionen arbeiten wir mit einem eingespielten Netzwerk erfahrener Partner.",
+      featureMedia: {
+        ariaLabel: "Bildplatzhalter für Studio, Making-of oder Team bei der Arbeit",
+        title: "Image Placeholder",
+        caption: "Studio / Making-of / Team at work",
       },
     },
     facts: {
@@ -418,6 +430,11 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           id: "partner",
           value: "1 Partner",
           label: "Von Strategie bis Umsetzung",
+        },
+        {
+          id: "network",
+          value: "Partner Netzwerk",
+          label: "Spezialist:innen für grössere und spezifische Produktionen.",
         },
       ],
     },
