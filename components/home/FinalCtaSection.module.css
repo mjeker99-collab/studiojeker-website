@@ -1,7 +1,7 @@
 .section {
   background: var(--color-black);
   color: var(--color-white);
-  padding-block: var(--space-10);
+  padding-block: var(--space-8);
   padding-inline: var(--container-padding-x);
 }
 
@@ -19,18 +19,19 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-4) var(--space-6);
 }
 
 .copy {
   display: grid;
   gap: var(--space-2);
-  max-width: 40rem;
+  max-width: 38rem;
 }
 
 .headline {
   margin: 0;
-  font-size: clamp(1.75rem, 3.5vw, 3rem);
+  max-width: 14em;
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
   font-weight: var(--font-weight-extrabold);
   line-height: 1.15;
 }
@@ -48,7 +49,11 @@
 
 @media (min-width: 64rem) {
   .section {
-    padding-block: var(--space-12, 6rem);
+    padding-block: var(--space-10);
+  }
+
+  .content {
+    align-items: center;
   }
 }
 

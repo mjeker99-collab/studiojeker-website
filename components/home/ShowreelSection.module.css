@@ -19,20 +19,20 @@
 .grid {
   display: grid;
   align-items: stretch;
-  min-height: 28rem;
 }
 
 .copy {
   display: grid;
   align-content: center;
   gap: var(--space-3);
-  max-width: 32rem;
+  max-width: 30rem;
   padding: var(--section-padding-y) var(--container-padding-x);
 }
 
 .headline {
   margin: 0;
-  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  max-width: 8em;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
   font-weight: var(--font-weight-extrabold);
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -44,7 +44,7 @@
 
 .body {
   margin: 0;
-  max-width: 28rem;
+  max-width: 26rem;
   color: var(--color-white);
   font-size: 1.0625rem;
   line-height: 1.55;
@@ -53,14 +53,14 @@
 .mediaWrap {
   display: grid;
   grid-template-columns: auto 1fr;
-  min-height: 18rem;
+  min-height: 16rem;
 }
 
 .mediaButton {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 18rem;
+  min-height: 16rem;
   padding: 0;
   border: 0;
   overflow: hidden;
@@ -120,24 +120,24 @@
 @media (min-width: 48rem) {
   .mediaWrap,
   .mediaButton {
-    min-height: 24rem;
+    min-height: 22rem;
   }
 }
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.34fr) minmax(0, 0.66fr);
-    min-height: 32rem;
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
   }
 
   .copy {
+    padding-block: var(--space-10);
     padding-right: var(--space-5);
     padding-left: max(var(--container-padding-x), 3.5%);
   }
 
   .mediaWrap,
   .mediaButton {
-    min-height: 100%;
+    min-height: 26rem;
   }
 }
 

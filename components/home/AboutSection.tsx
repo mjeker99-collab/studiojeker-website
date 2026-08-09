@@ -23,10 +23,21 @@ export function AboutSection({ content }: AboutSectionProps) {
         <Reveal className={styles.copy}>
           <SectionLabel>{content.label}</SectionLabel>
           <h2 id="home-about-title" className={styles.headline}>
-            {content.headline}
-            {content.headlineAccent ? (
-              <span className={styles.accent}>{content.headlineAccent}</span>
-            ) : null}
+            {content.headline
+              .split(/(?<=\.)\s+/)
+              .filter(Boolean)
+              .map((line, index, lines) => {
+                const isLast = index === lines.length - 1;
+                return (
+                  <span key={line} className={styles.headlineLine}>
+                    {line}
+                    {isLast && content.headlineAccent ? (
+                      <span className={styles.accent}>{content.headlineAccent}</span>
+                    ) : null}
+                    {!isLast ? <br /> : null}
+                  </span>
+                );
+              })}
           </h2>
           {content.subheadline ? (
             <p className={styles.subheadline}>{content.subheadline}</p>

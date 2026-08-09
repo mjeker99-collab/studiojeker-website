@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Dictionary, Locale } from "@/types/i18n";
+import { localizePathname } from "@/lib/i18n/config";
 import { getPrimaryNav } from "@/lib/i18n/navigation";
 import { Container } from "@/components/layout/Container";
 import { TextLink } from "@/components/ui/TextLink";
@@ -19,6 +20,36 @@ export function Footer({ locale, dictionary }: FooterProps) {
     insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
+
+  const serviceLinks = [
+    {
+      label: dictionary.footer.architecture,
+      href: localizePathname("/solutions/architecture-real-estate", locale),
+    },
+    {
+      label: dictionary.footer.productCommunication,
+      href: localizePathname("/solutions/products-industry", locale),
+    },
+    {
+      label: dictionary.footer.businessCommunication,
+      href: localizePathname("/solutions/brand-business", locale),
+    },
+    {
+      label: dictionary.footer.digitalMarketing,
+      href: localizePathname("/solutions/social-digital-marketing", locale),
+    },
+  ];
+
+  const legalLinks = [
+    {
+      label: dictionary.footer.impressum,
+      href: localizePathname("/impressum", locale),
+    },
+    {
+      label: dictionary.footer.privacy,
+      href: localizePathname("/datenschutz", locale),
+    },
+  ];
 
   return (
     <footer className={styles.footer}>
@@ -53,23 +84,26 @@ export function Footer({ locale, dictionary }: FooterProps) {
             <div>
               <h2 className={styles.columnTitle}>{dictionary.footer.services}</h2>
               <ul className={styles.list}>
-                <li>
-                  <TextLink
-                    href={items.find((item) => item.id === "services")?.href ?? "#"}
-                    inverse
-                  >
-                    {dictionary.nav.services}
-                  </TextLink>
-                </li>
+                {serviceLinks.map((item) => (
+                  <li key={item.href}>
+                    <TextLink href={item.href} inverse>
+                      {item.label}
+                    </TextLink>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
               <h2 className={styles.columnTitle}>{dictionary.footer.legal}</h2>
               <ul className={styles.list}>
-                <li>
-                  <span>—</span>
-                </li>
+                {legalLinks.map((item) => (
+                  <li key={item.href}>
+                    <TextLink href={item.href} inverse>
+                      {item.label}
+                    </TextLink>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

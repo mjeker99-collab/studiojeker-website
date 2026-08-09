@@ -25,6 +25,12 @@ export type Dictionary = {
     services: string;
     legal: string;
     copyright: string;
+    impressum: string;
+    privacy: string;
+    architecture: string;
+    productCommunication: string;
+    businessCommunication: string;
+    digitalMarketing: string;
   };
   foundation: {
     title: string;

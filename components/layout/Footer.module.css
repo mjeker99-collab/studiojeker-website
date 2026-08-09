@@ -1,7 +1,7 @@
 .footer {
   background: var(--color-black);
   color: var(--color-white);
-  padding-block: var(--space-10);
+  padding-block: var(--space-8);
 }
 
 .grid {
@@ -12,7 +12,7 @@
 .brandBlock {
   display: grid;
   gap: var(--space-2);
-  max-width: 28rem;
+  max-width: 26rem;
 }
 
 .logo {
@@ -29,7 +29,7 @@
 .positioning {
   margin: 0;
   color: var(--color-silver);
-  font-size: 1rem;
+  font-size: 0.9375rem;
 }
 
 .columns {
@@ -39,16 +39,16 @@
 
 .columnTitle {
   margin: 0 0 var(--space-2);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-silver);
 }
 
 .list {
   display: grid;
-  gap: var(--space-2);
+  gap: 0.65rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -59,8 +59,8 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-top: var(--space-8);
-  padding-top: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-3);
   border-top: 1px solid rgb(255 255 255 / 12%);
   color: var(--color-silver);
   font-size: 0.875rem;
@@ -68,25 +68,26 @@
 
 @media (min-width: 48rem) {
   .grid {
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: 1.3fr 1.7fr;
     align-items: start;
-  }
-
-  .columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64rem) {
-  .grid {
-    grid-template-columns: 1.6fr 1fr;
   }
 
   .columns {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 64rem) {
+  .footer {
+    padding-block: var(--space-10);
+  }
+
+  .grid {
+    grid-template-columns: 1.4fr 2fr;
+    gap: var(--space-8);
+  }
 
   .logo {
-    height: 2.25rem;
+    height: 2.15rem;
   }
 }

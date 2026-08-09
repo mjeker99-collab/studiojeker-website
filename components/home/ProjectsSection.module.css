@@ -1,6 +1,6 @@
 .section {
   background: var(--color-white);
-  padding-block: var(--section-padding-y);
+  padding-block: var(--section-padding-y) var(--space-8);
 }
 
 .header {
@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 
 .viewAll {
@@ -38,12 +38,12 @@
 
 .grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .card {
   display: grid;
-  gap: var(--space-2);
+  gap: 0.75rem;
   text-decoration: none;
   color: inherit;
 }
@@ -51,7 +51,7 @@
 .media {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
   background: var(--color-neutral);
 }
 
@@ -100,18 +100,23 @@
 }
 
 .placeholderNote {
-  margin: var(--space-4) 0 0;
-  color: rgb(0 0 0 / 45%);
+  margin: var(--space-3) 0 0;
+  color: rgb(0 0 0 / 40%);
   font-size: 0.75rem;
 }
 
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
   }
 }
 
 @media (min-width: 64rem) {
+  .header {
+    margin-bottom: var(--space-5);
+  }
+
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-3);

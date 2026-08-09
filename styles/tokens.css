@@ -44,17 +44,19 @@
   --space-15: 7.5rem; /* 120 */
   --space-20: 10rem; /* 160 */
 
-  --section-padding-y: 4.5rem;
+  /* Content sections: 80–140px desktop rhythm (not empty) */
+  --section-padding-y: 4rem; /* 64 */
+  --section-padding-y-compact: 3.5rem;
   --component-gap: var(--space-4);
   --card-gap: var(--space-3);
-  --headline-margin: var(--space-5);
+  --headline-margin: var(--space-4);
 
   /* Layout */
   --container-max: 90rem; /* 1440px */
   --container-padding-x: var(--space-2);
   --grid-columns: 4;
-  --header-height: 4.25rem; /* mobile */
-  --header-height-sticky: 3.75rem;
+  --header-height: 4rem; /* mobile */
+  --header-height-sticky: 3.5rem;
 
   /* Radii — homepage master uses sharp geometry intentionally */
   --radius-button: 0;
@@ -83,11 +85,12 @@
     --text-body-size: 1.25rem; /* 20px */
     --text-subheadline-size: 1.75rem; /* 28px */
     --text-headline-size: 3rem; /* 48px tablet */
-    --section-padding-y: 6.5rem; /* tuned toward mockup rhythm; kit base 120px */
+    --section-padding-y: 5rem; /* 80 */
+    --section-padding-y-compact: 4.5rem;
     --container-padding-x: var(--space-4);
     --grid-columns: 8;
-    --header-height: 5.25rem;
-    --header-height-sticky: 4.25rem;
+    --header-height: 4.5rem;
+    --header-height-sticky: 3.75rem;
   }
 }
 
@@ -95,15 +98,17 @@
   :root {
     --text-headline-size: 4rem; /* 64px */
     --grid-columns: 12;
-    --header-height: 5.75rem; /* ~92px master */
-    --header-height-sticky: 4.25rem; /* ~68px master */
+    --header-height: 4.75rem; /* lightweight architectural */
+    --header-height-sticky: 3.75rem;
+    --section-padding-y: 5.5rem; /* 88 */
   }
 }
 
 @media (min-width: 80rem) {
   :root {
     --text-headline-size: 5rem; /* 80px toward desktop range */
-    --section-padding-y: 8rem; /* tuned toward mockup rhythm; kit base 160px */
+    --section-padding-y: 6.5rem; /* 104 — within 80–140 */
+    --section-padding-y-compact: 5rem;
     --container-padding-x: var(--space-5);
   }
 }

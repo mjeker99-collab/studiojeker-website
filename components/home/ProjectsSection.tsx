@@ -23,7 +23,7 @@ export function ProjectsSection({ content, locale }: ProjectsSectionProps) {
       <Container>
         <Reveal className={styles.header}>
           <div>
-            <SectionLabel>{content.label}</SectionLabel>
+            <SectionLabel flush>{content.label}</SectionLabel>
             <h2 id="home-projects-title" className="visually-hidden">
               {content.headline}
             </h2>
