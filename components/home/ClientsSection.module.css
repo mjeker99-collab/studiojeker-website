@@ -25,6 +25,13 @@
 .viewport {
   overflow: hidden;
   /* Soft edge exit — barely perceptible */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
   mask-image: linear-gradient(
     to right,
     transparent 0,
@@ -39,6 +46,7 @@
   width: max-content;
   align-items: center;
   animation: clients-marquee 40s linear infinite;
+  will-change: transform;
 }
 
 .viewport:hover .rail {
@@ -55,16 +63,17 @@
 }
 
 .item {
-  display: grid;
-  place-items: center;
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   min-height: 4.25rem;
   padding: 0.5rem 1.75rem;
 }
 
 .logo {
+  display: block;
   width: auto;
-  height: auto;
   object-fit: contain;
   filter: grayscale(1) contrast(1.08);
   opacity: 0.9;
@@ -72,14 +81,14 @@
 
 /* Default / lighter wordmarks — more presence */
 .weightLight {
+  height: 3.5rem;
   max-width: 12.5rem;
-  max-height: 3.5rem;
 }
 
 /* Dense marks (UBS, Raiffeisen) — slightly less scale */
 .weightStrong {
+  height: 3rem;
   max-width: 9.5rem;
-  max-height: 3rem;
 }
 
 @keyframes clients-marquee {
@@ -98,13 +107,13 @@
   }
 
   .weightLight {
+    height: 3.85rem;
     max-width: 13.5rem;
-    max-height: 3.85rem;
   }
 
   .weightStrong {
+    height: 3.35rem;
     max-width: 10.5rem;
-    max-height: 3.35rem;
   }
 }
 
@@ -126,21 +135,21 @@
     animation-duration: 42s;
   }
 
-  /* ~50% larger light marks vs previous ~3.85rem height lock */
+  /* Maintain approx. previous desktop logo scale */
   .weightLight {
+    height: 5.5rem;
     max-width: 15.5rem;
-    max-height: 5.5rem;
   }
 
-  /* ~30% larger strong marks — already denser */
   .weightStrong {
+    height: 4.5rem;
     max-width: 11.5rem;
-    max-height: 4.5rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .viewport {
+    -webkit-mask-image: none;
     mask-image: none;
     overflow: visible;
   }
@@ -150,6 +159,7 @@
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
+    will-change: auto;
   }
 
   /* Hide duplicated sequence — show a single static centered row */
