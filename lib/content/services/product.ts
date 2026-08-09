@@ -44,7 +44,7 @@ export function getProductCommunicationContent(
             title: "Product Photography",
             description:
               "Professional imagery for websites, catalogues, online shops and campaigns.",
-            href: paths.references,
+            href: paths.work,
             icon: "product-photo",
           },
           {
@@ -52,7 +52,7 @@ export function getProductCommunicationContent(
             title: "Product Videos",
             description:
               "Present products with emotion, clarity and impact.",
-            href: paths.references,
+            href: paths.work,
             icon: "product-film",
           },
           {
@@ -60,7 +60,7 @@ export function getProductCommunicationContent(
             title: "3D Visualization",
             description:
               "Ideal for products still under development or difficult to photograph.",
-            href: paths.references,
+            href: paths.work,
             icon: "viz3d",
           },
           {
@@ -68,7 +68,7 @@ export function getProductCommunicationContent(
             title: "3D Animation",
             description:
               "Explain complex technology with simple and engaging visual storytelling.",
-            href: paths.references,
+            href: paths.work,
             icon: "animation",
           },
         ],
@@ -77,7 +77,7 @@ export function getProductCommunicationContent(
         label: "Showreel",
         headline: "Details that convince",
         body: "Precision made visible — product stories in photography, film and 3D.",
-        cta: { label: "Watch showreel", href: paths.references },
+        cta: { label: "Watch showreel", href: paths.work },
         media: {
           src: "/images/product/Industriefilm.jpg",
           alt: "Product film production still",
@@ -88,13 +88,13 @@ export function getProductCommunicationContent(
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
-        viewAll: { label: "View all projects", href: paths.references },
+        viewAll: { label: "View all projects", href: paths.work },
         items: [
           {
             id: "prod-1",
             title: "Product Communication",
             category: "Product Photography",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/product/Produktfotografie-scaled.jpg",
               alt: "Product photography project",
@@ -107,7 +107,7 @@ export function getProductCommunicationContent(
             id: "prod-2",
             title: "Product Communication",
             category: "Product Film",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/product/certina1.jpg",
               alt: "Product film project",
@@ -120,7 +120,7 @@ export function getProductCommunicationContent(
             id: "prod-3",
             title: "Product Communication",
             category: "3D Visualization",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/product/3D-Animation01.jpg",
               alt: "3D product visualization",
@@ -133,7 +133,7 @@ export function getProductCommunicationContent(
             id: "prod-4",
             title: "Product Communication",
             category: "Product Photography",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/product/Uhren_3-c83cc10e.jpg",
               alt: "Product still life",
@@ -205,7 +205,7 @@ export function getProductCommunicationContent(
           title: "Produktfotografie",
           description:
             "Professionelle Bilder für Websites, Kataloge, Onlineshops und Marketingkampagnen.",
-          href: paths.references,
+          href: paths.work,
           icon: "product-photo",
         },
         {
@@ -213,7 +213,7 @@ export function getProductCommunicationContent(
           title: "Produktfilme",
           description:
             "Produkte in Bewegung – emotional, informativ und überzeugend.",
-          href: paths.references,
+          href: paths.work,
           icon: "product-film",
         },
         {
@@ -221,7 +221,7 @@ export function getProductCommunicationContent(
           title: "3D-Visualisierungen",
           description:
             "Perfekt für Produkte, die noch in Entwicklung sind oder sich mit klassischer Fotografie nicht optimal darstellen lassen.",
-          href: paths.references,
+          href: paths.work,
           icon: "viz3d",
         },
         {
@@ -229,7 +229,7 @@ export function getProductCommunicationContent(
           title: "3D-Animationen",
           description:
             "Komplexe Funktionen und technische Abläufe verständlich erklärt.",
-          href: paths.references,
+          href: paths.work,
           icon: "animation",
         },
       ],
@@ -238,7 +238,7 @@ export function getProductCommunicationContent(
       label: "Showreel",
       headline: "Details, die überzeugen",
       body: "Präzision sichtbar machen — Produktgeschichten in Fotografie, Film und 3D.",
-      cta: { label: "Showreel ansehen", href: paths.references },
+      cta: { label: "Showreel ansehen", href: paths.work },
       media: {
         src: "/images/product/Industriefilm.jpg",
         alt: "Produktfilm-Produktion",
@@ -249,13 +249,13 @@ export function getProductCommunicationContent(
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
-      viewAll: { label: "Alle Projekte ansehen", href: paths.references },
+      viewAll: { label: "Alle Projekte ansehen", href: paths.work },
       items: [
         {
           id: "prod-1",
           title: "Product Communication",
           category: "Produktfotografie",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/product/Produktfotografie-scaled.jpg",
             alt: "Produktfotografie-Projekt",
@@ -268,7 +268,7 @@ export function getProductCommunicationContent(
           id: "prod-2",
           title: "Product Communication",
           category: "Produktfilm",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/product/certina1.jpg",
             alt: "Produktfilm-Projekt",
@@ -281,7 +281,7 @@ export function getProductCommunicationContent(
           id: "prod-3",
           title: "Product Communication",
           category: "3D-Visualisierung",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/product/3D-Animation01.jpg",
             alt: "3D-Produktvisualisierung",
@@ -294,7 +294,7 @@ export function getProductCommunicationContent(
           id: "prod-4",
           title: "Product Communication",
           category: "Produktfotografie",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/product/Uhren_3-c83cc10e.jpg",
             alt: "Produktstillleben",

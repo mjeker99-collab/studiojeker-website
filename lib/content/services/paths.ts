@@ -5,7 +5,7 @@ import type { ServicePageSlug } from "@/types/service-page";
 export function getServicePaths(locale: Locale) {
   return {
     contact: localizePathname("/contact", locale),
-    references: localizePathname("/references", locale),
+    work: localizePathname("/work", locale),
     about: localizePathname("/about", locale),
     /** Abo landing remains under /solutions until that page is built. */
     abo: localizePathname("/solutions/sichtbarkeit-im-abo", locale),

@@ -42,7 +42,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "Architectural Visualizations",
             description:
               "Photorealistic imagery for competitions, planning and marketing.",
-            href: paths.references,
+            href: paths.work,
             icon: "architecture",
           },
           {
@@ -50,7 +50,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "3D Animation",
             description:
               "Engaging animations that communicate architecture with emotion.",
-            href: paths.references,
+            href: paths.work,
             icon: "animation",
           },
           {
@@ -58,14 +58,14 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "Drone Footage",
             description:
               "Professional aerial imagery for architecture and real estate.",
-            href: paths.references,
+            href: paths.work,
             icon: "drone",
           },
           {
             id: "tours",
             title: "Virtual Tours",
             description: "Allow clients to experience projects from anywhere.",
-            href: paths.references,
+            href: paths.work,
             icon: "tour",
           },
         ],
@@ -74,7 +74,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         label: "Showreel",
         headline: "Spaces that inspire",
         body: "From first vision to marketing — architecture made visible before it is built.",
-        cta: { label: "Watch showreel", href: paths.references },
+        cta: { label: "Watch showreel", href: paths.work },
         media: {
           src: "/images/architecture/Architekturvisualisierung.jpg",
           alt: "Architectural visualization showreel still",
@@ -85,13 +85,13 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
-        viewAll: { label: "View all projects", href: paths.references },
+        viewAll: { label: "View all projects", href: paths.work },
         items: [
           {
             id: "arch-1",
             title: "Architecture",
             category: "Visualization",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/architecture/v5_02_korr.jpg",
               alt: "Architecture project visual",
@@ -104,7 +104,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             id: "arch-2",
             title: "Architecture",
             category: "3D Animation",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/architecture/3D_2.jpg",
               alt: "3D architecture project visual",
@@ -117,7 +117,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             id: "arch-3",
             title: "Architecture",
             category: "Real Estate",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/architecture/troesch4.jpg",
               alt: "Real estate project visual",
@@ -130,7 +130,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             id: "arch-4",
             title: "Architecture",
             category: "Visualization",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/architecture/IMG_9915.jpg",
               alt: "Architecture photography visual",
@@ -201,7 +201,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "Architekturvisualisierungen",
           description:
             "Fotorealistische Bilder für Wettbewerbe, Baueingaben und Vermarktung.",
-          href: paths.references,
+          href: paths.work,
           icon: "architecture",
         },
         {
@@ -209,7 +209,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "3D-Animationen",
           description:
             "Beeindruckende Filme, welche Architektur verständlich und emotional präsentieren.",
-          href: paths.references,
+          href: paths.work,
           icon: "animation",
         },
         {
@@ -217,14 +217,14 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "Drohnenaufnahmen",
           description:
             "Professionelle Luftaufnahmen für Architektur, Immobilien und Bauprojekte.",
-          href: paths.references,
+          href: paths.work,
           icon: "drone",
         },
         {
           id: "tours",
           title: "Virtuelle Rundgänge",
           description: "Immobilien digital erleben – jederzeit und überall.",
-          href: paths.references,
+          href: paths.work,
           icon: "tour",
         },
       ],
@@ -233,7 +233,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
       label: "Showreel",
       headline: "Räume, die begeistern",
       body: "Von der ersten Vision bis zur Vermarktung — Architektur sichtbar, bevor sie gebaut wird.",
-      cta: { label: "Showreel ansehen", href: paths.references },
+      cta: { label: "Showreel ansehen", href: paths.work },
       media: {
         src: "/images/architecture/Architekturvisualisierung.jpg",
         alt: "Architekturvisualisierung Showreel",
@@ -244,13 +244,13 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
-      viewAll: { label: "Alle Projekte ansehen", href: paths.references },
+      viewAll: { label: "Alle Projekte ansehen", href: paths.work },
       items: [
         {
           id: "arch-1",
           title: "Architecture",
           category: "Visualisierung",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/architecture/v5_02_korr.jpg",
             alt: "Architektur-Projektvisual",
@@ -263,7 +263,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           id: "arch-2",
           title: "Architecture",
           category: "3D-Animation",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/architecture/3D_2.jpg",
             alt: "3D-Architektur-Projektvisual",
@@ -276,7 +276,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           id: "arch-3",
           title: "Architecture",
           category: "Immobilien",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/architecture/troesch4.jpg",
             alt: "Immobilien-Projektvisual",
@@ -289,7 +289,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           id: "arch-4",
           title: "Architecture",
           category: "Visualisierung",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/architecture/IMG_9915.jpg",
             alt: "Architekturfotografie-Visual",

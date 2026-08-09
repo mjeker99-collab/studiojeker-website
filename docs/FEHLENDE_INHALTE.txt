@@ -5,10 +5,10 @@ Stand: Branch cursor/homepage-phase-2-0079
 
 1. SEITEN (VERLINKT, NOCH NICHT GEBAUT)
 --------------------------------------
-About                          /about  |  /en/about
-Work / Referenzen              /references  |  /en/references
-Projekt-Detail / Case Study    /references/[slug]
-Kontakt                        /contact  |  /en/contact
+About                          /about  |  /en/about  (destination page live; full Team mockup pending approved portraits)
+Work                           /work  |  /en/work  (overview live; project detail pages pending)
+Projekt-Detail / Case Study    /work/[slug] (not built)
+Kontakt                        /contact  |  /en/contact  (form + verified contact links live)
 Sichtbarkeit im Abo            /solutions/sichtbarkeit-im-abo
 Insights                       /insights  (IA reserviert, kein Inhalt)
 Impressum                      /impressum

@@ -1,6 +1,6 @@
 import type { Dictionary, Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
-import { getPrimaryNav } from "@/lib/i18n/navigation";
+import { getFooterNav, getServiceNavLinks } from "@/lib/i18n/navigation";
 import { Container } from "@/components/layout/Container";
 import { TextLink } from "@/components/ui/TextLink";
 import styles from "./Footer.module.css";
@@ -11,33 +11,14 @@ type FooterProps = {
 };
 
 export function Footer({ locale, dictionary }: FooterProps) {
-  const items = getPrimaryNav(locale);
+  const items = getFooterNav(locale);
+  const serviceLinks = getServiceNavLinks(locale, dictionary);
   const labels = {
     about: dictionary.nav.about,
-    services: dictionary.nav.services,
     work: dictionary.nav.work,
     insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
-
-  const serviceLinks = [
-    {
-      label: dictionary.footer.businessCommunication,
-      href: localizePathname("/services/business-communication", locale),
-    },
-    {
-      label: dictionary.footer.productCommunication,
-      href: localizePathname("/services/product-communication", locale),
-    },
-    {
-      label: dictionary.footer.architecture,
-      href: localizePathname("/services/architecture", locale),
-    },
-    {
-      label: dictionary.footer.digitalMarketing,
-      href: localizePathname("/services/digital-marketing", locale),
-    },
-  ];
 
   const legalLinks = [
     {
@@ -63,13 +44,15 @@ export function Footer({ locale, dictionary }: FooterProps) {
             <div>
               <h2 className={styles.columnTitle}>{dictionary.footer.navigation}</h2>
               <ul className={styles.list}>
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <TextLink href={item.href} inverse>
-                      {labels[item.id]}
-                    </TextLink>
-                  </li>
-                ))}
+                {items.map((item) =>
+                  item.href ? (
+                    <li key={item.id}>
+                      <TextLink href={item.href} inverse>
+                        {labels[item.id as keyof typeof labels]}
+                      </TextLink>
+                    </li>
+                  ) : null,
+                )}
               </ul>
             </div>
 

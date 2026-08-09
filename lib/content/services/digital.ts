@@ -53,7 +53,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             title: "Content Production",
             description:
               "Photography, video, reels and copy — produced for digital channels.",
-            href: paths.references,
+            href: paths.work,
             icon: "content",
           },
           {
@@ -61,7 +61,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             title: "Social Media",
             description:
               "Publishing and presence on LinkedIn, Instagram and further platforms.",
-            href: paths.references,
+            href: paths.work,
             icon: "social",
           },
           {
@@ -78,7 +78,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         label: "Showreel",
         headline: "Content that stays present",
         body: "From idea to distribution — content that builds reach and relevance over time.",
-        cta: { label: "Watch showreel", href: paths.references },
+        cta: { label: "Watch showreel", href: paths.work },
         media: {
           src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
           alt: "Content production showreel still",
@@ -89,13 +89,13 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
-        viewAll: { label: "View all projects", href: paths.references },
+        viewAll: { label: "View all projects", href: paths.work },
         items: [
           {
             id: "dig-1",
             title: "Digital Marketing",
             category: "Content",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/Social marketing/Social marketing/PHOTO-2023-05-11-15-00-27.jpg",
               alt: "Content marketing project visual",
@@ -108,7 +108,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             id: "dig-2",
             title: "Digital Marketing",
             category: "Social Media",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
               alt: "Social media project visual",
@@ -121,7 +121,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             id: "dig-3",
             title: "Digital Marketing",
             category: "Strategy",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/Social marketing/Social marketing/Screenshot-2022-11-04-104711-1.png",
               alt: "Digital strategy project visual",
@@ -212,7 +212,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           title: "Content-Produktion",
           description:
             "Fotografie, Video, Reels und Texte — produziert für digitale Kanäle.",
-          href: paths.references,
+          href: paths.work,
           icon: "content",
         },
         {
@@ -220,7 +220,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           title: "Social Media",
           description:
             "Publishing und Präsenz auf LinkedIn, Instagram und weiteren Plattformen.",
-          href: paths.references,
+          href: paths.work,
           icon: "social",
         },
         {
@@ -237,7 +237,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
       label: "Showreel",
       headline: "Content, der präsent bleibt",
       body: "Von der Idee bis zur Distribution — Inhalte, die Reichweite und Relevanz über die Zeit aufbauen.",
-      cta: { label: "Showreel ansehen", href: paths.references },
+      cta: { label: "Showreel ansehen", href: paths.work },
       media: {
         src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
         alt: "Content-Produktion Showreel",
@@ -248,13 +248,13 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
-      viewAll: { label: "Alle Projekte ansehen", href: paths.references },
+      viewAll: { label: "Alle Projekte ansehen", href: paths.work },
       items: [
         {
           id: "dig-1",
           title: "Digital Marketing",
           category: "Content",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/Social marketing/Social marketing/PHOTO-2023-05-11-15-00-27.jpg",
             alt: "Content-Marketing-Projektvisual",
@@ -267,7 +267,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           id: "dig-2",
           title: "Digital Marketing",
           category: "Social Media",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
             alt: "Social-Media-Projektvisual",
@@ -280,7 +280,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           id: "dig-3",
           title: "Digital Marketing",
           category: "Strategie",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/Social marketing/Social marketing/Screenshot-2022-11-04-104711-1.png",
             alt: "Digitale-Strategie-Projektvisual",

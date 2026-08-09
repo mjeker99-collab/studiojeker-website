@@ -1,0 +1,29 @@
+.section {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y);
+}
+
+.copy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.875rem, 3.4vw, 3.125rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.body p {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}

@@ -46,7 +46,7 @@ export function getBusinessCommunicationContent(
             title: "Corporate Films",
             description:
               "Authentic storytelling for companies and organisations.",
-            href: paths.references,
+            href: paths.work,
             icon: "film",
           },
           {
@@ -54,7 +54,7 @@ export function getBusinessCommunicationContent(
             title: "Business Portraits",
             description:
               "Professional portraits for executives, teams and employees.",
-            href: paths.references,
+            href: paths.work,
             icon: "portrait",
           },
           {
@@ -62,7 +62,7 @@ export function getBusinessCommunicationContent(
             title: "Reportage",
             description:
               "Real people. Real stories. For websites, recruitment and employer branding.",
-            href: paths.references,
+            href: paths.work,
             icon: "reportage",
           },
           {
@@ -70,7 +70,7 @@ export function getBusinessCommunicationContent(
             title: "Internal & Communication",
             description:
               "Consistent content for LinkedIn, Instagram, Facebook and other platforms.",
-            href: paths.references,
+            href: paths.work,
             icon: "internal",
           },
         ],
@@ -79,7 +79,7 @@ export function getBusinessCommunicationContent(
         label: "Showreel",
         headline: "Stories that move",
         body: "Moving images are our passion. Discover a selection of recent business communication projects.",
-        cta: { label: "Watch showreel", href: paths.references },
+        cta: { label: "Watch showreel", href: paths.work },
         media: {
           src: "/images/business/Hamilton_Services3861-1d4705bb.jpg",
           alt: "Behind the scenes of a Studiojeker film production",
@@ -90,13 +90,13 @@ export function getBusinessCommunicationContent(
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
-        viewAll: { label: "View all projects", href: paths.references },
+        viewAll: { label: "View all projects", href: paths.work },
         items: [
           {
             id: "biz-1",
             title: "Business Communication",
             category: "Corporate Film",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/business/Business_1-03e4abec.jpg",
               alt: "Business Communication project visual",
@@ -109,7 +109,7 @@ export function getBusinessCommunicationContent(
             id: "biz-2",
             title: "Business Communication",
             category: "Business Portrait",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/business/Business_4-22cbf9b5.jpg",
               alt: "Business portrait project visual",
@@ -122,7 +122,7 @@ export function getBusinessCommunicationContent(
             id: "biz-3",
             title: "Business Communication",
             category: "Reportage",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/business/Reportage_21-d196d171.jpg",
               alt: "Reportage project visual",
@@ -135,7 +135,7 @@ export function getBusinessCommunicationContent(
             id: "biz-4",
             title: "Business Communication",
             category: "Corporate Film",
-            href: paths.references,
+            href: paths.work,
             image: {
               src: "/images/business/Reportage_9-cb3c2e4c.jpg",
               alt: "Corporate storytelling project visual",
@@ -207,7 +207,7 @@ export function getBusinessCommunicationContent(
           title: "Unternehmensfilme",
           description:
             "Authentische Filme, die Ihr Unternehmen, Ihre Kultur und Ihre Leistungen sichtbar machen.",
-          href: paths.references,
+          href: paths.work,
           icon: "film",
         },
         {
@@ -215,7 +215,7 @@ export function getBusinessCommunicationContent(
           title: "Businessporträts",
           description:
             "Professionelle Portraits für Geschäftsleitung, Mitarbeitende und Teams.",
-          href: paths.references,
+          href: paths.work,
           icon: "portrait",
         },
         {
@@ -223,7 +223,7 @@ export function getBusinessCommunicationContent(
           title: "Reportagen",
           description:
             "Echte Menschen. Echte Geschichten. Für Website, Recruiting und Employer Branding.",
-          href: paths.references,
+          href: paths.work,
           icon: "reportage",
         },
         {
@@ -231,7 +231,7 @@ export function getBusinessCommunicationContent(
           title: "Intern & Kommunikation",
           description:
             "Kontinuierlicher Content für LinkedIn, Instagram, Facebook und weitere Plattformen.",
-          href: paths.references,
+          href: paths.work,
           icon: "internal",
         },
       ],
@@ -240,7 +240,7 @@ export function getBusinessCommunicationContent(
       label: "Showreel",
       headline: "Stories, die bewegen",
       body: "Bewegtbild ist unsere Leidenschaft. Entdecken Sie eine Auswahl unserer Business-Communication-Projekte.",
-      cta: { label: "Showreel ansehen", href: paths.references },
+      cta: { label: "Showreel ansehen", href: paths.work },
       media: {
         src: "/images/business/Hamilton_Services3861-1d4705bb.jpg",
         alt: "Behind the scenes einer Studiojeker-Filmproduktion",
@@ -251,13 +251,13 @@ export function getBusinessCommunicationContent(
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
-      viewAll: { label: "Alle Projekte ansehen", href: paths.references },
+      viewAll: { label: "Alle Projekte ansehen", href: paths.work },
       items: [
         {
           id: "biz-1",
           title: "Business Communication",
           category: "Unternehmensfilm",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/business/Business_1-03e4abec.jpg",
             alt: "Business-Communication-Projektvisual",
@@ -270,7 +270,7 @@ export function getBusinessCommunicationContent(
           id: "biz-2",
           title: "Business Communication",
           category: "Businessporträt",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/business/Business_4-22cbf9b5.jpg",
             alt: "Businessporträt-Projektvisual",
@@ -283,7 +283,7 @@ export function getBusinessCommunicationContent(
           id: "biz-3",
           title: "Business Communication",
           category: "Reportage",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/business/Reportage_21-d196d171.jpg",
             alt: "Reportage-Projektvisual",
@@ -296,7 +296,7 @@ export function getBusinessCommunicationContent(
           id: "biz-4",
           title: "Business Communication",
           category: "Unternehmensfilm",
-          href: paths.references,
+          href: paths.work,
           image: {
             src: "/images/business/Reportage_9-cb3c2e4c.jpg",
             alt: "Corporate-Storytelling-Projektvisual",

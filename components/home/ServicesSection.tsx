@@ -30,11 +30,13 @@ export function ServicesSection({ content }: ServicesSectionProps) {
         <div className={styles.grid}>
           {content.items.map((item, index) => (
             <Reveal key={item.id} as="article" className={styles.card} delayMs={index * 70}>
-              <ServiceIcon id={item.id} />
-              <h3 className={styles.title}>{item.title}</h3>
-              <p className={styles.description}>{item.description}</p>
-              <Link href={item.href} className={styles.link} aria-label={item.title}>
-                <Arrow className={styles.arrow} />
+              <Link href={item.href} className={styles.cardLink} aria-label={item.title}>
+                <ServiceIcon id={item.id} />
+                <h3 className={styles.title}>{item.title}</h3>
+                <p className={styles.description}>{item.description}</p>
+                <span className={styles.link} aria-hidden="true">
+                  <Arrow className={styles.arrow} />
+                </span>
               </Link>
             </Reveal>
           ))}

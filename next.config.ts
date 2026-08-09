@@ -98,6 +98,27 @@ const nextConfig: NextConfig = {
         destination: "/en/services/digital-marketing",
         permanent: true,
       },
+      // Legacy Work / References URL → /work
+      {
+        source: "/references",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/en/references",
+        destination: "/en/work",
+        permanent: true,
+      },
+      {
+        source: "/references/:path*",
+        destination: "/work",
+        permanent: true,
+      },
+      {
+        source: "/en/references/:path*",
+        destination: "/en/work",
+        permanent: true,
+      },
     ];
   },
 };

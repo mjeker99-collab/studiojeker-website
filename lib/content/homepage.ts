@@ -10,7 +10,7 @@ import { getClientLogos } from "@/lib/content/clients";
  */
 export function getHomepageContent(locale: Locale): HomepageContent {
   const contact = localizePathname("/contact", locale);
-  const references = localizePathname("/references", locale);
+  const work = localizePathname("/work", locale);
   const about = localizePathname("/about", locale);
   const abo = localizePathname("/solutions/sichtbarkeit-im-abo", locale);
 
@@ -39,7 +39,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         body: [
           "We stage brands, products and architecture — visually strong, strategically considered, effectively executed.",
         ],
-        primaryCta: { label: "View our work", href: references },
+        primaryCta: { label: "View our work", href: work },
         media: {
           src: "/images/architecture/hero-villa-master.jpg",
           alt: "Architectural visualization by Studiojeker",
@@ -85,7 +85,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         label: "Showreel",
         headline: "Stories that move",
         body: "Moving images are our passion. Discover a selection of our latest projects.",
-        cta: { label: "Watch showreel", href: references },
+        cta: { label: "Watch showreel", href: work },
         media: {
           src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
           alt: "Film production at Studiojeker",
@@ -96,13 +96,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
-        viewAll: { label: "View all projects", href: references },
+        viewAll: { label: "View all projects", href: work },
         items: [
           {
             id: "placeholder-architecture",
             title: "[Project placeholder]",
             category: "Architecture",
-            href: references,
+            href: work,
             image: {
               src: "/images/architecture/v5_02_korr.jpg",
               alt: "Architecture project placeholder image",
@@ -115,7 +115,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             id: "placeholder-product",
             title: "[Project placeholder]",
             category: "Product Communication",
-            href: references,
+            href: work,
             image: {
               src: "/images/product/Watch_3-057ab44a.jpg",
               alt: "Product communication placeholder image",
@@ -128,7 +128,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             id: "placeholder-business",
             title: "[Project placeholder]",
             category: "Business Communication",
-            href: references,
+            href: work,
             image: {
               src: "/images/business/Business_3-e21f49d5.jpg",
               alt: "Business communication placeholder image",
@@ -141,7 +141,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
             id: "placeholder-digital",
             title: "[Project placeholder]",
             category: "Digital Marketing",
-            href: references,
+            href: work,
             image: {
               src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
               alt: "Digital marketing placeholder image",
@@ -228,7 +228,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       body: [
         "Wir inszenieren Marken, Produkte und Architektur – visuell stark, strategisch durchdacht, wirkungsvoll umgesetzt.",
       ],
-      primaryCta: { label: "Unsere Arbeit ansehen", href: references },
+      primaryCta: { label: "Unsere Arbeit ansehen", href: work },
       media: {
         src: "/images/architecture/hero-villa-master.jpg",
         alt: "Architekturvisualisierung von Studiojeker",
@@ -274,7 +274,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       label: "Showreel",
       headline: "Stories, die bewegen",
       body: "Bewegtbild ist unsere Leidenschaft. Entdecken Sie eine Auswahl unserer neuesten Projekte.",
-      cta: { label: "Showreel ansehen", href: references },
+      cta: { label: "Showreel ansehen", href: work },
       media: {
         src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
         alt: "Filmproduktion bei Studiojeker",
@@ -285,13 +285,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
-      viewAll: { label: "Alle Projekte ansehen", href: references },
+      viewAll: { label: "Alle Projekte ansehen", href: work },
       items: [
         {
           id: "placeholder-architecture",
           title: "[Projektplatzhalter]",
           category: "Architecture",
-          href: references,
+          href: work,
           image: {
             src: "/images/architecture/v5_02_korr.jpg",
             alt: "Platzhalterbild Architektur",
@@ -304,7 +304,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           id: "placeholder-product",
           title: "[Projektplatzhalter]",
           category: "Product Communication",
-          href: references,
+          href: work,
           image: {
             src: "/images/product/Watch_3-057ab44a.jpg",
             alt: "Platzhalterbild Product Communication",
@@ -317,7 +317,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           id: "placeholder-business",
           title: "[Projektplatzhalter]",
           category: "Business Communication",
-          href: references,
+          href: work,
           image: {
             src: "/images/business/Business_3-e21f49d5.jpg",
             alt: "Platzhalterbild Business Communication",
@@ -330,7 +330,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           id: "placeholder-digital",
           title: "[Projektplatzhalter]",
           category: "Digital Marketing",
-          href: references,
+          href: work,
           image: {
             src: "/images/Social marketing/Social marketing/Zofingen-0279-b9bf2eb3.jpg",
             alt: "Platzhalterbild Digital Marketing",

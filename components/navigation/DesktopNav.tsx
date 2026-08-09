@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import type { Dictionary, Locale } from "@/types/i18n";
 import { getPrimaryNav, getServiceNavLinks } from "@/lib/i18n/navigation";
 import { NavLink } from "@/components/navigation/NavLink";
@@ -10,7 +11,17 @@ type DesktopNavProps = {
   dictionary: Dictionary;
 };
 
+function isServicesPath(pathname: string): boolean {
+  return (
+    pathname === "/services" ||
+    pathname.startsWith("/services/") ||
+    pathname === "/en/services" ||
+    pathname.startsWith("/en/services/")
+  );
+}
+
 export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
+  const pathname = usePathname() || "/";
   const items = getPrimaryNav(locale);
   const serviceLinks = getServiceNavLinks(locale, dictionary);
   const labels = {
@@ -20,6 +31,7 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
     insights: dictionary.nav.insights,
     contact: dictionary.nav.contact,
   };
+  const servicesActive = isServicesPath(pathname);
 
   return (
     <nav aria-label={dictionary.nav.primaryNav}>
@@ -28,14 +40,21 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
           if (item.id === "services") {
             return (
               <li key={item.id} className={styles.menuItem}>
-                <NavLink
-                  href={item.href}
+                <button
+                  type="button"
                   className={styles.link}
-                  matchPrefix="/services"
+                  aria-haspopup="menu"
+                  aria-controls="desktop-services-submenu"
+                  aria-current={servicesActive ? "true" : undefined}
                 >
                   {labels.services}
-                </NavLink>
-                <ul className={styles.submenu} aria-label={labels.services}>
+                </button>
+                <ul
+                  id="desktop-services-submenu"
+                  className={styles.submenu}
+                  role="menu"
+                  aria-label={labels.services}
+                >
                   {serviceLinks.map((service) => (
                     <li key={service.id}>
                       <NavLink href={service.href} className={styles.sublink}>
@@ -46,6 +65,10 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
                 </ul>
               </li>
             );
+          }
+
+          if (!item.href) {
+            return null;
           }
 
           return (

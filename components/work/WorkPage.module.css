@@ -1,0 +1,31 @@
+.hero {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.copy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(1.875rem, 3.4vw, 3.125rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.text {
+  margin: 0;
+  max-width: 32rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 64rem) {
+  .hero {
+    padding-block: var(--section-padding-y);
+  }
+}

@@ -117,6 +117,10 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
               );
             }
 
+            if (!item.href) {
+              return null;
+            }
+
             return (
               <li key={item.id}>
                 <NavLink href={item.href} className={styles.link} onClick={handleClose}>
