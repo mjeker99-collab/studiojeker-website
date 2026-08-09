@@ -222,7 +222,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         ],
         network: {
           title: "Partner network",
-          body: "Specialists across photography, film, 3D and marketing — assembled per project.",
+          body: "For specialised tasks and larger productions we work with a trusted network of experienced partners.",
         },
       },
       facts: {
@@ -399,7 +399,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       ],
       network: {
         title: "Partner Netzwerk",
-        body: "Spezialist:innen in Fotografie, Film, 3D und Marketing — projektspezifisch eingesetzt.",
+        body: "Für spezialisierte Aufgaben und grössere Produktionen arbeiten wir mit einem eingespielten Netzwerk erfahrener Partner.",
       },
     },
     facts: {

@@ -101,7 +101,7 @@
 
 /* About-page density — homepage keeps default .section spacing above */
 .compact .copy {
-  padding-block: 2.5rem;
+  padding-block: 2rem;
 }
 
 .compact .mediaWrap,
@@ -118,7 +118,7 @@
 
 @media (min-width: 64rem) {
   .compact .copy {
-    padding-top: 3.25rem;
+    padding-top: 2.5rem;
     padding-bottom: 2.75rem;
   }
 

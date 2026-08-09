@@ -26,10 +26,16 @@
   filter: grayscale(1);
 }
 
-/* Values — same density as homepage ServicesSection compact */
+/* Coherent middle: Anspruch → Team → Facts (tight rhythm) */
+.middleStack {
+  display: grid;
+  gap: 0;
+}
+
+/* Values — tighter bottom into Team */
 .values {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  padding-block: var(--section-padding-y-compact) var(--space-4);
 }
 
 .sectionHeader {
@@ -61,10 +67,10 @@
   line-height: 1.5;
 }
 
-/* Team — compact 5-column editorial grid */
+/* Team — compact 5-column editorial grid, reduced vertical whitespace */
 .team {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  padding-block: var(--space-4) var(--space-3);
 }
 
 .teamHeader {
@@ -139,31 +145,34 @@
   color: rgb(0 0 0 / 72%);
 }
 
+/* Partner Netzwerk — secondary, inside Team (not a large section) */
 .network {
   display: grid;
-  gap: 0.35rem;
-  margin-top: var(--space-3);
+  gap: 0.25rem;
+  margin-top: var(--space-2);
   max-width: 28rem;
 }
 
 .networkTitle {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: rgb(0 0 0 / 62%);
 }
 
 .networkBody {
   margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.45;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgb(0 0 0 / 72%);
 }
 
-/* Facts — compact typography, homepage tokens, no color band */
+/* Facts — one compact typographic row, minimal whitespace */
 .facts {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  padding-block: var(--space-3) var(--space-4);
 }
 
 .factsGrid {
@@ -173,7 +182,7 @@
 
 .fact {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .factValue {
@@ -211,6 +220,7 @@
   .factsGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-5);
+    align-items: start;
   }
 }
 
@@ -220,15 +230,15 @@
   }
 
   .values {
-    padding-block: 3.25rem;
+    padding-block: 3.25rem var(--space-4);
   }
 
   .team {
-    padding-block: 3.25rem;
+    padding-block: var(--space-4) var(--space-3);
   }
 
   .facts {
-    padding-block: 3.25rem;
+    padding-block: var(--space-3) var(--space-4);
   }
 
   .teamGrid {

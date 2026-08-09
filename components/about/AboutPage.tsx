@@ -18,8 +18,8 @@ type AboutPageProps = {
 };
 
 /**
- * About page rebuilt from homepage visual system.
- * Homepage = master template. About mockup = content sequence.
+ * About page — homepage visual system.
+ * Middle stack: Anspruch → Team → Facts (compact, coherent).
  */
 export function AboutPage({ content }: AboutPageProps) {
   const headlineLines = content.hero.headline.split("\n").filter(Boolean);
@@ -83,111 +83,120 @@ export function AboutPage({ content }: AboutPageProps) {
         </div>
       </section>
 
-      <section
-        className={styles.values}
-        data-header-theme="light"
-        aria-labelledby="about-values-title"
-      >
-        <Container>
-          <Reveal className={styles.sectionHeader}>
-            <SectionLabel>{content.values.label}</SectionLabel>
-            <h2 id="about-values-title" className="visually-hidden">
-              {content.values.label}
-            </h2>
-          </Reveal>
-          <div className={styles.valuesGrid}>
-            {content.values.items.map((item, index) => (
-              <Reveal
-                key={item.id}
-                as="article"
-                className={styles.valueCard}
-                delayMs={index * 50}
-              >
-                <h3 className={styles.valueTitle}>{item.title}</h3>
-                <p className={styles.valueText}>{item.description}</p>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
+      {/* Coherent middle: Anspruch → Team → Facts */}
+      <div className={styles.middleStack}>
+        <section
+          className={styles.values}
+          data-header-theme="light"
+          aria-labelledby="about-values-title"
+        >
+          <Container>
+            <Reveal className={styles.sectionHeader}>
+              <SectionLabel>{content.values.label}</SectionLabel>
+              <h2 id="about-values-title" className="visually-hidden">
+                {content.values.label}
+              </h2>
+            </Reveal>
+            <div className={styles.valuesGrid}>
+              {content.values.items.map((item, index) => (
+                <Reveal
+                  key={item.id}
+                  as="article"
+                  className={styles.valueCard}
+                  delayMs={index * 50}
+                >
+                  <h3 className={styles.valueTitle}>{item.title}</h3>
+                  <p className={styles.valueText}>{item.description}</p>
+                </Reveal>
+              ))}
+            </div>
+          </Container>
+        </section>
 
-      <ServicesSection content={content.services} />
+        <section
+          id="team"
+          className={styles.team}
+          data-header-theme="light"
+          aria-labelledby="about-team-title"
+        >
+          <Container>
+            <Reveal className={styles.teamHeader}>
+              <SectionLabel>{content.team.label}</SectionLabel>
+              <h2 id="about-team-title" className={styles.teamHeadline}>
+                {content.team.headline}
+              </h2>
+              <p className={styles.teamIntro}>{content.team.introduction}</p>
+            </Reveal>
 
-      <section
-        id="team"
-        className={styles.team}
-        data-header-theme="light"
-        aria-labelledby="about-team-title"
-      >
-        <Container>
-          <Reveal className={styles.teamHeader}>
-            <SectionLabel>{content.team.label}</SectionLabel>
-            <h2 id="about-team-title" className={styles.teamHeadline}>
-              {content.team.headline}
-            </h2>
-            <p className={styles.teamIntro}>{content.team.introduction}</p>
-          </Reveal>
-
-          <ul className={styles.teamGrid}>
-            {content.team.members.map((member, index) => (
-              <Reveal
-                key={member.id}
-                as="li"
-                className={styles.member}
-                delayMs={index * 40}
-              >
-                {member.isPlaceholder || !member.image ? (
-                  <div
-                    className={styles.portraitPlaceholder}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <div className={styles.portrait}>
-                    <Image
-                      src={mediaPath(member.image.src)}
-                      alt={member.image.alt}
-                      fill
-                      sizes="120px"
-                      className={styles.portraitImage}
+            <ul className={styles.teamGrid}>
+              {content.team.members.map((member, index) => (
+                <Reveal
+                  key={member.id}
+                  as="li"
+                  className={styles.member}
+                  delayMs={index * 40}
+                >
+                  {member.isPlaceholder || !member.image ? (
+                    <div
+                      className={styles.portraitPlaceholder}
+                      aria-hidden="true"
                     />
+                  ) : (
+                    <div className={styles.portrait}>
+                      <Image
+                        src={mediaPath(member.image.src)}
+                        alt={member.image.alt}
+                        fill
+                        sizes="120px"
+                        className={styles.portraitImage}
+                      />
+                    </div>
+                  )}
+                  <div className={styles.memberMeta}>
+                    <p className={styles.memberName}>{member.name}</p>
+                    <p className={styles.memberRole}>{member.role}</p>
                   </div>
-                )}
-                <div className={styles.memberMeta}>
-                  <p className={styles.memberName}>{member.name}</p>
-                  <p className={styles.memberRole}>{member.role}</p>
-                </div>
-              </Reveal>
-            ))}
-          </ul>
+                </Reveal>
+              ))}
+            </ul>
 
-          <Reveal className={styles.network}>
-            <p className={styles.networkTitle}>{content.team.network.title}</p>
-            <p className={styles.networkBody}>{content.team.network.body}</p>
-          </Reveal>
-        </Container>
-      </section>
+            <Reveal className={styles.network}>
+              <p className={styles.networkTitle}>{content.team.network.title}</p>
+              <p className={styles.networkBody}>{content.team.network.body}</p>
+            </Reveal>
+          </Container>
+        </section>
 
-      <section
-        className={styles.facts}
-        data-header-theme="light"
-        aria-labelledby="about-facts-title"
-      >
-        <Container>
-          <h2 id="about-facts-title" className="visually-hidden">
-            Studiojeker
-          </h2>
-          <div className={styles.factsGrid}>
-            {content.facts.items.map((item, index) => (
-              <Reveal key={item.id} className={styles.fact} delayMs={index * 40}>
-                <p className={styles.factValue}>{item.value}</p>
-                <p className={styles.factLabel}>{item.label}</p>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
+        <section
+          className={styles.facts}
+          data-header-theme="light"
+          aria-labelledby="about-facts-title"
+        >
+          <Container>
+            <h2 id="about-facts-title" className="visually-hidden">
+              Studiojeker
+            </h2>
+            <div className={styles.factsGrid}>
+              {content.facts.items.map((item, index) => (
+                <Reveal
+                  key={item.id}
+                  className={styles.fact}
+                  delayMs={index * 40}
+                >
+                  <p className={styles.factValue}>{item.value}</p>
+                  <p className={styles.factLabel}>{item.label}</p>
+                </Reveal>
+              ))}
+            </div>
+          </Container>
+        </section>
+      </div>
 
       <AboutSection content={content.approach} compact />
+
+      {/* Service destinations retained; kept outside the compact middle stack */}
+      <ServicesSection content={content.services} />
+
       <ClientsSection content={content.clients} />
       <FinalCtaSection content={content.finalCta} />
     </>
