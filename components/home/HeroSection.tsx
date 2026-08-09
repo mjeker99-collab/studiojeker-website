@@ -35,7 +35,10 @@ export function HeroSection({ content }: HeroSectionProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={120}>
-          <CyanBar />
+          {/* Rail pads the bar down — intentional white gap above cyan */}
+          <div className={styles.cyanRail}>
+            <CyanBar />
+          </div>
           <div className={styles.media}>
             <Image
               src={mediaPath(content.media.src)}

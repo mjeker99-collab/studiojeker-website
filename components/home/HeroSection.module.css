@@ -1,6 +1,8 @@
 .section {
   position: relative;
   background: var(--color-white);
+  /* Clear the solid fixed header — hero/media begin below it */
+  padding-top: var(--header-height);
   /* Hero may approach viewport height intentionally */
   min-height: min(100svh, 52rem);
   overflow: hidden;
@@ -17,10 +19,8 @@
   align-content: center;
   gap: var(--space-3);
   max-width: 34rem;
-  padding:
-    calc(var(--header-height) + var(--space-3))
-    var(--container-padding-x)
-    var(--space-5);
+  /* Header offset is on .section — keep only content padding here */
+  padding: var(--space-3) var(--container-padding-x) var(--space-5);
 }
 
 .headline {
@@ -72,6 +72,23 @@
   align-self: stretch;
   height: 100%;
   min-height: 18rem;
+}
+
+/*
+ * Cyan starts below the top of the hero image (reference gap).
+ * Image column stays full-height; only the bar is inset from the top.
+ */
+.cyanRail {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding-top: clamp(4.5rem, 12vh, 7.25rem);
+  min-height: 100%;
+}
+
+.cyanRail > * {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .media {
