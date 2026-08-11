@@ -41,7 +41,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         ],
         primaryCta: { label: "View our work", href: work },
         media: {
-          src: "/images/architecture/hero-villa-master.jpg",
+          src: "/images/architecture/Architekturvisualisierung.jpg",
           alt: "Architectural visualization by Studiojeker",
           width: 1785,
           height: 977,
@@ -231,7 +231,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
       ],
       primaryCta: { label: "Unsere Arbeit ansehen", href: work },
       media: {
-        src: "/images/architecture/hero-villa-master.jpg",
+        src: "/images/architecture/Architekturvisualisierung.jpg",
         alt: "Architekturvisualisierung von Studiojeker",
         width: 1785,
         height: 977,
