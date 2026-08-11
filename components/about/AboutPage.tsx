@@ -135,46 +135,63 @@ export function AboutPage({ content }: AboutPageProps) {
             <div className={styles.mediaComposition}>
               <Reveal className={styles.studioMedia}>
                 <div className={styles.studioFrame}>
-                  <Image
-                    src={mediaPath(content.team.featureMedia.src)}
-                    alt={content.team.featureMedia.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 55vw"
-                    className={styles.studioImage}
-                  />
+                  {content.team.featureMedia.src ? (
+                    <Image
+                      src={mediaPath(content.team.featureMedia.src)}
+                      alt={content.team.featureMedia.alt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 50vw"
+                      className={styles.studioImage}
+                    />
+                  ) : (
+                    <div className={styles.studioPlaceholder} aria-hidden="true" />
+                  )}
                 </div>
               </Reveal>
 
               <ul className={styles.portraitGrid}>
-                {content.team.members.map((member, index) => (
-                  <Reveal
-                    key={member.id}
-                    as="li"
-                    className={styles.member}
-                    delayMs={40 + index * 40}
-                  >
-                    {member.isPlaceholder || !member.image ? (
-                      <div
-                        className={styles.portraitPlaceholder}
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <div className={styles.portrait}>
-                        <Image
-                          src={mediaPath(member.image.src)}
-                          alt={member.image.alt}
-                          fill
-                          sizes="(max-width: 480px) 45vw, 160px"
-                          className={styles.portraitImage}
+                {content.team.members.map((member, index) => {
+                  const isSlot = Boolean(member.isPlaceholder || !member.image);
+                  const hasMeta = Boolean(member.name || member.role);
+
+                  return (
+                    <Reveal
+                      key={member.id}
+                      as="li"
+                      className={styles.member}
+                      delayMs={40 + index * 40}
+                    >
+                      {isSlot ? (
+                        <div
+                          className={styles.portraitPlaceholder}
+                          aria-hidden="true"
                         />
-                      </div>
-                    )}
-                    <div className={styles.memberMeta}>
-                      <p className={styles.memberName}>{member.name}</p>
-                      <p className={styles.memberRole}>{member.role}</p>
-                    </div>
-                  </Reveal>
-                ))}
+                      ) : (
+                        <div className={styles.portrait}>
+                          <Image
+                            src={mediaPath(member.image!.src)}
+                            alt={member.image!.alt}
+                            fill
+                            sizes="(max-width: 480px) 45vw, (max-width: 1024px) 22vw, 14vw"
+                            className={styles.portraitImage}
+                          />
+                        </div>
+                      )}
+                      {hasMeta ? (
+                        <div className={styles.memberMeta}>
+                          {member.name ? (
+                            <p className={styles.memberName}>{member.name}</p>
+                          ) : null}
+                          {member.role ? (
+                            <p className={styles.memberRole}>{member.role}</p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className={styles.memberMetaSpacer} aria-hidden="true" />
+                      )}
+                    </Reveal>
+                  );
+                })}
               </ul>
             </div>
           </Container>

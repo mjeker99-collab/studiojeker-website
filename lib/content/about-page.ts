@@ -181,8 +181,8 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         headline: "People behind the work.",
         introduction:
           "Studiojeker works with a focused team and a trusted network of specialists.",
-        placeholderLabel: "Team member",
-        placeholderRole: "Name / role to follow",
+        placeholderLabel: "",
+        placeholderRole: "",
         members: [
           {
             id: "martin",
@@ -206,22 +206,17 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
               height: 1080,
             },
           },
+          /* Neutral visual slots only — no invented names/roles. */
           {
-            id: "placeholder-1",
-            name: "Team member",
-            role: "Name / role to follow",
+            id: "slot-1",
+            name: "",
+            role: "",
             isPlaceholder: true,
           },
           {
-            id: "placeholder-2",
-            name: "Team member",
-            role: "Name / role to follow",
-            isPlaceholder: true,
-          },
-          {
-            id: "placeholder-3",
-            name: "Team member",
-            role: "Name / role to follow",
+            id: "slot-2",
+            name: "",
+            role: "",
             isPlaceholder: true,
           },
         ],
@@ -236,7 +231,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         items: [
           {
             id: "since",
-            value: "Since 1992",
+            value: "1992",
             label: "Visual communication",
           },
           {
@@ -245,14 +240,14 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             label: "Photography · Film · 3D · Design · Marketing",
           },
           {
-            id: "partner",
-            value: "1 contact person",
-            label: "From strategy to delivery",
-          },
-          {
             id: "network",
             value: "Partner network",
             label: "Specialists for larger and specific productions.",
+          },
+          {
+            id: "partner",
+            value: "1 contact person",
+            label: "From strategy to delivery",
           },
         ],
       },
@@ -365,8 +360,8 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       headline: "Die Menschen hinter der Arbeit.",
       introduction:
         "Studiojeker arbeitet mit einem fokussierten Team und einem Netzwerk spezialisierter Partner.",
-      placeholderLabel: "Teammitglied",
-      placeholderRole: "Name / Funktion folgt",
+      placeholderLabel: "",
+      placeholderRole: "",
       members: [
         {
           id: "martin",
@@ -390,22 +385,17 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             height: 1080,
           },
         },
+        /* Neutrale Bildflächen — keine erfundenen Namen/Rollen. */
         {
-          id: "placeholder-1",
-          name: "Teammitglied",
-          role: "Name / Funktion folgt",
+          id: "slot-1",
+          name: "",
+          role: "",
           isPlaceholder: true,
         },
         {
-          id: "placeholder-2",
-          name: "Teammitglied",
-          role: "Name / Funktion folgt",
-          isPlaceholder: true,
-        },
-        {
-          id: "placeholder-3",
-          name: "Teammitglied",
-          role: "Name / Funktion folgt",
+          id: "slot-2",
+          name: "",
+          role: "",
           isPlaceholder: true,
         },
       ],
@@ -420,7 +410,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
       items: [
         {
           id: "since",
-          value: "Seit 1992",
+          value: "1992",
           label: "Visuelle Kommunikation",
         },
         {
@@ -429,14 +419,14 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           label: "Fotografie · Film · 3D · Design · Marketing",
         },
         {
-          id: "partner",
-          value: "1 Ansprechpartner",
-          label: "Von Strategie bis Umsetzung",
-        },
-        {
           id: "network",
           value: "Partnernetzwerk",
           label: "Spezialist:innen für grössere und spezifische Produktionen.",
+        },
+        {
+          id: "partner",
+          value: "1 Ansprechpartner",
+          label: "Von Strategie bis Umsetzung",
         },
       ],
     },
