@@ -167,7 +167,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
       finalCta: {
         headlineBefore: "Start your ",
         headlineAccent: "visibility",
-        headlineAfter: " journey.",
+        headlineAfter: ".",
         text: "We look forward to building consistent presence with you.",
         cta: { label: "Get in touch", href: paths.contact },
       },

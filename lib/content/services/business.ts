@@ -22,8 +22,8 @@ export function getBusinessCommunicationContent(
       },
       hero: {
         label: "Business Communication",
-        headline: "People build trust. Communication builds relationships",
-        headlineAccent: ".",
+        headline: "Show people. Build trust. Strengthen relationships.",
+        headlineAccent: "",
         subheadline:
           "Authentic communication for businesses, organisations and brands.",
         body: [
@@ -166,9 +166,9 @@ export function getBusinessCommunicationContent(
       },
       clients: { label: clientsLabel, logos: getClientLogos() },
       finalCta: {
-        headlineBefore: "Let's create ",
-        headlineAccent: "visibility",
-        headlineAfter: " together.",
+        headlineBefore: "Visibility starts with a ",
+        headlineAccent: "conversation",
+        headlineAfter: ".",
         text: "Let's talk about your organisation, your goals and how we can help you communicate with clarity and confidence.",
         cta: { label: "Get in touch", href: paths.contact },
       },
@@ -184,8 +184,8 @@ export function getBusinessCommunicationContent(
     },
     hero: {
       label: "Business Communication",
-      headline: "Menschen schaffen Vertrauen. Kommunikation schafft Beziehungen",
-      headlineAccent: ".",
+      headline: "Menschen zeigen. Vertrauen schaffen. Beziehungen stärken.",
+      headlineAccent: "",
       subheadline:
         "Authentische Unternehmenskommunikation für Unternehmen, Organisationen und Marken.",
       body: [

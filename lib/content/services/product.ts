@@ -26,7 +26,8 @@ export function getProductCommunicationContent(
         subheadline:
           "We create visual communication that explains products, builds trust and supports sales.",
         body: [
-          "Whether you are launching a new product, explaining complex technology or strengthening your brand, we create photography, video and 3D content that helps customers understand and value your products.",
+          "Whether you are launching a new product, explaining complex technology or strengthening your brand – we help you make your product’s strengths visible.",
+          "With professional product photography, product films, 3D visualizations and animations, we create content that engages and persuades.",
         ],
         primaryCta: { label: "Let's talk", href: paths.contact },
         media: {

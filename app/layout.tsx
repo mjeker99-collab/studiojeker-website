@@ -27,6 +27,10 @@ export const metadata: Metadata = {
   applicationName: siteConfig.name,
 };
 
+/**
+ * Default document language is DE (master site).
+ * `/en` routes set `lang="en"` via English layout + DocumentLang.
+ */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="de" className={`${inter.variable} ${manrope.variable}`}>

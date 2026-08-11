@@ -2,8 +2,17 @@ import type { ReactNode } from "react";
 
 /**
  * English segment layout.
- * Keeps `/en` routing explicit for future English pages.
+ * Sets document language early for EN routes without changing DE SSR.
  */
 export default function EnglishLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.lang="en";`,
+        }}
+      />
+      {children}
+    </>
+  );
 }
