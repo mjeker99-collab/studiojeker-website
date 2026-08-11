@@ -1,7 +1,7 @@
 /**
  * About page — homepage visual system.
  * Team media: one editorial composition (large image + portrait grid).
- * No grey rules / gradients / shadows.
+ * No grey rules / gradients / shadows / CSS grayscale.
  */
 
 /*
@@ -18,10 +18,6 @@
 .heroCopy {
   padding-top: var(--space-3);
   padding-bottom: var(--space-4);
-}
-
-.heroImage {
-  filter: grayscale(1);
 }
 
 .middleStack {
@@ -93,9 +89,10 @@
 }
 
 /*
- * Media composition — one visual block.
- * Mobile: studio image → portraits.
- * Desktop: studio (left ~52%) ≈ portrait grid height (right ~48%).
+ * Shared team media grid — left studio + right portraits.
+ * Desktop: one row, align-items stretch; left fills exact right height.
+ * Portrait grid is the height authority (intrinsic aspect ratios).
+ * Left image must NOT set an independent taller min-height/aspect-ratio.
  */
 .mediaComposition {
   display: grid;
@@ -106,12 +103,14 @@
 .studioMedia {
   min-width: 0;
   min-height: 0;
+  height: 100%;
 }
 
 .studioFrame {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 2;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--color-neutral);
 }
@@ -119,7 +118,7 @@
 .studioImage {
   object-fit: cover;
   object-position: center;
-  filter: grayscale(1);
+  /* Original colour — no CSS desaturation */
 }
 
 .studioPlaceholder {
@@ -160,7 +159,7 @@
 .portraitImage {
   object-fit: cover;
   object-position: center top;
-  filter: grayscale(1);
+  /* Original colour — no CSS desaturation */
 }
 
 .memberMeta {
@@ -240,41 +239,40 @@
   .mediaComposition {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     gap: var(--space-2);
-    /* Shared block height so left image matches right grid */
-    grid-auto-rows: 1fr;
+    align-items: stretch;
   }
 
+  /*
+   * Reveal wrappers can break stretch; force media column to fill
+   * the shared row height defined by the portrait grid.
+   */
   .studioMedia {
-    display: flex;
+    display: grid;
+    align-self: stretch;
     height: 100%;
+    min-height: 0;
   }
 
   .studioFrame {
-    aspect-ratio: auto;
-    flex: 1 1 auto;
+    position: relative;
+    width: 100%;
     height: 100%;
-    min-height: 26rem;
+    min-height: 0;
+    aspect-ratio: auto;
   }
 
   .portraitGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem 0.65rem;
-    height: 100%;
-    align-content: stretch;
-  }
-
-  .member {
-    height: 100%;
+    gap: 0.65rem;
+    height: auto;
+    align-content: start;
+    align-self: start;
   }
 
   .portrait,
   .portraitPlaceholder {
-    flex: 1 1 auto;
-    aspect-ratio: auto;
-    min-height: 0;
-    /* Fill remaining cell height under the meta line */
-    align-self: stretch;
+    aspect-ratio: 4 / 5;
+    flex: 0 0 auto;
   }
 
   .factsGrid {
@@ -306,10 +304,6 @@
     gap: 0.75rem;
   }
 
-  .studioFrame {
-    min-height: 30rem;
-  }
-
   .portraitGrid {
     gap: 0.75rem;
   }
@@ -327,12 +321,7 @@
   }
 }
 
-/* Tablet portrait: keep 2-col composition if space allows, tighten */
 @media (min-width: 48rem) and (max-width: 63.9375rem) {
-  .studioFrame {
-    min-height: 24rem;
-  }
-
   .memberName {
     font-size: 0.75rem;
   }
@@ -355,8 +344,15 @@
     padding-block: var(--space-3) var(--space-2);
   }
 
+  /* Mobile: studio image stacks above portraits with own ratio */
+  .studioMedia {
+    height: auto;
+  }
+
   .studioFrame {
     aspect-ratio: 3 / 2;
+    height: auto;
+    min-height: 0;
   }
 
   .facts {

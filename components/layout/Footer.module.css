@@ -2,66 +2,99 @@
   /* Explicit black to avoid any edge-case variable resolution issues. */
   background: #000;
   color: var(--color-white);
-  padding-block: var(--space-7);
+  /* --space-7 is undefined in tokens; keep compact footer padding. */
+  padding-block: var(--space-6);
   width: 100%;
+
+  /* Three typographic levels — scoped to footer only */
+  --footer-heading-size: 0.75rem; /* 12px */
+  --footer-heading-line: 1.25;
+  --footer-heading-tracking: 0.08em;
+  --footer-heading-gap: 0.75rem; /* identical heading → content */
+
+  --footer-content-size: 0.875rem; /* 14px */
+  --footer-content-line: 1.5;
+  --footer-content-gap: 0.35rem;
+
+  --footer-meta-size: 0.75rem; /* 12px */
+  --footer-meta-line: 1.4;
 }
 
 .grid {
   display: grid;
   gap: var(--space-5);
+  align-items: start;
 }
 
-.brandColumn {
-  display: grid;
-  gap: var(--space-2);
-  align-content: start;
+/* Shared column system — identical top edge and heading rhythm */
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
-.columnTitle {
-  margin: 0 0 var(--space-2);
-  font-size: 0.75rem;
+.heading {
+  margin: 0 0 var(--footer-heading-gap);
+  padding: 0;
+  font-size: var(--footer-heading-size);
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.08em;
+  line-height: var(--footer-heading-line);
+  letter-spacing: var(--footer-heading-tracking);
   text-transform: uppercase;
   color: var(--color-silver);
 }
 
-.address {
-  display: grid;
-  gap: 0.15rem;
+.columnBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Level 2 — address, phone, email, service + nav links */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--footer-content-gap);
   margin: 0;
+  padding: 0;
   font-style: normal;
-  font-size: 0.9375rem;
-  line-height: 1.45;
+  font-size: var(--footer-content-size);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--footer-content-line);
   color: var(--color-white);
 }
 
-.addressLine {
+.contentLine {
   display: block;
 }
 
-.contactList {
-  display: grid;
-  gap: 0.35rem;
-  margin: var(--space-1) 0 0;
+.contentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--footer-content-gap);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.contactLink {
+.contentLink {
+  font-size: var(--footer-content-size);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--footer-content-line);
   color: var(--color-white);
-  font-size: 0.9375rem;
   text-decoration: none;
 }
 
-.contactLink:hover,
-.contactLink:focus-visible {
+.contentLink:hover,
+.contentLink:focus-visible {
   color: var(--color-cyan);
   text-decoration: none;
 }
 
 .footer a {
-  color: var(--color-white);
   text-decoration: none;
 }
 
@@ -71,20 +104,8 @@
   text-decoration: none;
 }
 
-.columns {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.list {
-  display: grid;
-  gap: 0.55rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bottom {
+/* Level 3 — copyright / legal */
+.meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -93,11 +114,17 @@
   margin-top: var(--space-5);
   padding-top: var(--space-3);
   border-top: 1px solid rgb(255 255 255 / 12%);
-  color: var(--color-silver);
-  font-size: 0.875rem;
 }
 
-.bottomLegal {
+.metaText,
+.metaLink {
+  font-size: var(--footer-meta-size);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--footer-meta-line);
+  color: var(--color-silver);
+}
+
+.metaList {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
@@ -106,36 +133,35 @@
   list-style: none;
 }
 
-.bottomLink {
-  font-size: 0.875rem;
+.meta a {
   color: var(--color-silver);
 }
 
+.meta a:hover,
+.meta a:focus-visible {
+  color: var(--color-cyan);
+}
+
 @media (min-width: 40rem) {
-  .columns {
+  .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
   }
 }
 
 @media (min-width: 48rem) {
   .grid {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.85fr);
-    align-items: start;
-    gap: var(--space-6);
-  }
-
-  .columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
   }
 }
 
 @media (min-width: 64rem) {
   .footer {
-    padding-block: var(--space-8);
+    padding-block: var(--space-6) var(--space-8);
   }
 
   .grid {
-    gap: var(--space-8);
+    gap: var(--space-6);
   }
 }

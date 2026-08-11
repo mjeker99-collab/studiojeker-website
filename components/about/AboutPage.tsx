@@ -7,7 +7,6 @@ import { FinalCtaSection } from "@/components/home/FinalCtaSection";
 import { ServicesSection } from "@/components/home/ServicesSection";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
-import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import heroStyles from "@/components/home/HeroSection.module.css";
@@ -68,16 +67,23 @@ export function AboutPage({ content }: AboutPageProps) {
           </Reveal>
 
           <Reveal className={heroStyles.mediaWrap} delayMs={120}>
-            <CyanBar />
+            {/*
+              Match the fixed homepage hero media pattern:
+              cyan bar + photo as grid siblings inside one media wrapper.
+              Heights couple via grid stretch — no absolute offsets.
+            */}
             <div className={heroStyles.media}>
-              <Image
-                src={mediaPath(content.hero.media.src)}
-                alt={content.hero.media.alt}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 64vw"
-                className={[heroStyles.image, styles.heroImage].join(" ")}
-              />
+              <div className={heroStyles.cyanBar} aria-hidden="true" />
+              <div className={heroStyles.photo}>
+                <Image
+                  src={mediaPath(content.hero.media.src)}
+                  alt={content.hero.media.alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={heroStyles.image}
+                />
+              </div>
             </div>
           </Reveal>
         </div>
