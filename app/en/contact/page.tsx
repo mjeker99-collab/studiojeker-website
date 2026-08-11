@@ -18,7 +18,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function EnglishContactPage() {
   return (
     <SiteChrome locale="en">
-      <ContactPage content={content} clientsLabel={clientsLabel} />
+      <ContactPage content={content} clientsLabel={clientsLabel} locale="en" />
     </SiteChrome>
   );
 }

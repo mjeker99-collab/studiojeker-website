@@ -97,10 +97,8 @@ export async function fetchWordpress<T>({
 
 export function getWordpressStatus(): {
   configured: boolean;
-  baseUrl: string | null;
 } {
   return {
     configured: isWordpressConfigured(),
-    baseUrl: getWordpressApiBaseUrl(),
   };
 }

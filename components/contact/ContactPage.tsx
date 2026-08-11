@@ -1,10 +1,11 @@
 import Image from "next/image";
-import Link from "next/link";
+import type { Locale } from "@/types/i18n";
 import type { ContactPageContent } from "@/lib/content/contact";
 import { studiojekerContact } from "@/lib/content/contact";
 import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { getClientLogos } from "@/lib/content/clients";
+import { ContactForm } from "@/components/contact/ContactForm";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
@@ -15,9 +16,10 @@ import styles from "./ContactPage.module.css";
 type ContactPageProps = {
   content: ContactPageContent;
   clientsLabel: string;
+  locale: Locale;
 };
 
-export function ContactPage({ content, clientsLabel }: ContactPageProps) {
+export function ContactPage({ content, clientsLabel, locale }: ContactPageProps) {
   const formHref = `#${content.form.id}`;
   const addressLines = [
     studiojekerContact.company,
@@ -119,71 +121,11 @@ export function ContactPage({ content, clientsLabel }: ContactPageProps) {
             </Reveal>
 
             <Reveal className={styles.formWrap} delayMs={60}>
-              <form
-                id={content.form.id}
-                className={styles.form}
-                action={`mailto:${studiojekerContact.email}`}
-                method="post"
-                encType="text/plain"
-              >
-                <label className={styles.field}>
-                  <span className="visually-hidden">{content.form.name}</span>
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    autoComplete="name"
-                    placeholder={content.form.name}
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className="visually-hidden">{content.form.company}</span>
-                  <input
-                    name="company"
-                    type="text"
-                    autoComplete="organization"
-                    placeholder={content.form.company}
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className="visually-hidden">{content.form.email}</span>
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    placeholder={content.form.email}
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className="visually-hidden">{content.form.phone}</span>
-                  <input
-                    name="phone"
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder={content.form.phone}
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className="visually-hidden">{content.form.message}</span>
-                  <textarea
-                    name="message"
-                    required
-                    rows={5}
-                    placeholder={content.form.message}
-                  />
-                </label>
-                <p className={styles.privacy}>
-                  {content.form.privacyNote}{" "}
-                  <Link href={content.privacyHref}>
-                    {content.form.privacyLinkLabel}
-                  </Link>
-                  .
-                </p>
-                <Button type="submit" variant="primary" showArrow>
-                  {content.form.submit}
-                </Button>
-              </form>
+              <ContactForm
+                labels={content.form}
+                privacyHref={content.privacyHref}
+                locale={locale}
+              />
             </Reveal>
           </div>
         </Container>

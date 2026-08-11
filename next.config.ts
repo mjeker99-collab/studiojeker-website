@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { getSecurityHeaders } from "@/lib/security/headers";
 
 function getWordpressHostname(): string | null {
   const baseUrl = process.env.WORDPRESS_API_BASE_URL;
@@ -8,31 +9,51 @@ function getWordpressHostname(): string | null {
   }
 
   try {
-    return new URL(baseUrl).hostname;
+    const url = new URL(baseUrl);
+    if (url.protocol !== "https:") {
+      return null;
+    }
+    return url.hostname;
   } catch {
     return null;
   }
 }
 
 const wordpressHostname = getWordpressHostname();
+const enableTurnstile = Boolean(
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim(),
+);
 
 const nextConfig: NextConfig = {
   // Keep repository AGENTS.md authoritative; do not let Next overwrite it.
   agentRules: false,
+  // Do not advertise the Next.js runtime to clients.
+  poweredByHeader: false,
+  // Avoid leaking build traces / verbose error overlays in production.
+  productionBrowserSourceMaps: false,
   images: {
     formats: ["image/avif", "image/webp"],
+    // HTTPS only — never allow remote http:// CMS assets.
     remotePatterns: wordpressHostname
       ? [
           {
             protocol: "https",
             hostname: wordpressHostname,
           },
-          {
-            protocol: "http",
-            hostname: wordpressHostname,
-          },
         ]
       : [],
+  },
+  async headers() {
+    const securityHeaders = getSecurityHeaders({
+      wordpressHostname,
+      enableTurnstile,
+    });
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+    ];
   },
   async redirects() {
     return [

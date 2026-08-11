@@ -39,6 +39,9 @@ export type ContactPageContent = {
     submit: string;
     privacyNote: string;
     privacyLinkLabel: string;
+    success: string;
+    error: string;
+    sending: string;
   };
   details: {
     addressLabel: string;
@@ -88,6 +91,9 @@ export function getContactPageContent(locale: Locale): ContactPageContent {
         submit: "Send message",
         privacyNote: "By sending this form you accept our",
         privacyLinkLabel: "privacy policy",
+        success: "Thank you. Your message has been sent.",
+        error: "Something went wrong. Please try again later.",
+        sending: "Sending…",
       },
       details: {
         addressLabel: "Address",
@@ -134,6 +140,9 @@ export function getContactPageContent(locale: Locale): ContactPageContent {
       submit: "Nachricht senden",
       privacyNote: "Mit dem Absenden akzeptieren Sie unsere",
       privacyLinkLabel: "Datenschutzerklärung",
+      success: "Vielen Dank. Ihre Nachricht wurde gesendet.",
+      error: "Etwas ist schiefgelaufen. Bitte versuchen Sie es später erneut.",
+      sending: "Wird gesendet…",
     },
     details: {
       addressLabel: "Adresse",
