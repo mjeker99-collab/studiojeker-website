@@ -16,7 +16,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function EnglishWorkPage() {
   return (
     <SiteChrome locale="en">
-      <WorkPage content={content} />
+      <WorkPage content={content} locale="en" />
     </SiteChrome>
   );
 }

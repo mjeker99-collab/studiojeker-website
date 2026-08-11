@@ -95,41 +95,11 @@
 .tileItem {
   min-width: 0;
   display: flex;
-}
-
-.tile {
-  display: block;
   width: 100%;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
 }
 
-.tileMedia {
-  position: relative;
+.tileItem > * {
   width: 100%;
-  overflow: hidden;
-  /* Shared aspect — source image size must not drive tile height */
-  aspect-ratio: 3 / 2;
-  min-width: 0;
-  background: var(--color-neutral);
-}
-
-.tileImage {
-  object-fit: cover;
-  object-position: center;
-  transition: transform 350ms var(--ease-standard);
-}
-
-.tilePlaceholder {
-  position: absolute;
-  inset: 0;
-  background: var(--color-neutral);
-}
-
-.tile:hover .tileImage,
-.tile:focus-visible .tileImage {
-  transform: scale(1.03);
 }
 
 @media (min-width: 48rem) {
@@ -165,16 +135,5 @@
 @media (min-width: 80rem) {
   .categoryGrid {
     gap: var(--space-4);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tileImage {
-    transition: none;
-  }
-
-  .tile:hover .tileImage,
-  .tile:focus-visible .tileImage {
-    transform: none;
   }
 }
