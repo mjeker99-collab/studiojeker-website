@@ -73,10 +73,10 @@ export function Header({ locale, dictionary }: HeaderProps) {
         ? styles.themeHero
         : styles.themeLight;
 
-  const logoSrc =
-    resolvedTheme === "dark"
-      ? "/logos/RZ_Studiojeker_Logo_1992_RGB_neg_8.png"
-      : "/logos/RZ_Studiojeker_Logo_RGB.svg";
+  // Always use the claim-free logo.
+  // The previous dark-theme PNG contains the "We Create Visibility" claim,
+  // which should not appear inside the header logo.
+  const logoSrc = "/logos/RZ_Studiojeker_Logo_RGB.svg";
 
   return (
     <>
