@@ -51,7 +51,10 @@ export function buildPageMetadata({
     : absoluteUrl(ogImage);
 
   return {
-    title: pageTitle,
+    title: {
+      // Use approved SEO titles exactly — do not append the layout brand template.
+      absolute: pageTitle,
+    },
     description: pageDescription,
     alternates: {
       canonical: absoluteUrl(canonicalPath),
