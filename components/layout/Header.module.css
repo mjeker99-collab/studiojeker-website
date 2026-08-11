@@ -12,6 +12,28 @@
   transition: none;
 }
 
+.scrolled {
+  /* Do not change header height on scroll. */
+  height: var(--header-height);
+}
+
+/* Legacy theme classes (kept white to avoid any black header state). */
+.themeLight {
+  background: #ffffff;
+  color: var(--color-black);
+}
+
+.themeHero {
+  background: #ffffff;
+  color: var(--color-black);
+}
+
+.themeDark {
+  background: #ffffff;
+  color: var(--color-black);
+  backdrop-filter: none;
+}
+
 .inner {
   display: flex;
   align-items: center;
