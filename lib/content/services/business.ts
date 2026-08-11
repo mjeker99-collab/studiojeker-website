@@ -184,8 +184,8 @@ export function getBusinessCommunicationContent(
     },
     hero: {
       label: "Business Communication",
-      headline: "Menschen schaffen Vertrauen. Kommunikation schafft Beziehungen",
-      headlineAccent: ".",
+      headline: "Menschen zeigen. Vertrauen schaffen. Beziehungen stärken.",
+      headlineAccent: "",
       subheadline:
         "Authentische Unternehmenskommunikation für Unternehmen, Organisationen und Marken.",
       body: [
