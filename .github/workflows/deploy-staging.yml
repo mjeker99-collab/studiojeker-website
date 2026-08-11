@@ -1,0 +1,93 @@
+# Manual staging deploy only — never runs on push/PR/schedule.
+# Target: staging2026.studiojeker.ch (Metanet/Plesk FTP).
+# Does NOT deploy to production / studiojeker.ch.
+
+name: Deploy staging (Metanet)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_target:
+        description: "Type staging2026 to confirm this deploys ONLY to staging"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-staging-metanet
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: Build static export and deploy to staging FTP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Confirm staging-only target
+        run: |
+          if [ "${{ inputs.confirm_target }}" != "staging2026" ]; then
+            echo "::error::Refusing deploy. Type exactly 'staging2026' in confirm_target."
+            exit 1
+          fi
+          echo "Confirmed staging target: staging2026.studiojeker.ch"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          # Node 22 LTS — compatible with Next.js 16 in this repo
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npm run build
+        env:
+          # Staging public URL for canonicals / metadata in the exported HTML
+          NEXT_PUBLIC_SITE_URL: https://staging2026.studiojeker.ch
+
+      - name: Verify out/ exists
+        run: |
+          if [ ! -d "out" ]; then
+            echo "::error::Static export directory out/ is missing after build."
+            exit 1
+          fi
+          if [ ! -f "out/index.html" ]; then
+            echo "::error::out/index.html is missing — refusing to deploy an incomplete export."
+            exit 1
+          fi
+          if [ ! -f "out/api/contact.php" ]; then
+            echo "::error::out/api/contact.php is missing — contact endpoint must be present."
+            exit 1
+          fi
+          echo "out/ verified ($(du -sh out | cut -f1))"
+          ls -la out | head -40
+
+      - name: Deploy contents of out/ to staging FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.STAGING_FTP_HOST }}
+          username: ${{ secrets.STAGING_FTP_USERNAME }}
+          password: ${{ secrets.STAGING_FTP_PASSWORD }}
+          # Explicit FTPS on the standard FTP port (typical Metanet/Plesk).
+          # If the host only allows plain FTP or implicit FTPS, change protocol to
+          # `ftp` or `ftps-legacy` in this workflow — do not point at production.
+          protocol: ftps
+          port: 21
+          # FTP account is already jailed to /staging2026.studiojeker.ch — upload to FTP root.
+          # Trailing slash required: uploads CONTENTS of out/, not the out folder itself.
+          local-dir: ./out/
+          server-dir: ./
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/api/contact.config.php
