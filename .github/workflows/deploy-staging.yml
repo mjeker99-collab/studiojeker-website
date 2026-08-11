@@ -67,22 +67,30 @@ jobs:
             echo "::error::out/api/contact.php is missing — contact endpoint must be present."
             exit 1
           fi
+          # Hidden files from public/ (e.g. .htaccess) must be present in the export.
+          if [ ! -f "out/.htaccess" ]; then
+            echo "::error::out/.htaccess is missing — Apache rules must be uploaded to staging."
+            exit 1
+          fi
           echo "out/ verified ($(du -sh out | cut -f1))"
+          echo "Hidden export files:"
+          find out -maxdepth 2 -name '.*' -type f | sort
           ls -la out | head -40
 
       - name: Deploy contents of out/ to staging FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
-          server: ${{ secrets.STAGING_FTP_HOST }}
-          username: ${{ secrets.STAGING_FTP_USERNAME }}
-          password: ${{ secrets.STAGING_FTP_PASSWORD }}
-          # Explicit FTPS on the standard FTP port (typical Metanet/Plesk).
-          # If the host only allows plain FTP or implicit FTPS, change protocol to
-          # `ftp` or `ftps-legacy` in this workflow — do not point at production.
+          server: ${{ secrets.METANET_FTP_SERVER }}
+          username: ${{ secrets.METANET_FTP_USERNAME }}
+          password: ${{ secrets.METANET_FTP_PASSWORD }}
+          # Explicit FTPS (TLS) on the standard FTP port (typical Metanet/Plesk).
           protocol: ftps
           port: 21
+          # Reject connections if the TLS certificate cannot be verified.
+          security: strict
           # FTP account is already jailed to /staging2026.studiojeker.ch — upload to FTP root.
           # Trailing slash required: uploads CONTENTS of out/, not the out folder itself.
+          # Includes hidden files such as .htaccess (not matched by the exclude globs below).
           local-dir: ./out/
           server-dir: ./
           dangerous-clean-slate: false

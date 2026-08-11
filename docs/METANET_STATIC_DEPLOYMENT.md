@@ -93,6 +93,8 @@ Workflow file: `.github/workflows/deploy-staging.yml`
 - Builds with Node.js **22 LTS** → `npm ci` → `npm run build`
 - Fails if `out/` (or `out/index.html` / `out/api/contact.php`) is missing
 - Uploads **only the contents of `out/`** to the staging FTP account via FTPS
+  (`protocol: ftps`, `security: strict` — TLS certificate verification enabled)
+- Includes hidden files from `out/`, especially **`out/.htaccess`** (verified before upload)
 - Does **not** upload source, `.git`, `node_modules`, docs, env files, or workflows
 - Does **not** deploy to production / `studiojeker.ch`
 
@@ -112,9 +114,9 @@ Repository → **Settings → Secrets and variables → Actions**. Create:
 
 | Secret | Purpose |
 |--------|---------|
-| `STAGING_FTP_HOST` | FTP hostname from Plesk (e.g. `ftp.…` or the Metanet FTP server) |
-| `STAGING_FTP_USERNAME` | Staging FTP user (jailed to `/staging2026.studiojeker.ch`) |
-| `STAGING_FTP_PASSWORD` | Staging FTP password |
+| `METANET_FTP_SERVER` | FTP hostname from Plesk (e.g. `ftp.…` or the Metanet FTP server) |
+| `METANET_FTP_USERNAME` | Staging FTP user (jailed to `/staging2026.studiojeker.ch`) |
+| `METANET_FTP_PASSWORD` | Staging FTP password |
 
 Never commit FTP credentials. Never reuse production FTP credentials here.
 
@@ -127,6 +129,7 @@ Never commit FTP credentials. Never reuse production FTP credentials here.
 5. Set `confirm_target` to `staging2026`.
 6. Run and wait for a green job.
 7. Smoke-test `https://staging2026.studiojeker.ch/` (including `/api/contact.php` GET → 405).
+8. Confirm `.htaccess` is present at the staging FTP/document root (Plesk File Manager → show hidden files).
 
 ### FTP path notes
 
@@ -136,6 +139,9 @@ web document root for `staging2026.studiojeker.ch`.
 
 Host-only file `api/contact.config.php` (if you created one on the server) is
 listed in the workflow `exclude` list so FTPS sync does not delete it.
+
+The exclude globs (`**/.git*`, etc.) do **not** match `.htaccess`; the root
+`.htaccess` from `out/` is part of the deploy set.
 
 ---
 
