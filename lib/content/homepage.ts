@@ -44,7 +44,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           src: "/images/architecture/hero-villa-master.jpg",
           alt: "Architectural visualization by Studiojeker",
           width: 1785,
-          height: 1020,
+          height: 977,
         },
       },
       services: {
@@ -233,7 +233,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         src: "/images/architecture/hero-villa-master.jpg",
         alt: "Architekturvisualisierung von Studiojeker",
         width: 1785,
-        height: 1020,
+        height: 977,
       },
     },
     services: {
