@@ -75,10 +75,67 @@ out/api/contact.php     →  httpdocs/api/contact.php
 
 1. Edit the site in Cursor (design stays locked unless intentionally changed).
 2. Commit and push to GitHub.
-3. On a machine with Node.js: `npm install && npm run build`.
-4. Upload **contents of `out/`** to the staging document root in Plesk.
-5. Smoke-test `https://staging2026.studiojeker.ch/` (and EN routes).
-6. When approved, repeat the upload to production (separate step — not automatic).
+3. Deploy staging with the **manual** GitHub Actions workflow (see below), **or**
+   build locally (`npm ci && npm run build`) and upload **contents of `out/`** via SFTP.
+4. Smoke-test `https://staging2026.studiojeker.ch/` (and EN routes).
+5. When approved, repeat for production in a **separate, explicit** step — never automatic.
+
+---
+
+## GitHub Actions — manual staging deploy
+
+Workflow file: `.github/workflows/deploy-staging.yml`
+
+### What it does
+
+- Trigger: **`workflow_dispatch` only** (Actions → “Deploy staging (Metanet)” → Run workflow)
+- Does **not** run on push, pull request, or schedule
+- Builds with Node.js **22 LTS** → `npm ci` → `npm run build`
+- Fails if `out/` (or `out/index.html` / `out/api/contact.php`) is missing
+- Uploads **only the contents of `out/`** to the staging FTP account via FTPS
+- Does **not** upload source, `.git`, `node_modules`, docs, env files, or workflows
+- Does **not** deploy to production / `studiojeker.ch`
+
+### Safety confirmation
+
+When starting the workflow you must type exactly:
+
+```text
+staging2026
+```
+
+in the `confirm_target` input. Any other value aborts the job.
+
+### Required GitHub secrets
+
+Repository → **Settings → Secrets and variables → Actions**. Create:
+
+| Secret | Purpose |
+|--------|---------|
+| `STAGING_FTP_HOST` | FTP hostname from Plesk (e.g. `ftp.…` or the Metanet FTP server) |
+| `STAGING_FTP_USERNAME` | Staging FTP user (jailed to `/staging2026.studiojeker.ch`) |
+| `STAGING_FTP_PASSWORD` | Staging FTP password |
+
+Never commit FTP credentials. Never reuse production FTP credentials here.
+
+### How to run
+
+1. Merge or push the branch you want on staging (usually `main` after review).
+2. Open **Actions** → **Deploy staging (Metanet)**.
+3. Click **Run workflow**.
+4. Choose the branch to build from.
+5. Set `confirm_target` to `staging2026`.
+6. Run and wait for a green job.
+7. Smoke-test `https://staging2026.studiojeker.ch/` (including `/api/contact.php` GET → 405).
+
+### FTP path notes
+
+The staging FTP account is restricted to `/staging2026.studiojeker.ch`. The workflow
+therefore uploads to the FTP **root** (`server-dir: ./`). That root must be the
+web document root for `staging2026.studiojeker.ch`.
+
+Host-only file `api/contact.config.php` (if you created one on the server) is
+listed in the workflow `exclude` list so FTPS sync does not delete it.
 
 ---
 
@@ -106,7 +163,12 @@ and keep staging `noindex` if search engines should ignore it.
 
 ---
 
-## Safest next step in Plesk
+## Safest next step in Plesk / GitHub
+
+**Preferred (after secrets are set):** run the manual Actions workflow
+“Deploy staging (Metanet)” with `confirm_target=staging2026`, then smoke-test.
+
+**Manual upload alternative:**
 
 1. Open the subdomain `staging2026.studiojeker.ch` in Plesk.
 2. Confirm the document root folder.
