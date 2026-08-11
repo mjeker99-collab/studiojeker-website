@@ -9,14 +9,13 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-behavior: smooth;
+  /* Do not set scroll-behavior: smooth on html — it breaks Next.js
+     App Router scroll-to-top on navigation (viewport can land on footer).
+     In-page anchors use :target / explicit JS when needed. */
+  scroll-behavior: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   *,
   *::before,
   *::after {
