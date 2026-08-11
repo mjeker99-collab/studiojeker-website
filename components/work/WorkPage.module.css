@@ -75,14 +75,31 @@
   margin-block-end: var(--arrow-inset-block-end);
 }
 
+/*
+ * Equal tile grid — identical size/aspect for every tile.
+ * Mobile: 1 column
+ * Tablet: 2 columns
+ * Desktop: 4 columns
+ */
 .categoryGrid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   min-width: 0;
+  align-items: stretch;
+}
+
+.tileItem {
+  min-width: 0;
+  display: flex;
 }
 
 .tile {
   display: block;
+  width: 100%;
   min-width: 0;
   text-decoration: none;
   color: inherit;
@@ -90,7 +107,9 @@
 
 .tileMedia {
   position: relative;
+  width: 100%;
   overflow: hidden;
+  /* Shared aspect — source image size must not drive tile height */
   aspect-ratio: 3 / 2;
   min-width: 0;
   background: var(--color-neutral);
@@ -98,7 +117,14 @@
 
 .tileImage {
   object-fit: cover;
+  object-position: center;
   transition: transform 350ms var(--ease-standard);
+}
+
+.tilePlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral);
 }
 
 .tile:hover .tileImage,
@@ -108,16 +134,8 @@
 
 @media (min-width: 48rem) {
   .categoryGrid {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
-    align-items: start;
-  }
-
-  .tileMedia {
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    aspect-ratio: 3 / 2;
   }
 }
 
@@ -134,6 +152,17 @@
     gap: var(--space-8);
   }
 
+  .category {
+    gap: var(--space-3);
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+@media (min-width: 80rem) {
   .categoryGrid {
     gap: var(--space-4);
   }

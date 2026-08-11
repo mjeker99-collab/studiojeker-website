@@ -11,7 +11,11 @@ import styles from "./WorkPage.module.css";
 
 export type WorkCategoryItem = {
   id: string;
-  image: {
+  /**
+   * When true (or image omitted), render a neutral visual surface only.
+   */
+  isPlaceholder?: boolean;
+  image?: {
     src: string;
     alt: string;
     width: number;
@@ -42,7 +46,7 @@ type WorkPageProps = {
 };
 
 /**
- * Work overview — editorial category grid with neutral visuals.
+ * Work overview — four equal category grids, identical tile sizes.
  * No invented project or client names.
  */
 export function WorkPage({ content }: WorkPageProps) {
@@ -90,31 +94,38 @@ export function WorkPage({ content }: WorkPageProps) {
                   </Link>
                 </div>
 
-                <div className={styles.categoryGrid}>
-                  {category.items.map((item, itemIndex) => (
-                    <Link
-                      key={item.id}
-                      href={category.href}
-                      className={[
-                        styles.tile,
-                        itemIndex === 0 ? styles.tileLead : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      aria-label={category.title}
-                    >
-                      <div className={styles.tileMedia}>
-                        <Image
-                          src={mediaPath(item.image.src)}
-                          alt={item.image.alt}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-                          className={styles.tileImage}
-                        />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                <ul className={styles.categoryGrid}>
+                  {category.items.map((item) => {
+                    const showImage = Boolean(item.image && !item.isPlaceholder);
+
+                    return (
+                      <li key={item.id} className={styles.tileItem}>
+                        <Link
+                          href={category.href}
+                          className={styles.tile}
+                          aria-label={category.title}
+                        >
+                          <div className={styles.tileMedia}>
+                            {showImage ? (
+                              <Image
+                                src={mediaPath(item.image!.src)}
+                                alt={item.image!.alt}
+                                fill
+                                sizes="(max-width: 47.9375rem) 100vw, (max-width: 63.9375rem) 50vw, 25vw"
+                                className={styles.tileImage}
+                              />
+                            ) : (
+                              <div
+                                className={styles.tilePlaceholder}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               </Reveal>
             ))}
           </div>
