@@ -1,21 +1,76 @@
-import type { Locale } from "@/types/i18n";
+import type { Dictionary, Locale } from "@/types/i18n";
 import { localizePathname } from "@/lib/i18n/config";
 
 export type NavItem = {
-  id: "solutions" | "references" | "about" | "contact";
+  id: "about" | "services" | "work" | "insights" | "contact";
+  /** Omitted for Services — dropdown trigger only, no overview page. */
+  href?: string;
+  hasChildren?: boolean;
+};
+
+export type ServiceNavLink = {
+  id: "business" | "product" | "architecture" | "digital";
+  label: string;
   href: string;
 };
 
 /**
- * V1 navigation from Developer Kit.
- * Insights is reserved architecturally and omitted until approved.
+ * Final primary navigation:
+ * ABOUT | SERVICES | WORK | CONTACT | DE
+ *
+ * Services is a dropdown trigger only — no /services overview.
+ * Insights remains routed/available but is not shown in the main nav.
  */
 export function getPrimaryNav(locale: Locale): NavItem[] {
   return [
-    { id: "solutions", href: localizePathname("/solutions", locale) },
-    { id: "references", href: localizePathname("/references", locale) },
     { id: "about", href: localizePathname("/about", locale) },
+    {
+      id: "services",
+      hasChildren: true,
+    },
+    { id: "work", href: localizePathname("/work", locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
+  ];
+}
+
+/**
+ * Footer NAVIGATION column — matches primary IA.
+ * No standalone Services overview. Insights omitted for now (route retained).
+ */
+export function getFooterNav(locale: Locale): Array<NavItem & { href: string }> {
+  return [
+    { id: "about", href: localizePathname("/about", locale) },
+    { id: "work", href: localizePathname("/work", locale) },
+    { id: "contact", href: localizePathname("/contact", locale) },
+  ];
+}
+
+export function getServiceNavLinks(
+  locale: Locale,
+  dictionary: Dictionary,
+): ServiceNavLink[] {
+  /* Final service order: 01 Content & Digital → 02 Business → 03 Product → 04 Architecture */
+  return [
+    {
+      id: "digital",
+      label: dictionary.footer.digitalMarketing,
+      href: localizePathname("/services/digital-marketing", locale),
+    },
+    {
+      id: "business",
+      label: dictionary.footer.businessCommunication,
+      href: localizePathname("/services/business-communication", locale),
+    },
+    {
+      id: "product",
+      label: dictionary.footer.productCommunication,
+      href: localizePathname("/services/product-communication", locale),
+    },
+    {
+      id: "architecture",
+      label: dictionary.footer.architecture,
+      href: localizePathname("/services/architecture", locale),
+    },
   ];
 }
 

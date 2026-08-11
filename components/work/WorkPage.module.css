@@ -1,0 +1,134 @@
+.hero {
+  background: var(--color-white);
+  padding-block: calc(var(--header-height) + var(--space-5)) var(--space-4);
+}
+
+.copy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(1.875rem, 3.4vw, 3.125rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.text {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.projects {
+  background: var(--color-white);
+  padding-block: var(--space-3) var(--section-padding-y-compact);
+}
+
+.categoryStack {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.category {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.categoryTitle {
+  margin: 0;
+  color: var(--color-cyan);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.categoryAccent {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: inherit;
+  pointer-events: none;
+}
+
+.categoryArrow {
+  margin-inline-end: var(--arrow-inset-inline-end);
+  margin-block-end: var(--arrow-inset-block-end);
+}
+
+/*
+ * Equal tile grid — identical size/aspect for every tile.
+ * Mobile: 1 column
+ * Tablet: 2 columns
+ * Desktop: 4 columns
+ */
+.categoryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.tileItem {
+  min-width: 0;
+  display: flex;
+  width: 100%;
+}
+
+.tileItem > * {
+  width: 100%;
+}
+
+@media (min-width: 48rem) {
+  .categoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero {
+    padding-block: calc(var(--header-height) + var(--space-6)) var(--space-5);
+  }
+
+  .projects {
+    padding-block: var(--space-4) var(--section-padding-y);
+  }
+
+  .categoryStack {
+    gap: var(--space-8);
+  }
+
+  .category {
+    gap: var(--space-3);
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+@media (min-width: 80rem) {
+  .categoryGrid {
+    gap: var(--space-4);
+  }
+}

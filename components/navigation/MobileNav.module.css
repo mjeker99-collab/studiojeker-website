@@ -16,7 +16,7 @@
 .top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   min-height: 3.5rem;
 }
 
@@ -49,17 +49,67 @@
   list-style: none;
 }
 
-.link {
+.link,
+.linkButton {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   min-height: 3rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-size: clamp(1.75rem, 6vw, 2.5rem);
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .link[aria-current="page"] {
+  color: var(--color-cyan);
+}
+
+.servicesItem {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.chevron {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-cyan);
+}
+
+.submenu {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0 0 0.5rem 0.25rem;
+  list-style: none;
+}
+
+.submenu[hidden] {
+  display: none;
+}
+
+.sublink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  color: rgb(255 255 255 / 85%);
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.sublink[aria-current="page"],
+.sublink:hover {
   color: var(--color-cyan);
 }
 

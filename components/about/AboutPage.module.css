@@ -1,0 +1,382 @@
+/**
+ * About page — homepage visual system.
+ * Team media: one editorial composition (large image + portrait grid).
+ * No grey rules / gradients / shadows / CSS grayscale.
+ */
+
+/*
+ * CRITICAL: Keep hero media below the fixed header.
+ * Homepage hero lets media run under a transparent header; About must not
+ * cover logo/navigation. Section offset keeps image/cyan bar locked.
+ *
+ * H1 typography: About uses HeroSection.module.css `.headline` only —
+ * no About-specific font-size / clamp overrides.
+ */
+.hero {
+  padding-top: var(--header-height);
+  min-height: min(70svh, 38rem);
+  z-index: 0;
+}
+
+/*
+ * Move the full left content block slightly down (label → CTA).
+ * Homepage centers copy in a taller hero; About keeps the locked image
+ * height and offsets via padding + start alignment — no translateY.
+ */
+.heroCopy {
+  align-content: start;
+  padding-top: clamp(2.75rem, 6vw, 5rem);
+  padding-bottom: var(--space-5);
+}
+
+.middleStack {
+  display: grid;
+  gap: 0;
+}
+
+.values {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact) var(--space-2);
+}
+
+.sectionHeader {
+  margin-bottom: var(--space-3);
+}
+
+.valuesGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.valueCard {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.valueTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.valueText {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.team {
+  position: relative;
+  background: var(--color-white);
+  padding-block: var(--space-3) var(--space-2);
+  overflow: hidden;
+}
+
+.teamIntroBlock {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 36rem;
+  margin-bottom: var(--space-3);
+}
+
+.teamHeadline {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.teamIntro {
+  margin: 0;
+  max-width: 32rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/*
+ * Shared team media grid — left studio + right portraits.
+ * Desktop: one row, align-items stretch; left fills exact right height.
+ * Portrait grid is the height authority (intrinsic aspect ratios).
+ * Left image must NOT set an independent taller min-height/aspect-ratio.
+ */
+.mediaComposition {
+  display: grid;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.studioMedia {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.studioFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-neutral);
+}
+
+.studioImage {
+  object-fit: cover;
+  object-position: center;
+  /* Original colour — no CSS desaturation */
+}
+
+.studioPlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral);
+}
+
+.portraitGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+  min-width: 0;
+}
+
+.member {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.portrait,
+.portraitPlaceholder {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--color-neutral);
+  flex: 0 0 auto;
+}
+
+.portraitImage {
+  object-fit: cover;
+  object-position: center top;
+  /* Original colour — no CSS desaturation */
+}
+
+.memberMeta {
+  display: grid;
+  gap: 0.12rem;
+  min-height: 2.4rem;
+}
+
+/* Keeps placeholder slots aligned with named portraits */
+.memberMetaSpacer {
+  min-height: 2.4rem;
+}
+
+.memberName {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.25;
+}
+
+.memberRole {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: rgb(0 0 0 / 72%);
+}
+
+.facts {
+  background: var(--color-white);
+  padding-block: var(--space-2) var(--space-4);
+}
+
+/*
+ * About-only: restore original colour for the shared AboutSection media
+ * without changing the homepage AboutSection component/styles.
+ */
+.approachWrap :global(img) {
+  filter: none;
+}
+
+.factsGrid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.fact {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.factValue {
+  margin: 0;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.factLabel {
+  margin: 0;
+  max-width: 14rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Very narrow phones: single portrait column if needed */
+@media (max-width: 22.5rem) {
+  .portraitGrid {
+    grid-template-columns: 1fr;
+    max-width: 18rem;
+  }
+
+  .memberMeta,
+  .memberMetaSpacer {
+    min-height: 0;
+  }
+}
+
+@media (min-width: 48rem) {
+  .valuesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .mediaComposition {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--space-2);
+    align-items: stretch;
+  }
+
+  /*
+   * Reveal wrappers can break stretch; force media column to fill
+   * the shared row height defined by the portrait grid.
+   */
+  .studioMedia {
+    display: grid;
+    align-self: stretch;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .studioFrame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .portraitGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    height: auto;
+    align-content: start;
+    align-self: start;
+  }
+
+  .portrait,
+  .portraitPlaceholder {
+    aspect-ratio: 4 / 5;
+    flex: 0 0 auto;
+  }
+
+  .factsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero {
+    min-height: min(68svh, 36rem);
+  }
+
+  .heroCopy {
+    padding-top: clamp(3.25rem, 5.5vw, 5.5rem);
+  }
+
+  .values {
+    padding-block: 3rem var(--space-2);
+  }
+
+  .team {
+    padding-block: var(--space-4) var(--space-2);
+  }
+
+  .teamIntroBlock {
+    margin-bottom: var(--space-4);
+  }
+
+  .mediaComposition {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .portraitGrid {
+    gap: 0.75rem;
+  }
+
+  .memberName {
+    font-size: 0.875rem;
+  }
+
+  .memberRole {
+    font-size: 0.75rem;
+  }
+
+  .facts {
+    padding-block: var(--space-3) var(--space-5);
+  }
+}
+
+@media (min-width: 48rem) and (max-width: 63.9375rem) {
+  .memberName {
+    font-size: 0.75rem;
+  }
+
+  .memberRole {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 47.9375rem) {
+  .hero {
+    min-height: auto;
+  }
+
+  .values {
+    padding-block: var(--space-5) var(--space-2);
+  }
+
+  .team {
+    padding-block: var(--space-3) var(--space-2);
+  }
+
+  /* Mobile: studio image stacks above portraits with own ratio */
+  .studioMedia {
+    height: auto;
+  }
+
+  .studioFrame {
+    aspect-ratio: 3 / 2;
+    height: auto;
+    min-height: 0;
+  }
+
+  .facts {
+    padding-block: var(--space-2) var(--space-5);
+  }
+}

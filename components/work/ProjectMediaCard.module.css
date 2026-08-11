@@ -1,0 +1,254 @@
+.card {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--color-neutral);
+  color: inherit;
+  text-decoration: none;
+  isolation: isolate;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.media,
+.slideshow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mediaLayer,
+.slide {
+  object-fit: cover;
+  object-position: center;
+  transition: transform 300ms var(--ease-standard, ease);
+  will-change: transform;
+}
+
+.mediaLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.card:hover .mediaLayer,
+.card:focus-visible .mediaLayer,
+.card:hover .slide,
+.card:focus-visible .slide {
+  transform: scale(1.03);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition:
+    opacity 700ms ease,
+    transform 300ms var(--ease-standard, ease);
+  pointer-events: none;
+}
+
+.slideActive {
+  opacity: 1;
+}
+
+.playButton {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #fff;
+}
+
+.imageButton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.imageButton:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: -4px;
+}
+
+.playButton:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -8px;
+}
+
+.playIcon {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.38);
+  transition: background-color 250ms ease, transform 250ms ease;
+}
+
+.playButton:hover .playIcon,
+.playButton:focus-visible .playIcon {
+  background: rgb(0 0 0 / 0.5);
+  transform: scale(1.04);
+}
+
+.playTriangle {
+  display: block;
+  width: 0;
+  height: 0;
+  margin-left: 0.15rem;
+  border-style: solid;
+  border-width: 0.55rem 0 0.55rem 0.9rem;
+  border-color: transparent transparent transparent #fff;
+}
+
+.duration {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.videoEl {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.iframeWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  overflow: hidden;
+}
+
+.iframe {
+  position: absolute;
+  /* Cover the 3:2 tile with a 16:9 player without letterboxing */
+  top: 50%;
+  left: 50%;
+  width: 177.78%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 177.78%;
+  border: 0;
+  transform: translate(-50%, -50%);
+}
+
+.dots {
+  position: absolute;
+  left: 50%;
+  bottom: 0.65rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.35rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.dot {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.45);
+  transition: background-color 250ms ease, transform 250ms ease;
+}
+
+.dotActive {
+  background: rgb(255 255 255 / 0.95);
+  transform: scale(1.15);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+  background: rgb(0 0 0 / 0.88);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightboxClose:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.lightboxFigure {
+  position: relative;
+  width: min(92vw, 72rem);
+  aspect-ratio: 3 / 2;
+  max-height: 88vh;
+}
+
+.lightboxImage {
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mediaLayer,
+  .slide,
+  .playIcon,
+  .dot {
+    transition: none;
+  }
+
+  .card:hover .mediaLayer,
+  .card:focus-visible .mediaLayer,
+  .card:hover .slide,
+  .card:focus-visible .slide {
+    transform: none;
+  }
+}

@@ -1,15 +1,41 @@
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   height: var(--header-height);
-  border-bottom: 1px solid transparent;
-  background: rgb(255 255 255 / 92%);
-  backdrop-filter: blur(10px);
+  border-bottom: 0;
+  /* Solid white bar — never transparent over the hero */
+  background: var(--color-white);
+  color: var(--color-black);
+  box-shadow: none;
   transition:
     background-color var(--duration-header) var(--ease-standard),
-    border-color var(--duration-header) var(--ease-standard),
+    color var(--duration-header) var(--ease-standard),
     height var(--duration-header) var(--ease-standard);
+}
+
+.scrolled {
+  height: var(--header-height-sticky);
+}
+
+.themeLight {
+  background: var(--color-white);
+  color: var(--color-black);
+}
+
+.themeDark {
+  /* Keep header solid white at all times (no black/blur state). */
+  background: #ffffff;
+  color: var(--color-black);
+  backdrop-filter: none;
+}
+
+.themeHero {
+  /* Same solid white as light — nav must not sit on the hero image */
+  background: var(--color-white);
+  color: var(--color-black);
 }
 
 .inner {
@@ -24,6 +50,7 @@
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  color: inherit;
 }
 
 .brand:hover {
@@ -32,13 +59,7 @@
 
 .logo {
   width: auto;
-  height: 1.75rem;
-}
-
-@media (min-width: 48rem) {
-  .logo {
-    height: 2.125rem;
-  }
+  height: 2.85rem; /* ~55% larger; clear brand presence */
 }
 
 .desktopNav {
@@ -58,9 +79,10 @@
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--color-black);
-  border-radius: var(--radius-button);
+  border: 1px solid currentColor;
+  border-radius: 0;
   background: transparent;
+  color: inherit;
   cursor: pointer;
 }
 
@@ -70,7 +92,7 @@
   display: block;
   width: 1.125rem;
   height: 1px;
-  background: var(--color-black);
+  background: currentColor;
   transition: transform var(--duration-fast) var(--ease-standard);
 }
 
@@ -93,8 +115,10 @@
   top: 0.35rem;
 }
 
-.ctaDesktop {
-  display: none;
+@media (min-width: 48rem) {
+  .logo {
+    height: 3.25rem;
+  }
 }
 
 @media (min-width: 64rem) {
@@ -107,7 +131,7 @@
     display: none;
   }
 
-  .ctaDesktop {
-    display: inline-flex;
+  .logo {
+    height: 3.5rem; /* ~60% larger vs previous ~2.15rem */
   }
 }

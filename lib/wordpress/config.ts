@@ -1,6 +1,7 @@
 /**
  * WordPress REST configuration.
  * The app must build without a live WordPress connection.
+ * WORDPRESS_API_BASE_URL is server-only — never expose via NEXT_PUBLIC_*.
  */
 export function getWordpressApiBaseUrl(): string | null {
   const value = process.env.WORDPRESS_API_BASE_URL?.trim();
@@ -9,7 +10,16 @@ export function getWordpressApiBaseUrl(): string | null {
     return null;
   }
 
-  return value.replace(/\/$/, "");
+  try {
+    const url = new URL(value);
+    // Production CMS must be HTTPS only.
+    if (url.protocol !== "https:") {
+      return null;
+    }
+    return value.replace(/\/$/, "");
+  } catch {
+    return null;
+  }
 }
 
 export function isWordpressConfigured(): boolean {

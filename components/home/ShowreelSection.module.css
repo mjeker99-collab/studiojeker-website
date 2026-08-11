@@ -1,0 +1,151 @@
+.section {
+  position: relative;
+  background: var(--color-black);
+  color: var(--color-white);
+  overflow: hidden;
+}
+
+.grid {
+  display: grid;
+  align-items: stretch;
+}
+
+.copy {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  max-width: 30rem;
+  padding: var(--section-padding-y-compact) var(--container-padding-x);
+}
+
+.headline {
+  margin: 0;
+  max-width: 8em;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.accent {
+  color: var(--color-cyan);
+}
+
+.body {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--color-white);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.mediaWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  height: 100%;
+  min-height: 16rem;
+}
+
+.mediaButton {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
+  width: auto;
+  height: auto;
+  min-height: 16rem;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--color-dark);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.image {
+  object-fit: cover;
+  transition:
+    transform 350ms var(--ease-standard),
+    filter 350ms var(--ease-standard);
+}
+
+.mediaButton:hover .image,
+.mediaButton:focus-visible .image {
+  transform: scale(1.04);
+  filter: brightness(0.78);
+}
+
+.play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border: 2px solid var(--color-white);
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  transition:
+    transform 300ms var(--ease-standard),
+    border-color 300ms var(--ease-standard);
+}
+
+.playTriangle {
+  display: block;
+  width: 0;
+  height: 0;
+  margin-left: 0.2rem;
+  border-top: 0.55rem solid transparent;
+  border-bottom: 0.55rem solid transparent;
+  border-left: 0.9rem solid var(--color-cyan);
+}
+
+.mediaButton:hover .play,
+.mediaButton:focus-visible .play {
+  transform: translate(-50%, -50%) scale(1.06);
+  border-color: var(--color-cyan);
+}
+
+@media (min-width: 48rem) {
+  .mediaWrap,
+  .mediaButton {
+    min-height: 22rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+  }
+
+  .copy {
+    padding-block: 4.5rem;
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
+  }
+
+  .mediaWrap,
+  .mediaButton {
+    min-height: 24rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .play {
+    transition: none;
+  }
+
+  .mediaButton:hover .image,
+  .mediaButton:focus-visible .image {
+    transform: none;
+    filter: none;
+  }
+}

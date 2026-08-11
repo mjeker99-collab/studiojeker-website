@@ -1,0 +1,36 @@
+/**
+ * Progressive enhancement:
+ * Content is visible by default so a failed/late observer can never blank the page.
+ * When JS marks an element as pending, it may hide briefly and then reveal.
+ */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal[data-pending="true"]:not(.visible) {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 600ms var(--ease-standard),
+    transform 600ms var(--ease-standard);
+  will-change: opacity, transform;
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 600ms var(--ease-standard),
+    transform 600ms var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-pending="true"],
+  .visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

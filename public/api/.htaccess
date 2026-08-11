@@ -1,0 +1,16 @@
+# Protect server-side contact config (never serve over HTTP).
+<IfModule mod_authz_core.c>
+  <FilesMatch "(?i)contact\.config(\.example)?\.php$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  <FilesMatch "(?i)contact\.config(\.example)?\.php$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+
+# Do not list directory contents.
+Options -Indexes

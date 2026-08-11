@@ -1,0 +1,179 @@
+.section {
+  background: var(--color-white);
+  /* Compact credibility strip — logos grow inside, section stays lean */
+  padding-block: 2.25rem;
+}
+
+.header {
+  margin-bottom: 0.85rem;
+  text-align: center;
+}
+
+.label {
+  margin: 0;
+  color: var(--color-black);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.marquee {
+  width: 100%;
+}
+
+.viewport {
+  overflow: hidden;
+  /* Soft edge exit — barely perceptible */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+}
+
+.rail {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  animation: clients-marquee 46s linear infinite;
+  will-change: transform;
+}
+
+.viewport:hover .rail {
+  animation-play-state: paused;
+}
+
+.track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  padding: 0.5rem 2.25rem;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.08);
+  opacity: 0.92;
+}
+
+/* Lighter wordmarks — ~50% larger optical presence */
+.weightLight {
+  height: 5.25rem;
+  max-width: 18.75rem;
+}
+
+/* Dense marks (UBS, Raiffeisen) — slightly less scale, still ~50% */
+.weightStrong {
+  height: 4.5rem;
+  max-width: 14.25rem;
+}
+
+@keyframes clients-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (min-width: 48rem) {
+  .item {
+    min-height: 6.25rem;
+    padding-inline: 2.5rem;
+  }
+
+  .weightLight {
+    height: 5.8rem;
+    max-width: 20.25rem;
+  }
+
+  .weightStrong {
+    height: 5rem;
+    max-width: 15.75rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .section {
+    padding-block: 2.5rem 2.75rem;
+  }
+
+  .header {
+    margin-bottom: 0.85rem;
+  }
+
+  .item {
+    min-height: 8rem;
+    padding: 0.65rem 3rem;
+  }
+
+  .rail {
+    animation-duration: 50s;
+  }
+
+  /* Desktop: ~50% larger than previous 5.5 / 4.5 rem heights */
+  .weightLight {
+    height: 8.25rem;
+    max-width: 23.25rem;
+  }
+
+  .weightStrong {
+    height: 6.75rem;
+    max-width: 17.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    -webkit-mask-image: none;
+    mask-image: none;
+    overflow: visible;
+  }
+
+  .rail {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    will-change: auto;
+  }
+
+  /* Hide duplicated sequence — show a single static centered row */
+  .rail > .track:last-child {
+    display: none;
+  }
+
+  .track {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .item {
+    padding-inline: 1.5rem;
+  }
+}

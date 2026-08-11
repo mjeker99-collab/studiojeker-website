@@ -8,7 +8,11 @@ function getWordpressHostname(): string | null {
   }
 
   try {
-    return new URL(baseUrl).hostname;
+    const url = new URL(baseUrl);
+    if (url.protocol !== "https:") {
+      return null;
+    }
+    return url.hostname;
   } catch {
     return null;
   }
@@ -16,17 +20,31 @@ function getWordpressHostname(): string | null {
 
 const wordpressHostname = getWordpressHostname();
 
+/**
+ * Static export for Metanet / Plesk Apache hosting (no Node.js runtime).
+ *
+ * Notes:
+ * - `headers()` / `redirects()` in next.config are NOT applied to static
+ *   export. Apache equivalents live in `public/.htaccess` (copied into `/out`).
+ * - `images.unoptimized` is required — no Next image optimization server.
+ * - `trailingSlash: true` emits `/about/index.html` for reliable Apache routing.
+ */
 const nextConfig: NextConfig = {
+  // Keep repository AGENTS.md authoritative; do not let Next overwrite it.
+  agentRules: false,
+  output: "export",
+  trailingSlash: true,
+  // Do not advertise the Next.js runtime to clients.
+  poweredByHeader: false,
+  // Avoid leaking build traces / verbose error overlays in production.
+  productionBrowserSourceMaps: false,
   images: {
-    formats: ["image/avif", "image/webp"],
+    unoptimized: true,
+    // HTTPS only — never allow remote http:// CMS assets.
     remotePatterns: wordpressHostname
       ? [
           {
             protocol: "https",
-            hostname: wordpressHostname,
-          },
-          {
-            protocol: "http",
             hostname: wordpressHostname,
           },
         ]

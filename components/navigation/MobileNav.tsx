@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Dictionary, Locale } from "@/types/i18n";
-import { getContactHref, getPrimaryNav } from "@/lib/i18n/navigation";
-import { Button } from "@/components/ui/Button";
+import { getPrimaryNav, getServiceNavLinks } from "@/lib/i18n/navigation";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 import { NavLink } from "@/components/navigation/NavLink";
 import styles from "./MobileNav.module.css";
@@ -17,11 +16,18 @@ type MobileNavProps = {
 
 export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps) {
   const items = getPrimaryNav(locale);
+  const serviceLinks = getServiceNavLinks(locale, dictionary);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const labels = {
-    solutions: dictionary.nav.solutions,
-    references: dictionary.nav.references,
     about: dictionary.nav.about,
+    services: dictionary.nav.services,
+    work: dictionary.nav.work,
     contact: dictionary.nav.contact,
+  };
+
+  const handleClose = () => {
+    setServicesOpen(false);
+    onClose();
   };
 
   useEffect(() => {
@@ -34,6 +40,7 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        setServicesOpen(false);
         onClose();
       }
     };
@@ -55,15 +62,10 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
       aria-label={dictionary.nav.primaryNav}
     >
       <div className={styles.top}>
-        <LanguageSwitcher
-          locale={locale}
-          label={dictionary.nav.language}
-          inverse
-        />
         <button
           type="button"
           className={styles.close}
-          onClick={onClose}
+          onClick={handleClose}
           aria-label={dictionary.nav.closeMenu}
         >
           ×
@@ -72,20 +74,68 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
 
       <nav className={styles.nav} aria-label={dictionary.nav.primaryNav}>
         <ul className={styles.list}>
-          {items.map((item) => (
-            <li key={item.id}>
-              <NavLink href={item.href} className={styles.link} onClick={onClose}>
-                {labels[item.id]}
-              </NavLink>
-            </li>
-          ))}
+          {items.map((item) => {
+            if (item.id === "services") {
+              return (
+                <li key={item.id} className={styles.servicesItem}>
+                  <button
+                    type="button"
+                    className={styles.linkButton}
+                    aria-expanded={servicesOpen}
+                    aria-controls="mobile-services-submenu"
+                    onClick={() => setServicesOpen((value) => !value)}
+                  >
+                    <span>{labels.services}</span>
+                    <span className={styles.chevron} aria-hidden="true">
+                      {servicesOpen ? "−" : "+"}
+                    </span>
+                  </button>
+                  <ul
+                    id="mobile-services-submenu"
+                    className={styles.submenu}
+                    hidden={!servicesOpen}
+                  >
+                    {serviceLinks.map((service) => (
+                      <li key={service.id}>
+                        <NavLink
+                          href={service.href}
+                          className={styles.sublink}
+                          onClick={handleClose}
+                        >
+                          {service.label}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            }
+
+            if (!item.href || !(item.id in labels)) {
+              return null;
+            }
+
+            return (
+              <li key={item.id}>
+                <NavLink
+                  href={item.href}
+                  className={styles.link}
+                  onClick={handleClose}
+                >
+                  {labels[item.id as keyof typeof labels]}
+                </NavLink>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
       <div className={styles.bottom}>
-        <Button href={getContactHref(locale)} fullWidthMobile onClick={onClose}>
-          {dictionary.nav.cta}
-        </Button>
+        <LanguageSwitcher
+          locale={locale}
+          label={dictionary.nav.language}
+          inverse
+        />
       </div>
     </div>
   );

@@ -146,3 +146,6 @@ vite.config.ts.timestamp-*
 .next/
 out/
 .env*.local
+
+# Metanet PHP contact config (may contain host-specific / SMTP secrets)
+public/api/contact.config.php

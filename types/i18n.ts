@@ -9,9 +9,10 @@ export type Dictionary = {
     positioning: string;
   };
   nav: {
-    solutions: string;
-    references: string;
     about: string;
+    services: string;
+    work: string;
+    insights: string;
     contact: string;
     cta: string;
     openMenu: string;
@@ -20,10 +21,17 @@ export type Dictionary = {
     language: string;
   };
   footer: {
+    brand: string;
     navigation: string;
     services: string;
     legal: string;
     copyright: string;
+    impressum: string;
+    privacy: string;
+    architecture: string;
+    productCommunication: string;
+    businessCommunication: string;
+    digitalMarketing: string;
   };
   foundation: {
     title: string;

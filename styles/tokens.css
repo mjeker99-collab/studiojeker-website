@@ -44,22 +44,38 @@
   --space-15: 7.5rem; /* 120 */
   --space-20: 10rem; /* 160 */
 
-  --section-padding-y: var(--space-10);
+  /* Content sections: ~70–100px desktop rhythm */
+  --section-padding-y: 3.75rem; /* 60 */
+  --section-padding-y-compact: 3.25rem;
   --component-gap: var(--space-4);
   --card-gap: var(--space-3);
-  --headline-margin: var(--space-5);
+  --headline-margin: var(--space-3);
 
   /* Layout */
   --container-max: 90rem; /* 1440px */
   --container-padding-x: var(--space-2);
   --grid-columns: 4;
-  --header-height: 4.5rem; /* compact mobile */
+  --header-height: 4.25rem; /* room for larger logo without bulk */
+  --header-height-sticky: 3.75rem;
 
-  /* Radii */
-  --radius-button: 0.5rem; /* 8px */
-  --radius-card: 0.75rem; /* 12px */
-  --radius-image: 1rem; /* 16px */
-  --radius-section: 1.5rem; /* 24px */
+  /* Radii — homepage master uses sharp geometry intentionally */
+  --radius-button: 0;
+  --radius-card: 0;
+  --radius-image: 0;
+  --radius-section: 0;
+
+  /* Cyan bars — shared brand system
+     edge: page/module left accent (~5–6px desktop)
+     width: thick signature bar beside media modules */
+  --cyan-bar-edge: 4px;
+  --cyan-bar-thin: var(--cyan-bar-edge); /* alias for legacy usages */
+  --cyan-bar-width: clamp(0.75rem, 2.2vw, 2.125rem);
+
+  /* Card/link arrows */
+  --arrow-size: 1.25rem;
+  --arrow-weight: 400;
+  --arrow-inset-inline-end: 0;
+  --arrow-inset-block-end: 0;
 
   /* Motion */
   --duration-fast: 200ms;
@@ -78,10 +94,13 @@
     --text-body-size: 1.25rem; /* 20px */
     --text-subheadline-size: 1.75rem; /* 28px */
     --text-headline-size: 3rem; /* 48px tablet */
-    --section-padding-y: var(--space-15);
+    --section-padding-y: 4.5rem; /* 72 */
+    --section-padding-y-compact: 4rem;
     --container-padding-x: var(--space-4);
     --grid-columns: 8;
-    --header-height: 5.5rem;
+    --header-height: 4.75rem;
+    --header-height-sticky: 4rem;
+    --cyan-bar-edge: 5px;
   }
 }
 
@@ -89,14 +108,19 @@
   :root {
     --text-headline-size: 4rem; /* 64px */
     --grid-columns: 12;
-    --header-height: 6rem; /* 96px */
+    --header-height: 5rem;
+    --header-height-sticky: 4.25rem;
+    --section-padding-y: 5rem; /* 80 */
+    --section-padding-y-compact: 4.5rem; /* 72 */
+    --cyan-bar-edge: 6px;
   }
 }
 
 @media (min-width: 80rem) {
   :root {
     --text-headline-size: 5rem; /* 80px toward desktop range */
-    --section-padding-y: var(--space-20);
+    --section-padding-y: 5.625rem; /* 90 */
+    --section-padding-y-compact: 4.75rem; /* 76 */
     --container-padding-x: var(--space-5);
   }
 }
