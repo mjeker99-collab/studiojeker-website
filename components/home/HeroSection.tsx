@@ -35,9 +35,9 @@ export function HeroSection({ content }: HeroSectionProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={120}>
-          {/* Bar + image share .mediaWrap bounds → identical top/bottom */}
-          <CyanBar boundToMedia />
           <div className={styles.media}>
+            {/* Bound to .media — identical top/bottom as the image box */}
+            <CyanBar boundToMedia />
             <Image
               src={mediaPath(content.media.src)}
               alt={content.media.alt}

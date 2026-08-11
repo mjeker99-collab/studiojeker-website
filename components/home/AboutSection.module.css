@@ -53,25 +53,24 @@
 }
 
 /*
- * Shared frame for cyan bar + image.
- * Both absolutely pinned → cyan top/bottom = image top/bottom.
+ * Media column: cyan bar lives INSIDE .media → same height as image.
  */
 .mediaWrap {
-  position: relative;
+  display: flex;
   align-self: stretch;
   height: 100%;
   min-height: 16rem;
-  --media-bar-width: var(--cyan-bar-width);
 }
 
 .media {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: var(--media-bar-width);
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 16rem;
   overflow: hidden;
   background: var(--color-neutral);
+  --media-bar-width: var(--cyan-bar-width);
 }
 
 .image {
@@ -80,13 +79,14 @@
 }
 
 @media (max-width: 47.9375rem) {
-  .mediaWrap {
+  .media {
     --media-bar-width: clamp(0.625rem, 2.4vw, 0.875rem);
   }
 }
 
 @media (min-width: 48rem) {
-  .mediaWrap {
+  .mediaWrap,
+  .media {
     min-height: 22rem;
   }
 }
@@ -104,7 +104,8 @@
     padding-left: max(var(--container-padding-x), 3.5%);
   }
 
-  .mediaWrap {
+  .mediaWrap,
+  .media {
     min-height: 22rem;
   }
 }
@@ -114,12 +115,14 @@
   padding-block: 2rem;
 }
 
-.compact .mediaWrap {
+.compact .mediaWrap,
+.compact .media {
   min-height: 14rem;
 }
 
 @media (min-width: 48rem) {
-  .compact .mediaWrap {
+  .compact .mediaWrap,
+  .compact .media {
     min-height: 18rem;
   }
 }
@@ -130,7 +133,8 @@
     padding-bottom: 2.75rem;
   }
 
-  .compact .mediaWrap {
+  .compact .mediaWrap,
+  .compact .media {
     min-height: 20rem;
   }
 }

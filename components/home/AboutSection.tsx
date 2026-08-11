@@ -58,8 +58,8 @@ export function AboutSection({ content, compact = false }: AboutSectionProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={100}>
-          <CyanBar boundToMedia />
           <div className={styles.media}>
+            <CyanBar boundToMedia />
             <Image
               src={mediaPath(content.media.src)}
               alt={content.media.alt}

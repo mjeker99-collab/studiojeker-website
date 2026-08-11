@@ -15,7 +15,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
       hero: {
         label: "Work",
         headline: "Selected projects.",
-        text: "Approved case studies will replace these category placeholders. Until then, cards lead to this overview.",
+        text: "A selection of our work in photography, film, 3D and marketing.",
       },
       projects: {
         ...home.projects,
@@ -35,7 +35,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
     hero: {
       label: "Work",
       headline: "Ausgewählte Projekte.",
-      text: "Freigegebene Case Studies ersetzen diese Kategorie-Platzhalter. Bis dahin führen die Karten auf diese Übersicht.",
+      text: "Eine Auswahl unserer Arbeit in Fotografie, Film, 3D und Marketing.",
     },
     projects: {
       ...home.projects,

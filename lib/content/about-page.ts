@@ -245,7 +245,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           },
           {
             id: "partner",
-            value: "1 partner",
+            value: "1 contact person",
             label: "From strategy to delivery",
           },
           {
@@ -428,7 +428,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         },
         {
           id: "partner",
-          value: "1 Partner",
+          value: "1 Ansprechpartner",
           label: "Von Strategie bis Umsetzung",
         },
         {

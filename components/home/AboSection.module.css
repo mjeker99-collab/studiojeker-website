@@ -68,44 +68,42 @@
 }
 
 /*
- * Subgrid: every benefit shares the same icon row track,
- * so all four icons sit on one horizontal line.
+ * Equal columns. Each unit is a flex column so icons share one baseline
+ * and titles start on one line — wrap length must not shift icons.
  */
 .benefits {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* Cycle: icon track (fixed) → title → text — keeps icons on one line */
-  grid-auto-rows: 2.25rem auto auto;
   gap: 0;
-  align-items: stretch;
+  align-items: start;
+  align-content: center;
   padding: var(--space-4) var(--space-2);
   background: var(--color-black);
   color: var(--color-white);
 }
 
 .benefit {
-  display: grid;
-  grid-template-rows: subgrid;
-  grid-row: span 3;
-  justify-items: center;
-  align-items: start;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
   min-height: 0;
   padding: var(--space-3) var(--space-2);
   text-align: center;
-  /* No cyan divider lines — benefits separated by whitespace only */
   border: 0;
 }
 
 .icon {
   display: flex;
-  flex-shrink: 0;
+  flex: 0 0 2.25rem;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   width: 2.25rem;
   height: 2.25rem;
-  margin: 0;
+  margin: 0 0 0.5rem;
   padding: 0;
   line-height: 0;
   color: var(--color-cyan);
@@ -120,15 +118,18 @@
 
 .benefitTitle {
   margin: 0;
+  width: 100%;
   color: var(--color-white);
   font-size: 0.6875rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
 .benefitText {
-  margin: 0;
+  margin: 0.35rem 0 0;
+  width: 100%;
   color: var(--color-silver);
   font-size: 0.8125rem;
   line-height: 1.4;
@@ -167,14 +168,9 @@
 
   .benefits {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    /* Icon + title only — fixed icon track shared across all 4 columns */
-    grid-auto-rows: 2.25rem auto;
+    align-items: start;
+    align-content: center;
     padding-inline: var(--space-2);
-  }
-
-  .benefit {
-    /* Icon + title only on desktop — shared subgrid rows across all 4 */
-    grid-row: span 2;
   }
 
   .benefitText {

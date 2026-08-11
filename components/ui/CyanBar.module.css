@@ -17,13 +17,15 @@
 }
 
 /*
- * Bound to the shared media frame (.mediaWrap):
- * top/bottom identical to the image box — no independent height.
- * Parent .mediaWrap must be position:relative and set --media-bar-width.
+ * Bound to the image box (.media):
+ * top/bottom identical to the photo — no independent height.
+ * Parent .media must be position:relative and may set --media-bar-width.
+ * Bar overlays the left edge of the image (same containing block).
  */
 .mediaBound {
   position: absolute;
   top: 0;
+  right: auto;
   bottom: 0;
   left: 0;
   z-index: 2;
@@ -31,6 +33,8 @@
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
   flex: none !important;
   align-self: auto !important;
   animation: none !important;
