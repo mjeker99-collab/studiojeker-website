@@ -2,7 +2,6 @@ import Image from "next/image";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
-import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import styles from "./HeroSection.module.css";
 
@@ -35,17 +34,22 @@ export function HeroSection({ content }: HeroSectionProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={120}>
+          {/*
+            Cyan + photo are GRID SIBLINGS of the same media wrapper.
+            No absolute top/bottom — height comes only from this grid.
+          */}
           <div className={styles.media}>
-            {/* Bound to .media — identical top/bottom as the image box */}
-            <CyanBar boundToMedia />
-            <Image
-              src={mediaPath(content.media.src)}
-              alt={content.media.alt}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 64vw"
-              className={styles.image}
-            />
+            <div className={styles.cyanBar} aria-hidden="true" />
+            <div className={styles.photo}>
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 64vw"
+                className={styles.image}
+              />
+            </div>
           </div>
         </Reveal>
       </div>
