@@ -2,6 +2,7 @@ import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
 import { getServicePaths } from "@/lib/content/services/paths";
+import { showreels } from "@/lib/content/showreels";
 
 /**
  * Content & Digital Marketing — SEO + kit §10 outline.
@@ -85,6 +86,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           width: 1400,
           height: 933,
         },
+        videoId: showreels.digitalMarketing,
       },
       projects: {
         label: "Selected projects",
@@ -244,6 +246,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         width: 1400,
         height: 933,
       },
+      videoId: showreels.digitalMarketing,
     },
     projects: {
       label: "Ausgewählte Projekte",

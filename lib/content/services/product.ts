@@ -2,6 +2,7 @@ import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
 import { getServicePaths } from "@/lib/content/services/paths";
+import { showreels } from "@/lib/content/showreels";
 
 export function getProductCommunicationContent(
   locale: Locale,
@@ -84,6 +85,7 @@ export function getProductCommunicationContent(
           width: 1400,
           height: 933,
         },
+        videoId: showreels.productCommunication,
       },
       projects: {
         label: "Selected projects",
@@ -245,6 +247,7 @@ export function getProductCommunicationContent(
         width: 1400,
         height: 933,
       },
+      videoId: showreels.productCommunication,
     },
     projects: {
       label: "Ausgewählte Projekte",

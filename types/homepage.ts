@@ -63,6 +63,8 @@ export type HomepageContent = {
     body: string;
     cta: { label: string; href: string };
     media: HomepageMedia;
+    /** Vimeo showreel video id (e.g. 1216347773). */
+    videoId: string;
   };
   projects: {
     label: string;

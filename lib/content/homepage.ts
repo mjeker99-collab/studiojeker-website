@@ -92,6 +92,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           width: 1600,
           height: 1066,
         },
+        videoId: "1216347773",
       },
       projects: {
         label: "Selected projects",
@@ -281,6 +282,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         width: 1600,
         height: 1066,
       },
+        videoId: "1216347773",
     },
     projects: {
       label: "Ausgewählte Projekte",

@@ -2,6 +2,7 @@ import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
 import { getServicePaths } from "@/lib/content/services/paths";
+import { showreels } from "@/lib/content/showreels";
 
 /** Content from Website Texte D&E_2026 + SEO Titles&Metas (kit-aligned). */
 export function getBusinessCommunicationContent(
@@ -86,6 +87,7 @@ export function getBusinessCommunicationContent(
           width: 1400,
           height: 933,
         },
+        videoId: showreels.businessCommunication,
       },
       projects: {
         label: "Selected projects",
@@ -247,6 +249,7 @@ export function getBusinessCommunicationContent(
         width: 1400,
         height: 933,
       },
+      videoId: showreels.businessCommunication,
     },
     projects: {
       label: "Ausgewählte Projekte",

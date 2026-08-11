@@ -2,6 +2,7 @@ import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
 import { getServicePaths } from "@/lib/content/services/paths";
+import { showreels } from "@/lib/content/showreels";
 
 export function getArchitectureContent(locale: Locale): ServicePageContent {
   const paths = getServicePaths(locale);
@@ -81,6 +82,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           width: 1400,
           height: 933,
         },
+        videoId: showreels.architecture,
       },
       projects: {
         label: "Selected projects",
@@ -240,6 +242,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         width: 1400,
         height: 933,
       },
+      videoId: showreels.architecture,
     },
     projects: {
       label: "Ausgewählte Projekte",

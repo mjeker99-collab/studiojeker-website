@@ -1,10 +1,10 @@
-import Image from "next/image";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import styles from "./ShowreelSection.module.css";
 
 type ShowreelSectionProps = {
@@ -12,6 +12,15 @@ type ShowreelSectionProps = {
 };
 
 export function ShowreelSection({ content }: ShowreelSectionProps) {
+  const poster = content.media
+    ? {
+        src: mediaPath(content.media.src),
+        alt: content.media.alt,
+        width: content.media.width,
+        height: content.media.height,
+      }
+    : undefined;
+
   return (
     <section
       className={styles.section}
@@ -35,22 +44,12 @@ export function ShowreelSection({ content }: ShowreelSectionProps) {
 
         <Reveal className={styles.mediaWrap} delayMs={100}>
           <CyanBar />
-          <a
+          <VimeoShowreel
             className={styles.mediaButton}
-            href={content.cta.href}
-            aria-label={content.cta.label}
-          >
-            <Image
-              src={mediaPath(content.media.src)}
-              alt={content.media.alt}
-              fill
-              sizes="(max-width: 1024px) 100vw, 64vw"
-              className={styles.image}
-            />
-            <span className={styles.play} aria-hidden="true">
-              <span className={styles.playTriangle} />
-            </span>
-          </a>
+            videoId={content.videoId}
+            title={`${content.media.alt} – Showreel`}
+            poster={poster}
+          />
         </Reveal>
       </div>
     </section>
