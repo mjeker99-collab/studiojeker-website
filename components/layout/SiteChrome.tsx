@@ -4,7 +4,6 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DocumentLang } from "@/components/i18n/DocumentLang";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
 
 type SiteChromeProps = {
   locale: Locale;
@@ -16,7 +15,6 @@ export function SiteChrome({ locale, children }: SiteChromeProps) {
 
   return (
     <>
-      <OrganizationJsonLd />
       <DocumentLang locale={locale} />
       <a className="skip-link" href="#main-content">
         {locale === "de" ? "Zum Inhalt springen" : "Skip to content"}
