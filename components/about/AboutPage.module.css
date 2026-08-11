@@ -7,7 +7,10 @@
 /*
  * CRITICAL: Keep hero media below the fixed header.
  * Homepage hero lets media run under a transparent header; About must not
- * cover logo/navigation. Section offset + reduced copy top padding.
+ * cover logo/navigation. Section offset keeps image/cyan bar locked.
+ *
+ * H1 typography: About uses HeroSection.module.css `.headline` only —
+ * no About-specific font-size / clamp overrides.
  */
 .hero {
   padding-top: var(--header-height);
@@ -15,9 +18,15 @@
   z-index: 0;
 }
 
+/*
+ * Move the full left content block slightly down (label → CTA).
+ * Homepage centers copy in a taller hero; About keeps the locked image
+ * height and offsets via padding + start alignment — no translateY.
+ */
 .heroCopy {
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-4);
+  align-content: start;
+  padding-top: clamp(2.75rem, 6vw, 5rem);
+  padding-bottom: var(--space-5);
 }
 
 .middleStack {
@@ -293,6 +302,10 @@
 @media (min-width: 64rem) {
   .hero {
     min-height: min(68svh, 36rem);
+  }
+
+  .heroCopy {
+    padding-top: clamp(3.25rem, 5.5vw, 5.5rem);
   }
 
   .values {
