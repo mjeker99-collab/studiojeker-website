@@ -228,7 +228,9 @@ export function AboutPage({ content }: AboutPageProps) {
         </section>
       </div>
 
-      <AboutSection content={content.approach} compact />
+      <div className={styles.approachWrap}>
+        <AboutSection content={content.approach} compact />
+      </div>
 
       <ServicesSection content={content.services} />
 
