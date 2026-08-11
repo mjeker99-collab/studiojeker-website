@@ -1,7 +1,9 @@
 .footer {
-  background: var(--color-black);
+  /* Explicit black to avoid any edge-case variable resolution issues. */
+  background: #000;
   color: var(--color-white);
   padding-block: var(--space-7);
+  width: 100%;
 }
 
 .grid {
@@ -47,14 +49,26 @@
 }
 
 .contactLink {
-  color: var(--color-cyan);
+  color: var(--color-white);
   font-size: 0.9375rem;
   text-decoration: none;
 }
 
 .contactLink:hover,
 .contactLink:focus-visible {
-  text-decoration: underline;
+  color: var(--color-cyan);
+  text-decoration: none;
+}
+
+.footer a {
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+.footer a:hover,
+.footer a:focus-visible {
+  color: var(--color-cyan);
+  text-decoration: none;
 }
 
 .columns {
