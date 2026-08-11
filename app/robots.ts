@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 
+/** Required for `output: "export"`. */
+export const dynamic = "force-static";
+
 /**
  * Production robots — allow public indexing.
  * Preview/tunnel hosts must not be used as the sitemap base URL.

@@ -1,12 +1,17 @@
-import { headers } from "next/headers";
+"use client";
+
+import { usePathname } from "next/navigation";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { localizePathname } from "@/lib/i18n/config";
 
-export default async function NotFound() {
-  const headerStore = await headers();
-  const locale = headerStore.get("x-studiojeker-locale") === "en" ? "en" : "de";
+/**
+ * Static-export compatible 404 — locale from pathname (no middleware/headers).
+ */
+export default function NotFound() {
+  const pathname = usePathname() || "/";
+  const locale = pathname === "/en" || pathname.startsWith("/en/") ? "en" : "de";
   const homeHref = localizePathname("/", locale);
 
   return (

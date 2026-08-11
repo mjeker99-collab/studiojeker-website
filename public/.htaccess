@@ -1,0 +1,54 @@
+# Studiojeker — Apache / Plesk static hosting
+# Copied into `/out` via the Next.js `public/` directory on build.
+# Requires: AllowOverride + mod_rewrite + mod_headers (typical Plesk defaults).
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # --- Legacy / IA redirects (moved from next.config; static export cannot emit them) ---
+  RewriteRule ^services/?$ / [R=301,L]
+  RewriteRule ^en/services/?$ /en/ [R=301,L]
+  RewriteRule ^solutions/?$ / [R=301,L]
+  RewriteRule ^en/solutions/?$ /en/ [R=301,L]
+
+  RewriteRule ^solutions/brand-business/?$ /services/business-communication/ [R=301,L]
+  RewriteRule ^en/solutions/brand-business/?$ /en/services/business-communication/ [R=301,L]
+  RewriteRule ^solutions/products-industry/?$ /services/product-communication/ [R=301,L]
+  RewriteRule ^en/solutions/products-industry/?$ /en/services/product-communication/ [R=301,L]
+  RewriteRule ^solutions/architecture-real-estate/?$ /services/architecture/ [R=301,L]
+  RewriteRule ^en/solutions/architecture-real-estate/?$ /en/services/architecture/ [R=301,L]
+  RewriteRule ^solutions/social-digital-marketing/?$ /services/digital-marketing/ [R=301,L]
+  RewriteRule ^en/solutions/social-digital-marketing/?$ /en/services/digital-marketing/ [R=301,L]
+
+  RewriteRule ^references(/.*)?$ /work/ [R=301,L]
+  RewriteRule ^en/references(/.*)?$ /en/work/ [R=301,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Security headers (static export cannot use next.config headers())
+  # Keep in sync with lib/security/headers.ts allow-lists.
+  Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' mailto:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://i.vimeocdn.com; font-src 'self'; connect-src 'self'; frame-src 'self' https://player.vimeo.com https://vimeo.com; child-src 'self' https://player.vimeo.com https://vimeo.com; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "DENY"
+  Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set X-DNS-Prefetch-Control "off"
+  Header unset X-Powered-By
+</IfModule>
+
+# Prefer UTF-8
+AddDefaultCharset UTF-8
+
+# Cache immutable Next assets aggressively when present
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/avif "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>

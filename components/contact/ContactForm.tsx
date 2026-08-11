@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import type { Locale } from "@/types/i18n";
-import { CONTACT_FIELD_LIMITS } from "@/lib/security/contact";
+import {
+  CONTACT_FIELD_LIMITS,
+  validateContactPayload,
+} from "@/lib/security/contact";
+import { studiojekerContact } from "@/lib/content/contact";
 import { Button } from "@/components/ui/Button";
 import styles from "./ContactPage.module.css";
 
@@ -30,7 +34,8 @@ type ContactFormProps = {
 
 /**
  * Contact form UI — same markup/classes as the approved contact layout.
- * Submits to POST /api/contact (server validation). No visual redesign.
+ * Static hosting: posts to NEXT_PUBLIC_CONTACT_FORM_ENDPOINT when configured,
+ * otherwise falls back to a mailto: hand-off (no Node.js API).
  */
 export function ContactForm({ labels, privacyHref, locale }: ContactFormProps) {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">(
@@ -44,37 +49,78 @@ export function ContactForm({ labels, privacyHref, locale }: ContactFormProps) {
     const form = event.currentTarget;
     const data = new FormData(form);
 
+    const validated = validateContactPayload({
+      name: data.get("name"),
+      company: data.get("company"),
+      email: data.get("email"),
+      phone: data.get("phone"),
+      message: data.get("message"),
+      website: data.get("website"),
+      turnstileToken: data.get("cf-turnstile-response") || undefined,
+      locale,
+    });
+
+    if (!validated.ok) {
+      if (validated.code === "honeypot") {
+        setStatus("success");
+        form.reset();
+        return;
+      }
+      setStatus("error");
+      return;
+    }
+
     setStatus("sending");
+
+    const endpoint = process.env.NEXT_PUBLIC_CONTACT_FORM_ENDPOINT?.trim();
+
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: data.get("name"),
-          company: data.get("company"),
-          email: data.get("email"),
-          phone: data.get("phone"),
-          message: data.get("message"),
-          website: data.get("website"),
-          turnstileToken: data.get("cf-turnstile-response") || undefined,
-          locale,
-        }),
-      });
+      if (endpoint) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: validated.data.name,
+            company: validated.data.company ?? "",
+            email: validated.data.email,
+            phone: validated.data.phone ?? "",
+            message: validated.data.message,
+            locale,
+            turnstileToken: validated.data.turnstileToken,
+            source: "studiojeker-website",
+          }),
+        });
 
-      if (!response.ok) {
-        setStatus("error");
+        if (!response.ok) {
+          setStatus("error");
+          return;
+        }
+
+        form.reset();
+        setStatus("success");
         return;
       }
 
-      const result = (await response.json()) as { ok?: boolean };
-      if (!result.ok) {
-        setStatus("error");
-        return;
-      }
-
+      // Static hosting without an external endpoint — open the user's mail client.
+      const subject = encodeURIComponent(
+        locale === "en" ? "Studiojeker enquiry" : "Studiojeker Anfrage",
+      );
+      const body = encodeURIComponent(
+        [
+          `Name: ${validated.data.name}`,
+          validated.data.company ? `Company: ${validated.data.company}` : null,
+          `Email: ${validated.data.email}`,
+          validated.data.phone ? `Phone: ${validated.data.phone}` : null,
+          "",
+          validated.data.message,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+      window.location.href = `mailto:${studiojekerContact.email}?subject=${subject}&body=${body}`;
       form.reset();
       setStatus("success");
     } catch {
@@ -82,12 +128,15 @@ export function ContactForm({ labels, privacyHref, locale }: ContactFormProps) {
     }
   }
 
+  const endpoint = process.env.NEXT_PUBLIC_CONTACT_FORM_ENDPOINT?.trim();
+
   return (
     <form
       id={labels.id}
       className={styles.form}
       method="post"
-      action="/api/contact"
+      action={endpoint || `mailto:${studiojekerContact.email}`}
+      encType={endpoint ? undefined : "text/plain"}
       onSubmit={onSubmit}
       noValidate={false}
     >

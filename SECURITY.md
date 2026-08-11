@@ -55,25 +55,19 @@ Enable HSTS only on production HTTPS at the edge — see section C.
 - Dependencies are minimal: `next`, `react`, `react-dom` (+ eslint/typescript as
   devDependencies). No unused production packages found to remove.
 
-### Contact form (`POST /api/contact`)
+### Contact form
 
-Replaces insecure `mailto:` form submission.
+Static Metanet deployment has **no** Next.js API routes.
 
 | Control | Implementation |
 |---------|----------------|
-| Method | `POST` only (`GET`/`PUT`/`DELETE` → 405) |
-| Validation | Server-side (`lib/security/contact.ts`) |
-| Max lengths | name 120, company 160, email 254, phone 40, message 4000 |
-| Sanitization | Control characters stripped (header-injection safe) |
-| Honeypot | Hidden `website` field; bots get a fake success |
-| Errors | Generic `{ ok: false, error: "request_failed" }` — no stack/paths |
-| Soft rate limit | In-process: 8 requests / IP / 15 minutes |
-| Turnstile ready | Accepts `turnstileToken`; verifies only if `TURNSTILE_SECRET_KEY` is set |
-| Delivery | Optional `CONTACT_FORM_WEBHOOK_URL` (server-side POST) |
+| Validation | Client-side (`lib/security/contact.ts`) with max lengths + honeypot |
+| Delivery | `NEXT_PUBLIC_CONTACT_FORM_ENDPOINT` (HTTPS webhook) when configured |
+| Fallback | `mailto:` hand-off when no endpoint is configured |
+| Turnstile | Slot reserved; enable with public site key + CSP updates in `.htaccess` |
 
-Wire a real mail/webhook endpoint before production go-live
-(`CONTACT_FORM_WEBHOOK_URL`). Until then, validated submissions succeed in
-non-broken UX but are not emailed unless the webhook is configured.
+Server-side `POST /api/contact` was removed for static export compatibility.
+Preferred production setup: external form backend + optional Cloudflare Turnstile.
 
 ### Error handling
 
@@ -81,18 +75,20 @@ non-broken UX but are not emailed unless the webhook is configured.
 - Production responses must not expose stack traces, filesystem paths,
   environment variables, or infrastructure details.
 
-### Rate-limit locations (app + edge)
+### Rate-limit locations (edge)
 
-| Endpoint / surface | App-level today | Recommended production |
-|--------------------|-----------------|------------------------|
-| `POST /api/contact` | Soft in-memory limiter | Cloudflare Rate Limiting / WAF |
-| Future `/api/*` | Add same helper | Cloudflare per-route rules |
-| Future auth endpoints | None yet | Cloudflare + app lockout |
+| Endpoint / surface | Static hosting | Recommended production |
+|--------------------|----------------|------------------------|
+| Contact form webhook | Provider limits | Cloudflare Rate Limiting / WAF in front of webhook |
+| Future APIs | N/A on static host | Cloudflare per-route rules |
 
 Do **not** set aggressive limits that block legitimate users.
-Suggested Cloudflare starting point for contact: e.g. **10 requests / minute / IP**
-with challenge after threshold (tune after observing traffic).
 
+### Static export note
+
+Security headers and legacy redirects for Apache live in `public/.htaccess`
+(copied into `/out`). Keep CSP allow-lists aligned with
+`lib/security/headers.ts` when editing.
 ---
 
 ## B) Hosting / server security — configure on Metanet
