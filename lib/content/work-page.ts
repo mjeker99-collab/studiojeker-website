@@ -1,7 +1,6 @@
 import type { Locale } from "@/types/i18n";
 import type { ProjectMedia, WorkPageContent, WorkProjectItem } from "@/types/work";
 import { localizePathname } from "@/lib/i18n/config";
-import { getServicePaths } from "@/lib/content/services/paths";
 import { getHomepageContent } from "@/lib/content/homepage";
 import { showreels } from "@/lib/content/showreels";
 
@@ -15,13 +14,11 @@ type ImageAsset = {
 function imageItem(
   id: string,
   title: string,
-  href: string,
   image: ImageAsset,
 ): WorkProjectItem {
   return {
     id,
     title,
-    href,
     media: {
       type: "image",
       src: image.src,
@@ -52,11 +49,10 @@ function slideshowItem(
  * Work overview — four equal category grids (4 tiles each).
  * Media type is switchable per tile (image | video | slideshow).
  * Visual placeholders until approved case studies exist.
- * No invented clients or project titles in the UI.
+ * No service-page links. No invented clients or project titles.
  */
 export function getWorkPageContent(locale: Locale): WorkPageContent {
   const home = getHomepageContent(locale);
-  const paths = getServicePaths(locale);
   const contact = localizePathname("/contact", locale);
 
   const digitalAlt =
@@ -190,34 +186,35 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
   const architectureTitle = "Architecture & Real Estate";
 
   /**
-   * Demo media mix (same assets / existing showreel IDs):
-   * - digital tile 3 → Vimeo video (poster = existing film still)
-   * - product tile 1 → slideshow of product stills
+   * Demo media mix (placeholder assets / existing showreel IDs):
+   * - digital tile 3 → Vimeo video
+   * - product tile 1 → slideshow
    * Remaining tiles stay static images until final project media is defined.
    */
   const digitalItems: WorkProjectItem[] = [
-    imageItem("digital-1", digitalTitle, paths.digital, digitalImages[0]),
-    imageItem("digital-2", digitalTitle, paths.digital, digitalImages[1]),
+    imageItem("digital-1", digitalTitle, digitalImages[0]),
+    imageItem("digital-2", digitalTitle, digitalImages[1]),
     videoItem("digital-3", digitalTitle, {
       type: "video",
       src: showreels.digitalMarketing,
       poster: digitalImages[2].src,
-      posterAlt: digitalImages[2].alt,
+      alt: digitalImages[2].alt,
       provider: "vimeo",
     }),
-    imageItem("digital-4", digitalTitle, paths.digital, digitalImages[3]),
+    imageItem("digital-4", digitalTitle, digitalImages[3]),
   ];
 
   const businessItems: WorkProjectItem[] = [
-    imageItem("business-1", businessTitle, paths.business, businessImages[0]),
-    imageItem("business-2", businessTitle, paths.business, businessImages[1]),
-    imageItem("business-3", businessTitle, paths.business, businessImages[2]),
-    imageItem("business-4", businessTitle, paths.business, businessImages[3]),
+    imageItem("business-1", businessTitle, businessImages[0]),
+    imageItem("business-2", businessTitle, businessImages[1]),
+    imageItem("business-3", businessTitle, businessImages[2]),
+    imageItem("business-4", businessTitle, businessImages[3]),
   ];
 
   const productItems: WorkProjectItem[] = [
     slideshowItem("product-1", productTitle, {
       type: "slideshow",
+      alt: productAlt,
       interval: 4500,
       images: [
         productImages[0],
@@ -226,16 +223,16 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
         productImages[3],
       ],
     }),
-    imageItem("product-2", productTitle, paths.product, productImages[1]),
-    imageItem("product-3", productTitle, paths.product, productImages[2]),
-    imageItem("product-4", productTitle, paths.product, productImages[3]),
+    imageItem("product-2", productTitle, productImages[1]),
+    imageItem("product-3", productTitle, productImages[2]),
+    imageItem("product-4", productTitle, productImages[3]),
   ];
 
   const architectureItems: WorkProjectItem[] = [
-    imageItem("architecture-1", architectureTitle, paths.architecture, architectureImages[0]),
-    imageItem("architecture-2", architectureTitle, paths.architecture, architectureImages[1]),
-    imageItem("architecture-3", architectureTitle, paths.architecture, architectureImages[2]),
-    imageItem("architecture-4", architectureTitle, paths.architecture, architectureImages[3]),
+    imageItem("architecture-1", architectureTitle, architectureImages[0]),
+    imageItem("architecture-2", architectureTitle, architectureImages[1]),
+    imageItem("architecture-3", architectureTitle, architectureImages[2]),
+    imageItem("architecture-4", architectureTitle, architectureImages[3]),
   ];
 
   if (locale === "en") {
@@ -251,28 +248,12 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
         text: "Strategy, content and design — moved, staged and effective across every channel.",
       },
       categories: [
-        {
-          id: "digital",
-          title: digitalTitle,
-          href: paths.digital,
-          items: digitalItems,
-        },
-        {
-          id: "business",
-          title: businessTitle,
-          href: paths.business,
-          items: businessItems,
-        },
-        {
-          id: "product",
-          title: productTitle,
-          href: paths.product,
-          items: productItems,
-        },
+        { id: "digital", title: digitalTitle, items: digitalItems },
+        { id: "business", title: businessTitle, items: businessItems },
+        { id: "product", title: productTitle, items: productItems },
         {
           id: "architecture",
           title: architectureTitle,
-          href: paths.architecture,
           items: architectureItems,
         },
       ],
@@ -295,28 +276,12 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
       text: "Strategie, Content und Design – bewegt, inszeniert und wirksam über alle Kanäle.",
     },
     categories: [
-      {
-        id: "digital",
-        title: digitalTitle,
-        href: paths.digital,
-        items: digitalItems,
-      },
-      {
-        id: "business",
-        title: businessTitle,
-        href: paths.business,
-        items: businessItems,
-      },
-      {
-        id: "product",
-        title: productTitle,
-        href: paths.product,
-        items: productItems,
-      },
+      { id: "digital", title: digitalTitle, items: digitalItems },
+      { id: "business", title: businessTitle, items: businessItems },
+      { id: "product", title: productTitle, items: productItems },
       {
         id: "architecture",
         title: architectureTitle,
-        href: paths.architecture,
         items: architectureItems,
       },
     ],

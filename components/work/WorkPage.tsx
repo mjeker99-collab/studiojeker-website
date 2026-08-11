@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Locale } from "@/types/i18n";
 import type { WorkPageContent } from "@/types/work";
 import { FinalCtaSection } from "@/components/home/FinalCtaSection";
@@ -17,9 +16,9 @@ type WorkPageProps = {
 };
 
 /**
- * Work overview — four equal category grids, identical tile sizes.
- * Tiles render via ProjectMediaCard (image | video | slideshow).
- * No invented project or client names.
+ * Work overview — standalone portfolio grid.
+ * Category labels structure projects only (no service navigation).
+ * Tiles use ProjectMediaCard (image | video | slideshow) in place.
  */
 export function WorkPage({ content, locale }: WorkPageProps) {
   return (
@@ -60,10 +59,10 @@ export function WorkPage({ content, locale }: WorkPageProps) {
               >
                 <div className={styles.categoryHeader}>
                   <h3 className={styles.categoryTitle}>{category.title}</h3>
-                  <Link href={category.href} className={styles.categoryLink}>
-                    <span className="visually-hidden">{category.title}</span>
+                  {/* Decorative only — Work is a portfolio, not service IA. */}
+                  <span className={styles.categoryAccent} aria-hidden="true">
                     <Arrow className={styles.categoryArrow} />
-                  </Link>
+                  </span>
                 </div>
 
                 <ul className={styles.categoryGrid}>

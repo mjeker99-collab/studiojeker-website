@@ -76,6 +76,23 @@
   color: #fff;
 }
 
+.imageButton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.imageButton:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: -4px;
+}
+
 .playButton:focus-visible {
   outline: 2px solid #fff;
   outline-offset: -8px;
@@ -176,6 +193,48 @@
 .dotActive {
   background: rgb(255 255 255 / 0.95);
   transform: scale(1.15);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+  background: rgb(0 0 0 / 0.88);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightboxClose:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.lightboxFigure {
+  position: relative;
+  width: min(92vw, 72rem);
+  aspect-ratio: 3 / 2;
+  max-height: 88vh;
+}
+
+.lightboxImage {
+  object-fit: contain;
+  object-position: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

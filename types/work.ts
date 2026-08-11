@@ -7,7 +7,7 @@ export type ProjectMediaImage = {
 
 /**
  * Work tile media — switch `type` without changing tile dimensions.
- * Central content can later set image | video | slideshow per project.
+ * No service-page URLs. Portfolio tiles stay on /work.
  */
 export type ProjectMedia =
   | {
@@ -22,13 +22,15 @@ export type ProjectMedia =
       /** Local MP4 path, Vimeo numeric id, or Vimeo URL */
       src: string;
       poster: string;
-      posterAlt?: string;
+      alt?: string;
       duration?: string;
       provider?: "local" | "vimeo";
     }
   | {
       type: "slideshow";
       images: ProjectMediaImage[];
+      /** Shared accessible label when individual alts are placeholders. */
+      alt?: string;
       /** Auto-advance interval in ms (default 4500). */
       interval?: number;
     };
@@ -37,15 +39,12 @@ export type WorkProjectItem = {
   id: string;
   /** Accessible label only — no invented client/project names in UI. */
   title: string;
-  /** Optional deep link (typically category service page). Image tiles only. */
-  href?: string;
   media: ProjectMedia;
 };
 
 export type WorkCategory = {
   id: string;
   title: string;
-  href: string;
   items: WorkProjectItem[];
 };
 

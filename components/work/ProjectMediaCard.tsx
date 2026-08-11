@@ -1,15 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { mediaPath } from "@/lib/media/paths";
 import type { Locale } from "@/types/i18n";
 import type { ProjectMedia, WorkProjectItem } from "@/types/work";
@@ -30,8 +31,9 @@ function vimeoEmbedUrl(src: string): string {
     : src.includes("player.vimeo.com")
       ? src.split("?")[0]
       : src;
+  /* User gesture starts playback; start muted to avoid surprise audio. */
   const params =
-    "autoplay=1&muted=0&dnt=1&playsinline=1&title=0&byline=0&portrait=0&badge=0";
+    "autoplay=1&muted=1&dnt=1&playsinline=1&title=0&byline=0&portrait=0&badge=0";
   return `${base}?${params}`;
 }
 
@@ -45,19 +47,112 @@ function resolveProvider(
   return "local";
 }
 
+function ImageLightbox({
+  src,
+  alt,
+  title,
+  closeLabel,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  title: string;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  const titleId = useId();
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className={styles.lightbox}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onClick={onClose}
+    >
+      <p id={titleId} className="visually-hidden">
+        {title}
+      </p>
+      <button
+        ref={closeRef}
+        type="button"
+        className={styles.lightboxClose}
+        onClick={onClose}
+        aria-label={closeLabel}
+      >
+        ×
+      </button>
+      <div
+        className={styles.lightboxFigure}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Image
+          src={mediaPath(src)}
+          alt={alt}
+          fill
+          sizes="100vw"
+          className={styles.lightboxImage}
+          priority
+        />
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function ImageMedia({
   media,
+  openLabel,
+  closeLabel,
 }: {
   media: Extract<ProjectMedia, { type: "image" }>;
+  openLabel: string;
+  closeLabel: string;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Image
-      src={mediaPath(media.src)}
-      alt={media.alt}
-      fill
-      sizes={MEDIA_SIZES}
-      className={styles.mediaLayer}
-    />
+    <>
+      <button
+        type="button"
+        className={styles.imageButton}
+        onClick={() => setOpen(true)}
+        aria-label={openLabel}
+      >
+        <Image
+          src={mediaPath(media.src)}
+          alt={media.alt}
+          fill
+          sizes={MEDIA_SIZES}
+          className={styles.mediaLayer}
+        />
+      </button>
+      {open ? (
+        <ImageLightbox
+          src={media.src}
+          alt={media.alt}
+          title={openLabel}
+          closeLabel={closeLabel}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -80,6 +175,7 @@ function VideoMedia({
     if (!playing || provider !== "local") return;
     const el = videoRef.current;
     if (!el) return;
+    el.muted = true;
     void el.play().catch(() => {
       /* native controls remain available */
     });
@@ -109,6 +205,7 @@ function VideoMedia({
         poster={mediaPath(media.poster)}
         controls
         playsInline
+        muted
         preload="metadata"
       />
     );
@@ -118,7 +215,7 @@ function VideoMedia({
     <>
       <Image
         src={mediaPath(media.poster)}
-        alt={media.posterAlt ?? ""}
+        alt={media.alt ?? ""}
         fill
         sizes={MEDIA_SIZES}
         className={styles.mediaLayer}
@@ -185,6 +282,8 @@ function SlideshowMedia({
     }
   };
 
+  const activeAlt = images[index]?.alt || media.alt || "Slideshow";
+
   return (
     <div
       className={styles.slideshow}
@@ -195,7 +294,7 @@ function SlideshowMedia({
       onKeyDown={onKeyDown}
       role="group"
       aria-roledescription="carousel"
-      aria-label={images[index]?.alt ?? "Slideshow"}
+      aria-label={activeAlt}
       tabIndex={0}
     >
       {images.map((image, i) => (
@@ -223,33 +322,29 @@ function SlideshowMedia({
   );
 }
 
+/**
+ * Interactive portfolio tile — never navigates off /work.
+ */
 export function ProjectMediaCard({ item, locale }: ProjectMediaCardProps) {
   const media = item.media;
   const playLabel =
     locale === "de" ? `Video abspielen: ${item.title}` : `Play video: ${item.title}`;
+  const openLabel =
+    locale === "de" ? `Bild ansehen: ${item.title}` : `View image: ${item.title}`;
+  const closeLabel = locale === "de" ? "Schliessen" : "Close";
 
   const inner =
     media.type === "image" ? (
-      <ImageMedia media={media} />
+      <ImageMedia media={media} openLabel={openLabel} closeLabel={closeLabel} />
     ) : media.type === "video" ? (
       <VideoMedia media={media} label={playLabel} />
     ) : (
       <SlideshowMedia media={media} />
     );
 
-  const content = <div className={styles.media}>{inner}</div>;
-
-  if (media.type === "image" && item.href) {
-    return (
-      <Link href={item.href} className={styles.card} aria-label={item.title}>
-        {content}
-      </Link>
-    );
-  }
-
   return (
     <article className={styles.card} aria-label={item.title}>
-      {content}
+      <div className={styles.media}>{inner}</div>
     </article>
   );
 }

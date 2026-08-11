@@ -57,17 +57,12 @@
   text-transform: uppercase;
 }
 
-.categoryLink {
+.categoryAccent {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   color: inherit;
-  text-decoration: none;
-}
-
-.categoryLink:hover .categoryArrow,
-.categoryLink:focus-visible .categoryArrow {
-  transform: translateX(0.25rem);
+  pointer-events: none;
 }
 
 .categoryArrow {
