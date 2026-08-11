@@ -57,29 +57,33 @@ Enable HSTS only on production HTTPS at the edge — see section C.
 
 ### Contact form
 
-Static Metanet deployment has **no** Next.js API routes.
+Static Metanet deployment has **no** Next.js API routes. Form delivery uses a
+minimal same-origin PHP endpoint that Apache executes on Metanet/Plesk.
 
 | Control | Implementation |
 |---------|----------------|
-| Validation | Client-side (`lib/security/contact.ts`) with max lengths + honeypot |
-| Delivery | `NEXT_PUBLIC_CONTACT_FORM_ENDPOINT` (HTTPS webhook) when configured |
-| Fallback | `mailto:` hand-off when no endpoint is configured |
+| Client validation | `lib/security/contact.ts` (max lengths + honeypot) |
+| Server validation | `public/api/contact.php` (POST only, email checks, honeypot, header-injection stripping, soft rate limit) |
+| Delivery | PHP `mail()` to configured inbox (`contact.config.php` or safe defaults) |
+| Frontend endpoint | `/api/contact.php` (optional `NEXT_PUBLIC_CONTACT_FORM_ENDPOINT` override) |
+| Secrets | Not in `NEXT_PUBLIC_*`; config file blocked by `public/api/.htaccess` |
 | Turnstile | Slot reserved; enable with public site key + CSP updates in `.htaccess` |
 
-Server-side `POST /api/contact` was removed for static export compatibility.
-Preferred production setup: external form backend + optional Cloudflare Turnstile.
+There is **no** `mailto:` form submission path.
 
 ### Error handling
 
 - `app/error.tsx` and `app/global-error.tsx` show generic messages only.
 - Production responses must not expose stack traces, filesystem paths,
   environment variables, or infrastructure details.
+- PHP contact errors return generic JSON codes (`invalid`, `rate_limited`, …)
+  without internal details.
 
 ### Rate-limit locations (edge)
 
 | Endpoint / surface | Static hosting | Recommended production |
 |--------------------|----------------|------------------------|
-| Contact form webhook | Provider limits | Cloudflare Rate Limiting / WAF in front of webhook |
+| `/api/contact.php` | Soft PHP per-IP limit | Cloudflare Rate Limiting / WAF in front of `/api/*` |
 | Future APIs | N/A on static host | Cloudflare per-route rules |
 
 Do **not** set aggressive limits that block legitimate users.
@@ -95,18 +99,16 @@ Security headers and legacy redirects for Apache live in `public/.htaccess`
 
 - Serve **HTTPS only** for `www.studiojeker.ch` (and apex redirect → www or vice versa, consistently).
 - TLS 1.2+ only; disable weak ciphers.
-- Keep OS / Node / reverse-proxy packages patched.
-- Run the Node process as a non-root user.
+- Keep OS / PHP / Apache packages patched (marketing site is static + PHP contact).
 - Firewall: allow only 80/443 (and SSH from trusted IPs).
 - Do not expose WordPress admin or database ports publicly beyond necessity.
-- Set production env vars on the host (never commit secrets):
-  - `WORDPRESS_API_BASE_URL=https://…`
-  - `CONTACT_FORM_WEBHOOK_URL=https://…`
-  - `TURNSTILE_SECRET_KEY=…` (server only)
-  - `NEXT_PUBLIC_TURNSTILE_SITE_KEY=…` (only when Turnstile UI is enabled)
+- Confirm PHP is enabled for the site and that `api/contact.config.php` (if used)
+  is not publicly readable (blocked via `api/.htaccess`).
+- Optional host-only file: `api/contact.config.php` (copy from example; preserve across deploys).
+- Build-time public vars only when needed:
   - `NEXT_PUBLIC_SITE_URL=https://www.studiojeker.ch`
-- Separate **staging** and **production** credentials and CMS instances.
-- Process supervisor / restart policy for `next start` (or equivalent).
+  - `NEXT_PUBLIC_TURNSTILE_SITE_KEY=…` (only when Turnstile UI is enabled)
+- Separate **staging** and **production** mail / CMS credentials.
 - Log rotation; avoid logging full contact message bodies in shared logs.
 
 ### Recommended production HSTS (edge or origin — pick one place)
@@ -129,10 +131,10 @@ Useful in front of Metanet for `studiojeker.ch`:
 2. **Always Use HTTPS** + automatic HTTPS rewrites.
 3. **HSTS** via Cloudflare (preferred over app-level for preview safety).
 4. **WAF** managed ruleset (OWASP).
-5. **Rate limiting** on `/api/contact` (and future APIs).
+5. **Rate limiting** on `/api/contact.php` (and future APIs).
 6. **Bot Fight / Super Bot Fight** carefully — avoid blocking real clients.
 7. **Turnstile** on the contact form (app already prepared).
-8. **Cache** static `/_next/static/*` aggressively; bypass cache for `/api/*`.
+8. **Cache** static `/_next/static/*` aggressively; **bypass cache for `/api/*`**.
 9. Restrict **Admin / staging** hostnames with Cloudflare Access if used.
 10. Enable **email obfuscation** only if it does not break intentional
     `mailto:` links (public email is already shown as a link).
@@ -177,18 +179,19 @@ When the headless WordPress CMS goes live:
   canonicals incorrectly (production build already prefers
   `https://www.studiojeker.ch` when env is localhost/tunnel).
 - Do not enable HSTS preload on staging.
-- Use distinct WordPress + webhook credentials.
+- Use distinct WordPress credentials; keep staging contact config separate if needed.
 
 ---
 
 ## Remaining production checklist (short)
 
-1. Set `CONTACT_FORM_WEBHOOK_URL` (or equivalent mail relay).
-2. Optionally enable Cloudflare Turnstile (site key + secret).
-3. Put Cloudflare (or equivalent) rate limits on `/api/contact`.
-4. Enable production HSTS at the edge.
-5. Point `WORDPRESS_API_BASE_URL` at HTTPS CMS when ready.
-6. Confirm CSP still allows all approved embeds after CMS media goes live;
+1. Confirm `/api/contact.php` delivers mail on staging (PHP `mail()` / Metanet mail).
+2. Optionally copy `api/contact.config.example.php` → `api/contact.config.php` and adjust addresses.
+3. Optionally enable Cloudflare Turnstile (site key + secret).
+4. Put Cloudflare (or equivalent) rate limits on `/api/contact.php`.
+5. Enable production HSTS at the edge.
+6. Point `WORDPRESS_API_BASE_URL` at HTTPS CMS when ready.
+7. Confirm CSP still allows all approved embeds after CMS media goes live;
    extend allow-lists explicitly in `lib/security/headers.ts`.
 
 ---

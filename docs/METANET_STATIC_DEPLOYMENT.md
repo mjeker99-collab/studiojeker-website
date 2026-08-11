@@ -66,6 +66,7 @@ out/en/work/index.html  →  httpdocs/en/work/index.html
 out/.htaccess           →  httpdocs/.htaccess
 out/_next/...           →  httpdocs/_next/...
 out/images/...          →  httpdocs/images/...
+out/api/contact.php     →  httpdocs/api/contact.php
 ```
 
 ---
@@ -88,7 +89,7 @@ out/images/...          →  httpdocs/images/...
 | Export mode | `output: "export"` in `next.config.ts` |
 | Trailing slashes | Enabled (`trailingSlash: true`) → `about/index.html` |
 | Images | `images.unoptimized: true` (no Node image optimizer) |
-| Contact form | Client-side validation; posts to `NEXT_PUBLIC_CONTACT_FORM_ENDPOINT` when set, otherwise `mailto:` fallback |
+| Contact form | POST to same-origin `/api/contact.php` (PHP on Metanet); optional endpoint override via env |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
 
@@ -113,25 +114,54 @@ and keep staging `noindex` if search engines should ignore it.
    (File Manager or SFTP).
 4. Ensure `.htaccess` was uploaded (may be hidden in File Manager — enable
    “Show hidden files”).
-5. Visit:
+5. Confirm PHP is enabled for the subdomain (Plesk default) and that
+   `https://staging2026.studiojeker.ch/api/contact.php` responds to GET with
+   HTTP 405 JSON (method not allowed) — proves PHP runs.
+6. Visit:
    - `https://staging2026.studiojeker.ch/`
    - `https://staging2026.studiojeker.ch/work/`
    - `https://staging2026.studiojeker.ch/en/work/`
    - hard-refresh nested routes (direct reload test)
-6. If CSS/JS 404: confirm `_next/` was uploaded completely.
+7. If CSS/JS 404: confirm `_next/` was uploaded completely.
 
 ---
 
-## Optional contact delivery on static hosting
+## Contact form on Metanet (PHP)
 
-Set at **build time** (baked into the client bundle):
+Metanet/Plesk provides **PHP** even when Node.js is unavailable. The static
+export therefore keeps the marketing site as HTML/CSS/JS and ships a single
+PHP endpoint for form delivery:
+
+| File | Role |
+|------|------|
+| `out/api/contact.php` | POST-only handler (validation, honeypot, mail) |
+| `out/api/contact.config.example.php` | Sample config — copy to `contact.config.php` on the host if you need overrides |
+| `out/api/.htaccess` | Blocks HTTP access to `contact.config*.php` |
+
+Behaviour:
+
+- POST JSON (or form-urlencoded) to `/api/contact.php`
+- Server-side validation + email checks + honeypot + header-injection stripping
+- Soft per-IP rate limit
+- Sends mail via PHP `mail()` to `mail@studiojeker.ch` (configurable)
+- No secrets in the frontend bundle
+- **Not** a `mailto:` solution
+
+Optional host config (after first upload):
 
 ```bash
-NEXT_PUBLIC_CONTACT_FORM_ENDPOINT=https://your-form-webhook.example/…
+# On the server, inside the document root:
+cp api/contact.config.example.php api/contact.config.php
+# Edit to / from addresses if needed. Preserve this file across re-uploads.
 ```
 
-Use a HTTPS form backend (Formspree, Basin, custom webhook, etc.).
-Do not put secret API keys in `NEXT_PUBLIC_*` variables.
+Optional build-time override (rarely needed):
+
+```bash
+NEXT_PUBLIC_CONTACT_FORM_ENDPOINT=/api/contact.php
+```
+
+Do not put API keys or SMTP passwords in `NEXT_PUBLIC_*` variables.
 
 ---
 
