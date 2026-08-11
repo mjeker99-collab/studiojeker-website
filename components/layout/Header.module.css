@@ -4,12 +4,34 @@
   z-index: 50;
   height: var(--header-height);
   border-bottom: 1px solid transparent;
-  background: rgb(255 255 255 / 92%);
-  backdrop-filter: blur(10px);
-  transition:
-    background-color var(--duration-header) var(--ease-standard),
-    border-color var(--duration-header) var(--ease-standard),
-    height var(--duration-header) var(--ease-standard);
+  /* Sticky header must stay solid white at all scroll positions. */
+  background: #ffffff;
+  color: var(--color-black);
+  backdrop-filter: none;
+  /* Prevent any background flash during scroll/state changes. */
+  transition: none;
+}
+
+.scrolled {
+  /* Do not change header height on scroll. */
+  height: var(--header-height);
+}
+
+/* Legacy theme classes (kept white to avoid any black header state). */
+.themeLight {
+  background: #ffffff;
+  color: var(--color-black);
+}
+
+.themeHero {
+  background: #ffffff;
+  color: var(--color-black);
+}
+
+.themeDark {
+  background: #ffffff;
+  color: var(--color-black);
+  backdrop-filter: none;
 }
 
 .inner {
