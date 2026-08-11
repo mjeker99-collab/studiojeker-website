@@ -26,7 +26,8 @@
 .headline {
   margin: 0;
   max-width: 7.2em;
-  font-size: clamp(2.75rem, 7.5vw, 5.5rem);
+  /* Homepage + About shared H1 — 20% smaller than previous clamp */
+  font-size: clamp(2.2rem, 6vw, 4.4rem);
   font-weight: var(--font-weight-extrabold);
   line-height: 0.96;
   letter-spacing: -0.035em;
