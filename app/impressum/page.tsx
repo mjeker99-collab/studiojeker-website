@@ -8,7 +8,7 @@ export const metadata: Metadata = buildPageMetadata({
   locale: "de",
   pathname: "/impressum",
   title: "Impressum | Studiojeker",
-  description: "Impressum der studiojeker GmbH.",
+  description: "Impressum der Studiojeker GmbH.",
 });
 
 export default function GermanImpressumPage() {
@@ -19,10 +19,11 @@ export default function GermanImpressumPage() {
         title="Impressum"
         body={[
           `${studiojekerContact.company}`,
-          `${studiojekerContact.street}, ${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+          `${studiojekerContact.street}`,
+          `CH-${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+          studiojekerContact.country,
           `E-Mail: ${studiojekerContact.email}`,
           `Telefon: ${studiojekerContact.phoneDisplay}`,
-          "Vollständiger Rechtstext folgt mit freigegebenen Impressumsangaben.",
         ]}
       />
     </SiteChrome>

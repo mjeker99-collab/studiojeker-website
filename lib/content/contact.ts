@@ -6,13 +6,13 @@ import { localizePathname } from "@/lib/i18n/config";
  * Do not invent alternate emails, phones or addresses.
  */
 export const studiojekerContact = {
-  company: "studiojeker GmbH",
+  company: "Studiojeker GmbH",
   street: "Hauptstrasse 73",
   postalCode: "4528",
   city: "Zuchwil",
   country: "Switzerland",
   email: "mail@studiojeker.ch",
-  phoneDisplay: "+41 32 623 45 42",
+  phoneDisplay: "+41 (0)32 623 45 42",
   phoneTel: "+41326234542",
   websiteDisplay: "studiojeker.ch",
   websiteHref: "https://www.studiojeker.ch",

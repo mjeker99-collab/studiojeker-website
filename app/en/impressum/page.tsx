@@ -8,7 +8,7 @@ export const metadata: Metadata = buildPageMetadata({
   locale: "en",
   pathname: "/impressum",
   title: "Imprint | Studiojeker",
-  description: "Legal imprint of studiojeker GmbH.",
+  description: "Legal imprint of Studiojeker GmbH.",
 });
 
 export default function EnglishImpressumPage() {
@@ -19,10 +19,11 @@ export default function EnglishImpressumPage() {
         title="Imprint"
         body={[
           `${studiojekerContact.company}`,
-          `${studiojekerContact.street}, ${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+          `${studiojekerContact.street}`,
+          `CH-${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+          studiojekerContact.country,
           `Email: ${studiojekerContact.email}`,
           `Phone: ${studiojekerContact.phoneDisplay}`,
-          "The full legal imprint text will follow with approved legal copy.",
         ]}
       />
     </SiteChrome>

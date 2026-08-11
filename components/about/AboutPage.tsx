@@ -19,7 +19,7 @@ type AboutPageProps = {
 
 /**
  * About page — homepage visual system.
- * Middle: Anspruch → Team+Image (40/60) → Facts → So arbeiten wir.
+ * Team media: editorial composition (large studio image + portrait grid).
  */
 export function AboutPage({ content }: AboutPageProps) {
   const headlineLines = content.hero.headline.split("\n").filter(Boolean);
@@ -112,24 +112,47 @@ export function AboutPage({ content }: AboutPageProps) {
           </Container>
         </section>
 
-        {/* Homepage AboutSection proportions: ~40% copy / ~60% media + CyanBar */}
         <section
           id="team"
           className={styles.team}
           data-header-theme="light"
           aria-labelledby="about-team-title"
         >
-          <div className={styles.teamSplit}>
-            <Reveal className={styles.teamCopy}>
+          <Container>
+            <Reveal className={styles.teamIntroBlock}>
               <SectionLabel>{content.team.label}</SectionLabel>
               <h2 id="about-team-title" className={styles.teamHeadline}>
                 {content.team.headline}
               </h2>
               <p className={styles.teamIntro}>{content.team.introduction}</p>
+            </Reveal>
 
-              <ul className={styles.teamGrid}>
+            {/*
+              Editorial media composition:
+              Desktop — large studio image (left) + portrait grid (right).
+              Mobile — studio image first, then portraits.
+            */}
+            <div className={styles.mediaComposition}>
+              <Reveal className={styles.studioMedia}>
+                <div className={styles.studioFrame}>
+                  <Image
+                    src={mediaPath(content.team.featureMedia.src)}
+                    alt={content.team.featureMedia.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 55vw"
+                    className={styles.studioImage}
+                  />
+                </div>
+              </Reveal>
+
+              <ul className={styles.portraitGrid}>
                 {content.team.members.map((member, index) => (
-                  <li key={member.id} className={styles.member}>
+                  <Reveal
+                    key={member.id}
+                    as="li"
+                    className={styles.member}
+                    delayMs={40 + index * 40}
+                  >
                     {member.isPlaceholder || !member.image ? (
                       <div
                         className={styles.portraitPlaceholder}
@@ -141,7 +164,7 @@ export function AboutPage({ content }: AboutPageProps) {
                           src={mediaPath(member.image.src)}
                           alt={member.image.alt}
                           fill
-                          sizes="96px"
+                          sizes="(max-width: 480px) 45vw, 160px"
                           className={styles.portraitImage}
                         />
                       </div>
@@ -150,29 +173,11 @@ export function AboutPage({ content }: AboutPageProps) {
                       <p className={styles.memberName}>{member.name}</p>
                       <p className={styles.memberRole}>{member.role}</p>
                     </div>
-                  </li>
+                  </Reveal>
                 ))}
               </ul>
-            </Reveal>
-
-            <Reveal className={styles.mediaWrap} delayMs={100}>
-              <CyanBar />
-              <div
-                className={styles.mediaPlaceholder}
-                role="img"
-                aria-label={content.team.featureMedia.ariaLabel}
-              >
-                <span className={styles.mediaPlaceholderLabel}>
-                  <span className={styles.mediaPlaceholderTitle}>
-                    {content.team.featureMedia.title}
-                  </span>
-                  <span className={styles.mediaPlaceholderCaption}>
-                    {content.team.featureMedia.caption}
-                  </span>
-                </span>
-              </div>
-            </Reveal>
-          </div>
+            </div>
+          </Container>
         </section>
 
         <section
@@ -202,7 +207,6 @@ export function AboutPage({ content }: AboutPageProps) {
 
       <AboutSection content={content.approach} compact />
 
-      {/* Service destinations retained; outside the compact middle stack */}
       <ServicesSection content={content.services} />
 
       <ClientsSection content={content.clients} />

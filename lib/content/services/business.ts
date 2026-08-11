@@ -67,7 +67,7 @@ export function getBusinessCommunicationContent(
           },
           {
             id: "internal",
-            title: "Internal & Communication",
+            title: "Social Media",
             description:
               "Consistent content for LinkedIn, Instagram, Facebook and other platforms.",
             href: paths.work,
@@ -228,7 +228,7 @@ export function getBusinessCommunicationContent(
         },
         {
           id: "internal",
-          title: "Intern & Kommunikation",
+          title: "Social Media",
           description:
             "Kontinuierlicher Content für LinkedIn, Instagram, Facebook und weitere Plattformen.",
           href: paths.work,

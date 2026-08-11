@@ -1,4 +1,5 @@
 import type { Dictionary, Locale } from "@/types/i18n";
+import { studiojekerContact } from "@/lib/content/contact";
 import { localizePathname } from "@/lib/i18n/config";
 import { getFooterNav, getServiceNavLinks } from "@/lib/i18n/navigation";
 import { Container } from "@/components/layout/Container";
@@ -9,6 +10,13 @@ type FooterProps = {
   locale: Locale;
   dictionary: Dictionary;
 };
+
+const addressLines = [
+  studiojekerContact.company,
+  studiojekerContact.street,
+  `CH-${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+  studiojekerContact.country,
+] as const;
 
 export function Footer({ locale, dictionary }: FooterProps) {
   const items = getFooterNav(locale);
@@ -34,27 +42,36 @@ export function Footer({ locale, dictionary }: FooterProps) {
     <footer className={styles.footer}>
       <Container>
         <div className={styles.grid}>
-          <div className={styles.brandBlock}>
-            <p className={styles.claim}>{dictionary.brand.claim}</p>
-            <p className={styles.positioning}>{dictionary.brand.positioning}</p>
+          <div className={styles.brandColumn}>
+            <h2 className={styles.columnTitle}>{dictionary.footer.brand}</h2>
+            <address className={styles.address}>
+              {addressLines.map((line) => (
+                <span key={line} className={styles.addressLine}>
+                  {line}
+                </span>
+              ))}
+            </address>
+            <ul className={styles.contactList}>
+              <li>
+                <a
+                  href={`tel:${studiojekerContact.phoneTel}`}
+                  className={styles.contactLink}
+                >
+                  {studiojekerContact.phoneDisplay}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${studiojekerContact.email}`}
+                  className={styles.contactLink}
+                >
+                  {studiojekerContact.email}
+                </a>
+              </li>
+            </ul>
           </div>
 
           <div className={styles.columns}>
-            <div>
-              <h2 className={styles.columnTitle}>{dictionary.footer.navigation}</h2>
-              <ul className={styles.list}>
-                {items.map((item) =>
-                  item.href ? (
-                    <li key={item.id}>
-                      <TextLink href={item.href} inverse>
-                        {labels[item.id as keyof typeof labels]}
-                      </TextLink>
-                    </li>
-                  ) : null,
-                )}
-              </ul>
-            </div>
-
             <div>
               <h2 className={styles.columnTitle}>{dictionary.footer.services}</h2>
               <ul className={styles.list}>
@@ -69,12 +86,14 @@ export function Footer({ locale, dictionary }: FooterProps) {
             </div>
 
             <div>
-              <h2 className={styles.columnTitle}>{dictionary.footer.legal}</h2>
+              <h2 className={styles.columnTitle}>
+                {dictionary.footer.navigation}
+              </h2>
               <ul className={styles.list}>
-                {legalLinks.map((item) => (
-                  <li key={item.href}>
+                {items.map((item) => (
+                  <li key={item.id}>
                     <TextLink href={item.href} inverse>
-                      {item.label}
+                      {labels[item.id as keyof typeof labels]}
                     </TextLink>
                   </li>
                 ))}
@@ -85,7 +104,15 @@ export function Footer({ locale, dictionary }: FooterProps) {
 
         <div className={styles.bottom}>
           <span>{dictionary.footer.copyright}</span>
-          <span>{dictionary.brand.claim}</span>
+          <ul className={styles.bottomLegal}>
+            {legalLinks.map((item) => (
+              <li key={item.href}>
+                <TextLink href={item.href} inverse className={styles.bottomLink}>
+                  {item.label}
+                </TextLink>
+              </li>
+            ))}
+          </ul>
         </div>
       </Container>
     </footer>

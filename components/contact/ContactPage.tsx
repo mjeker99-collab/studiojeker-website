@@ -22,7 +22,8 @@ export function ContactPage({ content, clientsLabel }: ContactPageProps) {
   const addressLines = [
     studiojekerContact.company,
     studiojekerContact.street,
-    `${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+    `CH-${studiojekerContact.postalCode} ${studiojekerContact.city}`,
+    studiojekerContact.country,
   ];
 
   return (

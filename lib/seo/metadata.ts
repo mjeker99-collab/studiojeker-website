@@ -10,6 +10,8 @@ type BuildMetadataOptions = {
   title?: string;
   description?: string;
   wordpressSeo?: WpSeoFields;
+  /** Absolute or site-relative Open Graph image path. */
+  ogImagePath?: string;
 };
 
 function absoluteUrl(pathname: string): string {
@@ -18,7 +20,7 @@ function absoluteUrl(pathname: string): string {
 
 /**
  * Metadata foundation compatible with DE/EN routing and future WP SEO fields.
- * Does not invent final production SEO copy.
+ * Uses approved page SEO copy from content modules — does not invent copy.
  */
 export function buildPageMetadata({
   locale,
@@ -26,6 +28,7 @@ export function buildPageMetadata({
   title,
   description,
   wordpressSeo,
+  ogImagePath,
 }: BuildMetadataOptions): Metadata {
   const localizedPath = localizePathname(pathname, locale);
   const canonicalPath = wordpressSeo?.canonical || localizedPath;
@@ -38,6 +41,14 @@ export function buildPageMetadata({
     en: absoluteUrl(localizePathname(pathname, "en")),
     "x-default": absoluteUrl(localizePathname(pathname, "de")),
   };
+
+  const ogImage =
+    wordpressSeo?.openGraphImageUrl ||
+    ogImagePath ||
+    siteConfig.defaultOgImage.path;
+  const ogImageAbsolute = ogImage.startsWith("http")
+    ? ogImage
+    : absoluteUrl(ogImage);
 
   return {
     title: pageTitle,
@@ -53,16 +64,20 @@ export function buildPageMetadata({
       siteName: siteConfig.name,
       title: pageTitle,
       description: pageDescription,
-      ...(wordpressSeo?.openGraphImageUrl
-        ? {
-            images: [{ url: wordpressSeo.openGraphImageUrl }],
-          }
-        : {}),
+      images: [
+        {
+          url: ogImageAbsolute,
+          width: siteConfig.defaultOgImage.width,
+          height: siteConfig.defaultOgImage.height,
+          alt: siteConfig.defaultOgImage.alt,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
       description: pageDescription,
+      images: [ogImageAbsolute],
     },
     robots: wordpressSeo?.noindex
       ? {

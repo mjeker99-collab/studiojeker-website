@@ -44,13 +44,13 @@ export type AboutPageContent = {
     placeholderRole: string;
     members: AboutTeamMember[];
     /**
-     * Neutral large-media placeholder (making-of / production photo later).
-     * Same crop intent as homepage AboutSection media.
+     * Large atmospheric studio / making-of image for the editorial media grid.
      */
     featureMedia: {
-      ariaLabel: string;
-      title: string;
-      caption: string;
+      src: string;
+      alt: string;
+      width: number;
+      height: number;
     };
   };
   facts: {
@@ -226,9 +226,10 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           },
         ],
         featureMedia: {
-          ariaLabel: "Image placeholder for Studiojeker studio, making-of or team at work",
-          title: "Image placeholder",
-          caption: "Studio / Making-of / Team at work",
+          src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
+          alt: "Studiojeker production — team at work",
+          width: 1600,
+          height: 1066,
         },
       },
       facts: {
@@ -262,7 +263,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         subheadline: "Personal. Creative. Reliable.",
         body: [
           "Studiojeker combines decades of experience with modern technology and a trusted network of specialists.",
-          "From the first idea to the final result — one partner, one workflow, one clear goal: visibility that works.",
+          "From the first idea to the final result — one contact person, one workflow, one clear goal: visibility that works.",
         ],
         cta: { label: "Get in touch", href: contact },
         media: {
@@ -409,9 +410,10 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         },
       ],
       featureMedia: {
-        ariaLabel: "Bildplatzhalter für Studio, Making-of oder Team bei der Arbeit",
-        title: "Image Placeholder",
-        caption: "Studio / Making-of / Team at work",
+        src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
+        alt: "Produktion bei Studiojeker — Team bei der Arbeit",
+        width: 1600,
+        height: 1066,
       },
     },
     facts: {
@@ -433,7 +435,7 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         },
         {
           id: "network",
-          value: "Partner Netzwerk",
+          value: "Partnernetzwerk",
           label: "Spezialist:innen für grössere und spezifische Produktionen.",
         },
       ],

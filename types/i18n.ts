@@ -21,6 +21,7 @@ export type Dictionary = {
     language: string;
   };
   footer: {
+    brand: string;
     navigation: string;
     services: string;
     legal: string;
