@@ -77,25 +77,31 @@ jobs:
           find out -maxdepth 2 -name '.*' -type f | sort
           ls -la out | head -40
 
-      - name: Deploy contents of out/ to staging FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.METANET_FTP_SERVER }}
-          username: ${{ secrets.METANET_FTP_USERNAME }}
-          password: ${{ secrets.METANET_FTP_PASSWORD }}
-          # Explicit FTPS (TLS) on the standard FTP port (typical Metanet/Plesk).
-          protocol: ftps
-          port: 21
-          # Reject connections if the TLS certificate cannot be verified.
-          security: strict
-          # FTP account is already jailed to /staging2026.studiojeker.ch — upload to FTP root.
-          # Trailing slash required: uploads CONTENTS of out/, not the out folder itself.
-          # Includes hidden files such as .htaccess (not matched by the exclude globs below).
-          local-dir: ./out/
-          server-dir: ./
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/api/contact.config.php
+      - name: Deploy contents of out/ to staging FTPS (lftp)
+        env:
+          METANET_FTP_SERVER: ${{ secrets.METANET_FTP_SERVER }}
+          METANET_FTP_USERNAME: ${{ secrets.METANET_FTP_USERNAME }}
+          METANET_FTP_PASSWORD: ${{ secrets.METANET_FTP_PASSWORD }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+          # Explicit FTPS (AUTH TLS on port 21), passive data channel, strict TLS.
+          # mirror -R uploads out/ contents only — no --delete (server-side extras preserved).
+          lftp -e "
+            set cmd:fail-exit true;
+            set ssl:verify-certificate true;
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ftp:ssl-protect-list true;
+            set ftp:passive-mode true;
+            set ftp:prefer-epsv false;
+            set net:timeout 60;
+            set net:max-retries 3;
+            set net:reconnect-interval-base 5;
+            set net:reconnect-interval-multiplier 1;
+            open -u ${METANET_FTP_USERNAME},${METANET_FTP_PASSWORD} ftp://${METANET_FTP_SERVER}:21;
+            lcd out;
+            mirror -R --verbose --parallel=1 --exclude-glob api/contact.config.php .;
+            bye
+          "
