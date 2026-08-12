@@ -92,9 +92,11 @@ Workflow file: `.github/workflows/deploy-staging.yml`
 - Does **not** run on push, pull request, or schedule
 - Builds with Node.js **22 LTS** → `npm ci` → `npm run build`
 - Fails if `out/` (or `out/index.html` / `out/api/contact.php`) is missing
-- Uploads **only the contents of `out/`** to the staging FTP account via FTPS
-  (`protocol: ftps`, `security: strict` — TLS certificate verification enabled)
+- Uploads **only the contents of `out/`** to the staging FTP account via **lftp**
+  (explicit FTPS on port 21, passive mode, `ssl:verify-certificate true`)
 - Includes hidden files from `out/`, especially **`out/.htaccess`** (verified before upload)
+- Does **not** delete remote files (`mirror -R` without `--delete`); preserves host-only
+  `api/contact.config.php` via `--exclude-glob`
 - Does **not** upload source, `.git`, `node_modules`, docs, env files, or workflows
 - Does **not** deploy to production / `studiojeker.ch`
 
@@ -134,14 +136,14 @@ Never commit FTP credentials. Never reuse production FTP credentials here.
 ### FTP path notes
 
 The staging FTP account is restricted to `/staging2026.studiojeker.ch`. The workflow
-therefore uploads to the FTP **root** (`server-dir: ./`). That root must be the
-web document root for `staging2026.studiojeker.ch`.
+uploads to the FTP **root** (login directory). That root must be the web document
+root for `staging2026.studiojeker.ch`.
 
 Host-only file `api/contact.config.php` (if you created one on the server) is
-listed in the workflow `exclude` list so FTPS sync does not delete it.
+excluded from upload (`--exclude-glob api/contact.config.php`) and never removed
+(`mirror -R` runs without `--delete`).
 
-The exclude globs (`**/.git*`, etc.) do **not** match `.htaccess`; the root
-`.htaccess` from `out/` is part of the deploy set.
+The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirrored).
 
 ---
 
