@@ -1,0 +1,10 @@
+{
+  "name": "Studiojeker Website",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "next-dev",
+      "command": "npm run dev"
+    }
+  ]
+}
