@@ -13,7 +13,11 @@ Sanity is scaffolded for future headless content (Work, texts, images).
 - Studio: standalone folder `studio/` (Variante A)
 - Marketing site: still **Next.js static export** → Metanet `/out`
 
-**Not done yet:** migrating `lib/content/*`, wiring pages to Sanity, embedding Studio in Next.
+**Homepage migration:** see `docs/SANITY_HOMEPAGE_MIGRATION.md` and
+`npm run sanity:migrate-homepage` (requires `SANITY_API_WRITE_TOKEN`).
+
+**Not done yet:** other `lib/content/*` pages, wiring marketing pages to Sanity,
+embedding Studio in Next.
 
 ---
 
@@ -38,10 +42,12 @@ See `.env.example`:
 - `NEXT_PUBLIC_SANITY_DATASET`
 - `NEXT_PUBLIC_SANITY_API_VERSION`
 - `SANITY_API_READ_TOKEN` (optional, server-only)
+- `SANITY_API_WRITE_TOKEN` (migration scripts only — server-only)
 
 ---
 
 ## Related
 
+- `docs/SANITY_HOMEPAGE_MIGRATION.md` — DE Homepage → Sanity field mapping
 - `docs/METANET_STATIC_DEPLOYMENT.md` — static hosting (unchanged)
 - `lib/wordpress/*` — previous CMS stubs (kept; not removed)

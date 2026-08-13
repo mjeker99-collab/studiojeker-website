@@ -13,7 +13,8 @@
     "sanity:dev": "npm run dev --prefix studio",
     "sanity:build": "npm run build --prefix studio",
     "sanity:deploy": "npm run deploy --prefix studio",
-    "sanity:typecheck": "npm run typecheck --prefix studio"
+    "sanity:typecheck": "npm run typecheck --prefix studio",
+    "sanity:migrate-homepage": "node scripts/migrate-homepage-to-sanity.mjs"
   },
   "dependencies": {
     "@sanity/client": "^7.26.2",
