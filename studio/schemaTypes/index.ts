@@ -1,8 +1,8 @@
 import type { SchemaTypeDefinition } from "sanity";
+import { homepage } from "./homepage";
 
 /**
- * Minimal schema registry.
- * Add document/object types here when CMS content models are approved.
- * Do not migrate lib/content/* into Sanity until explicitly requested.
+ * Sanity schema registry.
+ * Website content in lib/content/* is not migrated here yet.
  */
-export const schemaTypes: SchemaTypeDefinition[] = [];
+export const schemaTypes: SchemaTypeDefinition[] = [homepage];
