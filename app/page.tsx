@@ -1,22 +1,26 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { HomePage } from "@/components/home/HomePage";
-import { getHomepageContent } from "@/lib/content/homepage";
+import { getResolvedHomepageContent } from "@/lib/content/homepage-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-const content = getHomepageContent("de");
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getResolvedHomepageContent("de");
 
-export const metadata: Metadata = buildPageMetadata({
-  locale: "de",
-  pathname: "/",
-  title: content.seo.title,
-  description: content.seo.description,
-});
+  return buildPageMetadata({
+    locale: "de",
+    pathname: "/",
+    title: content.seo.title,
+    description: content.seo.description,
+  });
+}
 
-export default function GermanHomePage() {
+export default async function GermanHomePage() {
+  const content = await getResolvedHomepageContent("de");
+
   return (
     <SiteChrome locale="de">
-      <HomePage locale="de" />
+      <HomePage locale="de" content={content} />
     </SiteChrome>
   );
 }
