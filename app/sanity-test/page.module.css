@@ -1,0 +1,48 @@
+/* Isolated Sanity test page — not part of the marketing design system. */
+
+.main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  font-family: system-ui, sans-serif;
+  color: #111;
+  background: #fff;
+}
+
+.title {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.block {
+  margin-bottom: 1.75rem;
+}
+
+.label {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.value {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  max-width: 40rem;
+  height: auto;
+}
+
+.message {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #444;
+}

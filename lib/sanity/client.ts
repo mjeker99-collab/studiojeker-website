@@ -7,8 +7,9 @@ import {
 } from "@/lib/sanity/env";
 
 /**
- * Read-only Sanity client for future build-time fetches.
- * Not imported by any page yet — keeps current static content unchanged.
+ * Read-only Sanity client for build-time / server fetches.
+ * Public published content needs no token. Optional SANITY_API_READ_TOKEN
+ * is server-only and never exposed to the browser bundle.
  */
 export function getSanityClient(): SanityClient {
   return createClient({
