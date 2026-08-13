@@ -10,4 +10,12 @@ export default defineCliConfig({
     dataset: "production",
   },
   studioHost: "studiojeker",
+  vite: (config) => ({
+    ...config,
+    server: {
+      ...config.server,
+      // Allow ephemeral Cloudflare preview tunnels during Cloud Agent testing.
+      allowedHosts: true,
+    },
+  }),
 });
