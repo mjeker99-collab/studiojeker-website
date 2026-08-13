@@ -1,4 +1,5 @@
 import type { Locale } from "@/types/i18n";
+import type { HomepageContent } from "@/types/homepage";
 import { getHomepageContent } from "@/lib/content/homepage";
 import { AboutSection } from "@/components/home/AboutSection";
 import { AboSection } from "@/components/home/AboSection";
@@ -11,21 +12,27 @@ import { ShowreelSection } from "@/components/home/ShowreelSection";
 
 type HomePageProps = {
   locale: Locale;
+  /**
+   * Pre-resolved content (e.g. from Sanity at build time). Falls back to the
+   * local content source when omitted, so locales not yet wired to the CMS
+   * render exactly as before.
+   */
+  content?: HomepageContent;
 };
 
-export function HomePage({ locale }: HomePageProps) {
-  const content = getHomepageContent(locale);
+export function HomePage({ locale, content }: HomePageProps) {
+  const resolvedContent = content ?? getHomepageContent(locale);
 
   return (
     <>
-      <HeroSection content={content.hero} />
-      <ServicesSection content={content.services} />
-      <ShowreelSection content={content.showreel} />
-      <ProjectsSection content={content.projects} />
-      <AboSection content={content.abo} />
-      <AboutSection content={content.about} />
-      <ClientsSection content={content.clients} />
-      <FinalCtaSection content={content.finalCta} />
+      <HeroSection content={resolvedContent.hero} />
+      <ServicesSection content={resolvedContent.services} />
+      <ShowreelSection content={resolvedContent.showreel} />
+      <ProjectsSection content={resolvedContent.projects} />
+      <AboSection content={resolvedContent.abo} />
+      <AboutSection content={resolvedContent.about} />
+      <ClientsSection content={resolvedContent.clients} />
+      <FinalCtaSection content={resolvedContent.finalCta} />
     </>
   );
 }

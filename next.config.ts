@@ -41,14 +41,21 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
     // HTTPS only — never allow remote http:// CMS assets.
-    remotePatterns: wordpressHostname
-      ? [
-          {
-            protocol: "https",
-            hostname: wordpressHostname,
-          },
-        ]
-      : [],
+    remotePatterns: [
+      // Sanity CDN (Homepage hero image, served at build time into the export).
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+      },
+      ...(wordpressHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: wordpressHostname,
+            },
+          ]
+        : []),
+    ],
   },
 };
 
