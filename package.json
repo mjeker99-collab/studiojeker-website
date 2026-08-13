@@ -8,9 +8,18 @@
     "export": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sanity:install": "npm install --prefix studio",
+    "sanity:dev": "npm run dev --prefix studio",
+    "sanity:build": "npm run build --prefix studio",
+    "sanity:deploy": "npm run deploy --prefix studio",
+    "sanity:typecheck": "npm run typecheck --prefix studio",
+    "sanity:migrate-homepage": "node scripts/migrate-homepage-to-sanity.mjs"
   },
   "dependencies": {
+    "@sanity/client": "^7.26.2",
+    "@sanity/image-url": "^1.2.0",
+    "groq": "^3.99.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
