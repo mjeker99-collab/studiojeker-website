@@ -48,8 +48,6 @@ export function VimeoShowreel({
             <Image
               src={poster.src}
               alt={poster.alt}
-              width={poster.width}
-              height={poster.height}
               fill
               sizes="(max-width: 1024px) 100vw, 64vw"
               loading="lazy"
