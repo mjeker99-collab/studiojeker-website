@@ -1,0 +1,47 @@
+# Studiojeker — Sanity CMS scaffold
+
+Version 1.0
+
+---
+
+## Status
+
+Sanity is scaffolded for future headless content (Work, texts, images).
+
+- Project ID: `tgx6e6jg`
+- Dataset: `production`
+- Studio: standalone folder `studio/` (Variante A)
+- Marketing site: still **Next.js static export** → Metanet `/out`
+
+**Not done yet:** migrating `lib/content/*`, wiring pages to Sanity, embedding Studio in Next.
+
+---
+
+## Local Studio
+
+```bash
+npm run sanity:install   # first time
+npm run sanity:dev
+```
+
+URL: http://localhost:3333
+
+Studio is **not** included in `npm run build` / `/out` / Metanet FTPS deploy.
+
+---
+
+## Environment
+
+See `.env.example`:
+
+- `NEXT_PUBLIC_SANITY_PROJECT_ID`
+- `NEXT_PUBLIC_SANITY_DATASET`
+- `NEXT_PUBLIC_SANITY_API_VERSION`
+- `SANITY_API_READ_TOKEN` (optional, server-only)
+
+---
+
+## Related
+
+- `docs/METANET_STATIC_DEPLOYMENT.md` — static hosting (unchanged)
+- `lib/wordpress/*` — previous CMS stubs (kept; not removed)
