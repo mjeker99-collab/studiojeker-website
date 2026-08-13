@@ -1,0 +1,24 @@
+{
+  "name": "studiojeker-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Standalone Sanity Studio for Studiojeker (not part of Metanet /out deploy)",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity dev",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sanity/vision": "^4.6.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sanity": "^4.6.1",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}
