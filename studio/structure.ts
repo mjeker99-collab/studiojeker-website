@@ -1,7 +1,14 @@
 import type { StructureResolver } from "sanity/structure";
 
+/**
+ * Homepage singleton uses the existing published test document ID so Studio
+ * opens the live content (heroHeadline / introText / heroImage) instead of an
+ * empty stub. About and Global Settings use stable semantic IDs.
+ */
+const HOMEPAGE_DOCUMENT_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
+
 const SINGLETONS = [
-  { type: "homepage", title: "Homepage", id: "homepage" },
+  { type: "homepage", title: "Homepage", id: HOMEPAGE_DOCUMENT_ID },
   { type: "about", title: "About", id: "about" },
   { type: "globalSettings", title: "Global Settings", id: "globalSettings" },
 ] as const;
@@ -17,7 +24,7 @@ export const structure: StructureResolver = (S) =>
       ...SINGLETONS.map((item) =>
         S.listItem()
           .title(item.title)
-          .id(item.id)
+          .id(item.type)
           .child(
             S.document()
               .schemaType(item.type)

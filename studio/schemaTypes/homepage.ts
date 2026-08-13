@@ -30,12 +30,12 @@ export const homepage = defineType({
     }),
     defineField({
       name: "introText",
-      title: "Intro Text",
+      title: "Hero Intro Text",
       type: "text",
       rows: 4,
       group: "hero",
       description:
-        "Hero supporting text (existing test field — keep for compatibility).",
+        "Hero supporting text. Field name introText preserved for compatibility with /sanity-test.",
       validation: (Rule) => Rule.max(600),
     }),
     defineField({
