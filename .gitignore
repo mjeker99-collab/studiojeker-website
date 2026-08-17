@@ -149,3 +149,8 @@ out/
 
 # Metanet PHP contact config (may contain host-specific / SMTP secrets)
 public/api/contact.config.php
+
+# Sanity Studio local artifacts (studio/ has its own .gitignore too)
+.sanity/
+studio/dist/
+studio/.sanity/
