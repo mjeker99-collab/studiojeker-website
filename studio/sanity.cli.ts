@@ -10,6 +10,10 @@ export default defineCliConfig({
     dataset: "production",
   },
   studioHost: "studiojeker",
+  deployment: {
+    // Assigned on first `sanity deploy` to https://studiojeker.sanity.studio
+    appId: "ofbist72j0e7x9uewc5py90y",
+  },
   vite: (config) => ({
     ...config,
     server: {
