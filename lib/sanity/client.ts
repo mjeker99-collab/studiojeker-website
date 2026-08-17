@@ -6,6 +6,11 @@ import {
   sanityProjectId,
 } from "@/lib/sanity/env";
 
+type SanityClientOptions = {
+  /** Default true. Homepage build fetches set false so the export is not stale CDN. */
+  useCdn?: boolean;
+};
+
 /**
  * Read-only Sanity client for build-time / server fetches.
  * Public published content needs no token. Optional SANITY_API_READ_TOKEN
@@ -15,12 +20,14 @@ import {
  * export (`output: "export"`) bakes Sanity content into the HTML. No runtime
  * request to Sanity (or Metanet) happens for a visitor.
  */
-export function getSanityClient(): SanityClient {
+export function getSanityClient(
+  options: SanityClientOptions = {},
+): SanityClient {
   return createClient({
     projectId: sanityProjectId,
     dataset: sanityDataset,
     apiVersion: sanityApiVersion,
-    useCdn: true,
+    useCdn: options.useCdn ?? true,
     perspective: "published",
     token: getSanityReadToken(),
   });
