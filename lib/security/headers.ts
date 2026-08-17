@@ -5,6 +5,7 @@
 
 const VIMEO_FRAME_SOURCES = ["https://player.vimeo.com", "https://vimeo.com"];
 const VIMEO_IMG_SOURCES = ["https://i.vimeocdn.com"];
+const SANITY_IMG_SOURCES = ["https://cdn.sanity.io"];
 /** Reserved for future Turnstile / Cloudflare challenge widgets. */
 const CLOUDFLARE_CHALLENGE_SOURCES = [
   "https://challenges.cloudflare.com",
@@ -15,7 +16,13 @@ export function buildContentSecurityPolicy(options?: {
   enableTurnstile?: boolean;
 }): string {
   const wordpressHost = options?.wordpressHostname?.trim();
-  const imgSources = ["'self'", "data:", "blob:", ...VIMEO_IMG_SOURCES];
+  const imgSources = [
+    "'self'",
+    "data:",
+    "blob:",
+    ...VIMEO_IMG_SOURCES,
+    ...SANITY_IMG_SOURCES,
+  ];
   if (wordpressHost) {
     imgSources.push(`https://${wordpressHost}`);
   }
@@ -103,5 +110,6 @@ export function getSecurityHeaders(options?: {
 export const securityAllowlists = {
   vimeoFrames: VIMEO_FRAME_SOURCES,
   vimeoImages: VIMEO_IMG_SOURCES,
+  sanityImages: SANITY_IMG_SOURCES,
   cloudflareChallenges: CLOUDFLARE_CHALLENGE_SOURCES,
 } as const;
