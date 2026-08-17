@@ -25,6 +25,28 @@ const SINGLETON_DOCS = {
   },
 } as const;
 
+/**
+ * The four current service pages. IDs are stable — do not create extras.
+ */
+export const SERVICE_DOCS = [
+  {
+    id: "service-digital-marketing",
+    title: "Digital & Social Media Marketing",
+  },
+  {
+    id: "service-business-communication",
+    title: "Business Communication",
+  },
+  {
+    id: "service-product-communication",
+    title: "Product Communication",
+  },
+  {
+    id: "service-architecture",
+    title: "Architecture & Real Estate",
+  },
+] as const;
+
 function singletonListItem(
   S: StructureBuilder,
   item: (typeof SINGLETON_DOCS)[keyof typeof SINGLETON_DOCS],
@@ -40,6 +62,21 @@ function singletonListItem(
     );
 }
 
+function serviceListItem(
+  S: StructureBuilder,
+  item: (typeof SERVICE_DOCS)[number],
+) {
+  return S.listItem()
+    .title(item.title)
+    .id(item.id)
+    .child(
+      S.document()
+        .schemaType("service")
+        .documentId(item.id)
+        .title(item.title),
+    );
+}
+
 /**
  * Editorial desk order (non-technical editors):
  * Homepage → About → Services → Work → Team → Clients → Global Settings
@@ -50,7 +87,14 @@ export const structure: StructureResolver = (S) =>
     .items([
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
-      S.documentTypeListItem("service").title("Services"),
+      S.listItem()
+        .title("Services")
+        .id("services")
+        .child(
+          S.list()
+            .title("Services")
+            .items(SERVICE_DOCS.map((item) => serviceListItem(S, item))),
+        ),
       S.documentTypeListItem("project").title("Work / Projects"),
       S.documentTypeListItem("teamMember").title("Team"),
       S.documentTypeListItem("client").title("Clients / Logos"),
@@ -59,6 +103,7 @@ export const structure: StructureResolver = (S) =>
     ]);
 
 /** Hide singleton types from the generic “Create new” document menu. */
-export const singletonTypes: Set<string> = new Set(
-  Object.values(SINGLETON_DOCS).map((item) => item.type),
-);
+export const singletonTypes: Set<string> = new Set([
+  ...Object.values(SINGLETON_DOCS).map((item) => item.type),
+  "service",
+]);

@@ -9,7 +9,7 @@ import { teamMember } from "./teamMember";
 
 /**
  * Studiojeker editorial schema registry.
- * Homepage and About are wired to Next.js at build time.
+ * Homepage, About and the four service pages are wired to Next.js at build time.
  * Other types are editorial structure only until explicitly connected.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [

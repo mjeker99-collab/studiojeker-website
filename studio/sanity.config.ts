@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   schema: {
     types: schemaTypes,
-    // Prevent creating multiple Homepage / About / Global Settings docs.
+    // Prevent creating extra Homepage / About / Global Settings / Service docs.
     templates: (templates) =>
       templates.filter(({ schemaType }) => !singletonTypes.has(schemaType)),
   },
