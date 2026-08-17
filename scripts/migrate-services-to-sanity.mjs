@@ -744,7 +744,9 @@ async function upsertService(client, doc) {
       );
     }
     console.log(`Found existing ${doc._id} — patching (no duplicate).`);
-    const { _id, _type, ...payload } = doc;
+    const payload = Object.fromEntries(
+      Object.entries(doc).filter(([key]) => key !== "_id" && key !== "_type"),
+    );
     const result = await client
       .patch(_id)
       .set(payload)
