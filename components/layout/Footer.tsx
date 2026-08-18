@@ -1,8 +1,10 @@
 import type { Dictionary, Locale } from "@/types/i18n";
 import { studiojekerContact } from "@/lib/content/contact";
+import { studiojekerSocial } from "@/lib/content/social";
 import { localizePathname } from "@/lib/i18n/config";
 import { getFooterNav, getServiceNavLinks } from "@/lib/i18n/navigation";
 import { Container } from "@/components/layout/Container";
+import { SocialIcon } from "@/components/layout/SocialIcon";
 import { TextLink } from "@/components/ui/TextLink";
 import styles from "./Footer.module.css";
 
@@ -110,6 +112,21 @@ export function Footer({ locale, dictionary }: FooterProps) {
 
         <div className={styles.meta}>
           <span className={styles.metaText}>{dictionary.footer.copyright}</span>
+          <ul className={styles.socialList}>
+            {studiojekerSocial.map((item) => (
+              <li key={item.id}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.label}
+                  className={styles.socialLink}
+                >
+                  <SocialIcon id={item.id} />
+                </a>
+              </li>
+            ))}
+          </ul>
           <ul className={styles.metaList}>
             {legalLinks.map((item) => (
               <li key={item.href}>
