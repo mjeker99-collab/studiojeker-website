@@ -42,6 +42,7 @@ export type HomepageContent = {
   seo: {
     title: string;
     description: string;
+    ogImagePath?: string;
   };
   hero: {
     headline: string;
@@ -51,6 +52,8 @@ export type HomepageContent = {
     primaryCta: { label: string; href: string };
     secondaryCta?: { label: string; href: string };
     media: HomepageMedia;
+    /** When set, the hero renders a Vimeo showreel in the existing media slot. */
+    videoId?: string;
   };
   services: {
     label: string;
@@ -78,6 +81,7 @@ export type HomepageContent = {
     cta: { label: string; href: string };
     benefits: HomepageBenefit[];
     media: HomepageMedia;
+    videoId?: string;
   };
   about: {
     label: string;
@@ -87,6 +91,7 @@ export type HomepageContent = {
     body: string[];
     cta: { label: string; href: string };
     media: HomepageMedia;
+    videoId?: string;
   };
   clients: {
     label: string;
