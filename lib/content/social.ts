@@ -10,12 +10,12 @@ export const studiojekerSocial = [
   },
   {
     id: "instagram",
-    href: "https://www.instagram.com/studiojeker?igsi=djNsODZ3MHpnYnpm",
+    href: "https://www.instagram.com/studiojeker/",
     label: "Studiojeker auf Instagram",
   },
   {
     id: "facebook",
-    href: "https://www.facebook.com/studiojeker",
+    href: "https://www.facebook.com/studiojeker/",
     label: "Studiojeker auf Facebook",
   },
 ] as const;
