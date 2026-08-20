@@ -47,6 +47,22 @@ export const service = defineType({
     sortOrderField("basics"),
 
     defineField({
+      name: "homepageTitle",
+      title: "Homepage Card Title",
+      type: "localizedString",
+      group: "basics",
+      description:
+        "Title shown on the Homepage services grid. Falls back to Navigation / Display Title when empty.",
+    }),
+    defineField({
+      name: "homepageDescription",
+      title: "Homepage Card Description",
+      type: "localizedText",
+      group: "basics",
+      description: "Short description shown on the Homepage services grid.",
+    }),
+
+    defineField({
       name: "heroHeadline",
       title: "Hero Headline",
       type: "string",

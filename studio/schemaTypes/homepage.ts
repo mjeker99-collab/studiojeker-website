@@ -103,12 +103,12 @@ export const homepage = defineType({
   groups: [
     { name: "hero", title: "Hero", default: true },
     { name: "services", title: "Services" },
-    { name: "showreel", title: "Showreel" },
-    { name: "projects", title: "Projekte" },
+    { name: "showreel", title: "Intro / Showreel" },
+    { name: "projects", title: "Work / Projects" },
     { name: "abo", title: "Sichtbarkeit im Abo" },
-    { name: "about", title: "Studiojeker" },
-    { name: "clients", title: "Kundenlogos" },
-    { name: "finalCta", title: "Abschluss CTA" },
+    { name: "about", title: "About teaser" },
+    { name: "clients", title: "Clients / Logos" },
+    { name: "finalCta", title: "Final CTA" },
     { name: "seo", title: "SEO" },
     { name: "legacy", title: "Legacy (DE)" },
   ],
@@ -125,37 +125,41 @@ export const homepage = defineType({
       fields: [
         defineField({
           name: "eyebrow",
-          title: "Eyebrow / Label (optional)",
+          title: "Hero Label (optional)",
           type: "localizedString",
+          description: "Small label above the headline. Leave empty if unused.",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Hero Headline",
           type: "localizedString",
-          description: "Main hero headline.",
+          description: "Main headline (e.g. We create visibility.).",
         }),
         defineField({
           name: "subheadline",
-          title: "Subheadline",
+          title: "Hero Service Line",
           type: "localizedString",
-          description: "Service terms line below the headline.",
+          description:
+            "Secondary line under the headline (e.g. Photo. Video. 3D. …).",
         }),
         defineField({
           name: "intro",
-          title: "Intro Text",
+          title: "Hero Description",
           type: "localizedText",
-          description: "Supporting paragraph(s) below the subheadline.",
+          description: "Supporting paragraph below the service line.",
         }),
         defineField({
           name: "primaryCta",
-          title: "Primary CTA",
+          title: "Hero CTA",
           type: "ctaField",
+          description: "Button label and link (e.g. Unsere Arbeit ansehen).",
         }),
         defineField({
           name: "media",
-          title: "Hero Medium",
+          title: "Hero Media",
           type: "mediaField",
-          description: "Image or Vimeo video for the hero area.",
+          description:
+            "Choose Image or Video (Vimeo). Upload an image / poster and optional Vimeo URL.",
         }),
       ],
     }),
@@ -172,20 +176,30 @@ export const homepage = defineType({
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "Services Label",
           type: "localizedString",
+          description: "Small section label above the services grid.",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Services Headline",
           type: "localizedString",
+          description:
+            "Accessible section headline (may be visually hidden on the site).",
         }),
         defineField({
           name: "items",
-          title: "Service Areas",
+          title: "Services on Homepage",
           type: "array",
-          of: [defineArrayMember({ type: "homepageServiceItem" })],
+          of: [
+            defineArrayMember({
+              type: "reference",
+              to: [{ type: "service" }],
+            }),
+          ],
           validation: (Rule) => Rule.max(4),
+          description:
+            "Select Service documents (edit card title/description on each Service). Drag to set order. Icons stay fixed in the website design.",
         }),
       ],
     }),
@@ -195,36 +209,37 @@ export const homepage = defineType({
     // -------------------------------------------------------------------------
     defineField({
       name: "showreelSection",
-      title: "Showreel",
+      title: "Intro / Showreel",
       type: "object",
       group: "showreel",
       options: { collapsible: true },
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "Showreel Label",
           type: "localizedString",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Showreel Headline",
           type: "localizedString",
         }),
         defineField({
           name: "text",
-          title: "Text",
+          title: "Showreel Description",
           type: "localizedText",
         }),
         defineField({
           name: "cta",
-          title: "CTA (optional)",
+          title: "Showreel CTA",
           type: "ctaField",
         }),
         defineField({
           name: "media",
-          title: "Showreel Video",
+          title: "Showreel Media",
           type: "mediaField",
-          description: "Vimeo video with poster image.",
+          description:
+            "Image or Vimeo video. For video, add a poster image and the Vimeo URL or ID.",
         }),
       ],
     }),
@@ -234,34 +249,35 @@ export const homepage = defineType({
     // -------------------------------------------------------------------------
     defineField({
       name: "projectsSection",
-      title: "Ausgewählte Projekte",
+      title: "Work / Projects",
       type: "object",
       group: "projects",
       options: { collapsible: true },
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "Projects Label",
           type: "localizedString",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Projects Headline",
           type: "localizedString",
         }),
         defineField({
           name: "intro",
-          title: "Intro Text (optional)",
+          title: "Projects Intro (optional)",
           type: "localizedText",
         }),
         defineField({
           name: "viewAllCta",
           title: "View All CTA",
           type: "ctaField",
+          description: "Button/link to the Work overview.",
         }),
         defineField({
           name: "selectedProjects",
-          title: "Selected Projects",
+          title: "Featured Projects",
           type: "array",
           of: [
             defineArrayMember({
@@ -270,7 +286,7 @@ export const homepage = defineType({
             }),
           ],
           description:
-            "Pick featured projects from the Work library. Leave empty to show default placeholders.",
+            "Choose projects from Work / Projects. Drag to set order. Manage images and titles on each project.",
         }),
       ],
     }),
@@ -287,35 +303,37 @@ export const homepage = defineType({
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "Abo Label",
           type: "localizedString",
-          description: "Short label shown above the headline.",
+          description: "Short label in the Abo block.",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Abo Headline",
           type: "localizedString",
         }),
         defineField({
           name: "text",
-          title: "Text",
+          title: "Abo Description",
           type: "localizedText",
         }),
         defineField({
           name: "benefits",
-          title: "Benefits",
+          title: "Abo Benefits",
           type: "array",
           of: [defineArrayMember({ type: "homepageBenefitItem" })],
+          description: "Benefit titles and texts. Icons are fixed in the design.",
         }),
         defineField({
           name: "cta",
-          title: "CTA",
+          title: "Abo CTA",
           type: "ctaField",
         }),
         defineField({
           name: "media",
-          title: "Image or Video",
+          title: "Abo Media",
           type: "mediaField",
+          description: "Image or Vimeo video for the Abo block.",
         }),
       ],
     }),
@@ -325,40 +343,41 @@ export const homepage = defineType({
     // -------------------------------------------------------------------------
     defineField({
       name: "aboutSection",
-      title: "Studiojeker",
+      title: "About Teaser",
       type: "object",
       group: "about",
       options: { collapsible: true },
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "About Label",
           type: "localizedString",
         }),
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "About Headline",
           type: "localizedString",
         }),
         defineField({
           name: "subheadline",
-          title: "Subheadline (optional)",
+          title: "About Subheadline (optional)",
           type: "localizedString",
         }),
         defineField({
           name: "text",
-          title: "Text",
+          title: "About Description",
           type: "localizedText",
         }),
         defineField({
           name: "cta",
-          title: "CTA",
+          title: "About CTA",
           type: "ctaField",
         }),
         defineField({
           name: "media",
-          title: "Image or Video",
+          title: "About Media",
           type: "mediaField",
+          description: "Image or Vimeo video for the About teaser.",
         }),
       ],
     }),
@@ -368,14 +387,14 @@ export const homepage = defineType({
     // -------------------------------------------------------------------------
     defineField({
       name: "clientsSection",
-      title: "Kundenlogos",
+      title: "Clients / Logos",
       type: "object",
       group: "clients",
       options: { collapsible: true },
       fields: [
         defineField({
           name: "label",
-          title: "Section Label",
+          title: "Clients Label",
           type: "localizedString",
         }),
         defineField({
@@ -389,7 +408,7 @@ export const homepage = defineType({
             }),
           ],
           description:
-            "Select and order client logos. Manage logos under Clients / Logos.",
+            "Select logos from Clients / Logos. Drag to set order. Inactive clients are hidden on the site.",
         }),
       ],
     }),
@@ -399,26 +418,26 @@ export const homepage = defineType({
     // -------------------------------------------------------------------------
     defineField({
       name: "finalCtaSection",
-      title: "Abschluss CTA",
+      title: "Final CTA",
       type: "object",
       group: "finalCta",
       options: { collapsible: true },
       fields: [
         defineField({
           name: "headline",
-          title: "Headline",
+          title: "Final CTA Headline",
           type: "localizedString",
           description:
             "Full headline. The accent word (e.g. Sichtbarkeit / visibility) is styled automatically.",
         }),
         defineField({
           name: "text",
-          title: "Text (optional)",
+          title: "Final CTA Description",
           type: "localizedText",
         }),
         defineField({
           name: "cta",
-          title: "Button",
+          title: "Final CTA Button",
           type: "ctaField",
         }),
       ],
@@ -446,10 +465,10 @@ export const homepage = defineType({
         }),
         defineField({
           name: "ogImage",
-          title: "Open Graph / Social Sharing Image",
+          title: "Social Sharing Image",
           type: "image",
           options: { hotspot: true },
-          description: "Recommended 1200 × 630 px.",
+          description: "Optional Open Graph image. Recommended 1200 × 630 px.",
         }),
       ],
     }),

@@ -114,16 +114,16 @@ export const ctaField = defineType({
   fields: [
     defineField({
       name: "label",
-      title: "Button Label",
+      title: "CTA Label",
       type: "localizedString",
       description: "Button text in German and English.",
     }),
     defineField({
       name: "href",
-      title: "Link",
+      title: "CTA Link",
       type: "string",
       description:
-        "Internal path without locale prefix (e.g. /contact, /work) or absolute http(s) URL.",
+        "Internal path without language prefix (e.g. /contact, /work) or full http(s) URL.",
       validation: (Rule) => Rule.custom((value) => validateOptionalLink(value)),
     }),
   ],
@@ -151,6 +151,7 @@ export const mediaField = defineType({
         layout: "radio",
       },
       initialValue: "image",
+      description: "Choose whether this block shows a still image or a Vimeo video.",
     }),
     defineField({
       name: "image",
@@ -162,30 +163,31 @@ export const mediaField = defineType({
       fields: [
         defineField({
           name: "alt",
-          title: "Alt Text",
+          title: "Image Alt Text",
           type: "string",
-          description: "Describe the image for accessibility.",
+          description: "Describe the image for accessibility and SEO.",
         }),
       ],
     }),
     defineField({
       name: "vimeoUrl",
-      title: "Vimeo URL or ID",
+      title: "Vimeo Video",
       type: "string",
-      description: "Full Vimeo URL or numeric video ID. No external fetch in Studio.",
+      description:
+        "Paste a full Vimeo URL (https://vimeo.com/…) or the numeric video ID.",
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
     defineField({
       name: "poster",
-      title: "Poster / Fallback Image",
+      title: "Video Poster Image",
       type: "image",
       options: { hotspot: true },
-      description: "Shown before the video plays.",
+      description: "Still image shown before the video plays.",
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
       fields: [
         defineField({
           name: "alt",
-          title: "Alt Text",
+          title: "Poster Alt Text",
           type: "string",
         }),
       ],
@@ -268,10 +270,10 @@ export const homepageBenefitItem = defineType({
   },
 });
 
-/** Homepage service card — maps to the four service areas. */
+/** @deprecated Prefer Homepage → Services references to Service documents. Kept for legacy flat fields. */
 export const homepageServiceItem = defineType({
   name: "homepageServiceItem",
-  title: "Service Area",
+  title: "Service Area (legacy)",
   type: "object",
   fields: [
     defineField({
@@ -316,7 +318,7 @@ export const homepageServiceItem = defineType({
       title: "Image or Video (optional)",
       type: "mediaField",
       description:
-        "Optional media asset. The homepage currently uses service icons — this field is stored for future use.",
+        "Optional. Homepage service cards use fixed icons in the current design.",
     }),
     sortOrderField(),
   ],
