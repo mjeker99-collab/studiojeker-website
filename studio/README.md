@@ -30,3 +30,7 @@ origins for local Studio and later preview URLs, e.g.:
 
 - `http://localhost:3333`
 - `http://localhost:3000`
+
+Use **`http://localhost:3333`** for local Studio. `http://127.0.0.1:3333` is a
+different origin and currently receives CORS 403 unless explicitly added — do
+not rely on it for development.
