@@ -40,6 +40,14 @@
 # Prefer UTF-8
 AddDefaultCharset UTF-8
 
+# Homepage / route HTML must revalidate quickly so clients pick up JS that
+# refreshes CMS content via /api/homepage.php (static export has no ISR).
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
 # Cache immutable Next assets aggressively when present
 <IfModule mod_expires.c>
   ExpiresActive On

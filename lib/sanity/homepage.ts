@@ -10,6 +10,12 @@ import {
   type SanityMediaField,
 } from "@/lib/sanity/media";
 
+/**
+ * Deterministic Homepage singleton ID (matches Studio desk structure).
+ * Never select an arbitrary `*[_type == "homepage"][0]` document.
+ */
+export const HOMEPAGE_DOCUMENT_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
+
 export type SanityLocalizedString = {
   de?: string | null;
   en?: string | null;
@@ -67,8 +73,10 @@ export type SanityHomepageClientRef = {
 /**
  * Published Homepage singleton projection.
  * Includes nested section fields and legacy root fields for backward compatibility.
+ * Always targets the deterministic singleton ID — never an arbitrary first match.
  */
-export const homepageQuery = groq`*[_type == "homepage"][0]{
+export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
+  _id,
   heroSection{
     eyebrow${localizedStringProjection},
     headline${localizedStringProjection},
@@ -176,6 +184,7 @@ export const homepageQuery = groq`*[_type == "homepage"][0]{
 export type SanityHomepageImage = SanityImageProjection;
 
 export type SanityHomepage = {
+  _id?: string | null;
   heroSection?: {
     eyebrow?: SanityLocalizedString;
     headline?: SanityLocalizedString;
@@ -254,13 +263,15 @@ export type SanityHomepage = {
 export { sanityImageSource as heroImageSource } from "@/lib/sanity/media";
 
 /**
- * Fetch the published Homepage document at build time.
+ * Fetch the published Homepage singleton at build time.
  * Returns null on failure so callers can fall back to local content.
  */
 export async function fetchSanityHomepage(): Promise<SanityHomepage | null> {
   try {
     const client = getSanityClient();
-    const doc = await client.fetch<SanityHomepage | null>(homepageQuery);
+    const doc = await client.fetch<SanityHomepage | null>(homepageQuery, {
+      id: HOMEPAGE_DOCUMENT_ID,
+    });
     return doc ?? null;
   } catch (error) {
     console.warn(
