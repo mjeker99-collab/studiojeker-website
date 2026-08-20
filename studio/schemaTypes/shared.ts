@@ -109,7 +109,14 @@ export const ctaField = defineType({
         "Internal path without locale prefix (e.g. /contact, /work). The website localizes automatically.",
       validation: (Rule) =>
         Rule.custom((value) => {
-          if (!value) return true;
+          // Optional field: empty values are valid.
+          if (value === undefined || value === null || value === "") {
+            return true;
+          }
+          // Guard against non-string runtime values to avoid Uncaught errors.
+          if (typeof value !== "string") {
+            return "Use an internal path starting with /";
+          }
           return value.startsWith("/")
             ? true
             : "Use an internal path starting with /";
@@ -124,6 +131,9 @@ export const ctaField = defineType({
  *
  * Hidden callbacks default to "image" when mediaType is missing, so the
  * image upload never disappears for migrated/partial documents.
+ *
+ * Preview is intentionally text-only (no nested image/poster media resolution)
+ * to avoid Studio "Load failed" errors while editing.
  */
 export const mediaField = defineType({
   name: "mediaField",
@@ -194,18 +204,17 @@ export const mediaField = defineType({
   preview: {
     select: {
       mediaType: "mediaType",
-      image: "image",
-      poster: "poster",
       vimeoUrl: "vimeoUrl",
     },
-    prepare({ mediaType, image, poster, vimeoUrl }) {
+    prepare({ mediaType, vimeoUrl }) {
       const isVideo = (mediaType || "image") === "video";
       return {
         title: isVideo ? "Video (Vimeo)" : "Image",
         subtitle: isVideo
-          ? vimeoUrl || "Add a Vimeo URL or ID"
-          : "Upload or replace the image",
-        media: isVideo ? poster || image : image,
+          ? typeof vimeoUrl === "string" && vimeoUrl
+            ? vimeoUrl
+            : "Add a Vimeo URL or ID"
+          : "Image or poster is edited in the fields below",
       };
     },
   },
@@ -299,7 +308,12 @@ export const homepageServiceItem = defineType({
       description: "Internal path without locale prefix (e.g. /services/digital-marketing).",
       validation: (Rule) =>
         Rule.custom((value) => {
-          if (!value) return true;
+          if (value === undefined || value === null || value === "") {
+            return true;
+          }
+          if (typeof value !== "string") {
+            return "Use an internal path starting with /";
+          }
           return value.startsWith("/")
             ? true
             : "Use an internal path starting with /";

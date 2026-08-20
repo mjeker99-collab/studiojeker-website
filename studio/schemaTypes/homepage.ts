@@ -581,14 +581,11 @@ export const homepage = defineType({
     select: {
       title: "heroHeadlineLocalized.de",
       legacyTitle: "heroHeadline",
-      media: "heroMedia.image",
-      legacyMedia: "heroImage",
     },
-    prepare({ title, legacyTitle, media, legacyMedia }) {
+    prepare({ title, legacyTitle }) {
       return {
         title: title || legacyTitle || "Homepage",
         subtitle: "Singleton page content",
-        media: media || legacyMedia,
       };
     },
   },

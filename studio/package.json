@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "description": "Standalone Sanity Studio for Studiojeker (not part of Metanet /out deploy)",
   "scripts": {
-    "dev": "sanity dev",
-    "start": "sanity dev",
+    "dev": "sanity dev --host localhost --port 3333",
+    "start": "sanity dev --host localhost --port 3333",
     "build": "sanity build",
     "deploy": "sanity deploy",
     "typecheck": "tsc --noEmit"
