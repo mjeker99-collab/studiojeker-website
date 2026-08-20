@@ -12,6 +12,7 @@ import { getHomepageContent } from "@/lib/content/homepage";
 import { localizePathname } from "@/lib/i18n/config";
 import {
   fetchSanityHomepage,
+  type SanityCta,
   type SanityHomepage,
   type SanityHomepageBenefitItem,
   type SanityHomepageClientRef,
@@ -151,7 +152,11 @@ function sortByOrder<T extends { sortOrder?: number | null }>(items: T[]): T[] {
 function mergeServices(
   base: HomepageContent["services"],
   locale: Locale,
-  section: SanityHomepage["servicesSection"],
+  section: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    items?: SanityHomepageServiceItem[] | null;
+  } | null | undefined,
   legacyHeadline?: string | null,
 ): HomepageContent["services"] {
   const merged = { ...base, items: [...base.items] };
@@ -243,7 +248,12 @@ function mergeBenefits(
 function mergeProjects(
   base: HomepageContent["projects"],
   locale: Locale,
-  section: SanityHomepage["projectsSection"],
+  section: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    viewAllCta?: SanityCta;
+    selectedProjects?: SanityHomepageProjectRef[] | null;
+  } | null | undefined,
   legacyHeadline?: string | null,
 ): HomepageContent["projects"] {
   const merged = {
@@ -407,17 +417,21 @@ export function mergeSanityHomepage(
     finalCta: { ...base.finalCta, cta: { ...base.finalCta.cta } },
   };
 
-  const seoTitle = pickLocalized(doc.seoSection?.title, locale, doc.seoTitle);
+  const seoTitle = pickLocalized(
+    doc.seoMetaTitle ?? doc.seoSection?.title,
+    locale,
+    doc.seoTitle,
+  );
   if (seoTitle) merged.seo.title = seoTitle;
 
   const seoDescription = pickLocalized(
-    doc.seoSection?.description,
+    doc.seoMetaDescription ?? doc.seoSection?.description,
     locale,
     doc.seoDescription,
   );
   if (seoDescription) merged.seo.description = seoDescription;
 
-  const ogImage = resolveSanityImage(doc.seoSection?.ogImage, {
+  const ogImage = resolveSanityImage(doc.seoOgImage ?? doc.seoSection?.ogImage, {
     src: "",
     alt: "",
     width: 1200,
@@ -428,8 +442,11 @@ export function mergeSanityHomepage(
   }
 
   const heroHeadline =
-    pickLocalized(doc.heroSection?.headline, locale, doc.heroHeadline) ??
-    undefined;
+    pickLocalized(
+      doc.heroHeadlineLocalized ?? doc.heroSection?.headline,
+      locale,
+      doc.heroHeadline,
+    ) ?? undefined;
   if (heroHeadline) {
     const { headline, accent } = splitTrailingAccent(
       heroHeadline,
@@ -439,21 +456,30 @@ export function mergeSanityHomepage(
     merged.hero.headlineAccent = accent;
   }
 
-  const heroSubheadline = pickLocalized(doc.heroSection?.subheadline, locale);
+  const heroSubheadline = pickLocalized(
+    doc.heroSubheadline ?? doc.heroSection?.subheadline,
+    locale,
+  );
   if (heroSubheadline) {
     merged.hero.subheadline = heroSubheadline;
   }
 
-  const heroIntro = pickLocalized(doc.heroSection?.intro, locale, doc.introText);
+  const hasStructuredHeroIntro = Boolean(
+    doc.heroIntro ||
+      doc.heroSubheadline ||
+      doc.heroSection?.intro ||
+      doc.heroSection?.subheadline,
+  );
+  const heroIntro = pickLocalized(
+    doc.heroIntro ?? doc.heroSection?.intro,
+    locale,
+    doc.introText,
+  );
   if (heroIntro) {
-    if (doc.heroSection?.intro || doc.heroSection?.subheadline) {
+    if (hasStructuredHeroIntro) {
       merged.hero.body = splitParagraphs(heroIntro);
-      if (!heroSubheadline && !doc.heroSection?.subheadline) {
-        merged.hero.subheadline = merged.hero.body[0] ?? base.hero.subheadline;
-        merged.hero.body = merged.hero.body.slice(1);
-        if (merged.hero.body.length === 0) {
-          merged.hero.body = base.hero.body;
-        }
+      if (!heroSubheadline) {
+        // Keep subheadline from dedicated field when present; otherwise leave base.
       }
     } else if (locale === "de" && doc.introText) {
       const split = splitIntro(doc.introText, base.hero);
@@ -464,16 +490,20 @@ export function mergeSanityHomepage(
     }
   }
 
-  const heroCtaLabel = pickLocalized(doc.heroSection?.primaryCta?.label, locale);
+  const heroCtaLabel = pickLocalized(
+    doc.heroPrimaryCta?.label ?? doc.heroSection?.primaryCta?.label,
+    locale,
+  );
   if (heroCtaLabel) merged.hero.primaryCta.label = heroCtaLabel;
 
   merged.hero.primaryCta.href = resolveHref(
-    doc.heroSection?.primaryCta?.href,
+    doc.heroPrimaryCta?.href ?? doc.heroSection?.primaryCta?.href,
     locale,
     base.hero.primaryCta.href,
   );
 
   const heroMedia =
+    doc.heroMedia ??
     doc.heroSection?.media ??
     (doc.heroImage || doc.heroVideoUrl
       ? ({
@@ -496,33 +526,47 @@ export function mergeSanityHomepage(
   merged.services = mergeServices(
     base.services,
     locale,
-    doc.servicesSection,
+    {
+      label: doc.servicesLabel ?? doc.servicesSection?.label,
+      headline: doc.servicesHeadline ?? doc.servicesSection?.headline,
+      items: doc.servicesItems ?? doc.servicesSection?.items,
+    },
     doc.servicesSectionHeadline,
   );
 
-  const showreelLabel = pickLocalized(doc.showreelSection?.label, locale);
+  const showreelLabel = pickLocalized(
+    doc.showreelLabel ?? doc.showreelSection?.label,
+    locale,
+  );
   if (showreelLabel) merged.showreel.label = showreelLabel;
 
-  const showreelHeadline = pickLocalized(doc.showreelSection?.headline, locale);
+  const showreelHeadline = pickLocalized(
+    doc.showreelHeadline ?? doc.showreelSection?.headline,
+    locale,
+  );
   if (showreelHeadline) merged.showreel.headline = showreelHeadline;
 
-  const showreelText = pickLocalized(doc.showreelSection?.text, locale);
+  const showreelText = pickLocalized(
+    doc.showreelText ?? doc.showreelSection?.text,
+    locale,
+  );
   if (showreelText) merged.showreel.body = showreelText;
 
-  const showreelCtaLabel = pickLocalized(doc.showreelSection?.cta?.label, locale);
+  const showreelCtaLabel = pickLocalized(
+    doc.showreelCta?.label ?? doc.showreelSection?.cta?.label,
+    locale,
+  );
   if (showreelCtaLabel) merged.showreel.cta.label = showreelCtaLabel;
 
   merged.showreel.cta.href = resolveHref(
-    doc.showreelSection?.cta?.href,
+    doc.showreelCta?.href ?? doc.showreelSection?.cta?.href,
     locale,
     base.showreel.cta.href,
   );
 
-  if (doc.showreelSection?.media) {
-    const showreelMedia = applyMediaSection(
-      base.showreel.media,
-      doc.showreelSection.media,
-    );
+  const showreelMediaField = doc.showreelMedia ?? doc.showreelSection?.media;
+  if (showreelMediaField) {
+    const showreelMedia = applyMediaSection(base.showreel.media, showreelMediaField);
     merged.showreel.media = showreelMedia.media;
     if (showreelMedia.videoId) {
       merged.showreel.videoId = showreelMedia.videoId;
@@ -532,44 +576,57 @@ export function mergeSanityHomepage(
   merged.projects = mergeProjects(
     base.projects,
     locale,
-    doc.projectsSection,
+    {
+      label: doc.projectsLabel ?? doc.projectsSection?.label,
+      headline: doc.projectsHeadline ?? doc.projectsSection?.headline,
+      viewAllCta: doc.projectsViewAllCta ?? doc.projectsSection?.viewAllCta,
+      selectedProjects:
+        doc.selectedProjects ?? doc.projectsSection?.selectedProjects,
+    },
     doc.workSectionHeadline,
   );
 
   const aboHeadline =
-    pickLocalized(doc.aboSection?.headline, locale) ??
-    pickLocalized(doc.aboSection?.label, locale);
+    pickLocalized(doc.aboHeadline ?? doc.aboSection?.headline, locale) ??
+    pickLocalized(doc.aboLabel ?? doc.aboSection?.label, locale);
   if (aboHeadline) merged.abo.headline = aboHeadline;
 
-  const aboText = pickLocalized(doc.aboSection?.text, locale);
+  const aboText = pickLocalized(doc.aboText ?? doc.aboSection?.text, locale);
   if (aboText) merged.abo.introduction = aboText;
 
   merged.abo.benefits = mergeBenefits(
     base.abo.benefits,
     locale,
-    doc.aboSection?.benefits,
+    doc.aboBenefits ?? doc.aboSection?.benefits,
   );
 
-  const aboCtaLabel = pickLocalized(doc.aboSection?.cta?.label, locale);
+  const aboCtaLabel = pickLocalized(
+    doc.aboCta?.label ?? doc.aboSection?.cta?.label,
+    locale,
+  );
   if (aboCtaLabel) merged.abo.cta.label = aboCtaLabel;
 
   merged.abo.cta.href = resolveHref(
-    doc.aboSection?.cta?.href,
+    doc.aboCta?.href ?? doc.aboSection?.cta?.href,
     locale,
     base.abo.cta.href,
   );
 
-  if (doc.aboSection?.media) {
-    const aboMedia = applyMediaSection(base.abo.media, doc.aboSection.media, 1200);
+  const aboMediaField = doc.aboMedia ?? doc.aboSection?.media;
+  if (aboMediaField) {
+    const aboMedia = applyMediaSection(base.abo.media, aboMediaField, 1200);
     merged.abo.media = aboMedia.media;
     if (aboMedia.videoId) merged.abo.videoId = aboMedia.videoId;
   }
 
-  const aboutLabel = pickLocalized(doc.aboutSection?.label, locale);
+  const aboutLabel = pickLocalized(
+    doc.aboutLabel ?? doc.aboutSection?.label,
+    locale,
+  );
   if (aboutLabel) merged.about.label = aboutLabel;
 
   const aboutHeadline = pickLocalized(
-    doc.aboutSection?.headline,
+    doc.aboutHeadline ?? doc.aboutSection?.headline,
     locale,
     doc.mainIntroHeadline,
   );
@@ -581,41 +638,51 @@ export function mergeSanityHomepage(
     merged.about.headline = headline;
   }
 
-  const aboutSubheadline = pickLocalized(doc.aboutSection?.subheadline, locale);
+  const aboutSubheadline = pickLocalized(
+    doc.aboutSubheadline ?? doc.aboutSection?.subheadline,
+    locale,
+  );
   if (aboutSubheadline) merged.about.subheadline = aboutSubheadline;
 
   const aboutText = pickLocalized(
-    doc.aboutSection?.text,
+    doc.aboutText ?? doc.aboutSection?.text,
     locale,
     doc.mainIntroText,
   );
   if (aboutText) merged.about.body = splitParagraphs(aboutText);
 
-  const aboutCtaLabel = pickLocalized(doc.aboutSection?.cta?.label, locale);
+  const aboutCtaLabel = pickLocalized(
+    doc.aboutCta?.label ?? doc.aboutSection?.cta?.label,
+    locale,
+  );
   if (aboutCtaLabel) merged.about.cta.label = aboutCtaLabel;
 
   merged.about.cta.href = resolveHref(
-    doc.aboutSection?.cta?.href,
+    doc.aboutCta?.href ?? doc.aboutSection?.cta?.href,
     locale,
     base.about.cta.href,
   );
 
-  if (doc.aboutSection?.media) {
-    const aboutMedia = applyMediaSection(base.about.media, doc.aboutSection.media);
+  const aboutMediaField = doc.aboutMedia ?? doc.aboutSection?.media;
+  if (aboutMediaField) {
+    const aboutMedia = applyMediaSection(base.about.media, aboutMediaField);
     merged.about.media = aboutMedia.media;
     if (aboutMedia.videoId) merged.about.videoId = aboutMedia.videoId;
   }
 
-  const clientsLabel = pickLocalized(doc.clientsSection?.label, locale);
+  const clientsLabel = pickLocalized(
+    doc.clientsLabel ?? doc.clientsSection?.label,
+    locale,
+  );
   if (clientsLabel) merged.clients.label = clientsLabel;
 
   merged.clients.logos = mergeClientLogos(
     base.clients.logos,
-    doc.clientsSection?.logos,
+    doc.clientsLogos ?? doc.clientsSection?.logos,
   );
 
   const finalHeadline = pickLocalized(
-    doc.finalCtaSection?.headline,
+    doc.finalCtaHeadline ?? doc.finalCtaSection?.headline,
     locale,
     doc.ctaHeadline,
   );
@@ -629,18 +696,22 @@ export function mergeSanityHomepage(
     merged.finalCta.headlineAfter = after;
   }
 
-  const finalText = pickLocalized(doc.finalCtaSection?.text, locale, doc.ctaText);
+  const finalText = pickLocalized(
+    doc.finalCtaText ?? doc.finalCtaSection?.text,
+    locale,
+    doc.ctaText,
+  );
   if (finalText) merged.finalCta.text = finalText;
 
   const finalCtaLabel = pickLocalized(
-    doc.finalCtaSection?.cta?.label,
+    doc.finalCtaButton?.label ?? doc.finalCtaSection?.cta?.label,
     locale,
     doc.ctaLabel,
   );
   if (finalCtaLabel) merged.finalCta.cta.label = finalCtaLabel;
 
   merged.finalCta.cta.href = resolveHref(
-    doc.finalCtaSection?.cta?.href,
+    doc.finalCtaButton?.href ?? doc.finalCtaSection?.cta?.href,
     locale,
     base.finalCta.cta.href,
   );

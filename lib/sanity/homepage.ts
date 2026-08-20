@@ -65,10 +65,87 @@ export type SanityHomepageClientRef = {
 } | null;
 
 /**
- * Published Homepage singleton projection.
- * Includes nested section fields and legacy root fields for backward compatibility.
+ * Homepage projection.
+ * Prefer flat section fields; keep nested + legacy DE fields as fallbacks.
  */
 export const homepageQuery = groq`*[_type == "homepage"][0]{
+  heroMedia${sanityMediaProjection},
+  heroEyebrow${localizedStringProjection},
+  heroHeadlineLocalized${localizedStringProjection},
+  heroSubheadline${localizedStringProjection},
+  heroIntro${localizedTextProjection},
+  heroPrimaryCta${ctaProjection},
+
+  servicesLabel${localizedStringProjection},
+  servicesHeadline${localizedStringProjection},
+  servicesItems[]{
+    serviceId,
+    title${localizedStringProjection},
+    description${localizedTextProjection},
+    href,
+    ctaLabel${localizedStringProjection},
+    media${sanityMediaProjection},
+    sortOrder
+  },
+
+  showreelMedia${sanityMediaProjection},
+  showreelLabel${localizedStringProjection},
+  showreelHeadline${localizedStringProjection},
+  showreelText${localizedTextProjection},
+  showreelCta${ctaProjection},
+
+  projectsLabel${localizedStringProjection},
+  projectsHeadline${localizedStringProjection},
+  projectsIntro${localizedTextProjection},
+  projectsViewAllCta${ctaProjection},
+  "selectedProjects": selectedProjects[]->{
+    _id,
+    title,
+    slug,
+    shortDescription,
+    featured,
+    sortOrder,
+    mainImage${sanityImageProjection},
+    "category": category->{ title }
+  },
+
+  aboMedia${sanityMediaProjection},
+  aboLabel${localizedStringProjection},
+  aboHeadline${localizedStringProjection},
+  aboText${localizedTextProjection},
+  aboBenefits[]{
+    id,
+    title${localizedStringProjection},
+    description${localizedTextProjection},
+    sortOrder
+  },
+  aboCta${ctaProjection},
+
+  aboutMedia${sanityMediaProjection},
+  aboutLabel${localizedStringProjection},
+  aboutHeadline${localizedStringProjection},
+  aboutSubheadline${localizedStringProjection},
+  aboutText${localizedTextProjection},
+  aboutCta${ctaProjection},
+
+  clientsLabel${localizedStringProjection},
+  "clientsLogos": clientsLogos[]->{
+    _id,
+    name,
+    websiteUrl,
+    sortOrder,
+    active,
+    logo${sanityImageProjection}
+  },
+
+  finalCtaHeadline${localizedStringProjection},
+  finalCtaText${localizedTextProjection},
+  finalCtaButton${ctaProjection},
+
+  seoMetaTitle${localizedStringProjection},
+  seoMetaDescription${localizedTextProjection},
+  seoOgImage${sanityImageProjection},
+
   heroSection{
     eyebrow${localizedStringProjection},
     headline${localizedStringProjection},
@@ -155,6 +232,7 @@ export const homepageQuery = groq`*[_type == "homepage"][0]{
     description${localizedTextProjection},
     ogImage${sanityImageProjection}
   },
+
   heroHeadline,
   introText,
   heroVideoUrl,
@@ -176,6 +254,54 @@ export const homepageQuery = groq`*[_type == "homepage"][0]{
 export type SanityHomepageImage = SanityImageProjection;
 
 export type SanityHomepage = {
+  heroMedia?: SanityMediaField;
+  heroEyebrow?: SanityLocalizedString;
+  heroHeadlineLocalized?: SanityLocalizedString;
+  heroSubheadline?: SanityLocalizedString;
+  heroIntro?: SanityLocalizedText;
+  heroPrimaryCta?: SanityCta;
+
+  servicesLabel?: SanityLocalizedString;
+  servicesHeadline?: SanityLocalizedString;
+  servicesItems?: SanityHomepageServiceItem[] | null;
+
+  showreelMedia?: SanityMediaField;
+  showreelLabel?: SanityLocalizedString;
+  showreelHeadline?: SanityLocalizedString;
+  showreelText?: SanityLocalizedText;
+  showreelCta?: SanityCta;
+
+  projectsLabel?: SanityLocalizedString;
+  projectsHeadline?: SanityLocalizedString;
+  projectsIntro?: SanityLocalizedText;
+  projectsViewAllCta?: SanityCta;
+  selectedProjects?: SanityHomepageProjectRef[] | null;
+
+  aboMedia?: SanityMediaField;
+  aboLabel?: SanityLocalizedString;
+  aboHeadline?: SanityLocalizedString;
+  aboText?: SanityLocalizedText;
+  aboBenefits?: SanityHomepageBenefitItem[] | null;
+  aboCta?: SanityCta;
+
+  aboutMedia?: SanityMediaField;
+  aboutLabel?: SanityLocalizedString;
+  aboutHeadline?: SanityLocalizedString;
+  aboutSubheadline?: SanityLocalizedString;
+  aboutText?: SanityLocalizedText;
+  aboutCta?: SanityCta;
+
+  clientsLabel?: SanityLocalizedString;
+  clientsLogos?: SanityHomepageClientRef[] | null;
+
+  finalCtaHeadline?: SanityLocalizedString;
+  finalCtaText?: SanityLocalizedText;
+  finalCtaButton?: SanityCta;
+
+  seoMetaTitle?: SanityLocalizedString;
+  seoMetaDescription?: SanityLocalizedText;
+  seoOgImage?: SanityImageProjection;
+
   heroSection?: {
     eyebrow?: SanityLocalizedString;
     headline?: SanityLocalizedString;
@@ -253,10 +379,6 @@ export type SanityHomepage = {
 /** @deprecated Use sanityImageSource from lib/sanity/media */
 export { sanityImageSource as heroImageSource } from "@/lib/sanity/media";
 
-/**
- * Fetch the published Homepage document at build time.
- * Returns null on failure so callers can fall back to local content.
- */
 export async function fetchSanityHomepage(): Promise<SanityHomepage | null> {
   try {
     const client = getSanityClient();

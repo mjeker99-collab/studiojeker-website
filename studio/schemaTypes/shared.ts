@@ -121,6 +121,9 @@ export const ctaField = defineType({
 /**
  * Reusable image or Vimeo video block.
  * Layout and presentation remain controlled by the website.
+ *
+ * Hidden callbacks default to "image" when mediaType is missing, so the
+ * image upload never disappears for migrated/partial documents.
  */
 export const mediaField = defineType({
   name: "mediaField",
@@ -139,13 +142,15 @@ export const mediaField = defineType({
         layout: "radio",
       },
       initialValue: "image",
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "image",
       title: "Image",
       type: "image",
       options: { hotspot: true },
-      hidden: ({ parent }) => parent?.mediaType !== "image",
+      // Default to image when mediaType is unset — avoids a blank Studio UI.
+      hidden: ({ parent }) => (parent?.mediaType || "image") === "video",
       fields: [
         defineField({
           name: "alt",
@@ -160,7 +165,7 @@ export const mediaField = defineType({
       title: "Vimeo URL or ID",
       type: "string",
       description: "Full Vimeo URL or numeric video ID.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
     defineField({
       name: "poster",
@@ -168,7 +173,7 @@ export const mediaField = defineType({
       type: "image",
       options: { hotspot: true },
       description: "Shown before the video plays.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
       fields: [
         defineField({
           name: "alt",
@@ -183,9 +188,27 @@ export const mediaField = defineType({
       type: "image",
       options: { hotspot: true },
       description: "Optional alternative poster for smaller screens.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
   ],
+  preview: {
+    select: {
+      mediaType: "mediaType",
+      image: "image",
+      poster: "poster",
+      vimeoUrl: "vimeoUrl",
+    },
+    prepare({ mediaType, image, poster, vimeoUrl }) {
+      const isVideo = (mediaType || "image") === "video";
+      return {
+        title: isVideo ? "Video (Vimeo)" : "Image",
+        subtitle: isVideo
+          ? vimeoUrl || "Add a Vimeo URL or ID"
+          : "Upload or replace the image",
+        media: isVideo ? poster || image : image,
+      };
+    },
+  },
 });
 
 /** Benefit item for the Sichtbarkeit im Abo section. */

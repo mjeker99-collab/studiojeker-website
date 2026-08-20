@@ -2,11 +2,10 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 import { seoFields } from "./shared";
 
 /**
- * Homepage — singleton editorial content for the marketing homepage.
+ * Homepage — singleton editorial content.
  *
- * Legacy root fields (heroHeadline, introText, heroImage, etc.) are preserved
- * for backward compatibility with the existing published document. New nested
- * section fields take precedence when populated.
+ * Fields are flat and grouped by section tabs for clear Studio UX.
+ * Nested section objects (heroSection, …) remain as Legacy for migration fallback.
  */
 export const homepage = defineType({
   name: "homepage",
@@ -26,357 +25,313 @@ export const homepage = defineType({
   ],
   fields: [
     // -------------------------------------------------------------------------
-    // Hero
+    // Hero — media first so editors see the image immediately
     // -------------------------------------------------------------------------
     defineField({
-      name: "heroSection",
-      title: "Hero",
-      type: "object",
+      name: "heroMedia",
+      title: "Hero Medium",
+      type: "mediaField",
       group: "hero",
-      options: { collapsible: true, collapsed: false },
-      fields: [
-        defineField({
-          name: "eyebrow",
-          title: "Eyebrow / Label (optional)",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-          description: "Main hero headline.",
-        }),
-        defineField({
-          name: "subheadline",
-          title: "Subheadline",
-          type: "localizedString",
-          description: "Service terms line below the headline.",
-        }),
-        defineField({
-          name: "intro",
-          title: "Intro Text",
-          type: "localizedText",
-          description: "Supporting paragraph(s) below the subheadline.",
-        }),
-        defineField({
-          name: "primaryCta",
-          title: "Primary CTA",
-          type: "ctaField",
-        }),
-        defineField({
-          name: "media",
-          title: "Hero Medium",
-          type: "mediaField",
-          description: "Image or Vimeo video for the hero area.",
-        }),
-      ],
+      description: "Primary image or Vimeo video for the hero area.",
+    }),
+    defineField({
+      name: "heroEyebrow",
+      title: "Eyebrow / Label (optional)",
+      type: "localizedString",
+      group: "hero",
+    }),
+    defineField({
+      name: "heroHeadlineLocalized",
+      title: "Headline",
+      type: "localizedString",
+      group: "hero",
+      description: "Main hero headline.",
+    }),
+    defineField({
+      name: "heroSubheadline",
+      title: "Subheadline",
+      type: "localizedString",
+      group: "hero",
+      description: "Service terms line below the headline.",
+    }),
+    defineField({
+      name: "heroIntro",
+      title: "Intro Text",
+      type: "localizedText",
+      group: "hero",
+      description: "Supporting paragraph(s) below the subheadline.",
+    }),
+    defineField({
+      name: "heroPrimaryCta",
+      title: "Primary CTA",
+      type: "ctaField",
+      group: "hero",
     }),
 
     // -------------------------------------------------------------------------
     // Services
     // -------------------------------------------------------------------------
     defineField({
-      name: "servicesSection",
-      title: "Services",
-      type: "object",
+      name: "servicesLabel",
+      title: "Section Label",
+      type: "localizedString",
       group: "services",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "items",
-          title: "Service Areas",
-          type: "array",
-          of: [defineArrayMember({ type: "homepageServiceItem" })],
-          validation: (Rule) => Rule.max(4),
-        }),
-      ],
+    }),
+    defineField({
+      name: "servicesHeadline",
+      title: "Headline",
+      type: "localizedString",
+      group: "services",
+    }),
+    defineField({
+      name: "servicesItems",
+      title: "Service Areas",
+      type: "array",
+      group: "services",
+      of: [defineArrayMember({ type: "homepageServiceItem" })],
+      validation: (Rule) => Rule.max(4),
     }),
 
     // -------------------------------------------------------------------------
     // Showreel
     // -------------------------------------------------------------------------
     defineField({
-      name: "showreelSection",
-      title: "Showreel",
-      type: "object",
+      name: "showreelMedia",
+      title: "Showreel Video",
+      type: "mediaField",
       group: "showreel",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "text",
-          title: "Text",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "cta",
-          title: "CTA (optional)",
-          type: "ctaField",
-        }),
-        defineField({
-          name: "media",
-          title: "Showreel Video",
-          type: "mediaField",
-          description: "Vimeo video with poster image.",
-        }),
-      ],
+      description: "Vimeo video with poster image.",
+    }),
+    defineField({
+      name: "showreelLabel",
+      title: "Section Label",
+      type: "localizedString",
+      group: "showreel",
+    }),
+    defineField({
+      name: "showreelHeadline",
+      title: "Headline",
+      type: "localizedString",
+      group: "showreel",
+    }),
+    defineField({
+      name: "showreelText",
+      title: "Text",
+      type: "localizedText",
+      group: "showreel",
+    }),
+    defineField({
+      name: "showreelCta",
+      title: "CTA (optional)",
+      type: "ctaField",
+      group: "showreel",
     }),
 
     // -------------------------------------------------------------------------
-    // Projects / Work
+    // Projects
     // -------------------------------------------------------------------------
     defineField({
-      name: "projectsSection",
-      title: "Ausgewählte Projekte",
-      type: "object",
+      name: "projectsLabel",
+      title: "Section Label",
+      type: "localizedString",
       group: "projects",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "intro",
-          title: "Intro Text (optional)",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "viewAllCta",
-          title: "View All CTA",
-          type: "ctaField",
-        }),
-        defineField({
-          name: "selectedProjects",
-          title: "Selected Projects",
-          type: "array",
-          of: [
-            defineArrayMember({
-              type: "reference",
-              to: [{ type: "project" }],
-            }),
-          ],
-          description:
-            "Pick featured projects from the Work library. Leave empty to show default placeholders.",
+    }),
+    defineField({
+      name: "projectsHeadline",
+      title: "Headline",
+      type: "localizedString",
+      group: "projects",
+    }),
+    defineField({
+      name: "projectsIntro",
+      title: "Intro Text (optional)",
+      type: "localizedText",
+      group: "projects",
+    }),
+    defineField({
+      name: "projectsViewAllCta",
+      title: "View All CTA",
+      type: "ctaField",
+      group: "projects",
+    }),
+    defineField({
+      name: "selectedProjects",
+      title: "Selected Projects",
+      type: "array",
+      group: "projects",
+      of: [
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "project" }],
         }),
       ],
+      description:
+        "Pick featured projects from the Work library. Leave empty to show default placeholders.",
     }),
 
     // -------------------------------------------------------------------------
     // Sichtbarkeit im Abo
     // -------------------------------------------------------------------------
     defineField({
-      name: "aboSection",
-      title: "Sichtbarkeit im Abo",
-      type: "object",
+      name: "aboMedia",
+      title: "Image or Video",
+      type: "mediaField",
       group: "abo",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-          description: "Short label shown above the headline.",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "text",
-          title: "Text",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "benefits",
-          title: "Benefits",
-          type: "array",
-          of: [defineArrayMember({ type: "homepageBenefitItem" })],
-        }),
-        defineField({
-          name: "cta",
-          title: "CTA",
-          type: "ctaField",
-        }),
-        defineField({
-          name: "media",
-          title: "Image or Video",
-          type: "mediaField",
-        }),
-      ],
+    }),
+    defineField({
+      name: "aboLabel",
+      title: "Section Label",
+      type: "localizedString",
+      group: "abo",
+      description: "Short label shown above the headline.",
+    }),
+    defineField({
+      name: "aboHeadline",
+      title: "Headline",
+      type: "localizedString",
+      group: "abo",
+    }),
+    defineField({
+      name: "aboText",
+      title: "Text",
+      type: "localizedText",
+      group: "abo",
+    }),
+    defineField({
+      name: "aboBenefits",
+      title: "Benefits",
+      type: "array",
+      group: "abo",
+      of: [defineArrayMember({ type: "homepageBenefitItem" })],
+    }),
+    defineField({
+      name: "aboCta",
+      title: "CTA",
+      type: "ctaField",
+      group: "abo",
     }),
 
     // -------------------------------------------------------------------------
-    // Studiojeker / About teaser
+    // Studiojeker / About
     // -------------------------------------------------------------------------
     defineField({
-      name: "aboutSection",
-      title: "Studiojeker",
-      type: "object",
+      name: "aboutMedia",
+      title: "Image or Video",
+      type: "mediaField",
       group: "about",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "subheadline",
-          title: "Subheadline (optional)",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "text",
-          title: "Text",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "cta",
-          title: "CTA",
-          type: "ctaField",
-        }),
-        defineField({
-          name: "media",
-          title: "Image or Video",
-          type: "mediaField",
-        }),
-      ],
+    }),
+    defineField({
+      name: "aboutLabel",
+      title: "Section Label",
+      type: "localizedString",
+      group: "about",
+    }),
+    defineField({
+      name: "aboutHeadline",
+      title: "Headline",
+      type: "localizedString",
+      group: "about",
+    }),
+    defineField({
+      name: "aboutSubheadline",
+      title: "Subheadline (optional)",
+      type: "localizedString",
+      group: "about",
+    }),
+    defineField({
+      name: "aboutText",
+      title: "Text",
+      type: "localizedText",
+      group: "about",
+    }),
+    defineField({
+      name: "aboutCta",
+      title: "CTA",
+      type: "ctaField",
+      group: "about",
     }),
 
     // -------------------------------------------------------------------------
-    // Client logos
+    // Clients
     // -------------------------------------------------------------------------
     defineField({
-      name: "clientsSection",
-      title: "Kundenlogos",
-      type: "object",
+      name: "clientsLabel",
+      title: "Section Label",
+      type: "localizedString",
       group: "clients",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "label",
-          title: "Section Label",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "logos",
-          title: "Client Logos",
-          type: "array",
-          of: [
-            defineArrayMember({
-              type: "reference",
-              to: [{ type: "client" }],
-            }),
-          ],
-          description:
-            "Select and order client logos. Manage logos under Clients / Logos.",
+    }),
+    defineField({
+      name: "clientsLogos",
+      title: "Client Logos",
+      type: "array",
+      group: "clients",
+      of: [
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "client" }],
         }),
       ],
+      description:
+        "Select and order client logos. Manage logos under Clients / Logos.",
     }),
 
     // -------------------------------------------------------------------------
     // Final CTA
     // -------------------------------------------------------------------------
     defineField({
-      name: "finalCtaSection",
-      title: "Abschluss CTA",
-      type: "object",
+      name: "finalCtaHeadline",
+      title: "Headline",
+      type: "localizedString",
       group: "finalCta",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "headline",
-          title: "Headline",
-          type: "localizedString",
-          description:
-            "Full headline. The accent word (e.g. Sichtbarkeit / visibility) is styled automatically.",
-        }),
-        defineField({
-          name: "text",
-          title: "Text (optional)",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "cta",
-          title: "Button",
-          type: "ctaField",
-        }),
-      ],
+      description:
+        "Full headline. The accent word (e.g. Sichtbarkeit / visibility) is styled automatically.",
+    }),
+    defineField({
+      name: "finalCtaText",
+      title: "Text (optional)",
+      type: "localizedText",
+      group: "finalCta",
+    }),
+    defineField({
+      name: "finalCtaButton",
+      title: "Button",
+      type: "ctaField",
+      group: "finalCta",
     }),
 
     // -------------------------------------------------------------------------
     // SEO
     // -------------------------------------------------------------------------
     defineField({
-      name: "seoSection",
-      title: "SEO",
-      type: "object",
+      name: "seoMetaTitle",
+      title: "SEO Title",
+      type: "localizedString",
       group: "seo",
-      options: { collapsible: true },
-      fields: [
-        defineField({
-          name: "title",
-          title: "SEO Title",
-          type: "localizedString",
-        }),
-        defineField({
-          name: "description",
-          title: "Meta Description",
-          type: "localizedText",
-        }),
-        defineField({
-          name: "ogImage",
-          title: "Open Graph / Social Sharing Image",
-          type: "image",
-          options: { hotspot: true },
-          description: "Recommended 1200 × 630 px.",
-        }),
-      ],
+    }),
+    defineField({
+      name: "seoMetaDescription",
+      title: "Meta Description",
+      type: "localizedText",
+      group: "seo",
+    }),
+    defineField({
+      name: "seoOgImage",
+      title: "Open Graph / Social Sharing Image",
+      type: "image",
+      group: "seo",
+      options: { hotspot: true },
+      description: "Recommended 1200 × 630 px.",
     }),
 
     // -------------------------------------------------------------------------
-    // Legacy fields — preserved for backward compatibility (existing DE content)
+    // Legacy — keep for backward compatibility; hide from day-to-day editing
     // -------------------------------------------------------------------------
     defineField({
       name: "heroHeadline",
       title: "Hero Headline (legacy DE)",
       type: "string",
       group: "legacy",
-      description:
-        "Preserved for compatibility. Prefer Hero → Headline (German) when editing.",
-      validation: (Rule) => Rule.max(120),
+      hidden: true,
     }),
     defineField({
       name: "introText",
@@ -384,9 +339,7 @@ export const homepage = defineType({
       type: "text",
       rows: 4,
       group: "legacy",
-      description:
-        "Preserved for compatibility. Prefer Hero → Subheadline / Intro when editing.",
-      validation: (Rule) => Rule.max(600),
+      hidden: true,
     }),
     defineField({
       name: "heroImage",
@@ -394,23 +347,21 @@ export const homepage = defineType({
       type: "image",
       group: "legacy",
       options: { hotspot: true },
-      description: "Preserved for compatibility. Prefer Hero → Hero Medium.",
+      hidden: true,
     }),
     defineField({
       name: "heroVideoUrl",
       title: "Hero Video URL (legacy)",
       type: "url",
       group: "legacy",
-      description: "Preserved for compatibility. Prefer Hero → Hero Medium.",
-      validation: (Rule) =>
-        Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+      hidden: true,
     }),
     defineField({
       name: "mainIntroHeadline",
       title: "About Headline (legacy DE)",
       type: "string",
       group: "legacy",
-      validation: (Rule) => Rule.max(160),
+      hidden: true,
     }),
     defineField({
       name: "mainIntroText",
@@ -418,14 +369,14 @@ export const homepage = defineType({
       type: "text",
       rows: 5,
       group: "legacy",
-      validation: (Rule) => Rule.max(1200),
+      hidden: true,
     }),
     defineField({
       name: "servicesSectionHeadline",
       title: "Services Headline (legacy DE)",
       type: "string",
       group: "legacy",
-      validation: (Rule) => Rule.max(120),
+      hidden: true,
     }),
     defineField({
       name: "servicesIntro",
@@ -433,14 +384,14 @@ export const homepage = defineType({
       type: "text",
       rows: 3,
       group: "legacy",
-      validation: (Rule) => Rule.max(600),
+      hidden: true,
     }),
     defineField({
       name: "workSectionHeadline",
       title: "Projects Headline (legacy DE)",
       type: "string",
       group: "legacy",
-      validation: (Rule) => Rule.max(120),
+      hidden: true,
     }),
     defineField({
       name: "workIntro",
@@ -448,14 +399,14 @@ export const homepage = defineType({
       type: "text",
       rows: 3,
       group: "legacy",
-      validation: (Rule) => Rule.max(600),
+      hidden: true,
     }),
     defineField({
       name: "ctaHeadline",
       title: "Final CTA Headline (legacy DE)",
       type: "string",
       group: "legacy",
-      validation: (Rule) => Rule.max(160),
+      hidden: true,
     }),
     defineField({
       name: "ctaText",
@@ -463,22 +414,174 @@ export const homepage = defineType({
       type: "text",
       rows: 3,
       group: "legacy",
-      validation: (Rule) => Rule.max(400),
+      hidden: true,
     }),
     defineField({
       name: "ctaLabel",
       title: "Final CTA Label (legacy DE)",
       type: "string",
       group: "legacy",
-      validation: (Rule) => Rule.max(60),
+      hidden: true,
     }),
-    ...seoFields.map((field) => ({ ...field, group: "legacy" as const })),
+    ...seoFields.map((field) => ({
+      ...field,
+      group: "legacy" as const,
+      hidden: true,
+    })),
+
+    // Nested section snapshots from the first migration (read fallback only)
+    defineField({
+      name: "heroSection",
+      title: "Hero (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "eyebrow", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "subheadline", type: "localizedString" }),
+        defineField({ name: "intro", type: "localizedText" }),
+        defineField({ name: "primaryCta", type: "ctaField" }),
+        defineField({ name: "media", type: "mediaField" }),
+      ],
+    }),
+    defineField({
+      name: "servicesSection",
+      title: "Services (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({
+          name: "items",
+          type: "array",
+          of: [defineArrayMember({ type: "homepageServiceItem" })],
+        }),
+      ],
+    }),
+    defineField({
+      name: "showreelSection",
+      title: "Showreel (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "text", type: "localizedText" }),
+        defineField({ name: "cta", type: "ctaField" }),
+        defineField({ name: "media", type: "mediaField" }),
+      ],
+    }),
+    defineField({
+      name: "projectsSection",
+      title: "Projects (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "intro", type: "localizedText" }),
+        defineField({ name: "viewAllCta", type: "ctaField" }),
+        defineField({
+          name: "selectedProjects",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "reference",
+              to: [{ type: "project" }],
+            }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "aboSection",
+      title: "Abo (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "text", type: "localizedText" }),
+        defineField({
+          name: "benefits",
+          type: "array",
+          of: [defineArrayMember({ type: "homepageBenefitItem" })],
+        }),
+        defineField({ name: "cta", type: "ctaField" }),
+        defineField({ name: "media", type: "mediaField" }),
+      ],
+    }),
+    defineField({
+      name: "aboutSection",
+      title: "About (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "subheadline", type: "localizedString" }),
+        defineField({ name: "text", type: "localizedText" }),
+        defineField({ name: "cta", type: "ctaField" }),
+        defineField({ name: "media", type: "mediaField" }),
+      ],
+    }),
+    defineField({
+      name: "clientsSection",
+      title: "Clients (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "label", type: "localizedString" }),
+        defineField({
+          name: "logos",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "reference",
+              to: [{ type: "client" }],
+            }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "finalCtaSection",
+      title: "Final CTA (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "headline", type: "localizedString" }),
+        defineField({ name: "text", type: "localizedText" }),
+        defineField({ name: "cta", type: "ctaField" }),
+      ],
+    }),
+    defineField({
+      name: "seoSection",
+      title: "SEO (nested legacy)",
+      type: "object",
+      group: "legacy",
+      hidden: true,
+      fields: [
+        defineField({ name: "title", type: "localizedString" }),
+        defineField({ name: "description", type: "localizedText" }),
+        defineField({ name: "ogImage", type: "image", options: { hotspot: true } }),
+      ],
+    }),
   ],
   preview: {
     select: {
-      title: "heroSection.headline.de",
+      title: "heroHeadlineLocalized.de",
       legacyTitle: "heroHeadline",
-      media: "heroSection.media.image",
+      media: "heroMedia.image",
       legacyMedia: "heroImage",
     },
     prepare({ title, legacyTitle, media, legacyMedia }) {
