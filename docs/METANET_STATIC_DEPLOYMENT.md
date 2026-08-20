@@ -67,6 +67,7 @@ out/.htaccess           →  httpdocs/.htaccess
 out/_next/...           →  httpdocs/_next/...
 out/images/...          →  httpdocs/images/...
 out/api/contact.php     →  httpdocs/api/contact.php
+out/api/homepage.php    →  httpdocs/api/homepage.php
 ```
 
 ---
@@ -84,10 +85,18 @@ out/api/contact.php     →  httpdocs/api/contact.php
 ### CMS content changes (Sanity)
 
 1. Edit Homepage in Sanity Studio → **Publish**.
-2. Sanity webhook fires `repository_dispatch` on this repo (see below).
-3. The **same** staging workflow builds the static export (Sanity fetched at build time)
-   and deploys to Metanet staging.
+2. **Seconds later (no redeploy):** the staging homepage client calls same-origin
+   `/api/homepage.php`, which reads the pinned Homepage singleton from Sanity’s
+   **live API** (`useCdn: false` equivalent — `*.api.sanity.io`, not `apicdn`).
+   Published hero/copy/media updates appear without waiting for GitHub Actions.
+3. **Minutes later (background):** Sanity webhook still fires `repository_dispatch`
+   so the static HTML export is rebuilt and redeployed (SEO/OG + first paint).
 4. No manual GitHub/Cursor deploy is required for a normal CMS edit.
+
+Why both paths exist: Metanet serves a **static export** (`output: "export"`).
+Next.js ISR / `revalidate` cannot run on Apache-only hosting. The PHP proxy is
+the Metanet-compatible path for near-instant CMS updates; the webhook keeps
+the baked HTML aligned.
 
 Manual fallback remains available via Actions → **Deploy staging (Metanet)** → Run workflow.
 
@@ -112,7 +121,7 @@ Does **not** run on pull requests or schedule. Does **not** deploy production.
 - Builds with Node.js **22 LTS** → `npm ci` → `npm run build`
 - Sets `NEXT_PUBLIC_SITE_URL=https://staging2026.studiojeker.ch`
 - Pins public Sanity identifiers for the build (`tgx6e6jg` / `production` / `2025-01-01`)
-- Fails if `out/` (or `out/index.html` / `out/api/contact.php`) is missing
+- Fails if `out/` (or `out/index.html` / `out/api/contact.php` / `out/api/homepage.php`) is missing
 - Uploads **only the contents of `out/`** to the staging FTP account via **lftp**
   (explicit FTPS on port 21, passive mode, `ssl:verify-certificate true`)
 - Includes hidden files from `out/`, especially **`out/.htaccess`** (verified before upload)
@@ -152,7 +161,7 @@ Never commit FTP credentials. Never reuse production FTP credentials here.
 3. Choose the branch to build from (usually `main`).
 4. Set `confirm_target` to `staging2026`.
 5. Run and wait for a green job.
-6. Smoke-test `https://staging2026.studiojeker.ch/` (including `/api/contact.php` GET → 405).
+6. Smoke-test `https://staging2026.studiojeker.ch/` (including `/api/contact.php` GET → 405 and `/api/homepage.php` GET → JSON `ok: true`).
 7. Confirm `.htaccess` is present at the staging FTP/document root (Plesk File Manager → show hidden files).
 
 ---
@@ -273,6 +282,7 @@ The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirro
 | Trailing slashes | Enabled (`trailingSlash: true`) → `about/index.html` |
 | Images | `images.unoptimized: true` (no Node image optimizer) |
 | Contact form | POST to same-origin `/api/contact.php` (PHP on Metanet); optional endpoint override via env |
+| Homepage CMS live refresh | GET same-origin `/api/homepage.php` (PHP → Sanity live API); client merges without redeploy |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
 
@@ -327,6 +337,7 @@ PHP endpoint for form delivery:
 | File | Role |
 |------|------|
 | `out/api/contact.php` | POST-only handler (validation, honeypot, mail) |
+| `out/api/homepage.php` | GET Homepage singleton from Sanity live API (`Cache-Control: no-store`) |
 | `out/api/contact.config.example.php` | Sample config — copy to `contact.config.php` on the host if you need overrides |
 | `out/api/.htaccess` | Blocks HTTP access to `contact.config*.php` |
 

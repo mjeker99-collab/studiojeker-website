@@ -82,11 +82,26 @@ export function resolveSanityMedia(
   fallback: HomepageMedia,
   options?: { width?: number; preferMobilePoster?: boolean },
 ): ResolvedMedia {
-  if (!field?.mediaType) {
+  if (!field) {
     return { media: fallback };
   }
 
-  if (field.mediaType === "video") {
+  // Incomplete CMS rows may omit mediaType while still carrying an image/video.
+  // Prefer the explicit type; otherwise infer so we do not fall back to local
+  // architecture placeholders when Studio media is present.
+  const mediaType: "image" | "video" | null =
+    field.mediaType ??
+    (field.vimeoUrl
+      ? "video"
+      : field.image?.asset?._ref || field.image?.url
+        ? "image"
+        : null);
+
+  if (!mediaType) {
+    return { media: fallback };
+  }
+
+  if (mediaType === "video") {
     const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
     const posterSource =
       options?.preferMobilePoster && field.mobilePoster
