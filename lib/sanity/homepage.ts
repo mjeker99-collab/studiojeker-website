@@ -2,6 +2,9 @@ import groq from "groq";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { getSanityClient } from "@/lib/sanity/client";
 
+/** Existing published Homepage singleton — do not fetch a duplicate. */
+export const HOMEPAGE_DOCUMENT_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
+
 /**
  * Published Homepage singleton projection.
  *
@@ -9,7 +12,8 @@ import { getSanityClient } from "@/lib/sanity/client";
  * Other page types (About, Services, Work, Team, Clients, Contact) are NOT
  * fetched here — this step wires the Homepage only.
  */
-export const homepageQuery = groq`*[_type == "homepage"][0]{
+export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
+  _id,
   heroHeadline,
   introText,
   heroVideoUrl,
@@ -45,6 +49,7 @@ export type SanityHomepageImage = {
 } | null;
 
 export type SanityHomepage = {
+  _id?: string | null;
   heroHeadline?: string | null;
   introText?: string | null;
   heroVideoUrl?: string | null;
@@ -76,8 +81,10 @@ export function heroImageSource(
  */
 export async function fetchSanityHomepage(): Promise<SanityHomepage | null> {
   try {
-    const client = getSanityClient();
-    const doc = await client.fetch<SanityHomepage | null>(homepageQuery);
+    const client = getSanityClient({ useCdn: false });
+    const doc = await client.fetch<SanityHomepage | null>(homepageQuery, {
+      id: HOMEPAGE_DOCUMENT_ID,
+    });
     return doc ?? null;
   } catch (error) {
     // Non-fatal: keep the build green and fall back to local content.

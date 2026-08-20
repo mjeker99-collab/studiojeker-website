@@ -4,6 +4,7 @@ import type { HomepageContent, HomepageMedia } from "@/types/homepage";
 import { getHomepageContent } from "@/lib/content/homepage";
 import { urlForImage } from "@/lib/sanity/image";
 import {
+  HOMEPAGE_DOCUMENT_ID,
   fetchSanityHomepage,
   heroImageSource,
   type SanityHomepage,
@@ -176,10 +177,18 @@ export function mergeSanityHomepage(
   if (mainIntroText) merged.about.body = [mainIntroText];
 
   const servicesSectionHeadline = clean(doc.servicesSectionHeadline);
-  if (servicesSectionHeadline) merged.services.headline = servicesSectionHeadline;
+  if (servicesSectionHeadline) {
+    // ServicesSection shows `label`; `headline` is the visually-hidden h2.
+    merged.services.label = servicesSectionHeadline;
+    merged.services.headline = servicesSectionHeadline;
+  }
 
   const workSectionHeadline = clean(doc.workSectionHeadline);
-  if (workSectionHeadline) merged.projects.headline = workSectionHeadline;
+  if (workSectionHeadline) {
+    // ProjectsSection shows `label`; `headline` is the visually-hidden h2.
+    merged.projects.label = workSectionHeadline;
+    merged.projects.headline = workSectionHeadline;
+  }
 
   const ctaHeadline = clean(doc.ctaHeadline);
   if (ctaHeadline) {
@@ -220,9 +229,15 @@ export const getResolvedHomepageContent = cache(
 
     const doc = await fetchSanityHomepage();
     if (!doc) {
+      console.warn(
+        "[sanity] German Homepage: published document missing — using local content.",
+      );
       return base;
     }
 
+    console.info(
+      `[sanity] German Homepage sourced from published document ${doc._id ?? HOMEPAGE_DOCUMENT_ID}.`,
+    );
     return mergeSanityHomepage(base, doc);
   },
 );
