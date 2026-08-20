@@ -70,14 +70,13 @@ $query = <<<GROQ
   servicesSection{
     label{$localized},
     headline{$localized},
-    items[]{
-      serviceId,
-      title{$localized},
-      description{$localized},
-      href,
-      ctaLabel{$localized},
-      media{$mediaProjection},
-      sortOrder
+    "items": items[]->{
+      _id,
+      displayTitle,
+      slug,
+      sortOrder,
+      homepageTitle{$localized},
+      homepageDescription{$localized}
     }
   },
   showreelSection{
@@ -100,7 +99,7 @@ $query = <<<GROQ
       featured,
       sortOrder,
       mainImage{$imageProjection},
-      "category": category->{ title }
+      "category": category->{ "title": coalesce(displayTitle, title) }
     }
   },
   aboSection{

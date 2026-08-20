@@ -32,6 +32,13 @@ export type SanityCta = {
 } | null;
 
 export type SanityHomepageServiceItem = {
+  /** Present when items are Service document references. */
+  _id?: string;
+  displayTitle?: string | null;
+  slug?: { current?: string | null } | null;
+  homepageTitle?: SanityLocalizedString;
+  homepageDescription?: SanityLocalizedText;
+  /** Legacy embedded card fields (pre-reference migration). */
   serviceId?: "architecture" | "product" | "business" | "digital" | null;
   title?: SanityLocalizedString;
   description?: SanityLocalizedText;
@@ -88,14 +95,13 @@ export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
   servicesSection{
     label${localizedStringProjection},
     headline${localizedStringProjection},
-    items[]{
-      serviceId,
-      title${localizedStringProjection},
-      description${localizedTextProjection},
-      href,
-      ctaLabel${localizedStringProjection},
-      media${sanityMediaProjection},
-      sortOrder
+    "items": items[]->{
+      _id,
+      displayTitle,
+      slug,
+      sortOrder,
+      homepageTitle${localizedStringProjection},
+      homepageDescription${localizedTextProjection}
     }
   },
   showreelSection{
@@ -118,7 +124,7 @@ export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
       featured,
       sortOrder,
       mainImage${sanityImageProjection},
-      "category": category->{ title }
+      "category": category->{ "title": coalesce(displayTitle, title) }
     }
   },
   aboSection{

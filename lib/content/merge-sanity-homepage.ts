@@ -170,23 +170,36 @@ function mergeServices(
 
   const baseById = new Map(base.items.map((item) => [item.id, item]));
 
-  merged.items = sortByOrder(items)
+  const resolved = items
     .map((item) => mergeServiceItem(item, locale, baseById))
     .filter((item): item is HomepageService => Boolean(item));
 
-  if (merged.items.length === 0) {
-    merged.items = base.items;
+  if (resolved.length > 0) {
+    merged.items = resolved;
   }
 
   return merged;
 }
+
+const SERVICE_SLUG_TO_ID: Record<
+  string,
+  HomepageService["id"]
+> = {
+  "digital-marketing": "digital",
+  "business-communication": "business",
+  "product-communication": "product",
+  architecture: "architecture",
+};
 
 function mergeServiceItem(
   item: SanityHomepageServiceItem,
   locale: Locale,
   baseById: Map<string, HomepageService>,
 ): HomepageService | null {
-  const serviceId = item.serviceId;
+  const slug = clean(item.slug?.current ?? undefined);
+  const serviceIdFromSlug = slug ? SERVICE_SLUG_TO_ID[slug] : undefined;
+  const serviceId = item.serviceId ?? serviceIdFromSlug;
+
   if (!serviceId) {
     return null;
   }
@@ -196,14 +209,26 @@ function mergeServiceItem(
     return null;
   }
 
-  const title = pickLocalized(item.title, locale);
-  const description = pickLocalized(item.description, locale);
+  const title =
+    pickLocalized(item.homepageTitle, locale) ??
+    pickLocalized(item.title, locale) ??
+    clean(item.displayTitle ?? undefined) ??
+    fallback.title;
+
+  const description =
+    pickLocalized(item.homepageDescription, locale) ??
+    pickLocalized(item.description, locale) ??
+    fallback.description;
+
+  const hrefFromSlug = slug
+    ? localizePathname(`/services/${slug}`, locale)
+    : fallback.href;
 
   return {
     id: serviceId,
-    title: title ?? fallback.title,
-    description: description ?? fallback.description,
-    href: resolveHref(item.href, locale, fallback.href),
+    title,
+    description,
+    href: resolveHref(item.href, locale, hrefFromSlug),
   };
 }
 
@@ -306,15 +331,15 @@ function mergeProjectItem(
   };
 
   const image = resolveSanityImage(project.mainImage, fallbackImage, 1200);
-  const slug = clean(project.slug?.current ?? undefined);
-  const href = slug
-    ? localizePathname(`/work/${slug}`, locale)
-    : workHref;
+  // V1 has Work overview only (no /work/[slug] routes). Featured cards link there.
+  const href = workHref;
+  // Avoid duplicating the same string as title + category line.
+  const displayCategory = category && category !== title ? category : "";
 
   return {
     id: project._id ?? title,
     title,
-    category,
+    category: displayCategory,
     href,
     image,
     isPlaceholder: false,
@@ -490,9 +515,7 @@ export function mergeSanityHomepage(
     : resolveLegacyHeroMedia(base.hero.media, doc.heroImage, doc.heroVideoUrl);
 
   merged.hero.media = resolvedHeroMedia.media;
-  if (resolvedHeroMedia.videoId) {
-    merged.hero.videoId = resolvedHeroMedia.videoId;
-  }
+  merged.hero.videoId = resolvedHeroMedia.videoId;
 
   merged.services = mergeServices(
     base.services,
@@ -525,9 +548,7 @@ export function mergeSanityHomepage(
       doc.showreelSection.media,
     );
     merged.showreel.media = showreelMedia.media;
-    if (showreelMedia.videoId) {
-      merged.showreel.videoId = showreelMedia.videoId;
-    }
+    merged.showreel.videoId = showreelMedia.videoId;
   }
 
   merged.projects = mergeProjects(
@@ -563,7 +584,7 @@ export function mergeSanityHomepage(
   if (doc.aboSection?.media) {
     const aboMedia = applyMediaSection(base.abo.media, doc.aboSection.media, 1200);
     merged.abo.media = aboMedia.media;
-    if (aboMedia.videoId) merged.abo.videoId = aboMedia.videoId;
+    merged.abo.videoId = aboMedia.videoId;
   }
 
   const aboutLabel = pickLocalized(doc.aboutSection?.label, locale);
@@ -604,7 +625,7 @@ export function mergeSanityHomepage(
   if (doc.aboutSection?.media) {
     const aboutMedia = applyMediaSection(base.about.media, doc.aboutSection.media);
     merged.about.media = aboutMedia.media;
-    if (aboutMedia.videoId) merged.about.videoId = aboutMedia.videoId;
+    merged.about.videoId = aboutMedia.videoId;
   }
 
   const clientsLabel = pickLocalized(doc.clientsSection?.label, locale);

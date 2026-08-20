@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
@@ -44,12 +45,24 @@ export function ShowreelSection({ content }: ShowreelSectionProps) {
 
         <Reveal className={styles.mediaWrap} delayMs={100}>
           <CyanBar />
-          <VimeoShowreel
-            className={styles.mediaButton}
-            videoId={content.videoId}
-            title={`${content.media.alt} – Showreel`}
-            poster={poster}
-          />
+          {content.videoId ? (
+            <VimeoShowreel
+              className={styles.mediaButton}
+              videoId={content.videoId}
+              title={`${content.media.alt} – Showreel`}
+              poster={poster}
+            />
+          ) : (
+            <div className={styles.mediaButton}>
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className={styles.image}
+              />
+            </div>
+          )}
         </Reveal>
       </div>
     </section>
