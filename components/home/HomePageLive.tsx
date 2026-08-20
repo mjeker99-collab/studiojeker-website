@@ -33,11 +33,8 @@ type HomepageProxyResponse = {
  * Homepage changes appear within seconds without a redeploy.
  */
 export function HomePageLive({ locale, content }: HomePageLiveProps) {
-  const [resolved, setResolved] = useState(content);
-
-  useEffect(() => {
-    setResolved(content);
-  }, [content]);
+  const [live, setLive] = useState<HomepageContent | null>(null);
+  const resolved = live ?? content;
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +55,7 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
           payload.document,
           locale,
         );
-        setResolved(next);
+        setLive(next);
       } catch {
         // Keep build-time content when the proxy is unavailable.
       }

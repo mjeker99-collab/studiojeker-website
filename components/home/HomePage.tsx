@@ -16,5 +16,7 @@ type HomePageProps = {
 export function HomePage({ locale, content }: HomePageProps) {
   const resolvedContent = content ?? getHomepageContent(locale);
 
-  return <HomePageLive locale={locale} content={resolvedContent} />;
+  return (
+    <HomePageLive key={locale} locale={locale} content={resolvedContent} />
+  );
 }
