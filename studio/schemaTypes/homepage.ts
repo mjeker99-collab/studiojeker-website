@@ -2,11 +2,99 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 import { seoFields } from "./shared";
 
 /**
+ * Temporary root-level flat fields from post–PR #41 Studio experiments.
+ * Production still stores these alongside nested sections. Hidden + read-only
+ * so editors only use the nested canonical model, while Studio stops reporting
+ * “Unknown fields found”. Do not delete from the dataset until a separate
+ * migration is approved.
+ */
+function deprecatedFlatField(
+  name: string,
+  type: string,
+  options?: {
+    of?: ReturnType<typeof defineArrayMember>[];
+    description?: string;
+  },
+) {
+  return defineField({
+    name,
+    title: `[Deprecated · internal] ${name}`,
+    type,
+    ...(options?.of ? { of: options.of } : {}),
+    hidden: true,
+    readOnly: true,
+    description:
+      options?.description ??
+      "Internal compatibility field from a temporary flat schema experiment. Nested section fields are canonical. Do not edit.",
+  });
+}
+
+/** Flat experimental fields present on the production homepage document. */
+const deprecatedFlatCompatFields = [
+  deprecatedFlatField("heroMedia", "mediaField"),
+  deprecatedFlatField("heroHeadlineLocalized", "localizedString"),
+  deprecatedFlatField("heroSubheadline", "localizedString"),
+  deprecatedFlatField("heroIntro", "localizedText"),
+  deprecatedFlatField("heroPrimaryCta", "ctaField"),
+  deprecatedFlatField("servicesLabel", "localizedString"),
+  deprecatedFlatField("servicesHeadline", "localizedString"),
+  deprecatedFlatField("servicesItems", "array", {
+    of: [defineArrayMember({ type: "homepageServiceItem" })],
+  }),
+  deprecatedFlatField("showreelMedia", "mediaField"),
+  deprecatedFlatField("showreelLabel", "localizedString"),
+  deprecatedFlatField("showreelHeadline", "localizedString"),
+  deprecatedFlatField("showreelText", "localizedText"),
+  deprecatedFlatField("showreelCta", "ctaField"),
+  deprecatedFlatField("projectsLabel", "localizedString"),
+  deprecatedFlatField("projectsHeadline", "localizedString"),
+  deprecatedFlatField("projectsViewAllCta", "ctaField"),
+  // Root-level duplicate of projectsSection.selectedProjects
+  deprecatedFlatField("selectedProjects", "array", {
+    of: [
+      defineArrayMember({
+        type: "reference",
+        to: [{ type: "project" }],
+      }),
+    ],
+  }),
+  deprecatedFlatField("aboMedia", "mediaField"),
+  deprecatedFlatField("aboLabel", "localizedString"),
+  deprecatedFlatField("aboHeadline", "localizedString"),
+  deprecatedFlatField("aboText", "localizedText"),
+  deprecatedFlatField("aboBenefits", "array", {
+    of: [defineArrayMember({ type: "homepageBenefitItem" })],
+  }),
+  deprecatedFlatField("aboCta", "ctaField"),
+  deprecatedFlatField("aboutMedia", "mediaField"),
+  deprecatedFlatField("aboutLabel", "localizedString"),
+  deprecatedFlatField("aboutHeadline", "localizedString"),
+  deprecatedFlatField("aboutSubheadline", "localizedString"),
+  deprecatedFlatField("aboutText", "localizedText"),
+  deprecatedFlatField("aboutCta", "ctaField"),
+  deprecatedFlatField("clientsLabel", "localizedString"),
+  deprecatedFlatField("clientsLogos", "array", {
+    of: [
+      defineArrayMember({
+        type: "reference",
+        to: [{ type: "client" }],
+      }),
+    ],
+  }),
+  deprecatedFlatField("finalCtaHeadline", "localizedString"),
+  deprecatedFlatField("finalCtaText", "localizedText"),
+  deprecatedFlatField("finalCtaButton", "ctaField"),
+  deprecatedFlatField("seoMetaTitle", "localizedString"),
+  deprecatedFlatField("seoMetaDescription", "localizedText"),
+];
+
+/**
  * Homepage — singleton editorial content for the marketing homepage.
  *
+ * Canonical model: nested section fields (heroSection, …).
  * Legacy root fields (heroHeadline, introText, heroImage, etc.) are preserved
- * for backward compatibility with the existing published document. New nested
- * section fields take precedence when populated.
+ * for backward compatibility. Flat experimental root fields are hidden
+ * compatibility stubs only — do not present them as the editor UI.
  */
 export const homepage = defineType({
   name: "homepage",
@@ -473,19 +561,22 @@ export const homepage = defineType({
       validation: (Rule) => Rule.max(60),
     }),
     ...seoFields.map((field) => ({ ...field, group: "legacy" as const })),
+
+    // Hidden flat experimental fields — last so nested + legacy stay primary
+    ...deprecatedFlatCompatFields,
   ],
   preview: {
     select: {
       title: "heroSection.headline.de",
+      titleEn: "heroSection.headline.en",
       legacyTitle: "heroHeadline",
-      media: "heroSection.media.image",
-      legacyMedia: "heroImage",
     },
-    prepare({ title, legacyTitle, media, legacyMedia }) {
+    // Text-only list preview — never dereference nested media assets here.
+    // Selecting heroSection.media.image previously contributed to Studio “Load failed”.
+    prepare({ title, titleEn, legacyTitle }) {
       return {
-        title: title || legacyTitle || "Homepage",
-        subtitle: "Singleton page content",
-        media: media || legacyMedia,
+        title: "Homepage",
+        subtitle: title || titleEn || legacyTitle || "Studiojeker homepage",
       };
     },
   },
