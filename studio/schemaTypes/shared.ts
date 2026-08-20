@@ -89,6 +89,23 @@ export const localizedText = defineType({
   ],
 });
 
+/** Accept empty values, internal paths (/…), or absolute http(s) URLs. */
+function validateOptionalLink(value: unknown): true | string {
+  if (value === undefined || value === null || value === "") {
+    return true;
+  }
+  if (typeof value !== "string") {
+    return "Use an internal path (/…) or an http(s) URL";
+  }
+  if (value.startsWith("/")) {
+    return true;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    return true;
+  }
+  return "Use an internal path (/…) or an http(s) URL";
+}
+
 /** Bilingual CTA button label + shared link target. */
 export const ctaField = defineType({
   name: "ctaField",
@@ -106,14 +123,8 @@ export const ctaField = defineType({
       title: "Link",
       type: "string",
       description:
-        "Internal path without locale prefix (e.g. /contact, /work). The website localizes automatically.",
-      validation: (Rule) =>
-        Rule.custom((value) => {
-          if (!value) return true;
-          return value.startsWith("/")
-            ? true
-            : "Use an internal path starting with /";
-        }),
+        "Internal path without locale prefix (e.g. /contact, /work) or absolute http(s) URL.",
+      validation: (Rule) => Rule.custom((value) => validateOptionalLink(value)),
     }),
   ],
 });
@@ -121,6 +132,7 @@ export const ctaField = defineType({
 /**
  * Reusable image or Vimeo video block.
  * Layout and presentation remain controlled by the website.
+ * Studio preview is text-only to avoid asset Load failed errors.
  */
 export const mediaField = defineType({
   name: "mediaField",
@@ -145,7 +157,8 @@ export const mediaField = defineType({
       title: "Image",
       type: "image",
       options: { hotspot: true },
-      hidden: ({ parent }) => parent?.mediaType !== "image",
+      // Default to image when mediaType is unset — keeps the upload visible.
+      hidden: ({ parent }) => (parent?.mediaType || "image") === "video",
       fields: [
         defineField({
           name: "alt",
@@ -159,8 +172,8 @@ export const mediaField = defineType({
       name: "vimeoUrl",
       title: "Vimeo URL or ID",
       type: "string",
-      description: "Full Vimeo URL or numeric video ID.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      description: "Full Vimeo URL or numeric video ID. No external fetch in Studio.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
     defineField({
       name: "poster",
@@ -168,7 +181,7 @@ export const mediaField = defineType({
       type: "image",
       options: { hotspot: true },
       description: "Shown before the video plays.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
       fields: [
         defineField({
           name: "alt",
@@ -183,9 +196,26 @@ export const mediaField = defineType({
       type: "image",
       options: { hotspot: true },
       description: "Optional alternative poster for smaller screens.",
-      hidden: ({ parent }) => parent?.mediaType !== "video",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
   ],
+  preview: {
+    select: {
+      mediaType: "mediaType",
+      vimeoUrl: "vimeoUrl",
+    },
+    prepare({ mediaType, vimeoUrl }) {
+      const isVideo = (mediaType || "image") === "video";
+      return {
+        title: isVideo ? "Video (Vimeo)" : "Image",
+        subtitle: isVideo
+          ? typeof vimeoUrl === "string" && vimeoUrl
+            ? vimeoUrl
+            : "Add a Vimeo URL or ID"
+          : "Edit image fields below",
+      };
+    },
+  },
 });
 
 /** Benefit item for the Sichtbarkeit im Abo section. */
@@ -273,14 +303,8 @@ export const homepageServiceItem = defineType({
       name: "href",
       title: "Link",
       type: "string",
-      description: "Internal path without locale prefix (e.g. /services/digital-marketing).",
-      validation: (Rule) =>
-        Rule.custom((value) => {
-          if (!value) return true;
-          return value.startsWith("/")
-            ? true
-            : "Use an internal path starting with /";
-        }),
+      description: "Internal path without locale prefix (e.g. /services/digital-marketing) or http(s) URL.",
+      validation: (Rule) => Rule.custom((value) => validateOptionalLink(value)),
     }),
     defineField({
       name: "ctaLabel",
