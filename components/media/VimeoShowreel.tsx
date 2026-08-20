@@ -14,6 +14,8 @@ type VimeoShowreelProps = {
     height: number;
   };
   className?: string;
+  /** Fill the parent container instead of using a fixed aspect ratio. */
+  fill?: boolean;
 };
 
 /**
@@ -25,6 +27,7 @@ export function VimeoShowreel({
   title,
   poster,
   className,
+  fill = false,
 }: VimeoShowreelProps) {
   const [shouldLoad, setShouldLoad] = useState(false);
 
@@ -36,7 +39,11 @@ export function VimeoShowreel({
   const playLabel = `Play: ${title}`;
 
   return (
-    <div className={[styles.shell, className].filter(Boolean).join(" ")}>
+    <div
+      className={[styles.shell, fill ? styles.fill : "", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {!shouldLoad ? (
         <button
           type="button"

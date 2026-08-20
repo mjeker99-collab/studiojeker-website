@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import styles from "./AboutSection.module.css";
 
 type AboutSectionProps = {
@@ -60,13 +61,28 @@ export function AboutSection({ content, compact = false }: AboutSectionProps) {
         <Reveal className={styles.mediaWrap} delayMs={100}>
           <div className={styles.media}>
             <CyanBar boundToMedia />
-            <Image
-              src={mediaPath(content.media.src)}
-              alt={content.media.alt}
-              fill
-              sizes="(max-width: 1024px) 100vw, 64vw"
-              className={styles.image}
-            />
+            {content.videoId ? (
+              <VimeoShowreel
+                fill
+                className={styles.image}
+                videoId={content.videoId}
+                title={content.media.alt}
+                poster={{
+                  src: mediaPath(content.media.src),
+                  alt: content.media.alt,
+                  width: content.media.width,
+                  height: content.media.height,
+                }}
+              />
+            ) : (
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                sizes="(max-width: 1024px) 100vw, 64vw"
+                className={styles.image}
+              />
+            )}
           </div>
         </Reveal>
       </div>

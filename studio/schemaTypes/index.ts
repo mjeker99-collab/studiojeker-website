@@ -6,13 +6,26 @@ import { homepage } from "./homepage";
 import { project } from "./project";
 import { service } from "./service";
 import { teamMember } from "./teamMember";
+import {
+  ctaField,
+  homepageBenefitItem,
+  homepageServiceItem,
+  localizedString,
+  localizedText,
+  mediaField,
+} from "./shared";
 
 /**
  * Studiojeker editorial schema registry.
- * Homepage and About are wired to Next.js at build time.
- * Other types are editorial structure only until explicitly connected.
+ * Homepage is wired to Next.js at build time for DE and EN.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
+  localizedString,
+  localizedText,
+  mediaField,
+  ctaField,
+  homepageBenefitItem,
+  homepageServiceItem,
   homepage,
   about,
   service,

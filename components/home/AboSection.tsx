@@ -5,6 +5,7 @@ import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import styles from "./AboSection.module.css";
 
 type AboSectionProps = {
@@ -77,13 +78,28 @@ export function AboSection({ content }: AboSectionProps) {
           </div>
 
           <div className={styles.media}>
-            <Image
-              src={mediaPath(content.media.src)}
-              alt={content.media.alt}
-              fill
-              sizes="(max-width: 1280px) 100vw, 30vw"
-              className={styles.image}
-            />
+            {content.videoId ? (
+              <VimeoShowreel
+                fill
+                className={styles.image}
+                videoId={content.videoId}
+                title={content.media.alt}
+                poster={{
+                  src: mediaPath(content.media.src),
+                  alt: content.media.alt,
+                  width: content.media.width,
+                  height: content.media.height,
+                }}
+              />
+            ) : (
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                sizes="(max-width: 1280px) 100vw, 30vw"
+                className={styles.image}
+              />
+            )}
           </div>
         </div>
       </Reveal>

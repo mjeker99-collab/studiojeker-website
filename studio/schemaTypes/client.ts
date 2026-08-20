@@ -22,6 +22,14 @@ export const client = defineType({
       options: { hotspot: true },
       description: "Prefer SVG or transparent PNG for logo strips.",
       validation: (Rule) => Rule.required(),
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Describe the logo for accessibility.",
+        }),
+      ],
     }),
     defineField({
       name: "websiteUrl",

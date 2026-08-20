@@ -7,6 +7,14 @@
   background: var(--color-dark);
 }
 
+.fill {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  min-height: 0;
+  height: 100%;
+}
+
 .button {
   position: absolute;
   inset: 0;

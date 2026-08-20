@@ -3,6 +3,7 @@ import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import styles from "./HeroSection.module.css";
 
 type HeroSectionProps = {
@@ -41,14 +42,29 @@ export function HeroSection({ content }: HeroSectionProps) {
           <div className={styles.media}>
             <div className={styles.cyanBar} aria-hidden="true" />
             <div className={styles.photo}>
-              <Image
-                src={mediaPath(content.media.src)}
-                alt={content.media.alt}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 64vw"
-                className={styles.image}
-              />
+              {content.videoId ? (
+                <VimeoShowreel
+                  fill
+                  className={styles.image}
+                  videoId={content.videoId}
+                  title={content.media.alt}
+                  poster={{
+                    src: mediaPath(content.media.src),
+                    alt: content.media.alt,
+                    width: content.media.width,
+                    height: content.media.height,
+                  }}
+                />
+              ) : (
+                <Image
+                  src={mediaPath(content.media.src)}
+                  alt={content.media.alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={styles.image}
+                />
+              )}
             </div>
           </div>
         </Reveal>
