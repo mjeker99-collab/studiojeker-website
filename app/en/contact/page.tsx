@@ -1,24 +1,35 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import { ContactPage } from "@/components/contact/ContactPage";
-import { getContactPageContent } from "@/lib/content/contact";
+import { ContactPageLive } from "@/components/contact/ContactPageLive";
+import { getResolvedContactContent } from "@/lib/content/contact-sanity";
 import { getHomepageContent } from "@/lib/content/homepage";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-const content = getContactPageContent("en");
-const clientsLabel = getHomepageContent("en").clients.label;
+export async function generateMetadata(): Promise<Metadata> {
+  const clientsLabel = getHomepageContent("en").clients.label;
+  const content = await getResolvedContactContent("en", clientsLabel);
 
-export const metadata: Metadata = buildPageMetadata({
-  locale: "en",
-  pathname: "/contact",
-  title: content.seo.title,
-  description: content.seo.description,
-});
+  return buildPageMetadata({
+    locale: "en",
+    pathname: "/contact",
+    title: content.seo.title,
+    description: content.seo.description,
+    ogImagePath: content.seo.ogImagePath,
+  });
+}
 
-export default function EnglishContactPage() {
+export default async function EnglishContactPage() {
+  const clientsLabel = getHomepageContent("en").clients.label;
+  const content = await getResolvedContactContent("en", clientsLabel);
+
   return (
     <SiteChrome locale="en">
-      <ContactPage content={content} clientsLabel={clientsLabel} locale="en" />
+      <ContactPageLive
+        key="en"
+        locale="en"
+        content={content}
+        clientsLabel={clientsLabel}
+      />
     </SiteChrome>
   );
 }

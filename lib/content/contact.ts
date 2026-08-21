@@ -22,7 +22,7 @@ export const studiojekerContact = {
 } as const;
 
 export type ContactPageContent = {
-  seo: { title: string; description: string };
+  seo: { title: string; description: string; ogImagePath?: string };
   label: string;
   headlineBefore: string;
   headlineAccent: string;
