@@ -3,7 +3,7 @@ import type { StructureBuilder, StructureResolver } from "sanity/structure";
 /**
  * Homepage singleton uses the existing published test document ID so Studio
  * opens the live content instead of an empty stub.
- * About and Global Settings use stable semantic IDs.
+ * About, Contact and Global Settings use stable semantic IDs.
  */
 const HOMEPAGE_DOCUMENT_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
 
@@ -17,6 +17,11 @@ const SINGLETON_DOCS = {
     type: "about",
     title: "About",
     id: "about",
+  },
+  contact: {
+    type: "contact",
+    title: "Contact",
+    id: "contact",
   },
   globalSettings: {
     type: "globalSettings",
@@ -42,7 +47,7 @@ function singletonListItem(
 
 /**
  * Editorial desk order (non-technical editors):
- * Homepage → About → Services → Work → Team → Clients → Global Settings
+ * Homepage → About → Contact → Services → Work → Team → Clients → Global Settings
  */
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -50,6 +55,7 @@ export const structure: StructureResolver = (S) =>
     .items([
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
+      singletonListItem(S, SINGLETON_DOCS.contact),
       S.documentTypeListItem("service").title("Services"),
       S.documentTypeListItem("project").title("Work / Projects"),
       S.documentTypeListItem("teamMember").title("Team"),

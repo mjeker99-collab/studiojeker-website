@@ -1,6 +1,7 @@
 import type { SchemaTypeDefinition } from "sanity";
 import { about } from "./about";
 import { client } from "./client";
+import { contact } from "./contact";
 import { globalSettings } from "./globalSettings";
 import { homepage } from "./homepage";
 import { project } from "./project";
@@ -17,7 +18,7 @@ import {
 
 /**
  * Studiojeker editorial schema registry.
- * Homepage is wired to Next.js at build time for DE and EN.
+ * Homepage and Contact are wired to Next.js for DE and EN.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   localizedString,
@@ -28,6 +29,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   homepageServiceItem,
   homepage,
   about,
+  contact,
   service,
   project,
   teamMember,

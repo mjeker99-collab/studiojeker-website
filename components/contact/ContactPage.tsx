@@ -1,25 +1,24 @@
 import Image from "next/image";
 import type { Locale } from "@/types/i18n";
-import type { ContactPageContent } from "@/lib/content/contact";
+import type { ResolvedContactPageContent } from "@/lib/content/merge-sanity-contact";
 import { studiojekerContact } from "@/lib/content/contact";
 import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
-import { getClientLogos } from "@/lib/content/clients";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import styles from "./ContactPage.module.css";
 
 type ContactPageProps = {
-  content: ContactPageContent;
-  clientsLabel: string;
+  content: ResolvedContactPageContent;
   locale: Locale;
 };
 
-export function ContactPage({ content, clientsLabel, locale }: ContactPageProps) {
+export function ContactPage({ content, locale }: ContactPageProps) {
   const formHref = `#${content.form.id}`;
   const addressLines = [
     studiojekerContact.company,
@@ -51,16 +50,30 @@ export function ContactPage({ content, clientsLabel, locale }: ContactPageProps)
           <Reveal className={styles.mediaWrap} delayMs={80}>
             <CyanBar />
             <div className={styles.media}>
-              <Image
-                src={mediaPath(
-                  "/images/Social marketing/Social marketing/PHOTO-2023-05-11-15-00-27.jpg",
-                )}
-                alt="Studiojeker"
-                fill
-                sizes="(max-width: 1024px) 100vw, 64vw"
-                className={styles.image}
-                priority
-              />
+              {content.heroVideoId ? (
+                <VimeoShowreel
+                  fill
+                  className={styles.image}
+                  videoId={content.heroVideoId}
+                  title={content.heroMedia.alt}
+                  poster={{
+                    src: mediaPath(content.heroMedia.src),
+                    alt: content.heroMedia.alt,
+                    width: content.heroMedia.width,
+                    height: content.heroMedia.height,
+                  }}
+                />
+              ) : (
+                <Image
+                  key={content.heroMedia.src}
+                  src={mediaPath(content.heroMedia.src)}
+                  alt={content.heroMedia.alt}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={styles.image}
+                  priority
+                />
+              )}
             </div>
           </Reveal>
         </div>
@@ -150,9 +163,7 @@ export function ContactPage({ content, clientsLabel, locale }: ContactPageProps)
         </Container>
       </section>
 
-      <ClientsSection
-        content={{ label: clientsLabel, logos: getClientLogos() }}
-      />
+      <ClientsSection content={content.clients} />
 
       <section
         className={styles.finalCta}

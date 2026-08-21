@@ -68,6 +68,7 @@ out/_next/...           →  httpdocs/_next/...
 out/images/...          →  httpdocs/images/...
 out/api/contact.php     →  httpdocs/api/contact.php
 out/api/homepage.php    →  httpdocs/api/homepage.php
+out/api/contact-page.php →  httpdocs/api/contact-page.php
 ```
 
 ---
@@ -121,7 +122,7 @@ Does **not** run on pull requests or schedule. Does **not** deploy production.
 - Builds with Node.js **22 LTS** → `npm ci` → `npm run build`
 - Sets `NEXT_PUBLIC_SITE_URL=https://staging2026.studiojeker.ch`
 - Pins public Sanity identifiers for the build (`tgx6e6jg` / `production` / `2025-01-01`)
-- Fails if `out/` (or `out/index.html` / `out/api/contact.php` / `out/api/homepage.php`) is missing
+- Fails if `out/` (or `out/index.html` / `out/api/contact.php` / `out/api/homepage.php` / `out/api/contact-page.php`) is missing
 - Uploads **only the contents of `out/`** to the staging FTP account via **lftp**
   (explicit FTPS on port 21, passive mode, `ssl:verify-certificate true`)
 - Includes hidden files from `out/`, especially **`out/.htaccess`** (verified before upload)
@@ -283,6 +284,7 @@ The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirro
 | Images | `images.unoptimized: true` (no Node image optimizer) |
 | Contact form | POST to same-origin `/api/contact.php` (PHP on Metanet); optional endpoint override via env |
 | Homepage CMS live refresh | GET same-origin `/api/homepage.php` (PHP → Sanity live API); client merges without redeploy |
+| Contact CMS live refresh | GET same-origin `/api/contact-page.php` (PHP → Sanity live API); separate from form `contact.php` |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
 
@@ -338,6 +340,7 @@ PHP endpoint for form delivery:
 |------|------|
 | `out/api/contact.php` | POST-only handler (validation, honeypot, mail) |
 | `out/api/homepage.php` | GET Homepage singleton from Sanity live API (`Cache-Control: no-store`) |
+| `out/api/contact-page.php` | GET Contact singleton from Sanity live API (`Cache-Control: no-store`) |
 | `out/api/contact.config.example.php` | Sample config — copy to `contact.config.php` on the host if you need overrides |
 | `out/api/.htaccess` | Blocks HTTP access to `contact.config*.php` |
 
