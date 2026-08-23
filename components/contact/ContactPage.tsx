@@ -6,6 +6,7 @@ import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { Container } from "@/components/layout/Container";
+import { EditorialColorSpan } from "@/components/ui/EditorialColorSpan";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
@@ -38,11 +39,24 @@ export function ContactPage({ content, locale }: ContactPageProps) {
           <Reveal className={styles.heroCopy}>
             <SectionLabel>{content.label}</SectionLabel>
             <h1 id="contact-hero-title" className={styles.headline}>
-              {content.headlineBefore}
-              <span className={styles.accent}>{content.headlineAccent}</span>
-              {content.headlineAfter}
+              <EditorialColorSpan color={content.headlineColor}>
+                {content.headlineBefore}
+              </EditorialColorSpan>
+              <EditorialColorSpan
+                color={content.headlineHighlightColor}
+                fallbackClassName={styles.accent}
+              >
+                {content.headlineAccent}
+              </EditorialColorSpan>
+              <EditorialColorSpan color={content.headlineColor}>
+                {content.headlineAfter}
+              </EditorialColorSpan>
             </h1>
-            <p className={styles.subheadline}>{content.subheadline}</p>
+            <p className={styles.subheadline}>
+              <EditorialColorSpan color={content.subheadlineColor}>
+                {content.subheadline}
+              </EditorialColorSpan>
+            </p>
             <Button href={formHref} variant="outline">
               {content.heroCtaLabel}
             </Button>

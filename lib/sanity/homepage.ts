@@ -1,5 +1,6 @@
 import groq from "groq";
 import { getSanityClient } from "@/lib/sanity/client";
+import { editorialColorProjection, type SanityEditorialColor } from "@/lib/sanity/editorial-color";
 import {
   ctaProjection,
   localizedStringProjection,
@@ -87,7 +88,10 @@ export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
   heroSection{
     eyebrow${localizedStringProjection},
     headline${localizedStringProjection},
+    headlineColor${editorialColorProjection},
+    headlineHighlightColor${editorialColorProjection},
     subheadline${localizedStringProjection},
+    subheadlineColor${editorialColorProjection},
     intro${localizedTextProjection},
     primaryCta${ctaProjection},
     media${sanityMediaProjection}
@@ -194,7 +198,10 @@ export type SanityHomepage = {
   heroSection?: {
     eyebrow?: SanityLocalizedString;
     headline?: SanityLocalizedString;
+    headlineColor?: SanityEditorialColor;
+    headlineHighlightColor?: SanityEditorialColor;
     subheadline?: SanityLocalizedString;
+    subheadlineColor?: SanityEditorialColor;
     intro?: SanityLocalizedText;
     primaryCta?: SanityCta;
     media?: SanityMediaField;

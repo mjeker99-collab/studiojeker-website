@@ -1,4 +1,5 @@
 import type { Locale } from "@/types/i18n";
+import type { EditorialColorValue } from "@/types/editorial-color";
 import { localizePathname } from "@/lib/i18n/config";
 
 /**
@@ -27,7 +28,10 @@ export type ContactPageContent = {
   headlineBefore: string;
   headlineAccent: string;
   headlineAfter: string;
+  headlineColor?: EditorialColorValue;
+  headlineHighlightColor?: EditorialColorValue;
   subheadline: string;
+  subheadlineColor?: EditorialColorValue;
   heroCtaLabel: string;
   form: {
     id: string;

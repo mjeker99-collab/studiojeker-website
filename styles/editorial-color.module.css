@@ -1,0 +1,11 @@
+.black {
+  color: var(--color-black);
+}
+
+.cyan {
+  color: var(--color-cyan);
+}
+
+.white {
+  color: var(--color-white);
+}

@@ -12,6 +12,7 @@ import type {
   SanityLocalizedText,
 } from "@/lib/sanity/homepage";
 import { resolveSanityImage, resolveSanityMedia } from "@/lib/sanity/media";
+import { pickEditorialColor } from "@/lib/sanity/editorial-color";
 
 type Localized = SanityLocalizedString | SanityLocalizedText | null | undefined;
 
@@ -160,17 +161,33 @@ export function mergeSanityContact(
 
   const headline = pickLocalized(doc.heroSection?.headline, locale);
   if (headline) {
+    const highlightText =
+      pickLocalized(doc.heroSection?.headlineHighlightText, locale) ??
+      base.headlineAccent;
     const { before, accent, after } = splitAroundAccent(
       headline,
-      base.headlineAccent,
+      highlightText,
     );
     merged.headlineBefore = before;
-    merged.headlineAccent = accent || base.headlineAccent;
+    merged.headlineAccent = accent || highlightText;
     merged.headlineAfter = after;
+  }
+
+  const headlineColor = pickEditorialColor(doc.heroSection?.headlineColor);
+  if (headlineColor) merged.headlineColor = headlineColor;
+
+  const headlineHighlightColor = pickEditorialColor(
+    doc.heroSection?.headlineHighlightColor,
+  );
+  if (headlineHighlightColor) {
+    merged.headlineHighlightColor = headlineHighlightColor;
   }
 
   const subheadline = pickLocalized(doc.heroSection?.subheadline, locale);
   if (subheadline) merged.subheadline = subheadline;
+
+  const subheadlineColor = pickEditorialColor(doc.heroSection?.subheadlineColor);
+  if (subheadlineColor) merged.subheadlineColor = subheadlineColor;
 
   const heroCta = pickLocalized(doc.heroSection?.ctaLabel, locale);
   if (heroCta) merged.heroCtaLabel = heroCta;

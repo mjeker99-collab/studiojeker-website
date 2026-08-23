@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { editorialColorField } from "./shared";
 
 /**
  * Contact page — singleton editorial content for /contact and /en/contact.
@@ -39,14 +40,36 @@ export const contact = defineType({
           title: "Hero Headline",
           type: "localizedString",
           description:
-            "Full headline. The accent word (Sichtbarkeit / visibility) is styled automatically.",
+            "Full headline text. Use Highlight Text below to mark the word styled in cyan.",
         }),
+        defineField({
+          name: "headlineHighlightText",
+          title: "Highlight Text",
+          type: "localizedString",
+          description:
+            "Word or phrase inside the headline to emphasize in cyan (e.g. Sichtbarkeit / visibility). Must match the headline exactly.",
+        }),
+        editorialColorField(
+          "headlineColor",
+          "Headline Color",
+          "Color for the main headline text. Default keeps the current black.",
+        ),
+        editorialColorField(
+          "headlineHighlightColor",
+          "Highlight Color",
+          "Color for the highlighted word in the headline. Default keeps the Studiojeker cyan accent.",
+        ),
         defineField({
           name: "subheadline",
           title: "Hero Description",
           type: "localizedText",
           description: "Supporting text under the headline.",
         }),
+        editorialColorField(
+          "subheadlineColor",
+          "Subheadline Color",
+          "Color for the description under the headline. Default keeps the current black.",
+        ),
         defineField({
           name: "ctaLabel",
           title: "Hero CTA Label",

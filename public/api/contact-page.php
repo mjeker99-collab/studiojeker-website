@@ -51,6 +51,7 @@ $mediaProjection = <<<GROQ
 GROQ;
 
 $localized = '{ de, en }';
+$editorialColor = '{ preset, customHex }';
 
 $query = <<<GROQ
 *[_id == \$id && _type == "contact"][0]{
@@ -58,7 +59,11 @@ $query = <<<GROQ
   heroSection{
     label{$localized},
     headline{$localized},
+    headlineHighlightText{$localized},
+    headlineColor{$editorialColor},
+    headlineHighlightColor{$editorialColor},
     subheadline{$localized},
+    subheadlineColor{$editorialColor},
     ctaLabel{$localized},
     media{$mediaProjection}
   },

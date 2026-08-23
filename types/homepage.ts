@@ -1,3 +1,5 @@
+import type { EditorialColorValue } from "@/types/editorial-color";
+
 export type HomepageMedia = {
   src: string;
   alt: string;
@@ -47,7 +49,10 @@ export type HomepageContent = {
   hero: {
     headline: string;
     headlineAccent?: string;
+    headlineColor?: EditorialColorValue;
+    headlineHighlightColor?: EditorialColorValue;
     subheadline: string;
+    subheadlineColor?: EditorialColorValue;
     body: string[];
     primaryCta: { label: string; href: string };
     secondaryCta?: { label: string; href: string };
