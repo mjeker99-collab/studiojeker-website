@@ -75,7 +75,6 @@
 
 .image {
   object-fit: cover;
-  filter: grayscale(1);
 }
 
 @media (max-width: 47.9375rem) {

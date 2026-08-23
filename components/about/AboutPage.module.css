@@ -201,14 +201,6 @@
   padding-block: var(--space-2) var(--space-4);
 }
 
-/*
- * About-only: restore original colour for the shared AboutSection media
- * without changing the homepage AboutSection component/styles.
- */
-.approachWrap :global(img) {
-  filter: none;
-}
-
 .factsGrid {
   display: grid;
   gap: var(--space-3);
