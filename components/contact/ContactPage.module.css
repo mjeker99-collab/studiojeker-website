@@ -54,7 +54,7 @@
 
 .image {
   object-fit: cover;
-  filter: grayscale(1);
+  /* Original colour — no CSS desaturation */
 }
 
 .main {
