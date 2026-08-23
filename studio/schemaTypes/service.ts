@@ -67,6 +67,8 @@ export const service = defineType({
       title: "Hero Headline",
       type: "string",
       group: "hero",
+      description:
+        "Optional. Service page copy currently uses the website fallback unless later wired.",
       validation: (Rule) => Rule.max(160),
     }),
     defineField({
@@ -75,6 +77,8 @@ export const service = defineType({
       type: "text",
       rows: 4,
       group: "hero",
+      description:
+        "Optional. Service page copy currently uses the website fallback unless later wired.",
       validation: (Rule) => Rule.max(600),
     }),
     defineField({
@@ -83,13 +87,25 @@ export const service = defineType({
       type: "image",
       group: "hero",
       options: { hotspot: true },
+      description:
+        "Main image in the Service page hero (right side on desktop). Replace and Publish to update staging within seconds.",
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description:
+            "Describe the image for accessibility and SEO (e.g. Produktfotografie von Studiojeker).",
+        }),
+      ],
     }),
     defineField({
       name: "heroVideoUrl",
       title: "Hero Video URL (optional)",
       type: "url",
       group: "hero",
-      description: "Optional Vimeo URL.",
+      description:
+        "Optional Vimeo URL. Kept for future use — the current Service hero shows an image.",
       validation: (Rule) =>
         Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
     }),
