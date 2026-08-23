@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
+import { EditorialColorSpan } from "@/components/ui/EditorialColorSpan";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { VimeoShowreel } from "@/components/media/VimeoShowreel";
@@ -16,12 +17,23 @@ export function HeroSection({ content }: HeroSectionProps) {
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <h1 id="home-hero-title" className={styles.headline}>
-            {content.headline}
+            <EditorialColorSpan color={content.headlineColor}>
+              {content.headline}
+            </EditorialColorSpan>
             {content.headlineAccent ? (
-              <span className={styles.accent}>{content.headlineAccent}</span>
+              <EditorialColorSpan
+                color={content.headlineHighlightColor}
+                fallbackClassName={styles.accent}
+              >
+                {content.headlineAccent}
+              </EditorialColorSpan>
             ) : null}
           </h1>
-          <p className={styles.subheadline}>{content.subheadline}</p>
+          <p className={styles.subheadline}>
+            <EditorialColorSpan color={content.subheadlineColor}>
+              {content.subheadline}
+            </EditorialColorSpan>
+          </p>
           <div className={styles.body}>
             {content.body.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>

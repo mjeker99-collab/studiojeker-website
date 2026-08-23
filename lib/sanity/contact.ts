@@ -1,6 +1,10 @@
 import groq from "groq";
 import { getSanityClient } from "@/lib/sanity/client";
 import {
+  editorialColorProjection,
+  type SanityEditorialColor,
+} from "@/lib/sanity/editorial-color";
+import {
   localizedStringProjection,
   localizedTextProjection,
   sanityImageProjection,
@@ -30,7 +34,11 @@ export type SanityContact = {
   heroSection?: {
     label?: SanityLocalizedString;
     headline?: SanityLocalizedString;
+    headlineHighlightText?: SanityLocalizedString;
+    headlineColor?: SanityEditorialColor;
+    headlineHighlightColor?: SanityEditorialColor;
     subheadline?: SanityLocalizedText;
+    subheadlineColor?: SanityEditorialColor;
     ctaLabel?: SanityLocalizedString;
     media?: SanityMediaField;
   } | null;
@@ -83,7 +91,11 @@ export const contactQuery = groq`*[_id == $id && _type == "contact"][0]{
   heroSection{
     label${localizedStringProjection},
     headline${localizedStringProjection},
+    headlineHighlightText${localizedStringProjection},
+    headlineColor${editorialColorProjection},
+    headlineHighlightColor${editorialColorProjection},
     subheadline${localizedTextProjection},
+    subheadlineColor${editorialColorProjection},
     ctaLabel${localizedStringProjection},
     media${sanityMediaProjection}
   },

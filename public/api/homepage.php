@@ -55,6 +55,7 @@ GROQ;
 
 $localized = '{ de, en }';
 $cta = "{ label{$localized}, href }";
+$editorialColor = '{ preset, customHex }';
 
 $query = <<<GROQ
 *[_id == \$id && _type == "homepage"][0]{
@@ -62,7 +63,10 @@ $query = <<<GROQ
   heroSection{
     eyebrow{$localized},
     headline{$localized},
+    headlineColor{$editorialColor},
+    headlineHighlightColor{$editorialColor},
     subheadline{$localized},
+    subheadlineColor{$editorialColor},
     intro{$localized},
     primaryCta{$cta},
     media{$mediaProjection}

@@ -68,6 +68,82 @@ export const localizedString = defineType({
   ],
 });
 
+/** Reusable editorial text color — brand presets or validated custom HEX. */
+export const editorialColor = defineType({
+  name: "editorialColor",
+  title: "Text Color",
+  type: "object",
+  fields: [
+    defineField({
+      name: "preset",
+      title: "Color",
+      type: "string",
+      options: {
+        list: [
+          { title: "Default (website standard)", value: "" },
+          { title: "Black", value: "black" },
+          { title: "Cyan", value: "cyan" },
+          { title: "White", value: "white" },
+          { title: "Custom", value: "custom" },
+        ],
+        layout: "radio",
+      },
+      description:
+        "Leave on Default to keep the current website color. Choose Cyan for the Studiojeker brand accent.",
+    }),
+    defineField({
+      name: "customHex",
+      title: "Custom HEX Color",
+      type: "string",
+      description: "Enter a valid HEX value such as #000000, #00C8FF or #FFFFFF.",
+      hidden: ({ parent }) => parent?.preset !== "custom",
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          const parent = context.parent as { preset?: string } | undefined;
+          if (parent?.preset !== "custom") {
+            return true;
+          }
+          if (typeof value !== "string" || !value.trim()) {
+            return "Enter a HEX color when Custom is selected.";
+          }
+          if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value.trim())) {
+            return "Use a valid HEX value such as #000000 or #00C8FF.";
+          }
+          return true;
+        }),
+    }),
+  ],
+  preview: {
+    select: { preset: "preset", customHex: "customHex" },
+    prepare({ preset, customHex }) {
+      if (!preset) {
+        return { title: "Default (website standard)" };
+      }
+      if (preset === "custom") {
+        return {
+          title: "Custom",
+          subtitle: typeof customHex === "string" ? customHex : "Add HEX value",
+        };
+      }
+      return { title: String(preset).charAt(0).toUpperCase() + String(preset).slice(1) };
+    },
+  },
+});
+
+/** Convenience wrapper for headline/subheadline color fields in section schemas. */
+export function editorialColorField(
+  name: string,
+  title: string,
+  description: string,
+) {
+  return defineField({
+    name,
+    title,
+    type: "editorialColor",
+    description,
+  });
+}
+
 /** Bilingual longer text for DE/EN homepage content. */
 export const localizedText = defineType({
   name: "localizedText",

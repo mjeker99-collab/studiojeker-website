@@ -23,6 +23,7 @@ import {
   type SanityImageProjection,
   type SanityMediaField,
 } from "@/lib/sanity/media";
+import { pickEditorialColor } from "@/lib/sanity/editorial-color";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 
 /**
@@ -468,6 +469,23 @@ export function mergeSanityHomepage(
   const heroSubheadline = pickLocalized(doc.heroSection?.subheadline, locale);
   if (heroSubheadline) {
     merged.hero.subheadline = heroSubheadline;
+  }
+
+  const heroHeadlineColor = pickEditorialColor(doc.heroSection?.headlineColor);
+  if (heroHeadlineColor) merged.hero.headlineColor = heroHeadlineColor;
+
+  const heroHighlightColor = pickEditorialColor(
+    doc.heroSection?.headlineHighlightColor,
+  );
+  if (heroHighlightColor) {
+    merged.hero.headlineHighlightColor = heroHighlightColor;
+  }
+
+  const heroSubheadlineColor = pickEditorialColor(
+    doc.heroSection?.subheadlineColor,
+  );
+  if (heroSubheadlineColor) {
+    merged.hero.subheadlineColor = heroSubheadlineColor;
   }
 
   const heroIntro = pickLocalized(doc.heroSection?.intro, locale, doc.introText);

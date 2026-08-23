@@ -1,5 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
-import { seoFields } from "./shared";
+import { editorialColorField, seoFields } from "./shared";
 
 /**
  * Temporary root-level flat fields from post–PR #41 Studio experiments.
@@ -135,6 +135,16 @@ export const homepage = defineType({
           type: "localizedString",
           description: "Main headline (e.g. We create visibility.).",
         }),
+        editorialColorField(
+          "headlineColor",
+          "Headline Color",
+          "Color for the main headline text. Default keeps the current black.",
+        ),
+        editorialColorField(
+          "headlineHighlightColor",
+          "Highlight Color",
+          "Color for the accent at the end of the headline (e.g. the period after Sichtbarkeit). Default keeps cyan.",
+        ),
         defineField({
           name: "subheadline",
           title: "Hero Service Line",
@@ -142,6 +152,11 @@ export const homepage = defineType({
           description:
             "Secondary line under the headline (e.g. Photo. Video. 3D. …).",
         }),
+        editorialColorField(
+          "subheadlineColor",
+          "Subheadline Color",
+          "Color for the service line under the headline. Default keeps the current black.",
+        ),
         defineField({
           name: "intro",
           title: "Hero Description",

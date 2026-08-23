@@ -9,6 +9,7 @@ import { service } from "./service";
 import { teamMember } from "./teamMember";
 import {
   ctaField,
+  editorialColor,
   homepageBenefitItem,
   homepageServiceItem,
   localizedString,
@@ -23,6 +24,7 @@ import {
 export const schemaTypes: SchemaTypeDefinition[] = [
   localizedString,
   localizedText,
+  editorialColor,
   mediaField,
   ctaField,
   homepageBenefitItem,
