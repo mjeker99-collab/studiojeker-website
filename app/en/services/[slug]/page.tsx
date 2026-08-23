@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import { ServicePage } from "@/components/services/ServicePage";
+import { ServicePageLive } from "@/components/services/ServicePageLive";
 import {
-  getServicePageContent,
   isServicePageSlug,
   servicePageSlugs,
 } from "@/lib/content/services";
+import { getResolvedServiceContent } from "@/lib/content/service-sanity";
 import { serviceSlugToPath } from "@/lib/content/services/paths";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {};
   }
 
-  const content = getServicePageContent(slug, "en");
+  const content = await getResolvedServiceContent(slug, "en");
   return buildPageMetadata({
     locale: "en",
     pathname: serviceSlugToPath[slug],
@@ -39,11 +39,11 @@ export default async function EnglishServicePage({ params }: PageProps) {
     notFound();
   }
 
-  const content = getServicePageContent(slug, "en");
+  const content = await getResolvedServiceContent(slug, "en");
 
   return (
     <SiteChrome locale="en">
-      <ServicePage content={content} />
+      <ServicePageLive key={slug} locale="en" slug={slug} content={content} />
     </SiteChrome>
   );
 }

@@ -135,6 +135,10 @@ jobs:
             echo "::error::out/api/contact-page.php is missing — Contact live proxy must be present."
             exit 1
           fi
+          if [ ! -f "out/api/service-page.php" ]; then
+            echo "::error::out/api/service-page.php is missing — Service live proxy must be present."
+            exit 1
+          fi
           # Hidden files from public/ (e.g. .htaccess) must be present in the export.
           if [ ! -f "out/.htaccess" ]; then
             echo "::error::out/.htaccess is missing — Apache rules must be uploaded to staging."
