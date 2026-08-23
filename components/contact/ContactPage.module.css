@@ -11,11 +11,10 @@
 
 .heroCopy {
   display: grid;
-  align-content: start;
+  align-content: center;
   gap: var(--space-3);
   max-width: 36rem;
   padding: var(--section-padding-y-compact) var(--container-padding-x);
-  padding-bottom: var(--space-4);
 }
 
 .headline,
@@ -59,8 +58,7 @@
 
 .main {
   background: var(--color-white);
-  padding-top: var(--space-4);
-  padding-bottom: var(--section-padding-y-compact);
+  padding-block: var(--section-padding-y-compact);
 }
 
 .mainGrid {
@@ -212,12 +210,9 @@
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   }
 
-  .heroCopy {
-    padding-bottom: clamp(2.5rem, 3vw, 3.75rem);
-  }
-
-  .main {
-    padding-top: 0;
+  .mediaWrap,
+  .media {
+    min-height: 28rem;
   }
 
   .mainGrid {
@@ -228,7 +223,7 @@
 
 @media (min-width: 64rem) {
   .heroCopy {
-    padding-top: var(--section-padding-y);
+    padding-block: var(--section-padding-y);
   }
 }
 
