@@ -1,8 +1,42 @@
 import { defineField, defineType } from "sanity";
 import { seoFields, sortOrderField } from "./shared";
 
+const imageAltField = defineField({
+  name: "alt",
+  title: "Alt Text",
+  type: "string",
+  description: "Describe the image for accessibility.",
+});
+
+const SERVICE_SLUGS = [
+  "digital-marketing",
+  "business-communication",
+  "product-communication",
+  "architecture",
+] as const;
+
+const SOLUTION_ICONS = [
+  { title: "Film", value: "film" },
+  { title: "Portrait", value: "portrait" },
+  { title: "Reportage", value: "reportage" },
+  { title: "Internal / Social (lines)", value: "internal" },
+  { title: "Product photo", value: "product-photo" },
+  { title: "Product film", value: "product-film" },
+  { title: "3D visualization", value: "viz3d" },
+  { title: "Animation", value: "animation" },
+  { title: "Architecture", value: "architecture" },
+  { title: "Drone", value: "drone" },
+  { title: "Virtual tour", value: "tour" },
+  { title: "Strategy", value: "strategy" },
+  { title: "Social", value: "social" },
+  { title: "Content", value: "content" },
+  { title: "Visibility subscription", value: "abo" },
+] as const;
+
 /**
- * Service page — reusable document for Studiojeker service areas.
+ * Service page — one document per current service area.
+ * Field names match existing Sanity documents (source of truth).
+ * Design stays in Next.js; do not rename fields used by stored content.
  */
 export const service = defineType({
   name: "service",
@@ -11,9 +45,12 @@ export const service = defineType({
   groups: [
     { name: "basics", title: "Basics", default: true },
     { name: "hero", title: "Hero" },
-    { name: "content", title: "Content" },
-    { name: "media", title: "Media" },
-    { name: "cta", title: "CTA" },
+    { name: "solutions", title: "Solutions" },
+    { name: "showreel", title: "Showreel" },
+    { name: "projects", title: "Projects" },
+    { name: "about", title: "About block" },
+    { name: "clients", title: "Clients" },
+    { name: "cta", title: "Final CTA" },
     { name: "seo", title: "SEO" },
   ],
   fields: [
@@ -26,23 +63,32 @@ export const service = defineType({
       validation: (Rule) => Rule.required().max(120),
     }),
     defineField({
+      name: "displayTitle",
+      title: "Public Page Title",
+      type: "string",
+      group: "basics",
+      description: "Public service name (hero label / listings).",
+      validation: (Rule) => Rule.required().max(120),
+    }),
+    defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
       group: "basics",
+      description:
+        "Must match the existing website route. Do not rename — URLs stay unchanged.",
       options: {
         source: "displayTitle",
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "displayTitle",
-      title: "Navigation / Display Title",
-      type: "string",
-      group: "basics",
-      description: "Shown in navigation and listings.",
-      validation: (Rule) => Rule.required().max(120),
+      validation: (Rule) =>
+        Rule.required().custom((slug) => {
+          const value = slug?.current;
+          if (!value) return "Slug is required";
+          return (SERVICE_SLUGS as readonly string[]).includes(value)
+            ? true
+            : `Slug must be one of: ${SERVICE_SLUGS.join(", ")}`;
+        }),
     }),
     sortOrderField("basics"),
 
@@ -52,7 +98,7 @@ export const service = defineType({
       type: "localizedString",
       group: "basics",
       description:
-        "Title shown on the Homepage services grid. Falls back to Navigation / Display Title when empty.",
+        "Title shown on the Homepage services grid. Falls back to Public Page Title when empty.",
     }),
     defineField({
       name: "homepageDescription",
@@ -63,23 +109,61 @@ export const service = defineType({
     }),
 
     defineField({
-      name: "heroHeadline",
-      title: "Hero Headline",
+      name: "heroLabel",
+      title: "Hero Label",
       type: "string",
       group: "hero",
-      description:
-        "Optional. Service page copy currently uses the website fallback unless later wired.",
-      validation: (Rule) => Rule.max(160),
+      description: "Small eyebrow above the headline.",
+      validation: (Rule) => Rule.max(80),
     }),
     defineField({
-      name: "heroIntro",
-      title: "Hero Intro",
+      name: "heroHeadline",
+      title: "Hero Headline",
       type: "text",
-      rows: 4,
+      rows: 2,
       group: "hero",
-      description:
-        "Optional. Service page copy currently uses the website fallback unless later wired.",
-      validation: (Rule) => Rule.max(600),
+      description: "Do not include the trailing accent character (usually “.”).",
+      validation: (Rule) => Rule.required().max(200),
+    }),
+    defineField({
+      name: "heroHeadlineAccent",
+      title: "Hero Headline Accent",
+      type: "string",
+      group: "hero",
+      description: "Optional cyan accent appended to the headline, e.g. “.”.",
+      validation: (Rule) => Rule.max(8),
+    }),
+    defineField({
+      name: "heroSubheadline",
+      title: "Hero Subheadline",
+      type: "text",
+      rows: 2,
+      group: "hero",
+      validation: (Rule) => Rule.max(300),
+    }),
+    defineField({
+      name: "heroIntroText",
+      title: "Hero Intro Text",
+      type: "text",
+      rows: 6,
+      group: "hero",
+      description: "Separate paragraphs with a blank line.",
+      validation: (Rule) => Rule.max(1500),
+    }),
+    defineField({
+      name: "heroCtaLabel",
+      title: "Hero CTA Label",
+      type: "string",
+      group: "hero",
+      validation: (Rule) => Rule.max(60),
+    }),
+    defineField({
+      name: "heroCtaHref",
+      title: "Hero CTA Target",
+      type: "string",
+      group: "hero",
+      description: "Existing site path, e.g. /contact.",
+      validation: (Rule) => Rule.max(200),
     }),
     defineField({
       name: "heroImage",
@@ -87,17 +171,7 @@ export const service = defineType({
       type: "image",
       group: "hero",
       options: { hotspot: true },
-      description:
-        "Main image in the Service page hero (right side on desktop). Replace and Publish to update staging within seconds.",
-      fields: [
-        defineField({
-          name: "alt",
-          title: "Alt Text",
-          type: "string",
-          description:
-            "Describe the image for accessibility and SEO (e.g. Produktfotografie von Studiojeker).",
-        }),
-      ],
+      fields: [imageAltField],
     }),
     defineField({
       name: "heroVideoUrl",
@@ -111,75 +185,306 @@ export const service = defineType({
     }),
 
     defineField({
-      name: "introText",
-      title: "Intro Text",
-      type: "text",
-      rows: 5,
-      group: "content",
-      validation: (Rule) => Rule.max(1500),
+      name: "solutionsLabel",
+      title: "Solutions Label",
+      type: "string",
+      group: "solutions",
+      validation: (Rule) => Rule.max(80),
     }),
     defineField({
-      name: "contentSections",
-      title: "Additional Content Sections",
+      name: "solutionsHeadline",
+      title: "Solutions Headline",
+      type: "string",
+      group: "solutions",
+      description: "Visually hidden heading for the solutions grid.",
+      validation: (Rule) => Rule.max(120),
+    }),
+    defineField({
+      name: "solutions",
+      title: "Solution Items",
       type: "array",
-      group: "content",
+      group: "solutions",
       of: [
         {
           type: "object",
-          name: "contentSection",
-          title: "Content Section",
+          name: "serviceSolutionItem",
+          title: "Solution",
           fields: [
             defineField({
-              name: "headline",
-              title: "Headline",
+              name: "itemId",
+              title: "Item ID",
               type: "string",
-              validation: (Rule) => Rule.max(160),
+              description: "Stable id used by the website. Do not change.",
+              validation: (Rule) => Rule.required().max(60),
             }),
             defineField({
-              name: "text",
-              title: "Text",
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (Rule) => Rule.required().max(80),
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
               type: "text",
-              rows: 5,
-              validation: (Rule) => Rule.max(2000),
+              rows: 3,
+              validation: (Rule) => Rule.required().max(400),
+            }),
+            defineField({
+              name: "href",
+              title: "Link Target",
+              type: "string",
+              description: "Existing site path, e.g. /work or /contact.",
+              validation: (Rule) => Rule.max(200),
+            }),
+            defineField({
+              name: "icon",
+              title: "Icon",
+              type: "string",
+              options: { list: [...SOLUTION_ICONS], layout: "dropdown" },
+              validation: (Rule) => Rule.required(),
             }),
           ],
           preview: {
-            select: { title: "headline" },
-            prepare({ title }) {
-              return { title: title || "Content section" };
+            select: { title: "title", subtitle: "description" },
+          },
+        },
+      ],
+      validation: (Rule) => Rule.max(8),
+    }),
+
+    defineField({
+      name: "showreelLabel",
+      title: "Showreel Label",
+      type: "string",
+      group: "showreel",
+      validation: (Rule) => Rule.max(80),
+    }),
+    defineField({
+      name: "showreelHeadline",
+      title: "Showreel Headline",
+      type: "string",
+      group: "showreel",
+      description: "Do not include a trailing period — the website adds it.",
+      validation: (Rule) => Rule.max(160),
+    }),
+    defineField({
+      name: "showreelBody",
+      title: "Showreel Text",
+      type: "text",
+      rows: 3,
+      group: "showreel",
+      validation: (Rule) => Rule.max(600),
+    }),
+    defineField({
+      name: "showreelCtaLabel",
+      title: "Showreel CTA Label",
+      type: "string",
+      group: "showreel",
+      validation: (Rule) => Rule.max(60),
+    }),
+    defineField({
+      name: "showreelCtaHref",
+      title: "Showreel CTA Target",
+      type: "string",
+      group: "showreel",
+      description: "Existing site path, e.g. /work.",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "showreelImage",
+      title: "Showreel Poster Image",
+      type: "image",
+      group: "showreel",
+      options: { hotspot: true },
+      fields: [imageAltField],
+    }),
+    defineField({
+      name: "showreelVideoId",
+      title: "Showreel Vimeo ID or URL",
+      type: "string",
+      group: "showreel",
+      description:
+        "Vimeo video ID (digits) or a Vimeo URL. Autoplay/controls stay in the website.",
+      validation: (Rule) => Rule.max(200),
+    }),
+
+    defineField({
+      name: "projectsLabel",
+      title: "Projects Label",
+      type: "string",
+      group: "projects",
+      validation: (Rule) => Rule.max(80),
+    }),
+    defineField({
+      name: "projectsHeadline",
+      title: "Projects Headline",
+      type: "string",
+      group: "projects",
+      validation: (Rule) => Rule.max(160),
+    }),
+    defineField({
+      name: "projectsViewAllLabel",
+      title: "View-all Label",
+      type: "string",
+      group: "projects",
+      validation: (Rule) => Rule.max(60),
+    }),
+    defineField({
+      name: "projectsViewAllHref",
+      title: "View-all Target",
+      type: "string",
+      group: "projects",
+      description: "Existing site path, e.g. /work.",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "projects",
+      title: "Project Tiles",
+      type: "array",
+      group: "projects",
+      of: [
+        {
+          type: "object",
+          name: "serviceProjectItem",
+          title: "Project Tile",
+          fields: [
+            defineField({
+              name: "itemId",
+              title: "Item ID",
+              type: "string",
+              description: "Stable id used by the website. Do not change.",
+              validation: (Rule) => Rule.required().max(60),
+            }),
+            defineField({
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (Rule) => Rule.required().max(120),
+            }),
+            defineField({
+              name: "category",
+              title: "Category",
+              type: "string",
+              validation: (Rule) => Rule.max(80),
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "text",
+              rows: 3,
+              description: "Optional. Present when stored on a project tile.",
+              validation: (Rule) => Rule.max(600),
+            }),
+            defineField({
+              name: "href",
+              title: "Link Target",
+              type: "string",
+              validation: (Rule) => Rule.max(200),
+            }),
+            defineField({
+              name: "image",
+              title: "Image",
+              type: "image",
+              options: { hotspot: true },
+              fields: [imageAltField],
+            }),
+            defineField({
+              name: "videoUrl",
+              title: "Video / Vimeo URL",
+              type: "string",
+              description: "Optional Vimeo URL or ID when a tile uses video.",
+              validation: (Rule) => Rule.max(200),
+            }),
+            defineField({
+              name: "isPlaceholder",
+              title: "Placeholder Tile",
+              type: "boolean",
+              description: "Keep true until a real case study exists.",
+              initialValue: true,
+            }),
+          ],
+          preview: {
+            select: {
+              title: "title",
+              subtitle: "category",
+              media: "image",
             },
           },
         },
       ],
+      validation: (Rule) => Rule.max(8),
     }),
 
     defineField({
-      name: "images",
-      title: "Images",
-      type: "array",
-      group: "media",
-      of: [
-        {
-          type: "image",
-          options: { hotspot: true },
-          fields: [
-            defineField({
-              name: "alt",
-              title: "Alt Text",
-              type: "string",
-            }),
-          ],
-        },
-      ],
+      name: "aboutLabel",
+      title: "About Label",
+      type: "string",
+      group: "about",
+      validation: (Rule) => Rule.max(80),
     }),
     defineField({
-      name: "videoUrl",
-      title: "Video URL",
-      type: "url",
-      group: "media",
-      description: "Primary Vimeo (or other) video URL for this service.",
-      validation: (Rule) =>
-        Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+      name: "aboutHeadline",
+      title: "About Headline",
+      type: "string",
+      group: "about",
+      description: "Do not include the trailing accent character (usually “.”).",
+      validation: (Rule) => Rule.max(160),
+    }),
+    defineField({
+      name: "aboutHeadlineAccent",
+      title: "About Headline Accent",
+      type: "string",
+      group: "about",
+      validation: (Rule) => Rule.max(8),
+    }),
+    defineField({
+      name: "aboutSubheadline",
+      title: "About Subheadline",
+      type: "string",
+      group: "about",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "aboutText",
+      title: "About Text",
+      type: "text",
+      rows: 4,
+      group: "about",
+      description: "Separate paragraphs with a blank line.",
+      validation: (Rule) => Rule.max(1200),
+    }),
+    defineField({
+      name: "aboutCtaLabel",
+      title: "About CTA Label",
+      type: "string",
+      group: "about",
+      validation: (Rule) => Rule.max(60),
+    }),
+    defineField({
+      name: "aboutCtaHref",
+      title: "About CTA Target",
+      type: "string",
+      group: "about",
+      description: "Existing site path, e.g. /about.",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "aboutImage",
+      title: "About Image",
+      type: "image",
+      group: "about",
+      options: { hotspot: true },
+      fields: [imageAltField],
+    }),
+
+    defineField({
+      name: "clientsLabel",
+      title: "Clients Label",
+      type: "string",
+      group: "clients",
+      description: "Logo set stays in the website. This field is the heading only.",
+      validation: (Rule) => Rule.max(80),
     }),
 
     defineField({
@@ -187,7 +492,8 @@ export const service = defineType({
       title: "CTA Headline",
       type: "string",
       group: "cta",
-      validation: (Rule) => Rule.max(160),
+      description: "Full headline including the accented word.",
+      validation: (Rule) => Rule.max(200),
     }),
     defineField({
       name: "ctaText",
@@ -203,6 +509,14 @@ export const service = defineType({
       type: "string",
       group: "cta",
       validation: (Rule) => Rule.max(60),
+    }),
+    defineField({
+      name: "ctaHref",
+      title: "CTA Target",
+      type: "string",
+      group: "cta",
+      description: "Existing site path, e.g. /contact.",
+      validation: (Rule) => Rule.max(200),
     }),
 
     ...seoFields.map((field) => ({ ...field, group: "seo" })),
