@@ -97,14 +97,14 @@
 
 /*
  * Tight-crop CMS uploads (wide JPEGs with little canvas padding).
- * max-height targets the optical mark size of the padded-square pack
- * (~Raiffeisen / Bossard artwork), not the full 5.25–8.25rem canvas box.
+ * Caps target the optical mark height of the padded-square pack
+ * (Raiffeisen / Bossard artwork ≈ 1–1.75rem), not the 5.25–8.25rem canvas box.
  */
 .logoTight {
   width: auto;
   height: auto;
-  max-height: 1.75rem;
-  max-width: 7.5rem;
+  max-height: 1.35rem;
+  max-width: 6rem;
   object-fit: contain;
 }
 
@@ -135,8 +135,8 @@
   }
 
   .logoTight {
-    max-height: 2rem;
-    max-width: 8.25rem;
+    max-height: 1.55rem;
+    max-width: 7rem;
   }
 }
 
@@ -170,8 +170,8 @@
   }
 
   .logoTight {
-    max-height: 2.5rem;
-    max-width: 10rem;
+    max-height: 1.75rem;
+    max-width: 8rem;
   }
 }
 
