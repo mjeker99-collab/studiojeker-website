@@ -69,6 +69,7 @@ export function ClientsSection({ content }: ClientsSectionProps) {
             <div className={styles.rail}>
               <LogoTrack logos={content.logos} />
               <LogoTrack logos={content.logos} duplicate />
+              <LogoTrack logos={content.logos} duplicate />
             </div>
           </div>
         </div>
