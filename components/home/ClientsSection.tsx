@@ -11,10 +11,19 @@ type ClientsSectionProps = {
 
 type Logo = HomepageContent["clients"]["logos"][number];
 
+/** Visual-weight classes: light wordmarks need more scale than dense marks. */
+const logoWeightClass: Record<string, string> = {
+  hirslanden: styles.weightLight,
+  certina: styles.weightLight,
+  bossard: styles.weightLight,
+  endress: styles.weightLight,
+  ubs: styles.weightStrong,
+  raiffeisen: styles.weightStrong,
+};
+
 /**
  * Renders one full pass of the source logo list.
  * The marquee duplicates this track for a seamless loop; the source list itself is never capped.
- * Visual size is normalized via equal CSS slots — no per-client exceptions.
  */
 function LogoTrack({
   logos,
@@ -32,7 +41,9 @@ function LogoTrack({
             alt={duplicate ? "" : logo.name}
             width={logo.width}
             height={logo.height}
-            className={styles.logo}
+            className={[styles.logo, logoWeightClass[logo.id] ?? styles.weightLight]
+              .filter(Boolean)
+              .join(" ")}
           />
         </li>
       ))}
