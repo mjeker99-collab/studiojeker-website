@@ -75,13 +75,13 @@
  * Default = approved pre–PR #55 weightLight size.
  * Every logo (including new Sanity uploads) inherits this via `.logo`;
  * `.weightStrong` only overrides for the historical dense marks.
+ * Use fixed `height` (not only max-height) so SVG marks do not collapse.
  * Do not enlarge these values.
  */
 .logo {
   display: block;
   width: auto;
-  height: auto;
-  max-height: 5.25rem;
+  height: 5.25rem;
   max-width: 18.75rem;
   object-fit: contain;
   filter: grayscale(1) contrast(1.08);
@@ -90,13 +90,13 @@
 
 /* Lighter wordmarks — same as `.logo` defaults (explicit for weight map) */
 .weightLight {
-  max-height: 5.25rem;
+  height: 5.25rem;
   max-width: 18.75rem;
 }
 
 /* Dense marks (UBS, Raiffeisen) — slightly less scale, still ~50% */
 .weightStrong {
-  max-height: 4.5rem;
+  height: 4.5rem;
   max-width: 14.25rem;
 }
 
@@ -118,12 +118,12 @@
 
   .logo,
   .weightLight {
-    max-height: 5.8rem;
+    height: 5.8rem;
     max-width: 20.25rem;
   }
 
   .weightStrong {
-    max-height: 5rem;
+    height: 5rem;
     max-width: 15.75rem;
   }
 }
@@ -149,12 +149,12 @@
   /* Desktop: ~50% larger than previous 5.5 / 4.5 rem heights — unchanged */
   .logo,
   .weightLight {
-    max-height: 8.25rem;
+    height: 8.25rem;
     max-width: 23.25rem;
   }
 
   .weightStrong {
-    max-height: 6.75rem;
+    height: 6.75rem;
     max-width: 17.25rem;
   }
 }
