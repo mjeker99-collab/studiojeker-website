@@ -226,6 +226,8 @@ export const contact = defineType({
       type: "object",
       group: "clients",
       options: { collapsible: true },
+      description:
+        "Section label only. Logos come from every Enabled Client / Logo document (sortOrder). No quantity limit.",
       fields: [
         defineField({
           name: "label",
@@ -234,8 +236,10 @@ export const contact = defineType({
         }),
         defineField({
           name: "logos",
-          title: "Client Logos",
+          title: "[Deprecated] Client Logos selection",
           type: "array",
+          hidden: true,
+          readOnly: true,
           of: [
             defineArrayMember({
               type: "reference",
@@ -243,7 +247,7 @@ export const contact = defineType({
             }),
           ],
           description:
-            "Select logos from Clients / Logos. Drag to set order. Same library as the Homepage.",
+            "Deprecated. The live site loads every Enabled Client / Logo document (ordered by sortOrder). Same uncapped library as the Homepage.",
         }),
       ],
     }),

@@ -21,6 +21,10 @@ const logoWeightClass: Record<string, string> = {
   raiffeisen: styles.weightStrong,
 };
 
+/**
+ * Renders one full pass of the source logo list.
+ * The marquee duplicates this track for a seamless loop; the source list itself is never capped.
+ */
 function LogoTrack({
   logos,
   duplicate = false,

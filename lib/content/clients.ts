@@ -1,6 +1,9 @@
 import type { HomepageClientLogo } from "@/types/homepage";
 
-/** Shared client logos — identical on homepage and service pages. */
+/**
+ * Static fallback logos used only when Sanity returns no enabled Client documents.
+ * Not a live-source cap — the CMS list is uncapped and replaces this entirely when present.
+ */
 export function getClientLogos(): HomepageClientLogo[] {
   return [
     {

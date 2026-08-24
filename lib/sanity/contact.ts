@@ -4,6 +4,7 @@ import {
   editorialColorProjection,
   type SanityEditorialColor,
 } from "@/lib/sanity/editorial-color";
+import { allEnabledClientLogosProjection } from "@/lib/sanity/clients";
 import {
   localizedStringProjection,
   localizedTextProjection,
@@ -125,14 +126,7 @@ export const contactQuery = groq`*[_id == $id && _type == "contact"][0]{
   },
   clientsSection{
     label${localizedStringProjection},
-    "logos": logos[]->{
-      _id,
-      name,
-      websiteUrl,
-      sortOrder,
-      active,
-      logo${sanityImageProjection}
-    }
+    "logos": ${allEnabledClientLogosProjection}
   },
   finalCtaSection{
     headline${localizedStringProjection},
