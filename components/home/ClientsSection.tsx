@@ -12,9 +12,8 @@ type ClientsSectionProps = {
 type Logo = HomepageContent["clients"]["logos"][number];
 
 /**
- * Approved optical weights from the pre–PR #55 Clients marquee.
- * Keys are local fallback ids; Sanity document ids are normalized in
- * `resolveLogoWeightClass` (e.g. `client-ubs` → `ubs`).
+ * Approved optical weights for the original padded-square logo pack
+ * (≈600×600 SVG canvases with large transparent margins).
  */
 const logoWeightByKey: Record<string, string> = {
   hirslanden: styles.weightLight,
@@ -27,22 +26,26 @@ const logoWeightByKey: Record<string, string> = {
 };
 
 /**
- * Map any logo id (local slug or Sanity `_id`) onto the approved weight class.
- * Unknown / newly published Client documents inherit `weightLight` — the same
- * default the marquee used before CMS ids existed. No larger separate rule.
+ * Original approved logos sit on near-square padded canvases.
+ * Tight wide CMS uploads (e.g. SABAG, PB Swiss tools) fill most of their
+ * frame — the same CSS `height` then makes their artwork look 3–4× larger.
  */
+function isTightCropLogo(logo: Logo): boolean {
+  const width = logo.width ?? 0;
+  const height = logo.height ?? 0;
+  if (width <= 0 || height <= 0) return false;
+  const aspectRatio = width / height;
+  return aspectRatio < 0.85 || aspectRatio > 1.15;
+}
+
 function resolveLogoWeightClass(logo: Logo): string {
   const raw = logo.id.trim().toLowerCase();
   const withoutPrefix = raw.replace(/^client-/, "");
 
   if (logoWeightByKey[raw]) return logoWeightByKey[raw];
   if (logoWeightByKey[withoutPrefix]) return logoWeightByKey[withoutPrefix];
-
-  // Sanity slug variants (e.g. client-endress-hauser)
   if (withoutPrefix.startsWith("endress")) return styles.weightLight;
 
-  // UUID documents for known dense marks — match by name only for the
-  // two brands that historically used weightStrong.
   const name = logo.name.trim().toLowerCase();
   if (name === "ubs" || name.startsWith("ubs ")) return styles.weightStrong;
   if (name.includes("raiffeisen")) return styles.weightStrong;
@@ -50,10 +53,15 @@ function resolveLogoWeightClass(logo: Logo): string {
   return styles.weightLight;
 }
 
+/** One size class per logo — padded-square pack vs tight CMS crops. */
+function resolveLogoSizeClass(logo: Logo): string {
+  if (isTightCropLogo(logo)) return styles.logoTight;
+  return resolveLogoWeightClass(logo);
+}
+
 /**
  * Renders one full pass of the source logo list.
  * The marquee duplicates this track for a seamless loop; the source list itself is never capped.
- * Sizing uses the pre–PR #55 approved weight classes for every logo (Sanity or local).
  */
 function LogoTrack({
   logos,
@@ -71,7 +79,7 @@ function LogoTrack({
             alt={duplicate ? "" : logo.name}
             width={logo.width}
             height={logo.height}
-            className={[styles.logo, resolveLogoWeightClass(logo)]
+            className={[styles.logo, resolveLogoSizeClass(logo)]
               .filter(Boolean)
               .join(" ")}
           />
