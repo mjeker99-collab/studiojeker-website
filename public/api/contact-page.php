@@ -93,7 +93,7 @@ $query = <<<GROQ
   },
   clientsSection{
     label{$localized},
-    "logos": logos[]->{
+    "logos": *[_type == "client" && active != false && defined(logo.asset)] | order(coalesce(sortOrder, 999999) asc) {
       _id,
       name,
       websiteUrl,

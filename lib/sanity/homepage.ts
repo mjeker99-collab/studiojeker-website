@@ -1,6 +1,7 @@
 import groq from "groq";
 import { getSanityClient } from "@/lib/sanity/client";
 import { editorialColorProjection, type SanityEditorialColor } from "@/lib/sanity/editorial-color";
+import { allEnabledClientLogosProjection } from "@/lib/sanity/clients";
 import {
   ctaProjection,
   localizedStringProjection,
@@ -154,14 +155,7 @@ export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
   },
   clientsSection{
     label${localizedStringProjection},
-    "logos": logos[]->{
-      _id,
-      name,
-      websiteUrl,
-      sortOrder,
-      active,
-      logo${sanityImageProjection}
-    }
+    "logos": ${allEnabledClientLogosProjection}
   },
   finalCtaSection{
     headline${localizedStringProjection},

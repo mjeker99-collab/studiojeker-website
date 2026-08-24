@@ -406,6 +406,8 @@ export const homepage = defineType({
       type: "object",
       group: "clients",
       options: { collapsible: true },
+      description:
+        "Section label only. Logos come from every Enabled Client / Logo document (sortOrder). No quantity limit.",
       fields: [
         defineField({
           name: "label",
@@ -414,8 +416,10 @@ export const homepage = defineType({
         }),
         defineField({
           name: "logos",
-          title: "Client Logos",
+          title: "[Deprecated] Client Logos selection",
           type: "array",
+          hidden: true,
+          readOnly: true,
           of: [
             defineArrayMember({
               type: "reference",
@@ -423,7 +427,7 @@ export const homepage = defineType({
             }),
           ],
           description:
-            "Select logos from Clients / Logos. Drag to set order. Inactive clients are hidden on the site.",
+            "Deprecated. The live site loads every Enabled Client / Logo document (ordered by sortOrder). No curated subset or quantity cap.",
         }),
       ],
     }),

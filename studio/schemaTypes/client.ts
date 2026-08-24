@@ -2,7 +2,11 @@ import { defineField, defineType } from "sanity";
 import { sortOrderField } from "./shared";
 
 /**
- * Client logo — feeds the client marquee later (no animation changes now).
+ * Client / Logo — feeds the client marquee on Homepage and Contact.
+ *
+ * Every published document with Enabled = true and a logo asset appears
+ * automatically (ordered by sortOrder). There is no curated subset or
+ * fixed quantity cap on the live site.
  */
 export const client = defineType({
   name: "client",
@@ -41,9 +45,10 @@ export const client = defineType({
     sortOrderField(),
     defineField({
       name: "active",
-      title: "Active",
+      title: "Enabled",
       type: "boolean",
-      description: "Inactive logos are excluded from the public logo area later.",
+      description:
+        "When enabled, this logo appears in the public marquee after Publish. Disabled logos are excluded. There is no maximum number of logos.",
       initialValue: true,
     }),
   ],
@@ -68,7 +73,7 @@ export const client = defineType({
     prepare({ title, media, active }) {
       return {
         title: title || "Unnamed client",
-        subtitle: active === false ? "Inactive" : "Active",
+        subtitle: active === false ? "Disabled" : "Enabled",
         media,
       };
     },

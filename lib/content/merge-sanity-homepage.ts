@@ -347,6 +347,12 @@ function mergeProjectItem(
   };
 }
 
+/**
+ * Map Sanity Client documents to homepage logo models.
+ *
+ * No quantity cap: every enabled client with a resolvable logo is kept.
+ * Marquee duplication happens only in the UI for seamless looping.
+ */
 function mergeClientLogos(
   base: HomepageClientLogo[],
   clients: SanityHomepageClientRef[] | null | undefined,

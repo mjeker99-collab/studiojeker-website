@@ -52,6 +52,11 @@ function sortByOrder<T extends { sortOrder?: number | null }>(items: T[]): T[] {
   });
 }
 
+/**
+ * Map Sanity Client documents to logo models.
+ *
+ * No quantity cap: every enabled client with a resolvable logo is kept.
+ */
 function mergeClientLogos(
   base: HomepageClientLogo[],
   clients: SanityContactClientRef[] | null | undefined,
