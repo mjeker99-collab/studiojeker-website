@@ -71,15 +71,24 @@
   padding: 0.5rem 2.25rem;
 }
 
+/*
+ * Default = approved pre–PR #55 weightLight size.
+ * Every logo (including new Sanity uploads) inherits this via `.logo`;
+ * `.weightStrong` only overrides for the historical dense marks.
+ * Use fixed `height` (not only max-height) so SVG marks do not collapse.
+ * Do not enlarge these values.
+ */
 .logo {
   display: block;
   width: auto;
+  height: 5.25rem;
+  max-width: 18.75rem;
   object-fit: contain;
   filter: grayscale(1) contrast(1.08);
   opacity: 0.92;
 }
 
-/* Lighter wordmarks — ~50% larger optical presence */
+/* Lighter wordmarks — same as `.logo` defaults (explicit for weight map) */
 .weightLight {
   height: 5.25rem;
   max-width: 18.75rem;
@@ -107,6 +116,7 @@
     padding-inline: 2.5rem;
   }
 
+  .logo,
   .weightLight {
     height: 5.8rem;
     max-width: 20.25rem;
@@ -136,7 +146,8 @@
     animation-duration: 50s;
   }
 
-  /* Desktop: ~50% larger than previous 5.5 / 4.5 rem heights */
+  /* Desktop: ~50% larger than previous 5.5 / 4.5 rem heights — unchanged */
+  .logo,
   .weightLight {
     height: 8.25rem;
     max-width: 23.25rem;
