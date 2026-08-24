@@ -139,6 +139,20 @@ export const sanityMediaProjection = `{
   mobilePoster${sanityImageProjection}
 }`;
 
+/** GROQ fragment for the Work tile media object. */
+export const sanityWorkMediaProjection = `{
+  mediaType,
+  vimeoUrl,
+  externalVideoUrl,
+  videoAlt,
+  duration,
+  image${sanityImageProjection},
+  poster${sanityImageProjection},
+  slideshowAlt,
+  slideshowInterval,
+  "slideshowImages": slideshowImages[]${sanityImageProjection}
+}`;
+
 /** GROQ fragment for localized string/text objects. */
 export const localizedStringProjection = `{ de, en }`;
 
