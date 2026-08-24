@@ -1,8 +1,16 @@
 import { defineField, defineType } from "sanity";
 import { seoFields, sortOrderField } from "./shared";
 
+const imageAltField = defineField({
+  name: "alt",
+  title: "Alt Text",
+  type: "string",
+  description: "Describe the image for accessibility.",
+});
+
 /**
  * Project / Work item — image, video, or mixed media.
+ * Used for homepage teasers and standalone project records.
  */
 export const project = defineType({
   name: "project",
@@ -32,6 +40,13 @@ export const project = defineType({
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "subtitle",
+      title: "Subtitle (optional)",
+      type: "string",
+      group: "basics",
+      validation: (Rule) => Rule.max(160),
     }),
     defineField({
       name: "client",
@@ -64,6 +79,14 @@ export const project = defineType({
       validation: (Rule) => Rule.max(10),
     }),
     defineField({
+      name: "href",
+      title: "Link (optional)",
+      type: "string",
+      group: "basics",
+      description: "Optional internal path or URL.",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
       name: "featured",
       title: "Featured Project",
       type: "boolean",
@@ -74,12 +97,27 @@ export const project = defineType({
     sortOrderField("basics"),
 
     defineField({
+      name: "mediaType",
+      title: "Primary Media Type",
+      type: "string",
+      group: "media",
+      options: {
+        list: [
+          { title: "Image", value: "image" },
+          { title: "Video (Vimeo or URL)", value: "video" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "image",
+    }),
+    defineField({
       name: "mainImage",
       title: "Main Image",
       type: "image",
       group: "media",
       options: { hotspot: true },
       description: "Primary cover image for listings and detail pages.",
+      fields: [imageAltField],
     }),
     defineField({
       name: "gallery",
@@ -107,12 +145,39 @@ export const project = defineType({
     }),
     defineField({
       name: "videoUrl",
-      title: "Video URL",
+      title: "Vimeo URL",
+      type: "string",
+      group: "media",
+      description: "Vimeo video ID or full URL for video projects.",
+      hidden: ({ document }) => (document?.mediaType || "image") !== "video",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "externalVideoUrl",
+      title: "External Video URL (optional)",
       type: "url",
       group: "media",
-      description: "Primary Vimeo URL for video projects.",
+      description: "Optional direct MP4 or external video URL.",
+      hidden: ({ document }) => (document?.mediaType || "image") !== "video",
       validation: (Rule) =>
         Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+    }),
+    defineField({
+      name: "videoPoster",
+      title: "Video Poster Image",
+      type: "image",
+      group: "media",
+      options: { hotspot: true },
+      description: "Still image shown before the video plays.",
+      hidden: ({ document }) => (document?.mediaType || "image") !== "video",
+      fields: [imageAltField],
+    }),
+    defineField({
+      name: "videoAlt",
+      title: "Video Description",
+      type: "string",
+      group: "media",
+      hidden: ({ document }) => (document?.mediaType || "image") !== "video",
     }),
     defineField({
       name: "additionalVideoUrls",

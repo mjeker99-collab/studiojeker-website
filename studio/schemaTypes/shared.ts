@@ -296,6 +296,283 @@ export const mediaField = defineType({
   },
 });
 
+/**
+ * Work tile media — image, Vimeo video, or in-tile slideshow.
+ * Matches ProjectMediaCard types without changing frontend layout.
+ */
+export const workMediaField = defineType({
+  name: "workMediaField",
+  title: "Tile Media",
+  type: "object",
+  fields: [
+    defineField({
+      name: "mediaType",
+      title: "Media Type",
+      type: "string",
+      options: {
+        list: [
+          { title: "Image", value: "image" },
+          { title: "Video (Vimeo or URL)", value: "video" },
+          { title: "Slideshow", value: "slideshow" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "image",
+      description: "Choose how this Work tile displays media.",
+    }),
+    defineField({
+      name: "image",
+      title: "Image",
+      type: "image",
+      options: { hotspot: true },
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "image",
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Describe the image for accessibility and SEO.",
+        }),
+      ],
+    }),
+    defineField({
+      name: "vimeoUrl",
+      title: "Vimeo Video",
+      type: "string",
+      description:
+        "Paste a full Vimeo URL (https://vimeo.com/…) or the numeric video ID.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
+      name: "externalVideoUrl",
+      title: "External Video URL (optional)",
+      type: "url",
+      description:
+        "Optional direct MP4 or external video URL when not using Vimeo.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+      validation: (Rule) =>
+        Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+    }),
+    defineField({
+      name: "poster",
+      title: "Video Poster Image",
+      type: "image",
+      options: { hotspot: true },
+      description: "Still image shown before the video plays.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Poster Alt Text",
+          type: "string",
+        }),
+      ],
+    }),
+    defineField({
+      name: "videoAlt",
+      title: "Video Description",
+      type: "string",
+      description: "Accessible label for the video tile.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
+      name: "duration",
+      title: "Duration Label (optional)",
+      type: "string",
+      description: 'Optional on-tile duration label, e.g. "0:45".',
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+      validation: (Rule) => Rule.max(20),
+    }),
+    defineField({
+      name: "slideshowImages",
+      title: "Slideshow Images",
+      type: "array",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "slideshow",
+      of: [
+        {
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
+        },
+      ],
+      validation: (Rule) => Rule.max(8),
+    }),
+    defineField({
+      name: "slideshowAlt",
+      title: "Slideshow Label",
+      type: "string",
+      description: "Shared accessible label for the slideshow tile.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "slideshow",
+    }),
+    defineField({
+      name: "slideshowInterval",
+      title: "Slideshow Interval (ms)",
+      type: "number",
+      description: "Auto-advance interval. Default on the website is 4500 ms.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "slideshow",
+      validation: (Rule) => Rule.integer().min(1000).max(30000),
+    }),
+    defineField({
+      name: "gallery",
+      title: "Additional Media (optional)",
+      type: "array",
+      description:
+        "Optional extra media for future use. The Work tile still shows one primary media block.",
+      of: [{ type: "workMediaField" }],
+    }),
+  ],
+  preview: {
+    select: {
+      mediaType: "mediaType",
+      vimeoUrl: "vimeoUrl",
+    },
+    prepare({ mediaType, vimeoUrl }) {
+      const type = mediaType || "image";
+      if (type === "video") {
+        return {
+          title: "Video",
+          subtitle:
+            typeof vimeoUrl === "string" && vimeoUrl ? vimeoUrl : "Add Vimeo URL",
+        };
+      }
+      if (type === "slideshow") {
+        return { title: "Slideshow", subtitle: "Multiple images" };
+      }
+      return { title: "Image", subtitle: "Edit image below" };
+    },
+  },
+});
+
+/** Single Work / portfolio tile within a category grid. */
+export const workProjectItem = defineType({
+  name: "workProjectItem",
+  title: "Work Tile",
+  type: "object",
+  fields: [
+    defineField({
+      name: "itemId",
+      title: "Item ID",
+      type: "string",
+      description: "Stable id used by the website. Do not change after publish.",
+      validation: (Rule) => Rule.required().max(60),
+    }),
+    defineField({
+      name: "title",
+      title: "Accessible Title",
+      type: "localizedString",
+      description:
+        "Screen-reader label for the tile. Usually matches the service category name.",
+    }),
+    defineField({
+      name: "subtitle",
+      title: "Subtitle (optional)",
+      type: "localizedString",
+    }),
+    defineField({
+      name: "description",
+      title: "Description (optional)",
+      type: "localizedText",
+    }),
+    defineField({
+      name: "client",
+      title: "Client (optional)",
+      type: "string",
+      validation: (Rule) => Rule.max(120),
+    }),
+    defineField({
+      name: "year",
+      title: "Year (optional)",
+      type: "string",
+      validation: (Rule) => Rule.max(10),
+    }),
+    defineField({
+      name: "href",
+      title: "Link (optional)",
+      type: "string",
+      description: "Optional internal path or URL. Work tiles do not navigate by default.",
+      validation: (Rule) => Rule.custom((value) => validateOptionalLink(value)),
+    }),
+    defineField({
+      name: "media",
+      title: "Tile Media",
+      type: "workMediaField",
+      validation: (Rule) => Rule.required(),
+    }),
+    sortOrderField(),
+  ],
+  preview: {
+    select: {
+      titleDe: "title.de",
+      titleEn: "title.en",
+      itemId: "itemId",
+      mediaType: "media.mediaType",
+    },
+    prepare({ titleDe, titleEn, itemId, mediaType }) {
+      return {
+        title: titleDe || titleEn || itemId || "Work tile",
+        subtitle: [itemId, mediaType || "image"].filter(Boolean).join(" · "),
+      };
+    },
+  },
+});
+
+/** Work page category — one of the four Studiojeker service areas. */
+export const workCategory = defineType({
+  name: "workCategory",
+  title: "Work Category",
+  type: "object",
+  fields: [
+    defineField({
+      name: "categoryId",
+      title: "Category ID",
+      type: "string",
+      options: {
+        list: [
+          { title: "Digital / Social Media Marketing", value: "digital" },
+          { title: "Business Communication", value: "business" },
+          { title: "Product Communication", value: "product" },
+          { title: "Architecture & Real Estate", value: "architecture" },
+        ],
+        layout: "dropdown",
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "title",
+      title: "Category Title",
+      type: "localizedString",
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "items",
+      title: "Work Tiles",
+      type: "array",
+      of: [{ type: "workProjectItem" }],
+      validation: (Rule) => Rule.max(8),
+    }),
+    sortOrderField(),
+  ],
+  preview: {
+    select: {
+      titleDe: "title.de",
+      categoryId: "categoryId",
+      count: "items.length",
+    },
+    prepare({ titleDe, categoryId, count }) {
+      return {
+        title: titleDe || categoryId || "Category",
+        subtitle: `${count ?? 0} tile(s)`,
+      };
+    },
+  },
+});
+
 /** Benefit item for the Sichtbarkeit im Abo section. */
 export const homepageBenefitItem = defineType({
   name: "homepageBenefitItem",

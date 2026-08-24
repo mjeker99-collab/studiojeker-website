@@ -7,6 +7,7 @@ import { homepage } from "./homepage";
 import { project } from "./project";
 import { service } from "./service";
 import { teamMember } from "./teamMember";
+import { work } from "./work";
 import {
   ctaField,
   editorialColor,
@@ -15,6 +16,9 @@ import {
   localizedString,
   localizedText,
   mediaField,
+  workCategory,
+  workMediaField,
+  workProjectItem,
 } from "./shared";
 
 /**
@@ -26,12 +30,16 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   localizedText,
   editorialColor,
   mediaField,
+  workMediaField,
+  workProjectItem,
+  workCategory,
   ctaField,
   homepageBenefitItem,
   homepageServiceItem,
   homepage,
   about,
   contact,
+  work,
   service,
   project,
   teamMember,

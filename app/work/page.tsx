@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { WorkPage } from "@/components/work/WorkPage";
-import { getWorkPageContent } from "@/lib/content/work-page";
+import { getResolvedWorkPageContent } from "@/lib/content/work-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-const content = getWorkPageContent("de");
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getResolvedWorkPageContent("de");
 
-export const metadata: Metadata = buildPageMetadata({
-  locale: "de",
-  pathname: "/work",
-  title: content.seo.title,
-  description: content.seo.description,
-});
+  return buildPageMetadata({
+    locale: "de",
+    pathname: "/work",
+    title: content.seo.title,
+    description: content.seo.description,
+  });
+}
 
-export default function GermanWorkPage() {
+export default async function GermanWorkPage() {
+  const content = await getResolvedWorkPageContent("de");
+
   return (
     <SiteChrome locale="de">
       <WorkPage content={content} locale="de" />

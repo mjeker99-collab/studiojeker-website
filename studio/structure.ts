@@ -28,6 +28,11 @@ const SINGLETON_DOCS = {
     title: "Global Settings",
     id: "globalSettings",
   },
+  work: {
+    type: "work",
+    title: "Work",
+    id: "work",
+  },
 } as const;
 
 function singletonListItem(
@@ -47,7 +52,7 @@ function singletonListItem(
 
 /**
  * Editorial desk order (non-technical editors):
- * Homepage → About → Contact → Services → Work → Team → Clients → Global Settings
+ * Homepage → About → Contact → Work → Services → Project teasers → Team → Clients → Global Settings
  */
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -56,8 +61,9 @@ export const structure: StructureResolver = (S) =>
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
       singletonListItem(S, SINGLETON_DOCS.contact),
+      singletonListItem(S, SINGLETON_DOCS.work),
       S.documentTypeListItem("service").title("Services"),
-      S.documentTypeListItem("project").title("Work / Projects"),
+      S.documentTypeListItem("project").title("Project teasers"),
       S.documentTypeListItem("teamMember").title("Team"),
       S.documentTypeListItem("client").title("Clients / Logos"),
       S.divider(),
