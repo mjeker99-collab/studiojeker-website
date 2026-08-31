@@ -48,7 +48,7 @@ export const work = defineType({
       type: "array",
       group: "categories",
       description:
-        "Four service-area sections. Each contains individually editable Work tiles.",
+        "Four service-area sections. Each contains independently manageable Work items.",
       of: [{ type: "workCategory" }],
       validation: (Rule) => Rule.max(4),
     }),

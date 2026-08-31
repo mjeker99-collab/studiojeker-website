@@ -9,6 +9,7 @@ import {
   useState,
   type KeyboardEvent,
   type PointerEvent,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { mediaPath } from "@/lib/media/paths";
@@ -24,41 +25,75 @@ type ProjectMediaCardProps = {
 const MEDIA_SIZES =
   "(max-width: 47.9375rem) 100vw, (max-width: 63.9375rem) 50vw, 25vw";
 
-function vimeoEmbedUrl(src: string): string {
+type VideoProvider = "local" | "vimeo" | "youtube";
+
+function vimeoEmbedUrl(
+  src: string,
+  options: { autoplay?: boolean; muted?: boolean; loop?: boolean },
+): string {
   const id = src.trim();
   const base = /^\d+$/.test(id)
     ? `https://player.vimeo.com/video/${id}`
     : src.includes("player.vimeo.com")
       ? src.split("?")[0]
       : src;
-  /* User gesture starts playback; start muted to avoid surprise audio. */
-  const params =
-    "autoplay=1&muted=1&dnt=1&playsinline=1&title=0&byline=0&portrait=0&badge=0";
-  return `${base}?${params}`;
+  const params = new URLSearchParams({
+    autoplay: options.autoplay === false ? "0" : "1",
+    muted: options.muted === false ? "0" : "1",
+    loop: options.loop ? "1" : "0",
+    dnt: "1",
+    playsinline: "1",
+    title: "0",
+    byline: "0",
+    portrait: "0",
+    badge: "0",
+  });
+  return `${base}?${params.toString()}`;
+}
+
+function youtubeEmbedUrl(
+  src: string,
+  options: { autoplay?: boolean; muted?: boolean; loop?: boolean },
+): string {
+  const id = src.trim();
+  const videoId = /^[\w-]{11}$/.test(id) ? id : id;
+  const params = new URLSearchParams({
+    autoplay: options.autoplay === false ? "0" : "1",
+    mute: options.muted === false ? "0" : "1",
+    rel: "0",
+    modestbranding: "1",
+    playsinline: "1",
+  });
+  if (options.loop) {
+    params.set("loop", "1");
+    params.set("playlist", videoId);
+  }
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 }
 
 function resolveProvider(
   media: Extract<ProjectMedia, { type: "video" }>,
-): "local" | "vimeo" {
+): VideoProvider {
   if (media.provider) return media.provider;
+  if (media.src.includes("youtu") || /^[\w-]{11}$/.test(media.src.trim())) {
+    return "youtube";
+  }
   if (media.src.includes("vimeo") || /^\d+$/.test(media.src.trim())) {
     return "vimeo";
   }
   return "local";
 }
 
-function ImageLightbox({
-  src,
-  alt,
+function MediaLightbox({
   title,
   closeLabel,
   onClose,
+  children,
 }: {
-  src: string;
-  alt: string;
   title: string;
   closeLabel: string;
   onClose: () => void;
+  children: ReactNode;
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -98,10 +133,30 @@ function ImageLightbox({
       >
         ×
       </button>
-      <div
-        className={styles.lightboxFigure}
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className={styles.lightboxContent} onClick={(event) => event.stopPropagation()}>
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function ImageLightbox({
+  src,
+  alt,
+  title,
+  closeLabel,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  title: string;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  return (
+    <MediaLightbox title={title} closeLabel={closeLabel} onClose={onClose}>
+      <div className={styles.lightboxFigure}>
         <Image
           src={mediaPath(src)}
           alt={alt}
@@ -111,8 +166,73 @@ function ImageLightbox({
           priority
         />
       </div>
-    </div>,
-    document.body,
+    </MediaLightbox>
+  );
+}
+
+function VideoLightbox({
+  media,
+  title,
+  closeLabel,
+  onClose,
+}: {
+  media: Extract<ProjectMedia, { type: "video" }>;
+  title: string;
+  closeLabel: string;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const provider = resolveProvider(media);
+  const playback = {
+    autoplay: media.autoplay ?? true,
+    muted: media.muted ?? true,
+    loop: media.loop ?? false,
+  };
+
+  useEffect(() => {
+    if (provider !== "local") return;
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = playback.muted;
+    if (playback.autoplay) {
+      void el.play().catch(() => {
+        /* controls remain available */
+      });
+    }
+  }, [provider, playback.autoplay, playback.muted]);
+
+  return (
+    <MediaLightbox title={title} closeLabel={closeLabel} onClose={onClose}>
+      <div className={styles.videoLightboxFigure}>
+        {provider === "local" ? (
+          <video
+            ref={videoRef}
+            className={styles.videoLightboxEl}
+            src={mediaPath(media.src)}
+            poster={mediaPath(media.poster)}
+            controls
+            playsInline
+            muted={playback.muted}
+            loop={playback.loop}
+            autoPlay={playback.autoplay}
+            preload="metadata"
+          />
+        ) : (
+          <iframe
+            className={styles.videoLightboxIframe}
+            src={
+              provider === "youtube"
+                ? youtubeEmbedUrl(media.src, playback)
+                : vimeoEmbedUrl(media.src, playback)
+            }
+            title={title}
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        )}
+      </div>
+    </MediaLightbox>
   );
 }
 
@@ -159,57 +279,14 @@ function ImageMedia({
 function VideoMedia({
   media,
   label,
+  closeLabel,
 }: {
   media: Extract<ProjectMedia, { type: "video" }>;
   label: string;
+  closeLabel: string;
 }) {
-  const [playing, setPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const provider = resolveProvider(media);
-
-  const start = useCallback(() => {
-    setPlaying(true);
-  }, []);
-
-  useEffect(() => {
-    if (!playing || provider !== "local") return;
-    const el = videoRef.current;
-    if (!el) return;
-    el.muted = true;
-    void el.play().catch(() => {
-      /* native controls remain available */
-    });
-  }, [playing, provider]);
-
-  if (playing) {
-    if (provider === "vimeo") {
-      return (
-        <div className={styles.iframeWrap}>
-          <iframe
-            className={styles.iframe}
-            src={vimeoEmbedUrl(media.src)}
-            title={label}
-            allow="autoplay; fullscreen; picture-in-picture"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        </div>
-      );
-    }
-
-    return (
-      <video
-        ref={videoRef}
-        className={styles.videoEl}
-        src={mediaPath(media.src)}
-        poster={mediaPath(media.poster)}
-        controls
-        playsInline
-        muted
-        preload="metadata"
-      />
-    );
-  }
+  const [open, setOpen] = useState(false);
+  const start = useCallback(() => setOpen(true), []);
 
   return (
     <>
@@ -226,6 +303,14 @@ function VideoMedia({
         </span>
       </button>
       {media.duration ? <p className={styles.duration}>{media.duration}</p> : null}
+      {open ? (
+        <VideoLightbox
+          media={media}
+          title={label}
+          closeLabel={closeLabel}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </>
   );
 }
@@ -337,14 +422,17 @@ export function ProjectMediaCard({ item, locale }: ProjectMediaCardProps) {
     media.type === "image" ? (
       <ImageMedia media={media} openLabel={openLabel} closeLabel={closeLabel} />
     ) : media.type === "video" ? (
-      <VideoMedia media={media} label={playLabel} />
+      <VideoMedia media={media} label={playLabel} closeLabel={closeLabel} />
     ) : (
       <SlideshowMedia media={media} />
     );
 
   return (
     <article className={styles.card} aria-label={item.title}>
-      <div className={styles.media}>{inner}</div>
+      <div className={styles.mediaFrame}>
+        <div className={styles.media}>{inner}</div>
+      </div>
+      <p className={styles.label}>{item.title}</p>
     </article>
   );
 }

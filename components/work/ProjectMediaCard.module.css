@@ -1,19 +1,34 @@
 .card {
-  display: block;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   width: 100%;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mediaFrame {
+  position: relative;
+  width: 100%;
   aspect-ratio: 3 / 2;
   overflow: hidden;
   background: var(--color-neutral);
-  color: inherit;
-  text-decoration: none;
   isolation: isolate;
 }
 
-.card:focus-visible {
+.card:focus-within .mediaFrame {
   outline: 2px solid var(--color-text);
   outline-offset: 3px;
+}
+
+.label {
+  margin: 0;
+  padding-inline: 0.1rem;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
 }
 
 .media,
@@ -40,9 +55,9 @@
 }
 
 .card:hover .mediaLayer,
-.card:focus-visible .mediaLayer,
+.card:focus-within .mediaLayer,
 .card:hover .slide,
-.card:focus-visible .slide {
+.card:focus-within .slide {
   transform: scale(1.03);
 }
 
@@ -225,11 +240,38 @@
   outline-offset: 2px;
 }
 
+.lightboxContent {
+  width: min(92vw, 72rem);
+  max-height: 88vh;
+}
+
 .lightboxFigure {
   position: relative;
-  width: min(92vw, 72rem);
+  width: 100%;
   aspect-ratio: 3 / 2;
   max-height: 88vh;
+}
+
+.videoLightboxFigure {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 88vh;
+  background: #000;
+}
+
+.videoLightboxEl,
+.videoLightboxIframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+.videoLightboxEl {
+  object-fit: contain;
 }
 
 .lightboxImage {
@@ -246,9 +288,9 @@
   }
 
   .card:hover .mediaLayer,
-  .card:focus-visible .mediaLayer,
+  .card:focus-within .mediaLayer,
   .card:hover .slide,
-  .card:focus-visible .slide {
+  .card:focus-within .slide {
     transform: none;
   }
 }

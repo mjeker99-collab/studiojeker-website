@@ -20,6 +20,7 @@ import {
   type SanityWorkProjectItem,
 } from "@/lib/sanity/work";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
+import { extractYoutubeId } from "@/lib/sanity/youtube";
 
 function clean(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -93,12 +94,15 @@ export function resolveWorkMedia(
 
   if (mediaType === "video" && fallback.type === "video") {
     const vimeoId = extractVimeoId(field.vimeoUrl ?? undefined);
+    const youtubeId = extractYoutubeId(field.youtubeUrl ?? undefined);
     const external = clean(field.externalVideoUrl ?? undefined);
-    const src = vimeoId ?? external ?? fallback.src;
-    const provider =
-      vimeoId || (field.vimeoUrl && field.vimeoUrl.includes("vimeo"))
-        ? "vimeo"
-        : external
+    const uploaded = clean(field.videoFile?.url ?? undefined);
+    const src = vimeoId ?? youtubeId ?? external ?? uploaded ?? fallback.src;
+    const provider = vimeoId
+      ? "vimeo"
+      : youtubeId
+        ? "youtube"
+        : external || uploaded
           ? "local"
           : fallback.provider;
 
@@ -118,13 +122,18 @@ export function resolveWorkMedia(
       alt: clean(field.videoAlt) ?? fallback.alt,
       duration: clean(field.duration) ?? fallback.duration,
       provider,
+      autoplay: field.videoAutoplay ?? fallback.autoplay ?? true,
+      loop: field.videoLoop ?? fallback.loop ?? false,
+      muted: field.videoMuted ?? fallback.muted ?? true,
     };
   }
 
   if (mediaType === "video" && fallback.type === "image") {
     const vimeoId = extractVimeoId(field.vimeoUrl ?? undefined);
+    const youtubeId = extractYoutubeId(field.youtubeUrl ?? undefined);
     const external = clean(field.externalVideoUrl ?? undefined);
-    const src = vimeoId ?? external;
+    const uploaded = clean(field.videoFile?.url ?? undefined);
+    const src = vimeoId ?? youtubeId ?? external ?? uploaded;
     if (!src) {
       return fallback;
     }
@@ -140,7 +149,10 @@ export function resolveWorkMedia(
       poster: poster.src,
       alt: clean(field.videoAlt) ?? fallback.alt,
       duration: clean(field.duration),
-      provider: vimeoId ? "vimeo" : "local",
+      provider: vimeoId ? "vimeo" : youtubeId ? "youtube" : "local",
+      autoplay: field.videoAutoplay ?? true,
+      loop: field.videoLoop ?? false,
+      muted: field.videoMuted ?? true,
     };
   }
 
@@ -174,6 +186,7 @@ export function resolveWorkMedia(
         return {
           src: resolved.src,
           alt: resolved.alt,
+          caption: clean(image?.caption ?? undefined),
           width: resolved.width,
           height: resolved.height,
         };
@@ -213,7 +226,11 @@ function mergeWorkItem(
   sanityItem: SanityWorkProjectItem,
   baseItem: WorkProjectItem | undefined,
   locale: Locale,
-): WorkProjectItem {
+): WorkProjectItem | null {
+  if (sanityItem.active === false) {
+    return null;
+  }
+
   const fallback = baseItem ?? {
     id: sanityItem.itemId ?? "unknown",
     title: "",
@@ -224,6 +241,7 @@ function mergeWorkItem(
     id: clean(sanityItem.itemId) ?? fallback.id,
     title:
       pickLocalized(sanityItem.title, locale, fallback.title) ?? fallback.title,
+    caption: pickLocalized(sanityItem.caption, locale, fallback.caption),
     media: resolveWorkMedia(sanityItem.media, fallback.media),
   };
 }
@@ -237,12 +255,15 @@ function mergeCategory(
     (baseCategory?.items ?? []).map((item) => [item.id, item]),
   );
 
-  const items = (sanityCategory.items ?? [])
+  const sanityItems = sanityCategory.items;
+
+  const items = (sanityItems ?? [])
     .slice()
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
     .map((item) =>
       mergeWorkItem(item, baseItemsById.get(item.itemId ?? ""), locale),
-    );
+    )
+    .filter((item): item is WorkProjectItem => item !== null);
 
   return {
     id: clean(sanityCategory.categoryId) ?? baseCategory?.id ?? "category",
@@ -250,7 +271,7 @@ function mergeCategory(
       pickLocalized(sanityCategory.title, locale, baseCategory?.title) ??
       baseCategory?.title ??
       "",
-    items: items.length > 0 ? items : (baseCategory?.items ?? []),
+    items: sanityItems != null ? items : (baseCategory?.items ?? []),
   };
 }
 
