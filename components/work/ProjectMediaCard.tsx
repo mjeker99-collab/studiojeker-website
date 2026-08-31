@@ -89,16 +89,20 @@ function MediaLightbox({
   closeLabel,
   onClose,
   children,
+  contentClassName,
 }: {
   title: string;
   closeLabel: string;
   onClose: () => void;
   children: ReactNode;
+  contentClassName?: string;
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
+    scrollYRef.current = window.scrollY;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
@@ -110,6 +114,7 @@ function MediaLightbox({
     return () => {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
+      window.scrollTo(0, scrollYRef.current);
     };
   }, [onClose]);
 
@@ -133,7 +138,10 @@ function MediaLightbox({
       >
         ×
       </button>
-      <div className={styles.lightboxContent} onClick={(event) => event.stopPropagation()}>
+      <div
+        className={contentClassName ?? styles.lightboxContent}
+        onClick={(event) => event.stopPropagation()}
+      >
         {children}
       </div>
     </div>,
@@ -165,6 +173,128 @@ function ImageLightbox({
           className={styles.lightboxImage}
           priority
         />
+      </div>
+    </MediaLightbox>
+  );
+}
+
+function SlideshowLightbox({
+  images,
+  initialIndex,
+  title,
+  closeLabel,
+  prevLabel,
+  nextLabel,
+  onClose,
+}: {
+  images: Extract<ProjectMedia, { type: "slideshow" }>["images"];
+  initialIndex: number;
+  title: string;
+  closeLabel: string;
+  prevLabel: string;
+  nextLabel: string;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const count = images.length;
+  const active = images[index];
+
+  const goPrev = useCallback(() => {
+    if (count < 2) return;
+    setIndex((current) => (current - 1 + count) % count);
+  }, [count]);
+
+  const goNext = useCallback(() => {
+    if (count < 2) return;
+    setIndex((current) => (current + 1) % count);
+  }, [count]);
+
+  useEffect(() => {
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goPrev();
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goNext();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext]);
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    pointerStart.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start || count < 2) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) goNext();
+    else goPrev();
+  };
+
+  if (!active) return null;
+
+  return (
+    <MediaLightbox
+      title={title}
+      closeLabel={closeLabel}
+      onClose={onClose}
+      contentClassName={styles.galleryLightboxContent}
+    >
+      <div
+        className={styles.galleryLightbox}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+      >
+        {count > 1 ? (
+          <button
+            type="button"
+            className={`${styles.galleryNav} ${styles.galleryNavPrev}`}
+            onClick={goPrev}
+            aria-label={prevLabel}
+          >
+            <span className={styles.galleryNavIcon} aria-hidden="true" />
+          </button>
+        ) : null}
+
+        <figure className={styles.galleryFigure}>
+          <Image
+            src={mediaPath(active.src)}
+            alt={active.alt}
+            fill
+            sizes="100vw"
+            className={styles.galleryImage}
+            priority
+          />
+          {active.caption ? (
+            <figcaption className={styles.galleryCaption}>{active.caption}</figcaption>
+          ) : null}
+        </figure>
+
+        {count > 1 ? (
+          <button
+            type="button"
+            className={`${styles.galleryNav} ${styles.galleryNavNext}`}
+            onClick={goNext}
+            aria-label={nextLabel}
+          >
+            <span className={styles.galleryNavIcon} aria-hidden="true" />
+          </button>
+        ) : null}
+
+        {count > 1 ? (
+          <p className={styles.galleryCounter} aria-live="polite">
+            {index + 1} / {count}
+          </p>
+        ) : null}
       </div>
     </MediaLightbox>
   );
@@ -317,12 +447,21 @@ function VideoMedia({
 
 function SlideshowMedia({
   media,
+  openLabel,
+  closeLabel,
+  prevLabel,
+  nextLabel,
 }: {
   media: Extract<ProjectMedia, { type: "slideshow" }>;
+  openLabel: string;
+  closeLabel: string;
+  prevLabel: string;
+  nextLabel: string;
 }) {
   const images = media.images;
   const intervalMs = media.interval ?? 4500;
   const [index, setIndex] = useState(0);
+  const [open, setOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const reduceMotion = useRef(false);
@@ -339,71 +478,89 @@ function SlideshowMedia({
     return () => window.clearInterval(id);
   }, [images.length, intervalMs, paused]);
 
-  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     pointerStart.current = { x: event.clientX, y: event.clientY };
   };
 
-  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+  const onPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
     const start = pointerStart.current;
     pointerStart.current = null;
-    if (!start || images.length < 2) return;
+    if (!start) return;
+
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-    setIndex((current) =>
-      dx < 0 ? (current + 1) % images.length : (current - 1 + images.length) % images.length,
-    );
+    const isSwipe = images.length >= 2 && Math.abs(dx) >= 40 && Math.abs(dx) >= Math.abs(dy);
+
+    if (isSwipe) {
+      setIndex((current) =>
+        dx < 0
+          ? (current + 1) % images.length
+          : (current - 1 + images.length) % images.length,
+      );
+      return;
+    }
+
+    setOpen(true);
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (images.length < 2) return;
-    if (event.key === "ArrowRight") {
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      setIndex((current) => (current + 1) % images.length);
-    }
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      setIndex((current) => (current - 1 + images.length) % images.length);
+      setOpen(true);
     }
   };
 
   const activeAlt = images[index]?.alt || media.alt || "Slideshow";
 
   return (
-    <div
-      className={styles.slideshow}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onKeyDown={onKeyDown}
-      role="group"
-      aria-roledescription="carousel"
-      aria-label={activeAlt}
-      tabIndex={0}
-    >
-      {images.map((image, i) => (
-        <Image
-          key={`${image.src}-${i}`}
-          src={mediaPath(image.src)}
-          alt={i === index ? image.alt : ""}
-          fill
-          sizes={MEDIA_SIZES}
-          className={`${styles.slide} ${i === index ? styles.slideActive : ""}`}
-          aria-hidden={i !== index}
+    <>
+      <button
+        type="button"
+        className={styles.slideshowButton}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onKeyDown={onKeyDown}
+        aria-label={openLabel}
+      >
+        {images.map((image, i) => (
+          <Image
+            key={`${image.src}-${i}`}
+            src={mediaPath(image.src)}
+            alt={i === index ? image.alt : ""}
+            fill
+            sizes={MEDIA_SIZES}
+            className={`${styles.slide} ${i === index ? styles.slideActive : ""}`}
+            aria-hidden={i !== index}
+          />
+        ))}
+        {images.length > 1 ? (
+          <div className={styles.dots} aria-hidden="true">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`${styles.dot} ${i === index ? styles.dotActive : ""}`}
+              />
+            ))}
+          </div>
+        ) : null}
+      </button>
+      <span className="visually-hidden" aria-live="polite">
+        {activeAlt}
+      </span>
+      {open ? (
+        <SlideshowLightbox
+          images={images}
+          initialIndex={index}
+          title={openLabel}
+          closeLabel={closeLabel}
+          prevLabel={prevLabel}
+          nextLabel={nextLabel}
+          onClose={() => setOpen(false)}
         />
-      ))}
-      {images.length > 1 ? (
-        <div className={styles.dots} aria-hidden="true">
-          {images.map((_, i) => (
-            <span
-              key={i}
-              className={`${styles.dot} ${i === index ? styles.dotActive : ""}`}
-            />
-          ))}
-        </div>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -417,6 +574,10 @@ export function ProjectMediaCard({ item, locale }: ProjectMediaCardProps) {
   const openLabel =
     locale === "de" ? `Bild ansehen: ${item.title}` : `View image: ${item.title}`;
   const closeLabel = locale === "de" ? "Schliessen" : "Close";
+  const prevLabel = locale === "de" ? "Vorheriges Bild" : "Previous image";
+  const nextLabel = locale === "de" ? "Nächstes Bild" : "Next image";
+  const galleryLabel =
+    locale === "de" ? `Galerie öffnen: ${item.title}` : `Open gallery: ${item.title}`;
 
   const inner =
     media.type === "image" ? (
@@ -424,7 +585,13 @@ export function ProjectMediaCard({ item, locale }: ProjectMediaCardProps) {
     ) : media.type === "video" ? (
       <VideoMedia media={media} label={playLabel} closeLabel={closeLabel} />
     ) : (
-      <SlideshowMedia media={media} />
+      <SlideshowMedia
+        media={media}
+        openLabel={galleryLabel}
+        closeLabel={closeLabel}
+        prevLabel={prevLabel}
+        nextLabel={nextLabel}
+      />
     );
 
   return (
