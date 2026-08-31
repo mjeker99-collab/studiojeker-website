@@ -35,6 +35,42 @@ const SINGLETON_DOCS = {
   },
 } as const;
 
+const WORK_AREAS = [
+  { id: "digital", title: "Digital / Social Media Marketing" },
+  { id: "business", title: "Business Communication" },
+  { id: "product", title: "Product Communication" },
+  { id: "architecture", title: "Architecture & Real Estate" },
+] as const;
+
+function workDocumentEditor(S: StructureBuilder) {
+  return S.document()
+    .schemaType(SINGLETON_DOCS.work.type)
+    .documentId(SINGLETON_DOCS.work.id)
+    .title("Work");
+}
+
+function workStructure(S: StructureBuilder) {
+  return S.listItem()
+    .title("Work")
+    .id("work-menu")
+    .child(
+      S.list()
+        .title("Work")
+        .items([
+          S.listItem()
+            .title("Page (Hero, CTA, SEO)")
+            .child(workDocumentEditor(S)),
+          S.divider(),
+          ...WORK_AREAS.map((area) =>
+            S.listItem()
+              .title(area.title)
+              .id(`work-${area.id}`)
+              .child(workDocumentEditor(S)),
+          ),
+        ]),
+    );
+}
+
 function singletonListItem(
   S: StructureBuilder,
   item: (typeof SINGLETON_DOCS)[keyof typeof SINGLETON_DOCS],
@@ -61,7 +97,7 @@ export const structure: StructureResolver = (S) =>
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
       singletonListItem(S, SINGLETON_DOCS.contact),
-      singletonListItem(S, SINGLETON_DOCS.work),
+      workStructure(S),
       S.documentTypeListItem("service").title("Services"),
       S.documentTypeListItem("project").title("Project teasers"),
       S.documentTypeListItem("teamMember").title("Team"),

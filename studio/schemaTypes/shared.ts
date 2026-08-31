@@ -297,7 +297,7 @@ export const mediaField = defineType({
 });
 
 /**
- * Work tile media — image, Vimeo video, or in-tile slideshow.
+ * Work tile media — single image, video, or in-tile slideshow.
  * Matches ProjectMediaCard types without changing frontend layout.
  */
 export const workMediaField = defineType({
@@ -307,12 +307,12 @@ export const workMediaField = defineType({
   fields: [
     defineField({
       name: "mediaType",
-      title: "Media Type",
+      title: "Type",
       type: "string",
       options: {
         list: [
-          { title: "Image", value: "image" },
-          { title: "Video (Vimeo or URL)", value: "video" },
+          { title: "Einzelbild", value: "image" },
+          { title: "Video", value: "video" },
           { title: "Slideshow", value: "slideshow" },
         ],
         layout: "radio",
@@ -337,10 +337,18 @@ export const workMediaField = defineType({
     }),
     defineField({
       name: "vimeoUrl",
-      title: "Vimeo Video",
+      title: "Vimeo URL",
       type: "string",
       description:
         "Paste a full Vimeo URL (https://vimeo.com/…) or the numeric video ID.",
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
+      name: "youtubeUrl",
+      title: "YouTube URL (optional)",
+      type: "string",
+      description:
+        "Optional YouTube URL or 11-character video ID. Used when no Vimeo URL is set.",
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
     defineField({
@@ -348,10 +356,19 @@ export const workMediaField = defineType({
       title: "External Video URL (optional)",
       type: "url",
       description:
-        "Optional direct MP4 or external video URL when not using Vimeo.",
+        "Optional direct MP4 or external video URL when not using Vimeo or YouTube.",
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
       validation: (Rule) =>
         Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+    }),
+    defineField({
+      name: "videoFile",
+      title: "Uploaded Video (optional)",
+      type: "file",
+      description:
+        "Optional self-hosted video file (MP4). Used when no Vimeo, YouTube or external URL is set.",
+      options: { accept: "video/*" },
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
     }),
     defineField({
       name: "poster",
@@ -384,10 +401,32 @@ export const workMediaField = defineType({
       validation: (Rule) => Rule.max(20),
     }),
     defineField({
+      name: "videoAutoplay",
+      title: "Autoplay in lightbox",
+      type: "boolean",
+      initialValue: true,
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
+      name: "videoLoop",
+      title: "Loop",
+      type: "boolean",
+      initialValue: false,
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
+      name: "videoMuted",
+      title: "Muted",
+      type: "boolean",
+      initialValue: true,
+      hidden: ({ parent }) => (parent?.mediaType || "image") !== "video",
+    }),
+    defineField({
       name: "slideshowImages",
       title: "Slideshow Images",
       type: "array",
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "slideshow",
+      options: { layout: "grid" },
       of: [
         {
           type: "image",
@@ -397,11 +436,17 @@ export const workMediaField = defineType({
               name: "alt",
               title: "Alt Text",
               type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "caption",
+              title: "Caption (optional)",
+              type: "string",
+              validation: (Rule) => Rule.max(160),
             }),
           ],
         },
       ],
-      validation: (Rule) => Rule.max(8),
     }),
     defineField({
       name: "slideshowAlt",
@@ -418,43 +463,53 @@ export const workMediaField = defineType({
       hidden: ({ parent }) => (parent?.mediaType || "image") !== "slideshow",
       validation: (Rule) => Rule.integer().min(1000).max(30000),
     }),
-    defineField({
-      name: "gallery",
-      title: "Additional Media (optional)",
-      type: "array",
-      description:
-        "Optional extra media for future use. The Work tile still shows one primary media block.",
-      of: [{ type: "workMediaField" }],
-    }),
   ],
   preview: {
     select: {
       mediaType: "mediaType",
       vimeoUrl: "vimeoUrl",
+      youtubeUrl: "youtubeUrl",
+      image: "image",
+      poster: "poster",
+      firstSlide: "slideshowImages.0",
     },
-    prepare({ mediaType, vimeoUrl }) {
+    prepare({ mediaType, vimeoUrl, youtubeUrl, image, poster, firstSlide }) {
       const type = mediaType || "image";
+      const thumb = image || poster || firstSlide;
       if (type === "video") {
+        const source =
+          typeof vimeoUrl === "string" && vimeoUrl
+            ? "Vimeo"
+            : typeof youtubeUrl === "string" && youtubeUrl
+              ? "YouTube"
+              : "Video";
         return {
           title: "Video",
-          subtitle:
-            typeof vimeoUrl === "string" && vimeoUrl ? vimeoUrl : "Add Vimeo URL",
+          subtitle: source,
+          media: thumb,
         };
       }
       if (type === "slideshow") {
-        return { title: "Slideshow", subtitle: "Multiple images" };
+        return { title: "Slideshow", subtitle: "Multiple images", media: thumb };
       }
-      return { title: "Image", subtitle: "Edit image below" };
+      return { title: "Einzelbild", subtitle: "Single image", media: thumb };
     },
   },
 });
 
-/** Single Work / portfolio tile within a category grid. */
+/** Single Work sample within a service-area grid. */
 export const workProjectItem = defineType({
   name: "workProjectItem",
-  title: "Work Tile",
+  title: "Work Item",
   type: "object",
   fields: [
+    defineField({
+      name: "active",
+      title: "Active",
+      type: "boolean",
+      initialValue: true,
+      description: "Inactive items stay in the CMS but are hidden on the website.",
+    }),
     defineField({
       name: "itemId",
       title: "Item ID",
@@ -464,47 +519,55 @@ export const workProjectItem = defineType({
     }),
     defineField({
       name: "title",
-      title: "Accessible Title",
+      title: "Title / Label",
       type: "localizedString",
       description:
-        "Screen-reader label for the tile. Usually matches the service category name.",
+        "Short label shown under the tile, e.g. Business Portraits or Corporate Film.",
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "subtitle",
-      title: "Subtitle (optional)",
+      name: "caption",
+      title: "Media Caption (optional)",
       type: "localizedString",
-    }),
-    defineField({
-      name: "description",
-      title: "Description (optional)",
-      type: "localizedText",
-    }),
-    defineField({
-      name: "client",
-      title: "Client (optional)",
-      type: "string",
-      validation: (Rule) => Rule.max(120),
-    }),
-    defineField({
-      name: "year",
-      title: "Year (optional)",
-      type: "string",
-      validation: (Rule) => Rule.max(10),
-    }),
-    defineField({
-      name: "href",
-      title: "Link (optional)",
-      type: "string",
-      description: "Optional internal path or URL. Work tiles do not navigate by default.",
-      validation: (Rule) => Rule.custom((value) => validateOptionalLink(value)),
+      description: "Optional short caption for image or video. Not shown on Work tiles.",
     }),
     defineField({
       name: "media",
-      title: "Tile Media",
+      title: "Media",
       type: "workMediaField",
       validation: (Rule) => Rule.required(),
     }),
     sortOrderField(),
+    defineField({
+      name: "subtitle",
+      title: "Subtitle (legacy)",
+      type: "localizedString",
+      hidden: true,
+    }),
+    defineField({
+      name: "description",
+      title: "Description (legacy)",
+      type: "localizedText",
+      hidden: true,
+    }),
+    defineField({
+      name: "client",
+      title: "Client (legacy)",
+      type: "string",
+      hidden: true,
+    }),
+    defineField({
+      name: "year",
+      title: "Year (legacy)",
+      type: "string",
+      hidden: true,
+    }),
+    defineField({
+      name: "href",
+      title: "Link (legacy)",
+      type: "string",
+      hidden: true,
+    }),
   ],
   preview: {
     select: {
@@ -512,11 +575,23 @@ export const workProjectItem = defineType({
       titleEn: "title.en",
       itemId: "itemId",
       mediaType: "media.mediaType",
+      active: "active",
+      image: "media.image",
+      poster: "media.poster",
+      firstSlide: "media.slideshowImages.0",
     },
-    prepare({ titleDe, titleEn, itemId, mediaType }) {
+    prepare({ titleDe, titleEn, itemId, mediaType, active, image, poster, firstSlide }) {
+      const typeLabel =
+        mediaType === "slideshow"
+          ? "Slideshow"
+          : mediaType === "video"
+            ? "Video"
+            : "Einzelbild";
+      const status = active === false ? "Inactive" : "Active";
       return {
-        title: titleDe || titleEn || itemId || "Work tile",
-        subtitle: [itemId, mediaType || "image"].filter(Boolean).join(" · "),
+        title: titleDe || titleEn || itemId || "Work item",
+        subtitle: [typeLabel, status].join(" · "),
+        media: image || poster || firstSlide,
       };
     },
   },
@@ -551,10 +626,10 @@ export const workCategory = defineType({
     }),
     defineField({
       name: "items",
-      title: "Work Tiles",
+      title: "Work Items",
       type: "array",
+      description: "Unlimited work samples for this service area. Drag to reorder.",
       of: [{ type: "workProjectItem" }],
-      validation: (Rule) => Rule.max(8),
     }),
     sortOrderField(),
   ],

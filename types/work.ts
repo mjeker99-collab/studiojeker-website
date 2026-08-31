@@ -1,6 +1,7 @@
 export type ProjectMediaImage = {
   src: string;
   alt: string;
+  caption?: string;
   width?: number;
   height?: number;
 };
@@ -14,17 +15,21 @@ export type ProjectMedia =
       type: "image";
       src: string;
       alt: string;
+      caption?: string;
       width?: number;
       height?: number;
     }
   | {
       type: "video";
-      /** Local MP4 path, Vimeo numeric id, or Vimeo URL */
+      /** Local MP4 path, Vimeo/YouTube id or URL */
       src: string;
       poster: string;
       alt?: string;
       duration?: string;
-      provider?: "local" | "vimeo";
+      provider?: "local" | "vimeo" | "youtube";
+      autoplay?: boolean;
+      loop?: boolean;
+      muted?: boolean;
     }
   | {
       type: "slideshow";
@@ -37,8 +42,10 @@ export type ProjectMedia =
 
 export type WorkProjectItem = {
   id: string;
-  /** Accessible label only — no invented client/project names in UI. */
+  /** Visible label under the tile. */
   title: string;
+  /** Optional media caption (reserved; not shown on tiles). */
+  caption?: string;
   media: ProjectMedia;
 };
 

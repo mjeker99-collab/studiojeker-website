@@ -19,18 +19,25 @@ export type SanityWorkMediaField = {
   mediaType?: "image" | "video" | "slideshow" | null;
   image?: SanityImageProjection;
   vimeoUrl?: string | null;
+  youtubeUrl?: string | null;
   externalVideoUrl?: string | null;
+  videoFile?: { url?: string | null } | null;
   poster?: SanityImageProjection;
   videoAlt?: string | null;
   duration?: string | null;
-  slideshowImages?: SanityImageProjection[] | null;
+  videoAutoplay?: boolean | null;
+  videoLoop?: boolean | null;
+  videoMuted?: boolean | null;
+  slideshowImages?: (SanityImageProjection & { caption?: string | null })[] | null;
   slideshowAlt?: string | null;
   slideshowInterval?: number | null;
 } | null;
 
 export type SanityWorkProjectItem = {
   itemId?: string | null;
+  active?: boolean | null;
   title?: SanityLocalizedString;
+  caption?: SanityLocalizedString;
   subtitle?: SanityLocalizedString;
   description?: SanityLocalizedText;
   client?: string | null;
@@ -83,7 +90,9 @@ export const workPageQuery = groq`*[_id == $id && _type == "work"][0]{
     sortOrder,
     items[]{
       itemId,
+      active,
       title${localizedStringProjection},
+      caption${localizedStringProjection},
       subtitle${localizedStringProjection},
       description${localizedTextProjection},
       client,

@@ -143,14 +143,28 @@ export const sanityMediaProjection = `{
 export const sanityWorkMediaProjection = `{
   mediaType,
   vimeoUrl,
+  youtubeUrl,
   externalVideoUrl,
   videoAlt,
   duration,
+  videoAutoplay,
+  videoLoop,
+  videoMuted,
+  videoFile{
+    ...,
+    "url": asset->url
+  },
   image${sanityImageProjection},
   poster${sanityImageProjection},
   slideshowAlt,
   slideshowInterval,
-  "slideshowImages": slideshowImages[]${sanityImageProjection}
+  "slideshowImages": slideshowImages[]{
+    ...,
+    "url": asset->url,
+    "dimensions": asset->metadata.dimensions,
+    "alt": coalesce(alt, asset->altText),
+    caption
+  }
 }`;
 
 /** GROQ fragment for localized string/text objects. */

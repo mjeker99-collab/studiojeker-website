@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import { WorkPage } from "@/components/work/WorkPage";
+import { WorkPageLive } from "@/components/work/WorkPageLive";
 import { getResolvedWorkPageContent } from "@/lib/content/work-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -20,7 +20,7 @@ export default async function EnglishWorkPage() {
 
   return (
     <SiteChrome locale="en">
-      <WorkPage content={content} locale="en" />
+      <WorkPageLive content={content} locale="en" />
     </SiteChrome>
   );
 }

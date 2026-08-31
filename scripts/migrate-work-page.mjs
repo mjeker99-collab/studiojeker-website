@@ -331,6 +331,13 @@ async function buildMedia(item) {
 }
 
 async function main() {
+  const existing = await client.getDocument(WORK_ID).catch(() => null);
+  if (existing) {
+    console.log(`Work document already exists (${WORK_ID}). Skipping createOrReplace.`);
+    console.log("Existing Sanity data was not modified.");
+    return;
+  }
+
   const categories = [];
   for (const category of CATEGORIES) {
     const items = [];
@@ -339,6 +346,7 @@ async function main() {
         _type: "workProjectItem",
         _key: item.itemId,
         itemId: item.itemId,
+        active: true,
         sortOrder: item.sortOrder,
         title: {
           _type: "localizedString",
