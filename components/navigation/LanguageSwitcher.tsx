@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Locale } from "@/types/i18n";
-import { localeLabels, localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
+import { getAlternateLocalePath, localeLabels } from "@/lib/i18n/config";
 import styles from "./LanguageSwitcher.module.css";
 
 type LanguageSwitcherProps = {
@@ -22,16 +22,17 @@ export function LanguageSwitcher({
   inverse = false,
 }: LanguageSwitcherProps) {
   const pathname = usePathname() || "/";
-  const pathWithoutLocale = stripLocalePrefix(pathname);
   const nextLocale: Locale = locale === "de" ? "en" : "de";
 
   return (
     <div
-      className={[styles.switcher, inverse ? styles.inverse : ""].filter(Boolean).join(" ")}
+      className={[styles.switcher, inverse ? styles.inverse : ""]
+        .filter(Boolean)
+        .join(" ")}
       aria-label={label}
     >
       <Link
-        href={localizePathname(pathWithoutLocale, nextLocale)}
+        href={getAlternateLocalePath(pathname, nextLocale)}
         className={styles.link}
         hrefLang={nextLocale === "de" ? "de-CH" : "en"}
         aria-label={`${label}: ${localeLabels[nextLocale]}`}

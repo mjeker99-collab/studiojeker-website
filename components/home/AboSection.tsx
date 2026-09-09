@@ -1,44 +1,15 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
 import type { HomepageContent } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { VimeoShowreel } from "@/components/media/VimeoShowreel";
+import { aboBenefitIcons } from "@/components/home/aboBenefitIcons";
 import styles from "./AboSection.module.css";
 
 type AboSectionProps = {
   content: HomepageContent["abo"];
-};
-
-const benefitIcons: Record<string, ReactNode> = {
-  continuous: (
-    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-      <rect x="12" y="10" width="24" height="28" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M18 8v4M30 8v4M16 20h16M16 26h10" stroke="currentColor" strokeWidth="1.75" />
-    </svg>
-  ),
-  system: (
-    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-      {/* Centered stack — same optical middle as sibling icons */}
-      <path d="M12 28l12-6 12 6-12 6-12-6Z" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 20l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 14l12-6 12 6" stroke="currentColor" strokeWidth="1.75" />
-    </svg>
-  ),
-  visibility: (
-    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-      <path d="M12 30l7-9 6 5 6-10 5 6" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M10 12h28v24H10V12Z" stroke="currentColor" strokeWidth="1.75" />
-    </svg>
-  ),
-  planning: (
-    <svg viewBox="0 0 48 48" width="48" height="48" fill="none" aria-hidden="true">
-      <rect x="10" y="16" width="28" height="18" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M10 22h28M16 28h8" stroke="currentColor" strokeWidth="1.75" />
-    </svg>
-  ),
 };
 
 export function AboSection({ content }: AboSectionProps) {
@@ -70,7 +41,7 @@ export function AboSection({ content }: AboSectionProps) {
           <div className={styles.benefits} role="list">
             {content.benefits.map((benefit) => (
               <article key={benefit.id} className={styles.benefit} role="listitem">
-                <span className={styles.icon}>{benefitIcons[benefit.id]}</span>
+                <span className={styles.icon}>{aboBenefitIcons[benefit.id]}</span>
                 <h3 className={styles.benefitTitle}>{benefit.title}</h3>
                 <p className={styles.benefitText}>{benefit.description}</p>
               </article>

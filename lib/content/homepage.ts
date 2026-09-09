@@ -1,6 +1,6 @@
 import type { Locale } from "@/types/i18n";
 import type { HomepageContent } from "@/types/homepage";
-import { localizePathname } from "@/lib/i18n/config";
+import { getAboPath, localizePathname } from "@/lib/i18n/config";
 import { getClientLogos } from "@/lib/content/clients";
 
 /**
@@ -12,7 +12,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
   const contact = localizePathname("/contact", locale);
   const work = localizePathname("/work", locale);
   const about = localizePathname("/about", locale);
-  const abo = localizePathname("/solutions/sichtbarkeit-im-abo", locale);
+  const abo = getAboPath(locale);
 
   const architectureHref = localizePathname(
     "/services/architecture",

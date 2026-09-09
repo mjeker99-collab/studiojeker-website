@@ -12,6 +12,11 @@ type BuildMetadataOptions = {
   wordpressSeo?: WpSeoFields;
   /** Absolute or site-relative Open Graph image path. */
   ogImagePath?: string;
+  /**
+   * When DE/EN use different pathnames (translated slugs), pass both here
+   * so hreflang alternates stay correct.
+   */
+  languageAlternates?: { de: string; en: string };
 };
 
 function absoluteUrl(pathname: string): string {
@@ -29,17 +34,23 @@ export function buildPageMetadata({
   description,
   wordpressSeo,
   ogImagePath,
+  languageAlternates,
 }: BuildMetadataOptions): Metadata {
-  const localizedPath = localizePathname(pathname, locale);
+  const localizedPath = languageAlternates
+    ? languageAlternates[locale]
+    : localizePathname(pathname, locale);
   const canonicalPath = wordpressSeo?.canonical || localizedPath;
   const pageTitle = wordpressSeo?.title || title || siteConfig.name;
   const pageDescription =
     wordpressSeo?.description || description || siteConfig.positioning;
 
+  const dePath = languageAlternates?.de ?? localizePathname(pathname, "de");
+  const enPath = languageAlternates?.en ?? localizePathname(pathname, "en");
+
   const languages: Record<string, string> = {
-    "de-CH": absoluteUrl(localizePathname(pathname, "de")),
-    en: absoluteUrl(localizePathname(pathname, "en")),
-    "x-default": absoluteUrl(localizePathname(pathname, "de")),
+    "de-CH": absoluteUrl(dePath),
+    en: absoluteUrl(enPath),
+    "x-default": absoluteUrl(dePath),
   };
 
   const ogImage =

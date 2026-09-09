@@ -7,7 +7,7 @@ import type {
   HomepageProject,
   HomepageService,
 } from "@/types/homepage";
-import { localizePathname } from "@/lib/i18n/config";
+import { localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
 import {
   type SanityHomepage,
   type SanityHomepageBenefitItem,
@@ -118,6 +118,40 @@ function resolveHref(
 ): string {
   const value = clean(href);
   if (!value) {
+    return fallback;
+  }
+
+  return localizePathname(value, locale);
+}
+
+const ABO_PATH_SLUGS = new Set([
+  "/solutions/sichtbarkeit-im-abo",
+  "/content-abo",
+  "/content-subscription",
+  "/de/content-abo",
+]);
+
+/**
+ * Abo CTA destinations use translated slugs (DE `/content-abo`,
+ * EN `/en/content-subscription`). Remap known abo paths to the
+ * locale-correct landing URL; keep other editor links as-is.
+ */
+function resolveAboCtaHref(
+  href: string | null | undefined,
+  locale: Locale,
+  fallback: string,
+): string {
+  const value = clean(href);
+  if (!value) {
+    return fallback;
+  }
+
+  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+    return value;
+  }
+
+  const stripped = stripLocalePrefix(value).replace(/\/$/, "") || "/";
+  if (ABO_PATH_SLUGS.has(stripped)) {
     return fallback;
   }
 
@@ -599,7 +633,7 @@ export function mergeSanityHomepage(
   const aboCtaLabel = pickLocalized(doc.aboSection?.cta?.label, locale);
   if (aboCtaLabel) merged.abo.cta.label = aboCtaLabel;
 
-  merged.abo.cta.href = resolveHref(
+  merged.abo.cta.href = resolveAboCtaHref(
     doc.aboSection?.cta?.href,
     locale,
     base.abo.cta.href,
