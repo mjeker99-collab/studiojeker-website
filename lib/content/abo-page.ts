@@ -42,7 +42,8 @@ export type AboPageContent = {
     body: string;
     cta: { label: string; href: string };
     media: HomepageMedia;
-    videoId: string;
+    /** Vimeo id when Sanity media type is video; empty when image-only. */
+    videoId?: string;
   };
   closing: {
     label: string;

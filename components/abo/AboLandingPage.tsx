@@ -49,6 +49,7 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
               <div className={heroStyles.cyanBar} aria-hidden="true" />
               <div className={heroStyles.photo}>
                 <Image
+                  key={content.hero.media.src}
                   src={mediaPath(content.hero.media.src)}
                   alt={content.hero.media.alt}
                   fill
@@ -152,7 +153,10 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
         </Container>
       </section>
 
-      <ShowreelSection content={content.showreel} />
+      <ShowreelSection
+        key={`${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
+        content={content.showreel}
+      />
 
       <section
         className={styles.closing}

@@ -313,9 +313,11 @@ export function mergeSanityAbo(
       doc.showreelSection.media,
     );
     merged.showreel.media = showreelMedia.media;
-    if (showreelMedia.videoId) {
-      merged.showreel.videoId = showreelMedia.videoId;
-    }
+    // Always assign — same as homepage merge. A truthy-only update left the
+    // hardcoded `showreels.homepage` Vimeo ID in place when Studio switched
+    // the block to image-only (or cleared the Vimeo URL), so showreel media
+    // edits appeared to have no effect.
+    merged.showreel.videoId = showreelMedia.videoId ?? "";
   }
 
   const closingLabel = pickLocalized(doc.closingSection?.label, locale);
