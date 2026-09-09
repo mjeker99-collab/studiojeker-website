@@ -86,23 +86,22 @@ export function resolveSanityMedia(
     return { media: fallback };
   }
 
+  const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
+
   // Incomplete CMS rows may omit mediaType while still carrying an image/video.
-  // Prefer the explicit type; otherwise infer so we do not fall back to local
-  // architecture placeholders when Studio media is present.
-  const mediaType: "image" | "video" | null =
-    field.mediaType ??
-    (field.vimeoUrl
-      ? "video"
-      : field.image?.asset?._ref || field.image?.url
-        ? "image"
-        : null);
+  // When a playable Vimeo URL is present, prefer video even if mediaType was
+  // left on "image" (Studio hides the URL field in image mode but keeps data).
+  // Image-only presentation requires clearing the Vimeo URL in Sanity.
+  const mediaType: "image" | "video" | null = videoId
+    ? "video"
+    : (field.mediaType ??
+      (field.image?.asset?._ref || field.image?.url ? "image" : null));
 
   if (!mediaType) {
     return { media: fallback };
   }
 
   if (mediaType === "video") {
-    const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
     const posterSource =
       options?.preferMobilePoster && field.mobilePoster
         ? field.mobilePoster

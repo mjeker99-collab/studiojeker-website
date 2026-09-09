@@ -188,11 +188,11 @@ export function mergeSanityService(
     );
   }
 
-  // Always assign when Studio provides a value (including clear → empty),
-  // matching homepage/abo merge behaviour for video ↔ image switches.
+  // Always assign when Studio provides a value (including clear → empty).
+  // Never pass a raw non-ID URL into the player (breaks the iframe src).
   if (doc.showreelVideoId != null) {
-    merged.showreel.videoId =
-      extractVimeoId(doc.showreelVideoId) ?? clean(doc.showreelVideoId) ?? "";
+    const raw = clean(doc.showreelVideoId) ?? "";
+    merged.showreel.videoId = extractVimeoId(raw) ?? (/^\d+(\/[a-zA-Z0-9]+)?$/.test(raw) ? raw : "");
   }
 
   const hasAboutImage = Boolean(

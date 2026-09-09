@@ -74,15 +74,25 @@ export function resolveWorkMedia(
     return fallback;
   }
 
+  const vimeoId = extractVimeoId(field.vimeoUrl ?? undefined);
+  const youtubeId = extractYoutubeId(field.youtubeUrl ?? undefined);
+  const hasVideoSource = Boolean(
+    vimeoId ||
+      youtubeId ||
+      clean(field.externalVideoUrl ?? undefined) ||
+      clean(field.videoFile?.url ?? undefined),
+  );
+
+  // Prefer video when a playable source exists (even if mediaType was left on image).
   const mediaType =
-    field.mediaType ??
-    (field.vimeoUrl || field.externalVideoUrl
+    hasVideoSource
       ? "video"
-      : (field.slideshowImages?.length ?? 0) > 0
-        ? "slideshow"
-        : field.image?.asset?._ref || field.image?.url
-          ? "image"
-          : null);
+      : (field.mediaType ??
+        ((field.slideshowImages?.length ?? 0) > 0
+          ? "slideshow"
+          : field.image?.asset?._ref || field.image?.url
+            ? "image"
+            : null));
 
   if (!mediaType) {
     return fallback;
@@ -93,8 +103,6 @@ export function resolveWorkMedia(
   }
 
   if (mediaType === "video" && fallback.type === "video") {
-    const vimeoId = extractVimeoId(field.vimeoUrl ?? undefined);
-    const youtubeId = extractYoutubeId(field.youtubeUrl ?? undefined);
     const external = clean(field.externalVideoUrl ?? undefined);
     const uploaded = clean(field.videoFile?.url ?? undefined);
     const src = vimeoId ?? youtubeId ?? external ?? uploaded ?? fallback.src;
@@ -129,8 +137,6 @@ export function resolveWorkMedia(
   }
 
   if (mediaType === "video" && fallback.type === "image") {
-    const vimeoId = extractVimeoId(field.vimeoUrl ?? undefined);
-    const youtubeId = extractYoutubeId(field.youtubeUrl ?? undefined);
     const external = clean(field.externalVideoUrl ?? undefined);
     const uploaded = clean(field.videoFile?.url ?? undefined);
     const src = vimeoId ?? youtubeId ?? external ?? uploaded;

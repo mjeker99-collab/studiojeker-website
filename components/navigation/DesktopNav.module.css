@@ -43,7 +43,7 @@
 .link:hover,
 .link[aria-current="page"],
 .link[aria-current="true"] {
-  color: inherit;
+  color: var(--color-cyan);
 }
 
 .link:hover::after,
