@@ -13,7 +13,7 @@ export function SectionLabel({
   flush = false,
 }: SectionLabelProps) {
   return (
-    <p
+    <div
       className={[
         styles.label,
         inverse ? styles.inverse : "",
@@ -24,6 +24,6 @@ export function SectionLabel({
     >
       <CyanBar orientation="horizontal" />
       <span>{children}</span>
-    </p>
+    </div>
   );
 }

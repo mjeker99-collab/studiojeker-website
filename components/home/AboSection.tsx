@@ -22,10 +22,10 @@ export function AboSection({ content }: AboSectionProps) {
       <Reveal>
         <div className={styles.grid}>
           <div className={styles.intro}>
-            <p className={styles.label}>
+            <div className={styles.label}>
               <CyanBar orientation="horizontal" animated={false} className={styles.labelBar} />
               <span>{content.headline}</span>
-            </p>
+            </div>
             <h2 id="home-abo-title" className={styles.headline}>
               {content.headline}
               <span className={styles.accent}>.</span>
