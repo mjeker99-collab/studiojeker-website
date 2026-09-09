@@ -170,19 +170,32 @@ Never commit FTP credentials. Never reuse production FTP credentials here.
 ## Sanity publish → staging (webhook)
 
 Sanity content is baked into the static export at **build time** (`output: "export"`).
-A publish therefore must trigger a rebuild + FTP deploy. This uses the **same**
+A publish therefore should trigger a rebuild + FTP deploy. This uses the **same**
 workflow as code deploys via GitHub `repository_dispatch`.
+
+**Also:** same-origin PHP live proxies (`/api/homepage.php`, `/api/abo-page.php`,
+`/api/contact-page.php`, `/api/work-page.php`, `/api/service-page.php`) refresh
+published CMS content in the browser within seconds — even before the webhook
+deploy finishes. Hard-refresh staging after publish if the first paint looks stale.
 
 ### Architecture
 
 ```text
-Sanity Studio Publish (homepage)
-  → Sanity webhook (GROQ filter: homepage, published only)
-  → POST GitHub repository_dispatch
+Sanity Studio Publish
+  → (seconds) Browser GET /api/*-page.php → Sanity live API → client merge
+  → (minutes) Sanity webhook → GitHub repository_dispatch
   → Deploy staging (Metanet) workflow
-  → npm run build (fetches Sanity production)
+  → npm run build (fetches Sanity production, useCdn: false)
   → FTPS upload of out/ → staging2026.studiojeker.ch
 ```
+
+### Stale-deploy guard (required)
+
+The workflow **refuses FTPS** when the run’s commit is behind `origin/main`.
+This blocks old workflow re-runs from overwriting a newer staging tree.
+
+Do **not** re-run ancient “Deploy staging” jobs from the Actions history.
+Use **workflow_dispatch** on current `main`, or push/merge to `main`.
 
 ### Manual setup required (not automated in this repo)
 
@@ -198,9 +211,11 @@ Do **not** put GitHub tokens in the Next.js app, Studio client code, or git.
 4. Store the token only in the Sanity webhook Authorization header (Sanity project UI).
    Rotate if leaked. Never commit it.
 
-#### B) Create the Sanity webhook
+#### B) Create Sanity webhooks
 
-In [Sanity Manage](https://www.sanity.io/manage) → project **tgx6e6jg** → **API** → **Webhooks** → Create:
+In [Sanity Manage](https://www.sanity.io/manage) → project **tgx6e6jg** → **API** → **Webhooks**.
+
+Minimum (homepage) — keep or create:
 
 | Setting | Value |
 |---------|--------|
@@ -208,13 +223,11 @@ In [Sanity Manage](https://www.sanity.io/manage) → project **tgx6e6jg** → **
 | Dataset | `production` |
 | URL | `https://api.github.com/repos/mjeker99-collab/studiojeker-website/dispatches` |
 | Method | `POST` |
-| Trigger on | Create + Update (and Delete if you want rebuilds on removal) |
+| Trigger on | Create + Update |
 | Filter (GROQ) | `!(_id in path("drafts.**")) && _type == "homepage"` |
-| Projection | See JSON body below |
-| HTTP headers | See below |
 | Status | Enabled |
 
-**Projection / body** (must be valid JSON for `repository_dispatch`):
+**Projection / body:**
 
 ```groq
 {
@@ -228,9 +241,20 @@ In [Sanity Manage](https://www.sanity.io/manage) → project **tgx6e6jg** → **
 }
 ```
 
-If the Sanity UI expects a projection that returns the webhook payload shape
-supported by your Sanity plan, use the equivalent “static” JSON body with the
-same `event_type` and `client_payload.documentType: "homepage"`.
+**Recommended additional webhooks** (same URL/headers, different filter + event_type):
+
+| Name | GROQ filter `_type == …` | `event_type` | `documentType` |
+|------|--------------------------|--------------|----------------|
+| Content Abo | `abo` | `sanity-abo-published` | `abo` |
+| Contact | `contact` | `sanity-contact-published` | `contact` |
+| Work | `work` | `sanity-work-published` | `work` |
+| Service | `service` | `sanity-service-published` | `service` |
+
+Optional single catch-all webhook:
+
+| Filter | `!(_id in path("drafts.**")) && _type in ["homepage","abo","contact","work","service"]` |
+| event_type | `sanity-cms-published` |
+| documentType | `_type` |
 
 **HTTP headers:**
 
@@ -243,24 +267,16 @@ Authorization: Bearer <GITHUB_TOKEN_FROM_STEP_A>
 
 #### C) After the webhook exists
 
-1. Merge the workflow PR that listens for `sanity-homepage-published`.
+1. Merge the workflow that listens for the event types above.
 2. In Sanity Studio, publish a harmless Homepage text change.
 3. Confirm Actions → **Deploy staging (Metanet)** starts with event `repository_dispatch`.
 4. After the job is green, hard-refresh staging and verify the text.
-5. Restore the original text, publish again, and confirm a second deploy.
+5. Confirm `GET /api/homepage.php` returns JSON `{ "ok": true, "document": … }`.
 
 ### Expected Publish → Visible delay
 
-Typically **3–8 minutes** (webhook → queue → `npm ci` + build → FTPS mirror).
-Concurrency group `deploy-staging-metanet` does not cancel in-progress runs, so
-rapid successive publishes queue rather than interrupt.
-
-### Extending later (not in this task)
-
-Add more `repository_dispatch` types (or broaden the GROQ filter) for `about`,
-`service`, `project`, `teamMember`, `client`, `globalSettings` when those pages
-are fully CMS-driven on staging. Content Abo already supports
-`sanity-abo-published` (document type `abo`) in addition to the Homepage webhook.
+- **Live proxy:** usually **under a few seconds** (hard-refresh / tab focus).
+- **Webhook rebuild:** typically **3–8 minutes** (queue → `npm ci` + build → FTPS).
 
 ### FTP path notes
 
@@ -287,6 +303,9 @@ The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirro
 | Homepage CMS live refresh | GET same-origin `/api/homepage.php` (PHP → Sanity live API); client merges without redeploy |
 | Contact CMS live refresh | GET same-origin `/api/contact-page.php` (PHP → Sanity live API); separate from form `contact.php` |
 | Content Abo CMS live refresh | GET same-origin `/api/abo-page.php` (PHP → Sanity live API); singleton `_id: abo` |
+| Work CMS live refresh | GET same-origin `/api/work-page.php` |
+| Service CMS live refresh | GET same-origin `/api/service-page.php` |
+| Stale deploy protection | Workflow aborts if run SHA ≠ `origin/main` tip |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
 

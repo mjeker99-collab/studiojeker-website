@@ -4,11 +4,18 @@
 # Triggers:
 #   A) push to main          — code changes rebuild + deploy staging
 #   B) workflow_dispatch     — manual Actions run (requires confirm_target)
-#   C) repository_dispatch   — Sanity CMS publish webhook (homepage / content abo)
+#   C) repository_dispatch   — Sanity CMS publish webhooks
 #
-# Sanity does not call this workflow directly from the repo.
-# Configure the Sanity → GitHub webhook in the Sanity project UI (see
-# docs/METANET_STATIC_DEPLOYMENT.md). Do not commit tokens.
+# Architecture (static export on Apache):
+#   - Build bakes published Sanity into HTML (useCdn: false).
+#   - Same-origin PHP proxies (/api/*-page.php) refresh CMS content in the
+#     browser without waiting for a redeploy.
+#   - Webhooks rebuild baked HTML / SEO so first paint stays current.
+#
+# Critical guard:
+#   Refuse FTPS upload when this run's commit is behind origin/main.
+#   Prevents stale re-runs / queued older pushes from overwriting a newer deploy
+#   (observed 2026-09-09: run attempt of #63 @ 1ceaf3f overwrote #66 @ 631b6b1).
 
 name: Deploy staging (Metanet)
 
@@ -24,13 +31,18 @@ on:
         required: true
         type: string
 
-  # Fired by Sanity webhook → GitHub repository_dispatch API.
-  # Homepage + Content Abo rebuild baked HTML; live PHP proxies refresh sooner.
+  # Sanity → GitHub repository_dispatch (configure webhooks in Sanity Manage).
   repository_dispatch:
     types:
       - sanity-homepage-published
       - sanity-abo-published
+      - sanity-contact-published
+      - sanity-work-published
+      - sanity-service-published
+      - sanity-cms-published
 
+# Keep cancel-in-progress false so an in-flight FTPS mirror is not interrupted
+# mid-upload (partial tree). Stale runs are blocked by the tip-of-main guard.
 concurrency:
   group: deploy-staging-metanet
   cancel-in-progress: false
@@ -71,18 +83,17 @@ jobs:
               ;;
             repository_dispatch)
               case "${DISPATCH_TYPE}" in
-                sanity-homepage-published|sanity-abo-published) ;;
+                sanity-homepage-published|sanity-abo-published|sanity-contact-published|sanity-work-published|sanity-service-published|sanity-cms-published) ;;
                 *)
                   echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
                   exit 1
                   ;;
               esac
-              # Optional defence-in-depth when the Sanity webhook sends client_payload.
               if [ -n "${CLIENT_DOCUMENT_TYPE}" ]; then
                 case "${CLIENT_DOCUMENT_TYPE}" in
-                  homepage|abo) ;;
+                  homepage|abo|contact|work|service|client|project|cms) ;;
                   *)
-                    echo "::error::Refusing deploy. client_payload.documentType must be 'homepage' or 'abo' (got '${CLIENT_DOCUMENT_TYPE}')."
+                    echo "::error::Refusing deploy. Unsupported client_payload.documentType '${CLIENT_DOCUMENT_TYPE}'."
                     exit 1
                     ;;
                 esac
@@ -99,8 +110,44 @@ jobs:
               ;;
           esac
 
+      # CMS webhooks always build tip of main. Push/dispatch re-runs of old SHAs
+      # are rejected after fetch so they cannot FTPS-overwrite a newer staging.
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'repository_dispatch' && 'main' || github.sha }}
+          fetch-depth: 0
+
+      - name: Refuse stale / superseded deploys
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          TIP="$(git rev-parse origin/main)"
+          HEAD="$(git rev-parse HEAD)"
+          echo "origin/main tip: ${TIP}"
+          echo "Checked-out HEAD: ${HEAD}"
+          echo "GITHUB_SHA: ${GITHUB_SHA}"
+
+          if [ "${EVENT_NAME}" = "repository_dispatch" ]; then
+            if [ "${HEAD}" != "${TIP}" ]; then
+              echo "Resetting to origin/main tip for CMS rebuild"
+              git checkout --force "${TIP}"
+            fi
+            echo "CMS webhook deploy will build ${TIP}"
+            exit 0
+          fi
+
+          if [ "${HEAD}" != "${TIP}" ] || [ "${GITHUB_SHA}" != "${TIP}" ]; then
+            echo "::error::Refusing stale deploy."
+            echo "This run would build ${GITHUB_SHA}, but origin/main is ${TIP}."
+            echo "A newer commit already exists — allowing this FTPS upload would overwrite staging with older code/content."
+            echo "Re-run Deploy staging on the latest main commit instead of re-running an old workflow."
+            exit 1
+          fi
+
+          echo "Deploy SHA matches origin/main tip — safe to continue."
 
       - name: Setup Node.js LTS
         uses: actions/setup-node@v4
@@ -148,6 +195,10 @@ jobs:
             echo "::error::out/api/service-page.php is missing — Service live proxy must be present."
             exit 1
           fi
+          if [ ! -f "out/api/work-page.php" ]; then
+            echo "::error::out/api/work-page.php is missing — Work live proxy must be present."
+            exit 1
+          fi
           if [ ! -f "out/api/abo-page.php" ]; then
             echo "::error::out/api/abo-page.php is missing — Content Abo live proxy must be present."
             exit 1
@@ -161,6 +212,20 @@ jobs:
           echo "Hidden export files:"
           find out -maxdepth 2 -name '.*' -type f | sort
           ls -la out | head -40
+
+      - name: Re-check tip of main before FTPS
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          TIP="$(git rev-parse origin/main)"
+          HEAD="$(git rev-parse HEAD)"
+          if [ "${EVENT_NAME}" != "repository_dispatch" ] && [ "${HEAD}" != "${TIP}" ]; then
+            echo "::error::main moved to ${TIP} during this build (was ${HEAD}). Aborting FTPS to avoid overwriting a newer deploy."
+            exit 1
+          fi
+          echo "Pre-FTPS tip check OK (${HEAD})"
 
       - name: Deploy contents of out/ to staging FTPS (lftp)
         env:

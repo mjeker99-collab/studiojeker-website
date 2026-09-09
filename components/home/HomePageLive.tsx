@@ -95,21 +95,21 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
   return (
     <>
       <HeroSection
-        key={`hero-${resolved.hero.media.src}-${resolved.hero.videoId ?? "image"}`}
+        key={`hero-${resolved.hero.headline}-${resolved.hero.media.src}-${resolved.hero.videoId ?? "image"}`}
         content={resolved.hero}
       />
       <ServicesSection content={resolved.services} />
       <ShowreelSection
-        key={`showreel-${resolved.showreel.media.src}-${resolved.showreel.videoId ?? "image"}`}
+        key={`showreel-${resolved.showreel.headline}-${resolved.showreel.media.src}-${resolved.showreel.videoId ?? "image"}`}
         content={resolved.showreel}
       />
       <ProjectsSection content={resolved.projects} />
       <AboSection
-        key={`abo-${resolved.abo.media.src}-${resolved.abo.videoId ?? "image"}`}
+        key={`abo-${resolved.abo.headline}-${resolved.abo.media.src}-${resolved.abo.videoId ?? "image"}`}
         content={resolved.abo}
       />
       <AboutSection
-        key={`about-${resolved.about.media.src}-${resolved.about.videoId ?? "image"}`}
+        key={`about-${resolved.about.headline}-${resolved.about.media.src}-${resolved.about.videoId ?? "image"}`}
         content={resolved.about}
       />
       <ClientsSection content={resolved.clients} />
