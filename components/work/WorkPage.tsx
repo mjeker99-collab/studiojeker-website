@@ -52,7 +52,10 @@ export function WorkPage({ content, locale }: WorkPageProps) {
           <div className={styles.categoryStack}>
             {content.categories.map((category, categoryIndex) => (
               <Reveal
-                key={category.id}
+                // Index is required: Studio has historically duplicated
+                // categoryId values (e.g. two "business" rows), which made
+                // React reuse the wrong category subtree after live refresh.
+                key={`${category.id}-${categoryIndex}`}
                 as="article"
                 className={styles.category}
                 delayMs={categoryIndex * 40}

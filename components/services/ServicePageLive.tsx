@@ -21,9 +21,9 @@ type ServiceProxyResponse = {
 };
 
 /**
- * Client refresh for Metanet static export (same pattern as ContactPageLive).
- * Fetches `/api/service-page.php?slug=…` so published Hero Image changes
- * appear within seconds without a redeploy.
+ * Client refresh for Metanet static export (same pattern as HomePageLive).
+ * Fetches `/api/service-page.php?slug=…` (live Sanity API, no CDN) so published
+ * Service text/media changes appear within seconds without a redeploy.
  */
 export function ServicePageLive({
   locale,
@@ -42,7 +42,12 @@ export function ServicePageLive({
           `/api/service-page.php?slug=${encodeURIComponent(slug)}`,
           {
             cache: "no-store",
-            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
           },
         );
         if (!response.ok) return;
@@ -53,6 +58,7 @@ export function ServicePageLive({
         const next = mergeSanityService(
           getServicePageContent(slug, locale),
           payload.document,
+          locale,
         );
         setLive(next);
       } catch {
@@ -61,6 +67,10 @@ export function ServicePageLive({
     }
 
     void refreshFromSanity();
+
+    const pollId = window.setInterval(() => {
+      void refreshFromSanity();
+    }, 20000);
 
     const onFocus = () => {
       void refreshFromSanity();
@@ -76,10 +86,23 @@ export function ServicePageLive({
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [locale, slug]);
 
-  return <ServicePage content={resolved} />;
+  // Remount when live Sanity payload changes so next/image and showreel
+  // pick up new assets immediately after publish (same as HomePageLive / Abo).
+  const contentKey = [
+    slug,
+    resolved.hero.headline,
+    resolved.hero.media.src,
+    resolved.showreel.videoId ?? "",
+    resolved.showreel.media.src,
+    resolved.about.media.src,
+    resolved.projects.items.map((item) => item.image.src).join(","),
+  ].join("|");
+
+  return <ServicePage key={contentKey} content={resolved} />;
 }
