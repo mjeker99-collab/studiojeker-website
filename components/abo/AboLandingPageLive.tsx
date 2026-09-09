@@ -22,6 +22,8 @@ type AboProxyResponse = {
 
 /**
  * Client refresh for Metanet static export (same pattern as ContactPageLive).
+ * Fetches `/api/abo-page.php` (Sanity live API, no CDN) so published Content-Abo
+ * changes appear without waiting for a staging redeploy.
  */
 export function AboLandingPageLive({
   locale,
@@ -37,7 +39,11 @@ export function AboLandingPageLive({
       try {
         const response = await fetch("/api/abo-page.php", {
           cache: "no-store",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
         });
         if (!response.ok) return;
 
@@ -76,5 +82,14 @@ export function AboLandingPageLive({
     };
   }, [locale]);
 
-  return <AboLandingPage content={resolved} />;
+  // Remount when live Sanity payload changes so next/image and the showreel
+  // player pick up new assets immediately after publish.
+  const contentKey = [
+    resolved.hero.headline,
+    resolved.hero.media.src,
+    resolved.showreel.videoId ?? "",
+    resolved.showreel.media.src,
+  ].join("|");
+
+  return <AboLandingPage key={contentKey} content={resolved} />;
 }

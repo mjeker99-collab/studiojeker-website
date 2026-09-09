@@ -4,7 +4,7 @@
 # Triggers:
 #   A) push to main          — code changes rebuild + deploy staging
 #   B) workflow_dispatch     — manual Actions run (requires confirm_target)
-#   C) repository_dispatch   — Sanity CMS publish webhook (homepage)
+#   C) repository_dispatch   — Sanity CMS publish webhook (homepage / content abo)
 #
 # Sanity does not call this workflow directly from the repo.
 # Configure the Sanity → GitHub webhook in the Sanity project UI (see
@@ -25,10 +25,11 @@ on:
         type: string
 
   # Fired by Sanity webhook → GitHub repository_dispatch API.
-  # Keep event type stable; extend later for about/services/etc.
+  # Homepage + Content Abo rebuild baked HTML; live PHP proxies refresh sooner.
   repository_dispatch:
     types:
       - sanity-homepage-published
+      - sanity-abo-published
 
 concurrency:
   group: deploy-staging-metanet
@@ -69,14 +70,22 @@ jobs:
               echo "Push to main — deploying staging2026.studiojeker.ch"
               ;;
             repository_dispatch)
-              if [ "${DISPATCH_TYPE}" != "sanity-homepage-published" ]; then
-                echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
-                exit 1
-              fi
+              case "${DISPATCH_TYPE}" in
+                sanity-homepage-published|sanity-abo-published) ;;
+                *)
+                  echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
+                  exit 1
+                  ;;
+              esac
               # Optional defence-in-depth when the Sanity webhook sends client_payload.
-              if [ -n "${CLIENT_DOCUMENT_TYPE}" ] && [ "${CLIENT_DOCUMENT_TYPE}" != "homepage" ]; then
-                echo "::error::Refusing deploy. client_payload.documentType must be 'homepage' (got '${CLIENT_DOCUMENT_TYPE}')."
-                exit 1
+              if [ -n "${CLIENT_DOCUMENT_TYPE}" ]; then
+                case "${CLIENT_DOCUMENT_TYPE}" in
+                  homepage|abo) ;;
+                  *)
+                    echo "::error::Refusing deploy. client_payload.documentType must be 'homepage' or 'abo' (got '${CLIENT_DOCUMENT_TYPE}')."
+                    exit 1
+                    ;;
+                esac
               fi
               echo "Sanity CMS publish — deploying staging2026.studiojeker.ch"
               echo "Dispatch type: ${DISPATCH_TYPE}"
@@ -137,6 +146,10 @@ jobs:
           fi
           if [ ! -f "out/api/service-page.php" ]; then
             echo "::error::out/api/service-page.php is missing — Service live proxy must be present."
+            exit 1
+          fi
+          if [ ! -f "out/api/abo-page.php" ]; then
+            echo "::error::out/api/abo-page.php is missing — Content Abo live proxy must be present."
             exit 1
           fi
           # Hidden files from public/ (e.g. .htaccess) must be present in the export.

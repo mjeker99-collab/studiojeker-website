@@ -259,7 +259,8 @@ rapid successive publishes queue rather than interrupt.
 
 Add more `repository_dispatch` types (or broaden the GROQ filter) for `about`,
 `service`, `project`, `teamMember`, `client`, `globalSettings` when those pages
-are fully CMS-driven on staging.
+are fully CMS-driven on staging. Content Abo already supports
+`sanity-abo-published` (document type `abo`) in addition to the Homepage webhook.
 
 ### FTP path notes
 
@@ -285,6 +286,7 @@ The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirro
 | Contact form | POST to same-origin `/api/contact.php` (PHP on Metanet); optional endpoint override via env |
 | Homepage CMS live refresh | GET same-origin `/api/homepage.php` (PHP → Sanity live API); client merges without redeploy |
 | Contact CMS live refresh | GET same-origin `/api/contact-page.php` (PHP → Sanity live API); separate from form `contact.php` |
+| Content Abo CMS live refresh | GET same-origin `/api/abo-page.php` (PHP → Sanity live API); singleton `_id: abo` |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
 
@@ -341,6 +343,7 @@ PHP endpoint for form delivery:
 | `out/api/contact.php` | POST-only handler (validation, honeypot, mail) |
 | `out/api/homepage.php` | GET Homepage singleton from Sanity live API (`Cache-Control: no-store`) |
 | `out/api/contact-page.php` | GET Contact singleton from Sanity live API (`Cache-Control: no-store`) |
+| `out/api/abo-page.php` | GET Content Abo singleton (`abo`) from Sanity live API (`Cache-Control: no-store`) |
 | `out/api/contact.config.example.php` | Sample config — copy to `contact.config.php` on the host if you need overrides |
 | `out/api/.htaccess` | Blocks HTTP access to `contact.config*.php` |
 

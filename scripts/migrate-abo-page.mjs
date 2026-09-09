@@ -1,6 +1,8 @@
 /**
- * Create / update the Content-Abo singleton and point the homepage Abo CTA
- * at `/content-abo` (locale-correct EN path is resolved in Next.js).
+ * Seed the Content-Abo singleton (`_id: abo`) once.
+ *
+ * Does NOT overwrite existing Studio edits (create-only when the document
+ * already exists). Does NOT mutate the Homepage document.
  *
  * Usage: node scripts/migrate-abo-page.mjs
  */
@@ -13,7 +15,6 @@ const projectId = "tgx6e6jg";
 const dataset = "production";
 const apiVersion = "2025-01-01";
 const ABO_ID = "abo";
-const HOMEPAGE_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
 
 const token = process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_AUTH_TOKEN;
 if (!token) {
@@ -55,18 +56,17 @@ async function uploadImage(filePath) {
 
 async function main() {
   const existing = await client.getDocument(ABO_ID).catch(() => null);
-  let imageRef =
-    existing?.heroSection?.media?.image?.asset?._ref ||
-    existing?.showreelSection?.media?.poster?.asset?._ref ||
-    existing?.showreelSection?.media?.image?.asset?._ref;
-
-  if (!imageRef) {
-    const asset = await uploadImage(HERO_IMAGE);
-    imageRef = asset._id;
-    console.log(`Uploaded media image → ${imageRef}`);
-  } else {
-    console.log(`Keeping existing media image ${imageRef}`);
+  if (existing) {
+    console.log(
+      `Content-Abo singleton ${ABO_ID} already exists (_updatedAt=${existing._updatedAt}). Skipping seed to preserve Studio edits.`,
+    );
+    return;
   }
+
+  let imageRef;
+  const asset = await uploadImage(HERO_IMAGE);
+  imageRef = asset._id;
+  console.log(`Uploaded media image → ${imageRef}`);
 
   const mediaField = {
     _type: "mediaField",
@@ -315,13 +315,7 @@ async function main() {
   };
 
   await client.createOrReplace(doc);
-  console.log(`Upserted Content-Abo singleton ${ABO_ID}`);
-
-  await client
-    .patch(HOMEPAGE_ID)
-    .set({ "aboSection.cta.href": "/content-abo" })
-    .commit({ autoGenerateArrayKeys: true });
-  console.log(`Updated homepage Abo CTA href → /content-abo`);
+  console.log(`Created Content-Abo singleton ${ABO_ID}`);
 }
 
 main().catch((error) => {

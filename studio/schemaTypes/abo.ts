@@ -53,6 +53,8 @@ export const abo = defineType({
           name: "media",
           title: "Hero Media",
           type: "mediaField",
+          description:
+            "Hero image on the right. Set Media Type to Image and upload under Image. Publish to update staging.",
         }),
       ],
     }),
@@ -257,7 +259,8 @@ export const abo = defineType({
           name: "media",
           title: "Showreel Media",
           type: "mediaField",
-          description: "Image poster and/or Vimeo URL — editable in Sanity.",
+          description:
+            "Image: set Media Type → Image and upload under Image. Video: Media Type → Video (Vimeo), set Vimeo URL + Video Poster Image. Publish to update staging.",
         }),
       ],
     }),
