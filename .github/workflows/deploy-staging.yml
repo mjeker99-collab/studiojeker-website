@@ -233,8 +233,26 @@ jobs:
           METANET_FTP_USERNAME: ${{ secrets.METANET_FTP_USERNAME }}
           METANET_FTP_PASSWORD: ${{ secrets.METANET_FTP_PASSWORD }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y lftp
+          set -euo pipefail
+
+          # ubuntu-latest images include Google Chrome apt sources that are unrelated
+          # to this deploy. Occasional Hash Sum mismatch on dl.google.com aborts
+          # `apt-get update` (exit 100) before lftp can be installed. Remove those
+          # sources so only Ubuntu/Microsoft mirrors are used for this job.
+          sudo rm -f \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.list.save \
+            /etc/apt/sources.list.d/google-chrome*.list \
+            /etc/apt/sources.list.d/google.list \
+            /etc/apt/sources.list.d/google-chrome.sources \
+            /etc/apt/sources.list.d/google-chrome*.sources
+          # Drop any leftover chrome signed-by keyring entries that apt still probes.
+          sudo rm -f /usr/share/keyrings/google-chrome*.gpg /etc/apt/keyrings/google-chrome*.gpg || true
+
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y --no-install-recommends lftp
+          command -v lftp
+          lftp --version | head -n 1
 
           # Explicit FTPS (AUTH TLS on port 21), passive data channel, strict TLS.
           # mirror -R uploads out/ contents only — no --delete (server-side extras preserved).
