@@ -1,6 +1,7 @@
 /**
- * Create / update the Content-Abo singleton and point the homepage Abo CTA
- * at `/content-abo` (locale-correct EN path is resolved in Next.js).
+ * Create / update the Content-Abo singleton.
+ * Homepage CTA routing is handled in Next.js; this script must not mutate
+ * the Homepage singleton and accidentally couple the new page to `/`.
  *
  * Usage: node scripts/migrate-abo-page.mjs
  */
@@ -13,7 +14,6 @@ const projectId = "tgx6e6jg";
 const dataset = "production";
 const apiVersion = "2025-01-01";
 const ABO_ID = "abo";
-const HOMEPAGE_ID = "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1";
 
 const token = process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_AUTH_TOKEN;
 if (!token) {
@@ -316,12 +316,6 @@ async function main() {
 
   await client.createOrReplace(doc);
   console.log(`Upserted Content-Abo singleton ${ABO_ID}`);
-
-  await client
-    .patch(HOMEPAGE_ID)
-    .set({ "aboSection.cta.href": "/content-abo" })
-    .commit({ autoGenerateArrayKeys: true });
-  console.log(`Updated homepage Abo CTA href → /content-abo`);
 }
 
 main().catch((error) => {
