@@ -1,0 +1,276 @@
+/**
+ * Content-Abo landing page — homepage visual system.
+ * Reuses homepage hero, abo-benefit, showreel and final-CTA rhythms.
+ * No new color system, cards, gradients or animation experiments.
+ */
+
+.hero {
+  padding-top: var(--header-height);
+  min-height: min(70svh, 38rem);
+  z-index: 0;
+}
+
+.heroCopy {
+  align-content: start;
+  padding-top: clamp(2.75rem, 6vw, 5rem);
+  padding-bottom: var(--space-5);
+}
+
+.heroBody {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--color-black);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.problem {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.problemCopy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.sectionHeadline {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.problemBody {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.problemBody p {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.highlight {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--color-black);
+  font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+
+.benefits {
+  background: var(--color-black);
+  color: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+  width: 100%;
+}
+
+.benefit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
+  padding: 0;
+  text-align: center;
+  border: 0;
+  overflow: hidden;
+}
+
+.icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  line-height: 0;
+  color: var(--color-cyan);
+}
+
+.icon svg {
+  display: block;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+.benefitTitle {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  color: var(--color-white);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.benefitText {
+  margin: 0.35rem 0 0;
+  width: 100%;
+  max-width: 16rem;
+  color: var(--color-silver);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+.process {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.processHeader {
+  margin-bottom: var(--space-4);
+  max-width: 36rem;
+}
+
+.processGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.step {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 28rem;
+}
+
+.stepNumber {
+  margin: 0;
+  color: var(--color-cyan);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stepText {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.scope {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.scopeCopy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 44rem;
+}
+
+.scopeIntro {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.scopeItems {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--color-black);
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.55;
+}
+
+.scopeClosing {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.closing {
+  background: var(--color-black);
+  color: var(--color-white);
+  padding-block: 4rem;
+  padding-inline: var(--container-padding-x);
+}
+
+.closingInner {
+  width: min(100%, var(--container-max));
+  margin-inline: auto;
+}
+
+.closingContent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+
+.closingCopy {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 38rem;
+}
+
+.closingHeadline {
+  margin: 0;
+  max-width: 14em;
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.15;
+}
+
+.closingText {
+  margin: 0;
+  color: var(--color-white);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 48rem) {
+  .processGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .benefitsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .processGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .closing {
+    padding-block: 4.5rem;
+  }
+}

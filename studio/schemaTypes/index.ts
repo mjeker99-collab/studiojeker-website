@@ -1,4 +1,5 @@
 import type { SchemaTypeDefinition } from "sanity";
+import { abo } from "./abo";
 import { about } from "./about";
 import { client } from "./client";
 import { contact } from "./contact";
@@ -23,7 +24,7 @@ import {
 
 /**
  * Studiojeker editorial schema registry.
- * Homepage and Contact are wired to Next.js for DE and EN.
+ * Homepage, Contact and Content Abo are wired to Next.js for DE and EN.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   localizedString,
@@ -38,6 +39,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   homepageServiceItem,
   homepage,
   about,
+  abo,
   contact,
   work,
   service,

@@ -1,5 +1,5 @@
 import type { Locale } from "@/types/i18n";
-import { localizePathname } from "@/lib/i18n/config";
+import { getAboPath, localizePathname } from "@/lib/i18n/config";
 import type { ServicePageSlug } from "@/types/service-page";
 
 export function getServicePaths(locale: Locale) {
@@ -7,8 +7,8 @@ export function getServicePaths(locale: Locale) {
     contact: localizePathname("/contact", locale),
     work: localizePathname("/work", locale),
     about: localizePathname("/about", locale),
-    /** Abo landing remains under /solutions until that page is built. */
-    abo: localizePathname("/solutions/sichtbarkeit-im-abo", locale),
+    /** Content-Abo landing: DE `/content-abo`, EN `/en/content-subscription`. */
+    abo: getAboPath(locale),
     architecture: localizePathname("/services/architecture", locale),
     product: localizePathname("/services/product-communication", locale),
     business: localizePathname("/services/business-communication", locale),

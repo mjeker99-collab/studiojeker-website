@@ -20,6 +20,11 @@
   RewriteRule ^solutions/social-digital-marketing/?$ /services/digital-marketing/ [R=301,L]
   RewriteRule ^en/solutions/social-digital-marketing/?$ /en/services/digital-marketing/ [R=301,L]
 
+  # Legacy Abo landing URL → Content-Abo routes
+  RewriteRule ^solutions/sichtbarkeit-im-abo/?$ /content-abo/ [R=301,L]
+  RewriteRule ^en/solutions/sichtbarkeit-im-abo/?$ /en/content-subscription/ [R=301,L]
+  RewriteRule ^de/content-abo/?$ /content-abo/ [R=301,L]
+
   RewriteRule ^references(/.*)?$ /work/ [R=301,L]
   RewriteRule ^en/references(/.*)?$ /en/work/ [R=301,L]
 </IfModule>

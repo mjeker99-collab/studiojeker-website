@@ -18,6 +18,11 @@ const SINGLETON_DOCS = {
     title: "About",
     id: "about",
   },
+  abo: {
+    type: "abo",
+    title: "Content Abo",
+    id: "abo",
+  },
   contact: {
     type: "contact",
     title: "Contact",
@@ -88,7 +93,7 @@ function singletonListItem(
 
 /**
  * Editorial desk order (non-technical editors):
- * Homepage → About → Contact → Work → Services → Project teasers → Team → Clients → Global Settings
+ * Homepage → About → Content Abo → Contact → Work → Services → …
  */
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -96,6 +101,7 @@ export const structure: StructureResolver = (S) =>
     .items([
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
+      singletonListItem(S, SINGLETON_DOCS.abo),
       singletonListItem(S, SINGLETON_DOCS.contact),
       workStructure(S),
       S.documentTypeListItem("service").title("Services"),

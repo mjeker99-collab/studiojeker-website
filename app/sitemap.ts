@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
+import { aboLanguageAlternates } from "@/lib/content/abo-page";
 
 /** Required for `output: "export"`. */
 export const dynamic = "force-static";
@@ -19,6 +20,11 @@ const PUBLIC_PATHS = [
 
 function absolute(path: string): string {
   return `${siteConfig.getUrl()}${path === "/" ? "" : path}`;
+}
+
+function withTrailingSlash(path: string): string {
+  if (path === "/") return path;
+  return path.endsWith("/") ? path : `${path}/`;
 }
 
 /**
@@ -59,6 +65,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     });
   }
+
+  const aboDe = absolute(withTrailingSlash(aboLanguageAlternates.de));
+  const aboEn = absolute(withTrailingSlash(aboLanguageAlternates.en));
+
+  entries.push({
+    url: aboDe,
+    changeFrequency: "monthly",
+    priority: 0.8,
+    alternates: {
+      languages: {
+        "de-CH": aboDe,
+        en: aboEn,
+        "x-default": aboDe,
+      },
+    },
+  });
+
+  entries.push({
+    url: aboEn,
+    changeFrequency: "monthly",
+    priority: 0.7,
+    alternates: {
+      languages: {
+        "de-CH": aboDe,
+        en: aboEn,
+        "x-default": aboDe,
+      },
+    },
+  });
 
   return entries;
 }
