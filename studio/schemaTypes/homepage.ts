@@ -315,6 +315,8 @@ export const homepage = defineType({
       type: "object",
       group: "abo",
       options: { collapsible: true },
+      description:
+        "Homepage Abo teaser only. The full landing page (/content-abo) is the separate “Content Abo” document.",
       fields: [
         defineField({
           name: "label",
@@ -348,7 +350,8 @@ export const homepage = defineType({
           name: "media",
           title: "Abo Media",
           type: "mediaField",
-          description: "Image or Vimeo video for the Abo block.",
+          description:
+            "Homepage teaser media. For Video: set Vimeo URL + Video Poster Image. For a still only: Media Type → Image. Publish, then hard-refresh staging.",
         }),
       ],
     }),

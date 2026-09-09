@@ -43,7 +43,12 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
       try {
         const response = await fetch("/api/homepage.php", {
           cache: "no-store",
-          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
         });
         if (!response.ok) return;
 
@@ -63,6 +68,10 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
 
     void refreshFromSanity();
 
+    const pollId = window.setInterval(() => {
+      void refreshFromSanity();
+    }, 20000);
+
     const onFocus = () => {
       void refreshFromSanity();
     };
@@ -77,6 +86,7 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
@@ -89,10 +99,19 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
         content={resolved.hero}
       />
       <ServicesSection content={resolved.services} />
-      <ShowreelSection content={resolved.showreel} />
+      <ShowreelSection
+        key={`showreel-${resolved.showreel.media.src}-${resolved.showreel.videoId ?? "image"}`}
+        content={resolved.showreel}
+      />
       <ProjectsSection content={resolved.projects} />
-      <AboSection content={resolved.abo} />
-      <AboutSection content={resolved.about} />
+      <AboSection
+        key={`abo-${resolved.abo.media.src}-${resolved.abo.videoId ?? "image"}`}
+        content={resolved.abo}
+      />
+      <AboutSection
+        key={`about-${resolved.about.media.src}-${resolved.about.videoId ?? "image"}`}
+        content={resolved.about}
+      />
       <ClientsSection content={resolved.clients} />
       <FinalCtaSection content={resolved.finalCta} />
     </>

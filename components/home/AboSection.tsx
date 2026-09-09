@@ -51,6 +51,7 @@ export function AboSection({ content }: AboSectionProps) {
           <div className={styles.media}>
             {content.videoId ? (
               <VimeoShowreel
+                key={`abo-video-${content.videoId}-${content.media.src}`}
                 fill
                 className={styles.image}
                 videoId={content.videoId}
@@ -64,6 +65,7 @@ export function AboSection({ content }: AboSectionProps) {
               />
             ) : (
               <Image
+                key={content.media.src}
                 src={mediaPath(content.media.src)}
                 alt={content.media.alt}
                 fill

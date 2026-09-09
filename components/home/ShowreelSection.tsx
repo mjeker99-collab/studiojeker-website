@@ -47,6 +47,7 @@ export function ShowreelSection({ content }: ShowreelSectionProps) {
           <CyanBar />
           {content.videoId ? (
             <VimeoShowreel
+              key={`showreel-video-${content.videoId}-${content.media.src}`}
               className={styles.mediaButton}
               videoId={content.videoId}
               title={`${content.media.alt} – Showreel`}
@@ -55,6 +56,7 @@ export function ShowreelSection({ content }: ShowreelSectionProps) {
           ) : (
             <div className={styles.mediaButton}>
               <Image
+                key={content.media.src}
                 src={mediaPath(content.media.src)}
                 alt={content.media.alt}
                 fill

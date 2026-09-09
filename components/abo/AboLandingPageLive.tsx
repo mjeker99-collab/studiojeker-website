@@ -39,6 +39,7 @@ export function AboLandingPageLive({
       try {
         const response = await fetch("/api/abo-page.php", {
           cache: "no-store",
+          credentials: "same-origin",
           headers: {
             Accept: "application/json",
             "Cache-Control": "no-cache",
@@ -63,6 +64,10 @@ export function AboLandingPageLive({
 
     void refreshFromSanity();
 
+    const pollId = window.setInterval(() => {
+      void refreshFromSanity();
+    }, 20000);
+
     const onFocus = () => {
       void refreshFromSanity();
     };
@@ -77,6 +82,7 @@ export function AboLandingPageLive({
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
