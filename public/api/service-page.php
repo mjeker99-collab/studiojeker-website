@@ -8,7 +8,7 @@ declare(strict_types=1);
  * - Static export cannot use Next.js ISR.
  * - Browser → Sanity is blocked by CORS on staging.
  * - This same-origin endpoint reads one Service document by slug from
- *   Sanity's live API so Hero Image publishes appear within seconds.
+ *   Sanity's live API so published Service edits appear within seconds.
  *
  * Keep the GROQ projection in sync with `lib/sanity/service.ts`
  * (`serviceBySlugQuery`).
@@ -61,9 +61,65 @@ GROQ;
 $query = <<<GROQ
 *[_type == "service" && slug.current == \$slug][0]{
   _id,
+  internalTitle,
+  displayTitle,
   slug,
+  homepageTitle,
+  homepageDescription,
+  heroLabel,
+  heroHeadline,
+  heroHeadlineAccent,
+  heroSubheadline,
+  heroIntroText,
+  heroCtaLabel,
+  heroCtaHref,
   heroImage{$imageProjection},
-  heroVideoUrl
+  heroVideoUrl,
+  solutionsLabel,
+  solutionsHeadline,
+  solutions[]{
+    itemId,
+    title,
+    description,
+    href,
+    icon
+  },
+  showreelLabel,
+  showreelHeadline,
+  showreelBody,
+  showreelCtaLabel,
+  showreelCtaHref,
+  showreelImage{$imageProjection},
+  showreelVideoId,
+  projectsLabel,
+  projectsHeadline,
+  projectsViewAllLabel,
+  projectsViewAllHref,
+  projects[]{
+    itemId,
+    title,
+    category,
+    description,
+    href,
+    isPlaceholder,
+    image{$imageProjection},
+    videoUrl
+  },
+  aboutLabel,
+  aboutHeadline,
+  aboutHeadlineAccent,
+  aboutSubheadline,
+  aboutText,
+  aboutCtaLabel,
+  aboutCtaHref,
+  aboutImage{$imageProjection},
+  clientsLabel,
+  ctaHeadline,
+  ctaText,
+  ctaLabel,
+  ctaHref,
+  seoTitle,
+  seoDescription
 }
 GROQ;
 

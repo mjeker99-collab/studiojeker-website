@@ -10,6 +10,9 @@ export { mergeSanityService } from "@/lib/content/merge-sanity-service";
 /**
  * Build-time Service resolution (static export).
  * Runtime freshness on Metanet uses `/api/service-page.php` + `ServicePageLive`.
+ *
+ * German routes merge full Sanity page fields. English keeps local copy and
+ * still receives Sanity media (images / showreel video id).
  */
 export const getResolvedServiceContent = cache(
   async (
@@ -23,6 +26,6 @@ export const getResolvedServiceContent = cache(
       return base;
     }
 
-    return mergeSanityService(base, doc);
+    return mergeSanityService(base, doc, locale);
   },
 );

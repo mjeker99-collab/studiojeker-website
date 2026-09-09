@@ -35,7 +35,12 @@ export function WorkPageLive({ locale, content }: WorkPageLiveProps) {
       try {
         const response = await fetch("/api/work-page.php", {
           cache: "no-store",
-          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
         });
         if (!response.ok) return;
 
@@ -55,6 +60,10 @@ export function WorkPageLive({ locale, content }: WorkPageLiveProps) {
 
     void refreshFromSanity();
 
+    const pollId = window.setInterval(() => {
+      void refreshFromSanity();
+    }, 20000);
+
     const onFocus = () => {
       void refreshFromSanity();
     };
@@ -69,10 +78,31 @@ export function WorkPageLive({ locale, content }: WorkPageLiveProps) {
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [locale]);
 
-  return <WorkPage content={resolved} locale={locale} />;
+  // Remount when live Sanity payload changes so tile media (next/image,
+  // slideshow state, video posters) picks up publishes immediately.
+  const contentKey = [
+    resolved.hero.headline,
+    resolved.hero.text,
+    ...resolved.categories.flatMap((category) => [
+      category.id,
+      category.title,
+      ...category.items.map((item) => {
+        if (item.media.type === "image") {
+          return `${item.id}:${item.media.src}`;
+        }
+        if (item.media.type === "video") {
+          return `${item.id}:${item.media.src}:${item.media.poster}`;
+        }
+        return `${item.id}:${item.media.images.map((img) => img.src).join(",")}`;
+      }),
+    ]),
+  ].join("|");
+
+  return <WorkPage key={contentKey} content={resolved} locale={locale} />;
 }

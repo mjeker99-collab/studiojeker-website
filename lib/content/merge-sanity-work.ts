@@ -290,9 +290,27 @@ export function mergeSanityWork(
   const categories = (doc.categories ?? [])
     .slice()
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-    .map((category) =>
-      mergeCategory(category, baseCategoriesById.get(category.categoryId ?? ""), locale),
-    );
+    .map((category, index) => {
+      // Prefer explicit categoryId; when Studio duplicates ids (observed:
+      // digital + business both stored as "business"), fall back to the
+      // matching local category by sort position so media fallbacks stay correct.
+      const byId = baseCategoriesById.get(category.categoryId ?? "");
+      const byIndex = base.categories[index];
+      const baseCategory = byId ?? byIndex;
+      const merged = mergeCategory(category, baseCategory, locale);
+      // Keep React keys unique even when Sanity categoryId values collide.
+      if (
+        category.categoryId &&
+        (doc.categories ?? []).filter((c) => c.categoryId === category.categoryId)
+          .length > 1
+      ) {
+        return {
+          ...merged,
+          id: `${merged.id}-${index}`,
+        };
+      }
+      return merged;
+    });
 
   return {
     seo: {
