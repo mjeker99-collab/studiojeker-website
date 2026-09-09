@@ -53,6 +53,7 @@ export function VimeoShowreel({
         >
           {poster ? (
             <Image
+              key={poster.src}
               src={poster.src}
               alt={poster.alt}
               fill
