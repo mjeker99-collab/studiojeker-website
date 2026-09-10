@@ -6,6 +6,7 @@ import { ProjectsSection } from "@/components/home/ProjectsSection";
 import { ShowreelSection } from "@/components/home/ShowreelSection";
 import { ServiceHero } from "@/components/services/ServiceHero";
 import { ServiceOverview } from "@/components/services/ServiceOverview";
+import styles from "./ServicePage.module.css";
 
 type ServicePageProps = {
   content: ServicePageContent;
@@ -27,7 +28,9 @@ export function ServicePage({ content }: ServicePageProps) {
         titleId={`${titleBase}-solutions`}
       />
       <ShowreelSection content={content.showreel} />
-      <ProjectsSection content={content.projects} />
+      <div className={styles.projectsScope}>
+        <ProjectsSection content={content.projects} />
+      </div>
       <AboutSection content={content.about} />
       <ClientsSection content={content.clients} />
       <FinalCtaSection content={content.finalCta} />

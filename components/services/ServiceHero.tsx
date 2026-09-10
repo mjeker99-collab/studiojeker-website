@@ -2,7 +2,6 @@ import Image from "next/image";
 import type { ServicePageContent } from "@/types/service-page";
 import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
-import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import styles from "./ServiceHero.module.css";
@@ -12,6 +11,10 @@ type ServiceHeroProps = {
   titleId: string;
 };
 
+/**
+ * Service hero — same cyan+photo grid coupling as the homepage HeroSection
+ * (approved media chrome). Typography/copy structure stays service-specific.
+ */
 export function ServiceHero({ content, titleId }: ServiceHeroProps) {
   return (
     <section
@@ -42,16 +45,22 @@ export function ServiceHero({ content, titleId }: ServiceHeroProps) {
         </Reveal>
 
         <Reveal className={styles.mediaWrap} delayMs={120}>
-          <CyanBar />
+          {/*
+            Cyan + photo are GRID SIBLINGS of the same media wrapper.
+            Matches homepage HeroSection — bar height equals image height.
+          */}
           <div className={styles.media}>
-            <Image
-              src={mediaPath(content.media.src)}
-              alt={content.media.alt}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 64vw"
-              className={styles.image}
-            />
+            <div className={styles.cyanBar} aria-hidden="true" />
+            <div className={styles.photo}>
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 64vw"
+                className={styles.image}
+              />
+            </div>
           </div>
         </Reveal>
       </div>

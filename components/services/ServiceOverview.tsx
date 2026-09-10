@@ -31,12 +31,19 @@ export function ServiceOverview({ content, titleId }: ServiceOverviewProps) {
         <div className={styles.grid}>
           {content.items.map((item, index) => (
             <Reveal key={item.id} as="article" className={styles.card} delayMs={index * 70}>
-              <SolutionIcon id={item.icon} />
-              <h3 className={styles.title}>{item.title}</h3>
-              <p className={styles.description}>{item.description}</p>
-              <Link href={item.href} className={styles.link} aria-label={item.title}>
-                <Arrow className={styles.arrow} />
-              </Link>
+              {/*
+                Restore column flex layout lost when homepage moved flex onto
+                `.cardLink` (e06ea8f). Service cards keep arrow-only links, so
+                we reuse `.cardLink` as a non-navigating flex shell.
+              */}
+              <div className={styles.cardLink}>
+                <SolutionIcon id={item.icon} />
+                <h3 className={styles.title}>{item.title}</h3>
+                <p className={styles.description}>{item.description}</p>
+                <Link href={item.href} className={styles.link} aria-label={item.title}>
+                  <Arrow className={styles.arrow} />
+                </Link>
+              </div>
             </Reveal>
           ))}
         </div>
