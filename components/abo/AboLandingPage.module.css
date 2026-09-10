@@ -1,19 +1,39 @@
 /**
  * Content-Abo landing page — homepage visual system.
  * Reuses homepage hero, abo-benefit, showreel and final-CTA rhythms.
- * No new color system, cards, gradients or animation experiments.
+ * Layout fixes for /content-abo only — do not change global hero CSS.
  */
 
 .hero {
   padding-top: var(--header-height);
   min-height: min(70svh, 38rem);
   z-index: 0;
+  overflow: hidden;
 }
 
-.heroCopy {
+/* Nested selectors beat shared HeroSection.module.css on this page only */
+.hero .heroGrid {
+  width: 100%;
+  min-width: 0;
+}
+
+.hero .heroCopy {
   align-content: start;
+  min-width: 0;
+  max-width: 100%;
   padding-top: clamp(2.75rem, 6vw, 5rem);
   padding-bottom: var(--space-5);
+  overflow-wrap: break-word;
+}
+
+.hero .heroHeadline {
+  max-width: 100%;
+  /* Slightly smaller than homepage hero so copy stays in its column */
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  overflow-wrap: break-word;
+  hyphens: manual;
 }
 
 .heroBody {
@@ -24,15 +44,59 @@
   line-height: 1.55;
 }
 
+.hero .heroMediaWrap {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .problem {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  overflow: hidden;
+}
+
+.problemGrid {
+  display: grid;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.problemMediaWrap {
+  display: flex;
+  align-self: stretch;
+  height: 100%;
+  min-height: 16rem;
+  min-width: 0;
+}
+
+.problemMedia {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 16rem;
+  overflow: hidden;
+  background: var(--color-neutral);
+  --media-bar-width: var(--cyan-bar-width);
+}
+
+.problemImage {
+  object-fit: cover;
+}
+
+.problemPhotoPlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral);
 }
 
 .problemCopy {
   display: grid;
+  align-content: center;
   gap: var(--space-3);
-  max-width: 40rem;
+  min-width: 0;
+  max-width: 36rem;
+  padding: var(--section-padding-y-compact) var(--container-padding-x);
 }
 
 .sectionHeadline {
@@ -41,6 +105,7 @@
   font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.02em;
   line-height: 1.15;
+  overflow-wrap: break-word;
 }
 
 .problemBody {
@@ -185,9 +250,10 @@
   padding-block: var(--section-padding-y-compact);
 }
 
-.scopeCopy {
+.scopeHeader {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
   max-width: 44rem;
 }
 
@@ -197,18 +263,35 @@
   line-height: 1.55;
 }
 
-.scopeItems {
+.scopeGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem 1.5rem;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.scopeItem {
   margin: 0;
-  max-width: 40rem;
+  min-width: 0;
   color: var(--color-black);
   font-size: clamp(1rem, 1.5vw, 1.125rem);
   font-weight: var(--font-weight-medium);
-  line-height: 1.55;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+
+.scopeFooter {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 44rem;
 }
 
 .scopeClosing {
   margin: 0;
-  max-width: 36rem;
+  max-width: 40rem;
   font-size: 1rem;
   line-height: 1.55;
 }
@@ -254,13 +337,69 @@
   line-height: 1.55;
 }
 
+@media (max-width: 47.9375rem) {
+  .problemMedia {
+    --media-bar-width: clamp(0.625rem, 2.4vw, 0.875rem);
+  }
+}
+
 @media (min-width: 48rem) {
+  .problemMediaWrap,
+  .problemMedia {
+    min-height: 22rem;
+  }
+
+  .scopeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .processGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 64rem) {
+  .hero .heroGrid {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    align-items: stretch;
+  }
+
+  .hero .heroCopy {
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.25%);
+    max-width: none;
+  }
+
+  .hero .heroHeadline {
+    max-width: 11.5em;
+  }
+
+  .hero .heroMediaWrap {
+    min-height: 100%;
+  }
+
+  .problemGrid {
+    grid-template-columns: minmax(0, 0.48fr) minmax(0, 0.52fr);
+  }
+
+  .problemMediaWrap,
+  .problemMedia {
+    min-height: 22rem;
+  }
+
+  .problemCopy {
+    padding-block: 4.5rem;
+    padding-right: max(var(--container-padding-x), 3.5%);
+    padding-left: var(--space-5);
+    max-width: none;
+  }
+
+  .scopeGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem 1.75rem;
+    margin-bottom: var(--space-5);
+  }
+
   .benefitsGrid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.5rem;
@@ -272,5 +411,19 @@
 
   .closing {
     padding-block: 4.5rem;
+  }
+}
+
+@media (max-width: 63.9375rem) {
+  .hero {
+    min-height: auto;
+  }
+
+  .hero .heroGrid {
+    min-height: auto;
+  }
+
+  .hero .heroCopy {
+    padding-bottom: var(--space-4);
   }
 }

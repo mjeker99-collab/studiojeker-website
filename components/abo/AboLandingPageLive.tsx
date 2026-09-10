@@ -102,6 +102,7 @@ export function AboLandingPageLive({
   const contentKey = [
     resolved.hero.headline,
     resolved.hero.media.src,
+    resolved.problem.media?.src ?? "",
     resolved.showreel.videoId ?? "",
     resolved.showreel.media.src,
   ].join("|");

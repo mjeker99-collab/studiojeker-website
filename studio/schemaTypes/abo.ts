@@ -95,6 +95,22 @@ export const abo = defineType({
           title: "Highlighted Statement",
           type: "localizedText",
         }),
+        defineField({
+          name: "image",
+          title: "Section Image",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Bild links im Kontinuitäts-Block (Bild links / Text rechts). Ausschnitt und Hotspot am Bild einstellen. Ohne Bild erscheint ein neutraler Platzhalter.",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Image Alt Text",
+              type: "string",
+              description: "Describe the image for accessibility and SEO.",
+            }),
+          ],
+        }),
       ],
     }),
 

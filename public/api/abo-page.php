@@ -66,7 +66,8 @@ $query = <<<GROQ
     label{$localized},
     headline{$localized},
     text{$localized},
-    highlight{$localized}
+    highlight{$localized},
+    image{$imageProjection}
   },
   benefitsSection{
     items[]{

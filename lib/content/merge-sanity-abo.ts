@@ -190,7 +190,11 @@ export function mergeSanityAbo(
       primaryCta: { ...base.hero.primaryCta },
       media: { ...base.hero.media },
     },
-    problem: { ...base.problem, body: [...base.problem.body] },
+    problem: {
+      ...base.problem,
+      body: [...base.problem.body],
+      ...(base.problem.media ? { media: { ...base.problem.media } } : {}),
+    },
     benefits: { items: [...base.benefits.items] },
     process: {
       ...base.process,
@@ -263,6 +267,23 @@ export function mergeSanityAbo(
 
   const problemHighlight = pickLocalized(doc.problemSection?.highlight, locale);
   if (problemHighlight) merged.problem.highlight = problemHighlight;
+
+  if (doc.problemSection?.image) {
+    const emptyFallback: HomepageMedia = {
+      src: "",
+      alt: "",
+      width: 1200,
+      height: 900,
+    };
+    const problemImage = resolveSanityImage(
+      doc.problemSection.image,
+      base.problem.media ?? emptyFallback,
+      1400,
+    );
+    if (problemImage.src) {
+      merged.problem.media = problemImage;
+    }
+  }
 
   merged.benefits.items = mergeBenefits(
     base.benefits.items,
