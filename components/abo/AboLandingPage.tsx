@@ -5,6 +5,7 @@ import { aboBenefitIcons } from "@/components/home/aboBenefitIcons";
 import { ShowreelSection } from "@/components/home/ShowreelSection";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
+import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import heroStyles from "@/components/home/HeroSection.module.css";
@@ -17,8 +18,11 @@ type AboLandingPageProps = {
 /**
  * Content-Abo landing page.
  * Visual language matches the homepage — SiteChrome provides header/footer.
+ * Layout overrides for this page live in AboLandingPage.module.css only.
  */
 export function AboLandingPage({ content }: AboLandingPageProps) {
+  const problemMedia = content.problem.media;
+
   return (
     <>
       <section
@@ -26,10 +30,13 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
         data-header-theme="light"
         aria-labelledby="abo-hero-title"
       >
-        <div className={heroStyles.grid}>
+        <div className={[heroStyles.grid, styles.heroGrid].join(" ")}>
           <Reveal className={[heroStyles.copy, styles.heroCopy].join(" ")}>
             <SectionLabel>{content.hero.label}</SectionLabel>
-            <h1 id="abo-hero-title" className={heroStyles.headline}>
+            <h1
+              id="abo-hero-title"
+              className={[heroStyles.headline, styles.heroHeadline].join(" ")}
+            >
               {content.hero.headline}
             </h1>
             <p className={styles.heroBody}>{content.hero.body}</p>
@@ -44,7 +51,10 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
             </div>
           </Reveal>
 
-          <Reveal className={heroStyles.mediaWrap} delayMs={120}>
+          <Reveal
+            className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
+            delayMs={120}
+          >
             <div className={heroStyles.media}>
               <div className={heroStyles.cyanBar} aria-hidden="true" />
               <div className={heroStyles.photo}>
@@ -54,7 +64,7 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
                   alt={content.hero.media.alt}
                   fill
                   priority
-                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  sizes="(max-width: 1024px) 100vw, 58vw"
                   className={heroStyles.image}
                 />
               </div>
@@ -68,7 +78,28 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
         data-header-theme="light"
         aria-labelledby="abo-problem-title"
       >
-        <Container>
+        <div className={styles.problemGrid}>
+          <Reveal className={styles.problemMediaWrap} delayMs={80}>
+            <div className={styles.problemMedia}>
+              <CyanBar boundToMedia />
+              {problemMedia?.src ? (
+                <Image
+                  key={problemMedia.src}
+                  src={mediaPath(problemMedia.src)}
+                  alt={problemMedia.alt}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 48vw"
+                  className={styles.problemImage}
+                />
+              ) : (
+                <div
+                  className={styles.problemPhotoPlaceholder}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          </Reveal>
+
           <Reveal className={styles.problemCopy}>
             <SectionLabel>{content.problem.label}</SectionLabel>
             <h2 id="abo-problem-title" className={styles.sectionHeadline}>
@@ -81,7 +112,7 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
             </div>
             <p className={styles.highlight}>{content.problem.highlight}</p>
           </Reveal>
-        </Container>
+        </div>
       </section>
 
       <section
@@ -141,12 +172,20 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
         aria-labelledby="abo-scope-title"
       >
         <Container>
-          <Reveal className={styles.scopeCopy}>
+          <Reveal className={styles.scopeHeader}>
             <h2 id="abo-scope-title" className={styles.sectionHeadline}>
               {content.scope.headline}
             </h2>
             <p className={styles.scopeIntro}>{content.scope.introduction}</p>
-            <p className={styles.scopeItems}>{content.scope.items.join(" · ")}</p>
+          </Reveal>
+          <ul className={styles.scopeGrid}>
+            {content.scope.items.map((item) => (
+              <li key={item} className={styles.scopeItem}>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <Reveal className={styles.scopeFooter}>
             <p className={styles.scopeClosing}>{content.scope.closing}</p>
             <p className={styles.highlight}>{content.scope.highlight}</p>
           </Reveal>

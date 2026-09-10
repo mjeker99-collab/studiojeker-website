@@ -56,6 +56,8 @@ export type SanityAbo = {
     headline?: SanityLocalizedString;
     text?: SanityLocalizedText;
     highlight?: SanityLocalizedText;
+    /** Optional continuity-section image (left column). */
+    image?: SanityImageProjection;
   } | null;
   benefitsSection?: {
     items?: SanityAboBenefitItem[] | null;
@@ -110,7 +112,8 @@ export const aboQuery = groq`*[_id == $id && _type == "abo"][0]{
     label${localizedStringProjection},
     headline${localizedStringProjection},
     text${localizedTextProjection},
-    highlight${localizedTextProjection}
+    highlight${localizedTextProjection},
+    image${sanityImageProjection}
   },
   benefitsSection{
     items[]{

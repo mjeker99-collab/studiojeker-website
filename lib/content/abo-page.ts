@@ -21,6 +21,11 @@ export type AboPageContent = {
     headline: string;
     body: string[];
     highlight: string;
+    /**
+     * Optional left-column image for the continuity block.
+     * When unset, the layout shows a neutral empty media placeholder.
+     */
+    media?: HomepageMedia;
   };
   benefits: {
     items: HomepageBenefit[];

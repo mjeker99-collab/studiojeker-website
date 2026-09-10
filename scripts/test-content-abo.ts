@@ -17,10 +17,21 @@ const poster = { ...image, url: image.url.replace("hero-test", "poster-test") };
 // Every existing text/CTA section must prefer the edited German CMS values.
 const text = { de: "CMS DE", en: "CMS EN" };
 const cta = { label: text, href: "/contact" };
+const problemImage = {
+  url: "https://cdn.sanity.io/images/tgx6e6jg/production/problem-test.jpg",
+  alt: "Problem test",
+  dimensions: { width: 1400, height: 1050 },
+};
 const doc: SanityAbo = {
   _id: "abo",
   heroSection: { label: text, headline: text, text, cta, media: { mediaType: "image", image } },
-  problemSection: { label: text, headline: text, text: { de: "Absatz 1\n\nAbsatz 2" }, highlight: text },
+  problemSection: {
+    label: text,
+    headline: text,
+    text: { de: "Absatz 1\n\nAbsatz 2" },
+    highlight: text,
+    image: problemImage,
+  },
   benefitsSection: { items: base.benefits.items.map((item) => ({ id: item.id, title: text, description: text })) },
   processSection: {
     headline: text,
@@ -48,11 +59,18 @@ assert.deepEqual(content.problem.body, ["Absatz 1", "Absatz 2"]);
 assert.deepEqual([content.hero.primaryCta.href, content.showreel.cta.href, content.closing.cta.href], ["/contact", "/contact", "/contact"]);
 assert.equal(content.hero.media.src, image.url);
 assert.equal(content.hero.media.alt, image.alt);
+assert.equal(content.problem.media?.src, problemImage.url);
+assert.equal(content.problem.media?.alt, problemImage.alt);
 assert.equal(content.showreel.media.src, poster.url);
 assert.equal(content.seo.ogImagePath, image.url);
 assert.equal(content.showreel.videoId, "");
 assert.deepEqual(base, original, "merging must not mutate shared fallback data");
 assert.deepEqual(mergeSanityAbo(base, {}, "de"), base, "absent CMS fields preserve existing content and images");
+assert.equal(
+  mergeSanityAbo(base, { problemSection: { image: { alt: "No asset" } } }, "de").problem.media,
+  undefined,
+  "problem image without asset stays empty so the layout can show a placeholder",
+);
 
 const short = mergeSanityAbo(base, { heroSection: { headline: { de: base.hero.label } } }, "de");
 assert.equal(short.hero.headline, base.hero.label, "a shorter edited headline wins over the long fallback");
