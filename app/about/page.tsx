@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { AboutPage } from "@/components/about/AboutPage";
-import { getAboutPageContent } from "@/lib/content/about-page";
+import { getResolvedAboutPageContent } from "@/lib/content/about-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-const content = getAboutPageContent("de");
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getResolvedAboutPageContent("de");
+  return buildPageMetadata({
+    locale: "de",
+    pathname: "/about",
+    title: content.seo.title,
+    description: content.seo.description,
+  });
+}
 
-export const metadata: Metadata = buildPageMetadata({
-  locale: "de",
-  pathname: "/about",
-  title: content.seo.title,
-  description: content.seo.description,
-});
+export default async function GermanAboutPage() {
+  const content = await getResolvedAboutPageContent("de");
 
-export default function GermanAboutPage() {
   return (
     <SiteChrome locale="de">
       <AboutPage content={content} />

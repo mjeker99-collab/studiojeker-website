@@ -3,10 +3,8 @@ import type { HomepageClientLogo, HomepageMedia } from "@/types/homepage";
 import type { ContactPageContent } from "@/lib/content/contact";
 import { getContactPageContent } from "@/lib/content/contact";
 import { getClientLogos } from "@/lib/content/clients";
-import type {
-  SanityContact,
-  SanityContactClientRef,
-} from "@/lib/sanity/contact";
+import { mergeClientLogos } from "@/lib/content/merge-client-logos";
+import type { SanityContact } from "@/lib/sanity/contact";
 import type {
   SanityLocalizedString,
   SanityLocalizedText,
@@ -42,67 +40,6 @@ function splitAroundAccent(
     accent: accentWord,
     after: full.slice(index + accentWord.length),
   };
-}
-
-function sortByOrder<T extends { sortOrder?: number | null }>(items: T[]): T[] {
-  return [...items].sort((a, b) => {
-    const aOrder = a.sortOrder ?? Number.MAX_SAFE_INTEGER;
-    const bOrder = b.sortOrder ?? Number.MAX_SAFE_INTEGER;
-    return aOrder - bOrder;
-  });
-}
-
-/**
- * Map Sanity Client documents to logo models.
- *
- * No quantity cap: every enabled client with a resolvable logo is kept.
- */
-function mergeClientLogos(
-  base: HomepageClientLogo[],
-  clients: SanityContactClientRef[] | null | undefined,
-): HomepageClientLogo[] {
-  const source = clients ?? [];
-  const activeClients = sortByOrder(
-    source.filter(
-      (client): client is NonNullable<SanityContactClientRef> =>
-        Boolean(client && client.active !== false && client.logo),
-    ),
-  );
-
-  if (activeClients.length === 0) {
-    return base;
-  }
-
-  const merged = activeClients
-    .map((client, index) => {
-      const name = clean(client.name ?? undefined);
-      const logo = client.logo;
-      if (!name || !logo) {
-        return null;
-      }
-
-      const resolved = resolveSanityImage(logo, {
-        src: "",
-        alt: name,
-        width: 160,
-        height: 48,
-      });
-
-      if (!resolved.src) {
-        return null;
-      }
-
-      return {
-        id: client._id ?? `client-${index}`,
-        name,
-        src: resolved.src,
-        width: resolved.width,
-        height: resolved.height,
-      };
-    })
-    .filter((logo): logo is HomepageClientLogo => Boolean(logo?.src));
-
-  return merged.length > 0 ? merged : base;
 }
 
 const DEFAULT_HERO_MEDIA: HomepageMedia = {

@@ -1,7 +1,6 @@
 import type { Locale } from "@/types/i18n";
 import type {
   HomepageBenefit,
-  HomepageClientLogo,
   HomepageContent,
   HomepageMedia,
   HomepageProject,
@@ -11,7 +10,6 @@ import { localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
 import {
   type SanityHomepage,
   type SanityHomepageBenefitItem,
-  type SanityHomepageClientRef,
   type SanityHomepageProjectRef,
   type SanityHomepageServiceItem,
   type SanityLocalizedString,
@@ -25,6 +23,7 @@ import {
 } from "@/lib/sanity/media";
 import { pickEditorialColor } from "@/lib/sanity/editorial-color";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
+import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 
 /**
  * Pure merge of Sanity Homepage document → frontend HomepageContent.
@@ -379,60 +378,6 @@ function mergeProjectItem(
     image,
     isPlaceholder: false,
   };
-}
-
-/**
- * Map Sanity Client documents to homepage logo models.
- *
- * No quantity cap: every enabled client with a resolvable logo is kept.
- * Marquee duplication happens only in the UI for seamless looping.
- */
-function mergeClientLogos(
-  base: HomepageClientLogo[],
-  clients: SanityHomepageClientRef[] | null | undefined,
-): HomepageClientLogo[] {
-  const source = clients ?? [];
-  const activeClients = sortByOrder(
-    source.filter(
-      (client): client is NonNullable<SanityHomepageClientRef> =>
-        Boolean(client && client.active !== false && client.logo),
-    ),
-  );
-
-  if (activeClients.length === 0) {
-    return base;
-  }
-
-  const merged = activeClients
-    .map((client, index) => {
-      const name = clean(client.name ?? undefined);
-      const logo = client.logo;
-      if (!name || !logo) {
-        return null;
-      }
-
-      const resolved = resolveSanityImage(logo, {
-        src: "",
-        alt: name,
-        width: 160,
-        height: 48,
-      });
-
-      if (!resolved.src) {
-        return null;
-      }
-
-      return {
-        id: client._id ?? `client-${index}`,
-        name,
-        src: resolved.src,
-        width: resolved.width,
-        height: resolved.height,
-      };
-    })
-    .filter((logo): logo is HomepageClientLogo => Boolean(logo?.src));
-
-  return merged.length > 0 ? merged : base;
 }
 
 function applyMediaSection(

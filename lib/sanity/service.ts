@@ -1,6 +1,10 @@
 import groq from "groq";
 import { getSanityClient } from "@/lib/sanity/client";
 import {
+  allEnabledClientLogosProjection,
+  type SanityClientLogo,
+} from "@/lib/sanity/clients";
+import {
   sanityImageProjection,
   type SanityImageProjection,
 } from "@/lib/sanity/media";
@@ -77,6 +81,8 @@ export type SanityService = {
   aboutCtaHref?: string | null;
   aboutImage?: SanityImageProjection;
   clientsLabel?: string | null;
+  /** Same uncapped Client list as Contact ClientsSection. */
+  clientLogos?: SanityClientLogo[] | null;
   ctaHeadline?: string | null;
   ctaText?: string | null;
   ctaLabel?: string | null;
@@ -145,6 +151,7 @@ export const serviceBySlugQuery = groq`*[_type == "service" && slug.current == $
   aboutCtaHref,
   aboutImage${sanityImageProjection},
   clientsLabel,
+  "clientLogos": ${allEnabledClientLogosProjection},
   ctaHeadline,
   ctaText,
   ctaLabel,
