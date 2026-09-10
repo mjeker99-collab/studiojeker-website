@@ -155,52 +155,59 @@ export function AboutPage({ content }: AboutPageProps) {
                 </div>
               </Reveal>
 
-              <ul className={styles.portraitGrid}>
-                {content.team.members.slice(0, 6).map((member, index) => {
-                  // Show CMS/local portrait whenever a src exists. Do not let a
-                  // leftover isPlaceholder flag hide a published image.
-                  const hasImage = Boolean(member.image?.src);
-                  const hasMeta = Boolean(member.name || member.role);
+              {/*
+                Portrait column: on desktop, overflow:hidden + absolute grid
+                locks the 2×3 block to the studio image height without
+                expanding the composition row.
+              */}
+              <div className={styles.portraitColumn}>
+                <ul className={styles.portraitGrid}>
+                  {content.team.members.slice(0, 6).map((member, index) => {
+                    // Show CMS/local portrait whenever a src exists. Do not let a
+                    // leftover isPlaceholder flag hide a published image.
+                    const hasImage = Boolean(member.image?.src);
+                    const hasMeta = Boolean(member.name || member.role);
 
-                  return (
-                    <Reveal
-                      key={member.id}
-                      as="li"
-                      className={styles.member}
-                      delayMs={40 + index * 40}
-                    >
-                      {hasImage ? (
-                        <div className={styles.portrait}>
-                          <Image
-                            src={mediaPath(member.image!.src)}
-                            alt={member.image!.alt || member.name || ""}
-                            fill
-                            sizes="(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 10vw"
-                            className={styles.portraitImage}
+                    return (
+                      <Reveal
+                        key={member.id}
+                        as="li"
+                        className={styles.member}
+                        delayMs={40 + index * 40}
+                      >
+                        {hasImage ? (
+                          <div className={styles.portrait}>
+                            <Image
+                              src={mediaPath(member.image!.src)}
+                              alt={member.image!.alt || member.name || ""}
+                              fill
+                              sizes="(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 10vw"
+                              className={styles.portraitImage}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className={styles.portraitPlaceholder}
+                            aria-hidden="true"
                           />
-                        </div>
-                      ) : (
-                        <div
-                          className={styles.portraitPlaceholder}
-                          aria-hidden="true"
-                        />
-                      )}
-                      {hasMeta ? (
-                        <div className={styles.memberMeta}>
-                          {member.name ? (
-                            <p className={styles.memberName}>{member.name}</p>
-                          ) : null}
-                          {member.role ? (
-                            <p className={styles.memberRole}>{member.role}</p>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className={styles.memberMetaSpacer} aria-hidden="true" />
-                      )}
-                    </Reveal>
-                  );
-                })}
-              </ul>
+                        )}
+                        {hasMeta ? (
+                          <div className={styles.memberMeta}>
+                            {member.name ? (
+                              <p className={styles.memberName}>{member.name}</p>
+                            ) : null}
+                            {member.role ? (
+                              <p className={styles.memberRole}>{member.role}</p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className={styles.memberMetaSpacer} aria-hidden="true" />
+                        )}
+                      </Reveal>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
           </Container>
         </section>
