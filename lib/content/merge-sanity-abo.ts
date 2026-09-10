@@ -243,7 +243,12 @@ export function mergeSanityAbo(
   );
 
   if (doc.heroSection?.media) {
-    const heroMedia = applyMedia(base.hero.media, doc.heroSection.media);
+    const media = doc.heroSection.media;
+    // /content-abo renders a still image. A leftover video selection must not
+    // hide a newly uploaded hero image behind an older poster/local fallback.
+    const heroMedia = locale === "de" && (media.image?.asset?._ref || media.image?.url)
+      ? { media: resolveSanityImage(media.image, base.hero.media, 1600) }
+      : applyMedia(base.hero.media, media);
     merged.hero.media = heroMedia.media;
   }
 
