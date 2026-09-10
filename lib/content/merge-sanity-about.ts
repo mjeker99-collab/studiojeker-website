@@ -59,8 +59,11 @@ export type ResolvedAboutPageContent = AboutPageContent;
 export function mergeSanityAbout(
   base: AboutPageContent,
   doc: SanityAbout,
-  _locale: Locale,
+  locale: Locale,
 ): ResolvedAboutPageContent {
+  // About Studio fields are monolingual today; locale is kept for API parity
+  // with Contact/Abo merge helpers and future localized About content.
+  void locale;
   const merged: ResolvedAboutPageContent = {
     ...base,
     seo: { ...base.seo },
