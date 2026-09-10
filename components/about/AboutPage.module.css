@@ -98,10 +98,10 @@
 }
 
 /*
- * Shared team media grid — left studio + right portraits.
- * Desktop: one row, align-items stretch; left fills exact right height.
- * Portrait grid is the height authority (intrinsic aspect ratios).
- * Left image must NOT set an independent taller min-height/aspect-ratio.
+ * Shared team media grid — large studio left + 2×3 portraits right.
+ * Desktop: left image aspect-ratio defines row height; portrait block
+ * fills that height (height:0 + min-height:100%) so tiles stay ~half
+ * the previous size and never force the studio taller.
  */
 .mediaComposition {
   display: grid;
@@ -112,14 +112,11 @@
 .studioMedia {
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
 .studioFrame {
   position: relative;
   width: 100%;
-  height: 100%;
-  min-height: 0;
   overflow: hidden;
   background: var(--color-neutral);
 }
@@ -150,7 +147,7 @@
 .member {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   min-width: 0;
   min-height: 0;
 }
@@ -173,26 +170,26 @@
 
 .memberMeta {
   display: grid;
-  gap: 0.12rem;
-  min-height: 2.4rem;
+  gap: 0.1rem;
+  min-height: 2.1rem;
 }
 
-/* Keeps placeholder slots aligned with named portraits */
+/* Keeps empty slots aligned with named portraits */
 .memberMetaSpacer {
-  min-height: 2.4rem;
+  min-height: 2.1rem;
 }
 
 .memberName {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
   line-height: 1.25;
 }
 
 .memberRole {
   margin: 0;
-  font-size: 0.6875rem;
-  line-height: 1.35;
+  font-size: 0.625rem;
+  line-height: 1.3;
   color: rgb(0 0 0 / 72%);
 }
 
@@ -226,11 +223,11 @@
   line-height: 1.4;
 }
 
-/* Very narrow phones: single portrait column if needed */
+/* Very narrow phones: single portrait column */
 @media (max-width: 22.5rem) {
   .portraitGrid {
     grid-template-columns: 1fr;
-    max-width: 18rem;
+    max-width: 16rem;
   }
 
   .memberMeta,
@@ -245,42 +242,58 @@
     gap: var(--space-4);
   }
 
+  /*
+   * Tablet / desktop: left studio drives height via aspect-ratio.
+   * Right column is ~half the previous relative width so portrait
+   * tiles read ~50% smaller. Portrait grid locks to left height.
+   */
   .mediaComposition {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.85fr) minmax(0, 0.7fr);
     gap: var(--space-2);
     align-items: stretch;
   }
 
-  /*
-   * Reveal wrappers can break stretch; force media column to fill
-   * the shared row height defined by the portrait grid.
-   */
   .studioMedia {
     display: grid;
     align-self: stretch;
-    height: 100%;
     min-height: 0;
   }
 
   .studioFrame {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: auto;
     min-height: 0;
-    aspect-ratio: auto;
+    aspect-ratio: 3 / 2;
   }
 
   .portraitGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
-    height: auto;
-    align-content: start;
-    align-self: start;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    /* Do not contribute to row height — fill the studio column height */
+    height: 0;
+    min-height: 100%;
+    align-self: stretch;
+    align-content: stretch;
+  }
+
+  .member {
+    gap: 0.2rem;
   }
 
   .portrait,
   .portraitPlaceholder {
-    aspect-ratio: 4 / 5;
+    /* Equal cells fill remaining space under name/role */
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .memberMeta,
+  .memberMetaSpacer {
+    min-height: 0;
     flex: 0 0 auto;
   }
 
@@ -313,20 +326,20 @@
   }
 
   .mediaComposition {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 0.72fr);
+    gap: 0.65rem;
   }
 
   .portraitGrid {
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .memberName {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
   }
 
   .memberRole {
-    font-size: 0.75rem;
+    font-size: 0.625rem;
   }
 
   .facts {
@@ -336,11 +349,11 @@
 
 @media (min-width: 48rem) and (max-width: 63.9375rem) {
   .memberName {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
   }
 
   .memberRole {
-    font-size: 0.6875rem;
+    font-size: 0.5625rem;
   }
 }
 
@@ -357,7 +370,7 @@
     padding-block: var(--space-3) var(--space-2);
   }
 
-  /* Mobile: studio image stacks above portraits with own ratio */
+  /* Mobile: studio image stacks above 2-col portrait grid */
   .studioMedia {
     height: auto;
   }
@@ -366,6 +379,16 @@
     aspect-ratio: 3 / 2;
     height: auto;
     min-height: 0;
+  }
+
+  .portraitGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .portrait,
+  .portraitPlaceholder {
+    aspect-ratio: 4 / 5;
   }
 
   .facts {

@@ -219,6 +219,18 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
             role: "",
             isPlaceholder: true,
           },
+          {
+            id: "slot-3",
+            name: "",
+            role: "",
+            isPlaceholder: true,
+          },
+          {
+            id: "slot-4",
+            name: "",
+            role: "",
+            isPlaceholder: true,
+          },
         ],
         featureMedia: {
           src: "/images/Social marketing/Social marketing/Eventfotografie-2-a35bdf37.jpg",
@@ -394,6 +406,18 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         },
         {
           id: "slot-2",
+          name: "",
+          role: "",
+          isPlaceholder: true,
+        },
+        {
+          id: "slot-3",
+          name: "",
+          role: "",
+          isPlaceholder: true,
+        },
+        {
+          id: "slot-4",
           name: "",
           role: "",
           isPlaceholder: true,

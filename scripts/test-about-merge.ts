@@ -18,6 +18,7 @@ function assert(condition: unknown, message: string): asserts condition {
 
 async function main() {
   const base = getAboutPageContent("de");
+  assert(base.team.members.length === 6, "local fallback reserves 6 team slots");
   assert(
     base.team.members[0]?.image?.src === "/images/team/Martin.jpg",
     "fallback uses local Martin portrait",
@@ -35,6 +36,7 @@ async function main() {
   );
 
   const fromCms = mergeSanityAbout(base, live!, "de");
+  assert(fromCms.team.members.length === 6, "merged team always has 6 slots");
   assert(
     fromCms.team.members[0]?.image?.src.includes("cdn.sanity.io"),
     "Martin portrait URL comes from Sanity CDN",
@@ -55,6 +57,28 @@ async function main() {
     !fromCms.team.members[0]?.image?.src.includes("/images/team/"),
     "local /images/team fallback must not win over published portrait",
   );
+
+  // Live CMS still has leftover isPlaceholder on filled members (Sabine/Jonathan).
+  // Portraits must still win.
+  const flaggedWithPortrait = live!.teamMembers!.find(
+    (member) =>
+      member?.isPlaceholder &&
+      (member.portrait?.asset?._ref || member.portrait?.url),
+  );
+  if (flaggedWithPortrait) {
+    const mergedFlagged = fromCms.team.members.find(
+      (member) => member.id === flaggedWithPortrait._key,
+    );
+    assert(mergedFlagged, "flagged member present after merge");
+    assert(
+      mergedFlagged!.isPlaceholder !== true,
+      "isPlaceholder must not stick when portrait exists",
+    );
+    assert(
+      mergedFlagged!.image?.src.includes("cdn.sanity.io"),
+      "portrait still loads when Empty-slot flag was left on",
+    );
+  }
 
   const swapped: SanityAbout = {
     ...live!,
@@ -103,10 +127,18 @@ async function main() {
       },
       {
         _key: "slot-1",
-        name: "",
-        role: "",
+        name: "Person With Flag",
+        role: "Role",
+        // Leftover empty-slot flag with real content + portrait
         isPlaceholder: true,
-        portrait: null,
+        portrait: {
+          asset: {
+            _ref: "image-cccccccccccccccccccccccccccccccccccccccc-800x600-jpg",
+          },
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/flagged-portrait.jpg",
+          dimensions: { width: 800, height: 600 },
+          alt: "Flagged portrait",
+        },
       },
       {
         _key: "slot-2",
@@ -119,6 +151,7 @@ async function main() {
   };
 
   const afterSwap = mergeSanityAbout(base, swapped, "de");
+  assert(afterSwap.team.members.length === 6, "swap case pads to 6 slots");
   assert(
     afterSwap.team.members[0]?.image?.src.includes("martin-swapped.jpg") ||
       afterSwap.team.members[0]?.image?.src.includes("cdn.sanity.io"),
@@ -133,8 +166,17 @@ async function main() {
     "swapped role wins",
   );
   assert(
-    afterSwap.team.members[2]?.isPlaceholder === true,
-    "placeholder slots stay placeholders",
+    afterSwap.team.members[2]?.isPlaceholder !== true,
+    "filled member with leftover Empty-slot flag is not a placeholder",
+  );
+  assert(
+    afterSwap.team.members[2]?.image?.src.includes("flagged-portrait.jpg") ||
+      afterSwap.team.members[2]?.image?.src.includes("cdn.sanity.io"),
+    "portrait wins over leftover Empty-slot flag",
+  );
+  assert(
+    afterSwap.team.members[3]?.isPlaceholder === true,
+    "true empty slots stay placeholders",
   );
 
   const emptyDoc: SanityAbout = { _id: "about" };
@@ -157,7 +199,7 @@ async function main() {
   );
 
   console.log(
-    "OK: About Team Sanity merge prefers published portraits over local /images/team fallbacks.",
+    "OK: About Team — Sanity portraits win (incl. leftover Empty-slot flags), 6-slot grid.",
   );
 }
 

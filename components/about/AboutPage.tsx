@@ -156,8 +156,10 @@ export function AboutPage({ content }: AboutPageProps) {
               </Reveal>
 
               <ul className={styles.portraitGrid}>
-                {content.team.members.map((member, index) => {
-                  const isSlot = Boolean(member.isPlaceholder || !member.image);
+                {content.team.members.slice(0, 6).map((member, index) => {
+                  // Show CMS/local portrait whenever a src exists. Do not let a
+                  // leftover isPlaceholder flag hide a published image.
+                  const hasImage = Boolean(member.image?.src);
                   const hasMeta = Boolean(member.name || member.role);
 
                   return (
@@ -167,21 +169,21 @@ export function AboutPage({ content }: AboutPageProps) {
                       className={styles.member}
                       delayMs={40 + index * 40}
                     >
-                      {isSlot ? (
+                      {hasImage ? (
+                        <div className={styles.portrait}>
+                          <Image
+                            src={mediaPath(member.image!.src)}
+                            alt={member.image!.alt || member.name || ""}
+                            fill
+                            sizes="(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 18vw, 10vw"
+                            className={styles.portraitImage}
+                          />
+                        </div>
+                      ) : (
                         <div
                           className={styles.portraitPlaceholder}
                           aria-hidden="true"
                         />
-                      ) : (
-                        <div className={styles.portrait}>
-                          <Image
-                            src={mediaPath(member.image!.src)}
-                            alt={member.image!.alt}
-                            fill
-                            sizes="(max-width: 480px) 45vw, (max-width: 1024px) 22vw, 14vw"
-                            className={styles.portraitImage}
-                          />
-                        </div>
                       )}
                       {hasMeta ? (
                         <div className={styles.memberMeta}>
