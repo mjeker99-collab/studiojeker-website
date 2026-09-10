@@ -9,6 +9,7 @@ import type {
   SanityServiceProjectItem,
   SanityServiceSolutionItem,
 } from "@/lib/sanity/service";
+import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 import { resolveSanityImage } from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 
@@ -166,7 +167,10 @@ export function mergeSanityService(
       media: { ...base.about.media },
       body: [...base.about.body],
     },
-    clients: { ...base.clients },
+    clients: {
+      ...base.clients,
+      logos: [...base.clients.logos],
+    },
     finalCta: { ...base.finalCta, cta: { ...base.finalCta.cta } },
   };
 
@@ -211,6 +215,12 @@ export function mergeSanityService(
       base.hero.label,
     );
   }
+
+  // Logos are language-agnostic — same Contact ClientsSection source for DE/EN.
+  merged.clients.logos = mergeClientLogos(
+    merged.clients.logos,
+    doc.clientLogos,
+  );
 
   // German plain-string fields only — EN keeps local copywriting.
   if (locale !== "de") {

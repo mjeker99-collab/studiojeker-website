@@ -102,6 +102,7 @@ export function ServicePageLive({
     resolved.showreel.media.src,
     resolved.about.media.src,
     resolved.projects.items.map((item) => item.image.src).join(","),
+    resolved.clients.logos.map((logo) => logo.src).join(","),
   ].join("|");
 
   return <ServicePage key={contentKey} content={resolved} />;

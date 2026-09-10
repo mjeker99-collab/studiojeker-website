@@ -114,6 +114,14 @@ $query = <<<GROQ
   aboutCtaHref,
   aboutImage{$imageProjection},
   clientsLabel,
+  "clientLogos": *[_type == "client" && active != false && defined(logo.asset)] | order(coalesce(sortOrder, 999999) asc) {
+    _id,
+    name,
+    websiteUrl,
+    sortOrder,
+    active,
+    logo{$imageProjection}
+  },
   ctaHeadline,
   ctaText,
   ctaLabel,
