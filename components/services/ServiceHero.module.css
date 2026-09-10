@@ -1,6 +1,8 @@
 .section {
   position: relative;
   background: var(--color-white);
+  /* Clear the solid fixed header — hero/media begin below it (homepage pattern) */
+  padding-top: var(--header-height);
   min-height: min(100svh, 48rem);
   overflow: hidden;
 }
@@ -16,10 +18,8 @@
   align-content: center;
   gap: var(--space-3);
   max-width: 34rem;
-  padding:
-    calc(var(--header-height) + var(--space-3))
-    var(--container-padding-x)
-    var(--space-5);
+  /* Header offset is on .section — keep only content padding here */
+  padding: var(--space-3) var(--container-padding-x) var(--space-5);
 }
 
 .headline {
@@ -64,28 +64,57 @@
   margin-top: var(--space-1);
 }
 
+/* Outer column shell — only stretches in the page grid */
 .mediaWrap {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
   align-self: stretch;
-  gap: 0;
   height: 100%;
   min-height: 18rem;
 }
 
+/*
+ * Single media wrapper: cyan column + photo column.
+ * Grid stretch couples heights — same approved pattern as homepage Hero.
+ */
 .media {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  align-self: stretch;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: var(--cyan-bar-width) minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
   min-height: 18rem;
+}
+
+.cyanBar {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  background: var(--color-cyan);
+  position: static;
+  top: auto;
+  bottom: auto;
+  margin: 0;
+  padding: 0;
+  transform: none;
+}
+
+.photo {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   background: var(--color-neutral);
 }
 
 .image {
   object-fit: cover;
+}
+
+@media (max-width: 47.9375rem) {
+  .media {
+    grid-template-columns: clamp(0.625rem, 2.4vw, 0.875rem) minmax(0, 1fr);
+  }
 }
 
 @media (min-width: 64rem) {
