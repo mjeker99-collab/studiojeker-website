@@ -24,7 +24,7 @@ import {
 
 /**
  * Studiojeker editorial schema registry.
- * Homepage, Contact and Content Abo are wired to Next.js for DE and EN.
+ * Homepage, About, Contact and Content Abo are wired to Next.js for DE and EN.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   localizedString,

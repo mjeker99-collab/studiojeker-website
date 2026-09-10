@@ -1,0 +1,167 @@
+/**
+ * About / Team Sanity merge regression checks.
+ * Run: npx tsx scripts/test-about-merge.ts
+ */
+import { getAboutPageContent } from "../lib/content/about-page";
+import { mergeSanityAbout } from "../lib/content/merge-sanity-about";
+import {
+  ABOUT_DOCUMENT_ID,
+  fetchSanityAbout,
+  type SanityAbout,
+} from "../lib/sanity/about";
+
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+async function main() {
+  const base = getAboutPageContent("de");
+  assert(
+    base.team.members[0]?.image?.src === "/images/team/Martin.jpg",
+    "fallback uses local Martin portrait",
+  );
+  assert(
+    base.team.members[1]?.image?.src === "/images/team/Nora.jpg",
+    "fallback uses local Nora portrait",
+  );
+
+  const live = await fetchSanityAbout();
+  assert(live?._id === ABOUT_DOCUMENT_ID, "published singleton id is about");
+  assert(
+    Array.isArray(live!.teamMembers) && live!.teamMembers!.length >= 2,
+    "published About has teamMembers",
+  );
+
+  const fromCms = mergeSanityAbout(base, live!, "de");
+  assert(
+    fromCms.team.members[0]?.image?.src.includes("cdn.sanity.io"),
+    "Martin portrait URL comes from Sanity CDN",
+  );
+  assert(
+    fromCms.team.members[1]?.image?.src.includes("cdn.sanity.io"),
+    "Nora portrait URL comes from Sanity CDN",
+  );
+  assert(
+    fromCms.team.featureMedia.src.includes("cdn.sanity.io"),
+    "team feature image comes from Sanity CDN",
+  );
+  assert(
+    fromCms.team.members[0]?.role === live!.teamMembers![0]?.role,
+    "published team role overrides local fallback",
+  );
+  assert(
+    !fromCms.team.members[0]?.image?.src.includes("/images/team/"),
+    "local /images/team fallback must not win over published portrait",
+  );
+
+  const swapped: SanityAbout = {
+    ...live!,
+    teamMembers: [
+      {
+        _key: "martin",
+        name: "Martin Jeker",
+        role: "Test role Martin",
+        isPlaceholder: false,
+        portrait: {
+          asset: {
+            _ref: "image-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-800x600-jpg",
+          },
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/martin-swapped.jpg",
+          dimensions: { width: 800, height: 600 },
+          alt: "Martin swapped",
+          crop: {
+            _type: "sanity.imageCrop",
+            top: 0,
+            bottom: 0,
+            left: 0.1,
+            right: 0.1,
+          },
+          hotspot: {
+            _type: "sanity.imageHotspot",
+            x: 0.5,
+            y: 0.4,
+            height: 0.8,
+            width: 0.8,
+          },
+        },
+      },
+      {
+        _key: "nora",
+        name: "Nora Jeker",
+        role: "Test role Nora",
+        isPlaceholder: false,
+        portrait: {
+          asset: {
+            _ref: "image-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-800x600-jpg",
+          },
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/nora-swapped.jpg",
+          dimensions: { width: 800, height: 600 },
+          alt: "Nora swapped",
+        },
+      },
+      {
+        _key: "slot-1",
+        name: "",
+        role: "",
+        isPlaceholder: true,
+        portrait: null,
+      },
+      {
+        _key: "slot-2",
+        name: "",
+        role: "",
+        isPlaceholder: true,
+        portrait: null,
+      },
+    ],
+  };
+
+  const afterSwap = mergeSanityAbout(base, swapped, "de");
+  assert(
+    afterSwap.team.members[0]?.image?.src.includes("martin-swapped.jpg") ||
+      afterSwap.team.members[0]?.image?.src.includes("cdn.sanity.io"),
+    "swapped Martin portrait wins over local fallback",
+  );
+  assert(
+    afterSwap.team.members[0]?.image?.alt === "Martin swapped",
+    "portrait alt comes from Sanity",
+  );
+  assert(
+    afterSwap.team.members[0]?.role === "Test role Martin",
+    "swapped role wins",
+  );
+  assert(
+    afterSwap.team.members[2]?.isPlaceholder === true,
+    "placeholder slots stay placeholders",
+  );
+
+  const emptyDoc: SanityAbout = { _id: "about" };
+  const fallbackOnly = mergeSanityAbout(base, emptyDoc, "de");
+  assert(
+    fallbackOnly.team.members[0]?.image?.src === "/images/team/Martin.jpg",
+    "missing Sanity portraits keep local fallback images",
+  );
+
+  const draftIgnored = mergeSanityAbout(
+    base,
+    { _id: "drafts.about", teamMembers: swapped.teamMembers },
+    "de",
+  );
+  // Merge itself does not filter drafts — fetch/query does via perspective + _id.
+  // Prove merge still prefers CMS portraits when given a document payload.
+  assert(
+    draftIgnored.team.members[0]?.image?.src.includes("cdn.sanity.io"),
+    "merge applies portraits from provided document payload",
+  );
+
+  console.log(
+    "OK: About Team Sanity merge prefers published portraits over local /images/team fallbacks.",
+  );
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
