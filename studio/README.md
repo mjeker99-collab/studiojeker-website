@@ -8,10 +8,6 @@ uploaded to Metanet/Plesk staging.
 ## Local
 
 ```bash
-# from repo root
-npm run sanity:dev
-
-# or
 cd studio && npm run dev
 ```
 
@@ -23,8 +19,7 @@ Schema / desk changes (including the **Content Abo** singleton) only appear on
 https://studiojeker.sanity.studio/ after a Studio deploy — `main` alone is not enough.
 
 ```bash
-npm run sanity:deploy
-# or: cd studio && npm run deploy
+cd studio && npm run deploy
 ```
 
 CI: `.github/workflows/deploy-sanity-studio.yml` (secret `SANITY_AUTH_TOKEN`).
