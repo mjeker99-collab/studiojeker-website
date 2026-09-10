@@ -37,6 +37,8 @@ export const abo = defineType({
           name: "headline",
           title: "Headline",
           type: "localizedString",
+          description:
+            "Die deutsche Hero-Headline auf /content-abo. Hier den gewünschten kurzen Wortlaut bearbeiten und veröffentlichen; das Website-Layout bleibt unverändert.",
         }),
         defineField({
           name: "text",
@@ -51,10 +53,16 @@ export const abo = defineType({
         }),
         defineField({
           name: "media",
-          title: "Hero Media",
+          title: "Hero-Bild",
           type: "mediaField",
           description:
-            "Hero image on the right. Set Media Type to Image and upload under Image. Publish to update staging.",
+            "Bild rechts im Hero: Media Type → Image, dann Image ersetzen. Alt-Text, Ausschnitt und Hotspot am Bild bearbeiten. Der Hero spielt kein Video ab. Anschliessend veröffentlichen.",
+          validation: (Rule) => Rule.custom((value) => {
+            const media = value as { mediaType?: string } | undefined;
+            return media?.mediaType === "video"
+              ? "Der Hero zeigt ein Bild. Bitte Media Type auf Image stellen und das Hero-Bild unter Image bearbeiten."
+              : true;
+          }).warning(),
         }),
       ],
     }),

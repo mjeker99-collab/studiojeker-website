@@ -9,6 +9,7 @@ import {
   type ResolvedAboPageContent,
 } from "@/lib/content/merge-sanity-abo";
 import { AboLandingPage } from "@/components/abo/AboLandingPage";
+import { createAboRefresh } from "@/lib/content/abo-refresh";
 
 type AboLandingPageLiveProps = {
   locale: Locale;
@@ -34,8 +35,15 @@ export function AboLandingPageLive({
 
   useEffect(() => {
     let cancelled = false;
+    // Keep the English route's existing refresh behavior outside this fix.
+    const germanRefresh = locale === "de"
+      ? createAboRefresh((document) => {
+          setLive(mergeSanityAbo(getAboPageContent("de"), document, "de"));
+        })
+      : undefined;
 
     async function refreshFromSanity() {
+      if (germanRefresh) return germanRefresh.refresh();
       try {
         const response = await fetch("/api/abo-page.php", {
           cache: "no-store",
@@ -82,6 +90,7 @@ export function AboLandingPageLive({
 
     return () => {
       cancelled = true;
+      germanRefresh?.stop();
       window.clearInterval(pollId);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
