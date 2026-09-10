@@ -164,17 +164,32 @@ export function mergeSanityAbout(
   }
 
   if (doc.teamMembers && doc.teamMembers.length > 0) {
-    merged.team.members = doc.teamMembers.map((member, index) => {
+    // About team grid is a fixed 2×3 editorial composition (max 6).
+    const sourceMembers = doc.teamMembers.slice(0, 6);
+    merged.team.members = sourceMembers.map((member, index) => {
       const fallback = base.team.members[index];
-      const isPlaceholder = Boolean(member?.isPlaceholder);
-      const name = clean(member?.name) ?? (isPlaceholder ? "" : fallback?.name) ?? "";
-      const role = clean(member?.role) ?? (isPlaceholder ? "" : fallback?.role) ?? "";
-      const fallbackImage = fallback?.image ?? EMPTY_MEDIA;
       const hasPortrait =
         Boolean(member?.portrait?.asset?._ref) || Boolean(member?.portrait?.url);
+      const nameFromCms = clean(member?.name);
+      const roleFromCms = clean(member?.role);
+      // "Empty slot" must not hide a published portrait or filled name/role.
+      // Seeded CMS rows sometimes leave isPlaceholder true after content is added.
+      const isEmptySlotFlag = Boolean(member?.isPlaceholder);
+      const isPlaceholder =
+        isEmptySlotFlag && !hasPortrait && !nameFromCms && !roleFromCms;
+
+      const name =
+        nameFromCms ?? (isPlaceholder ? "" : fallback?.name) ?? "";
+      const role =
+        roleFromCms ?? (isPlaceholder ? "" : fallback?.role) ?? "";
+      const fallbackImage = fallback?.image ?? EMPTY_MEDIA;
+      // Prefer Sanity portrait whenever an asset is present — never keep a
+      // local /images/team fallback over a published CMS image.
       const resolvedImage = hasPortrait
         ? resolveSanityImage(member?.portrait, fallbackImage, 1200)
-        : fallback?.image;
+        : isPlaceholder
+          ? undefined
+          : fallback?.image;
 
       const next: AboutTeamMember = {
         id: clean(member?._key) ?? fallback?.id ?? `member-${index}`,
@@ -189,6 +204,17 @@ export function mergeSanityAbout(
 
       return next;
     });
+
+    while (merged.team.members.length < 6) {
+      const index = merged.team.members.length;
+      const fallback = base.team.members[index];
+      merged.team.members.push({
+        id: fallback?.id ?? `slot-${index}`,
+        name: "",
+        role: "",
+        isPlaceholder: true,
+      });
+    }
   }
 
   if (doc.facts && doc.facts.length > 0) {

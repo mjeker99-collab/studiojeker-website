@@ -17,7 +17,8 @@ export { mergeSanityAbout } from "@/lib/content/merge-sanity-about";
  * Runtime freshness on Metanet uses `/api/about-page.php` + `AboutPageLive`.
  *
  * Team portraits come from the About singleton (`teamMembers[].portrait`),
- * not from standalone `teamMember` documents.
+ * not from standalone `teamMember` documents. Grid is capped at 6 (2×3).
+ * A leftover `isPlaceholder` flag must not hide a published portrait.
  */
 export const getResolvedAboutPageContent = cache(
   async (locale: Locale): Promise<ResolvedAboutPageContent> => {

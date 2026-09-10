@@ -151,7 +151,8 @@ export const about = defineType({
       type: "array",
       group: "team",
       description:
-        "Portraits in grid order. Leave name/role empty and mark as placeholder for empty slots.",
+        "About page shows up to 6 portraits in a 2×3 grid (order = grid order). Each member has its own Portrait image — upload or replace per person, then publish.",
+      validation: (Rule) => Rule.max(6),
       of: [
         {
           type: "object",
@@ -174,13 +175,16 @@ export const about = defineType({
               title: "Portrait",
               type: "image",
               options: { hotspot: true },
+              description:
+                "Per-person portrait. Replace this image and publish to update staging. Crop and hotspot are supported.",
               fields: [imageAltField],
             }),
             defineField({
               name: "isPlaceholder",
               title: "Empty slot",
               type: "boolean",
-              description: "Neutral tile with no invented person.",
+              description:
+                "Only for vacant tiles (no name, role, or portrait). Turn this off when adding a real person — a leftover empty-slot flag must not hide an uploaded portrait.",
               initialValue: false,
             }),
           ],
