@@ -1,32 +1,31 @@
 import { cache } from "react";
 import type { Locale } from "@/types/i18n";
+import { getAboutPageContent } from "@/lib/content/about-page";
 import {
-  getAboutPageContent,
-  type AboutPageContent,
-} from "@/lib/content/about-page";
-import { mergeClientLogos } from "@/lib/content/merge-client-logos";
-import { fetchEnabledClientLogos } from "@/lib/sanity/clients";
+  getLocalResolvedAboutPageContent,
+  mergeAboutClientLogos,
+  mergeSanityAbout,
+  type ResolvedAboutPageContent,
+} from "@/lib/content/merge-sanity-about";
+import { fetchSanityAbout } from "@/lib/sanity/about";
+
+export type { ResolvedAboutPageContent } from "@/lib/content/merge-sanity-about";
+export { mergeSanityAbout } from "@/lib/content/merge-sanity-about";
 
 /**
- * About page with Contact-identical Client logo list.
- * About has no live PHP proxy yet — logos refresh on the next static rebuild.
+ * Build-time About resolution (static export).
+ * Runtime freshness on Metanet uses `/api/about-page.php` + `AboutPageLive`.
+ *
+ * Team portraits come from the About singleton (`teamMembers[].portrait`),
+ * not from standalone `teamMember` documents.
  */
 export const getResolvedAboutPageContent = cache(
-  async (locale: Locale): Promise<AboutPageContent> => {
+  async (locale: Locale): Promise<ResolvedAboutPageContent> => {
     const base = getAboutPageContent(locale);
-    const logos = await fetchEnabledClientLogos();
-    const mergedLogos = mergeClientLogos(base.clients.logos, logos);
+    const local = getLocalResolvedAboutPageContent(locale);
+    const doc = await fetchSanityAbout();
 
-    if (mergedLogos === base.clients.logos) {
-      return base;
-    }
-
-    return {
-      ...base,
-      clients: {
-        ...base.clients,
-        logos: mergedLogos,
-      },
-    };
+    const merged = doc ? mergeSanityAbout(base, doc, locale) : local;
+    return mergeAboutClientLogos(merged);
   },
 );

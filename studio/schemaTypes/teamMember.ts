@@ -2,12 +2,16 @@ import { defineField, defineType } from "sanity";
 import { sortOrderField } from "./shared";
 
 /**
- * Team member — referenced from About and listing pages later.
+ * Standalone team directory document.
+ * About page portraits are edited under About → Team Members (inline objects),
+ * not via references to these documents.
  */
 export const teamMember = defineType({
   name: "teamMember",
   title: "Team Member",
   type: "document",
+  description:
+    "Standalone team directory. About page portraits live under About → Team → Team Members.",
   fields: [
     defineField({
       name: "name",

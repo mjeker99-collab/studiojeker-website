@@ -106,7 +106,9 @@ export const structure: StructureResolver = (S) =>
       workStructure(S),
       S.documentTypeListItem("service").title("Services"),
       S.documentTypeListItem("project").title("Project teasers"),
-      S.documentTypeListItem("teamMember").title("Team"),
+      S.documentTypeListItem("teamMember").title(
+        "Team directory (not About portraits)",
+      ),
       S.documentTypeListItem("client").title("Clients / Logos"),
       S.divider(),
       singletonListItem(S, SINGLETON_DOCS.globalSettings),

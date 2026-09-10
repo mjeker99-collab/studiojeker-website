@@ -246,13 +246,14 @@ Minimum (homepage) — keep or create:
 | Name | GROQ filter `_type == …` | `event_type` | `documentType` |
 |------|--------------------------|--------------|----------------|
 | Content Abo | `abo` | `sanity-abo-published` | `abo` |
+| About | `about` | `sanity-about-published` | `about` |
 | Contact | `contact` | `sanity-contact-published` | `contact` |
 | Work | `work` | `sanity-work-published` | `work` |
 | Service | `service` | `sanity-service-published` | `service` |
 
 Optional single catch-all webhook:
 
-| Filter | `!(_id in path("drafts.**")) && _type in ["homepage","abo","contact","work","service"]` |
+| Filter | `!(_id in path("drafts.**")) && _type in ["homepage","abo","about","contact","work","service"]` |
 | event_type | `sanity-cms-published` |
 | documentType | `_type` |
 

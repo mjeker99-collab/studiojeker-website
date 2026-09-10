@@ -36,6 +36,7 @@ on:
     types:
       - sanity-homepage-published
       - sanity-abo-published
+      - sanity-about-published
       - sanity-contact-published
       - sanity-work-published
       - sanity-service-published
@@ -83,7 +84,7 @@ jobs:
               ;;
             repository_dispatch)
               case "${DISPATCH_TYPE}" in
-                sanity-homepage-published|sanity-abo-published|sanity-contact-published|sanity-work-published|sanity-service-published|sanity-cms-published) ;;
+                sanity-homepage-published|sanity-abo-published|sanity-about-published|sanity-contact-published|sanity-work-published|sanity-service-published|sanity-cms-published) ;;
                 *)
                   echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
                   exit 1
@@ -91,7 +92,7 @@ jobs:
               esac
               if [ -n "${CLIENT_DOCUMENT_TYPE}" ]; then
                 case "${CLIENT_DOCUMENT_TYPE}" in
-                  homepage|abo|contact|work|service|client|project|cms) ;;
+                  homepage|abo|about|contact|work|service|client|project|cms) ;;
                   *)
                     echo "::error::Refusing deploy. Unsupported client_payload.documentType '${CLIENT_DOCUMENT_TYPE}'."
                     exit 1
@@ -201,6 +202,10 @@ jobs:
           fi
           if [ ! -f "out/api/abo-page.php" ]; then
             echo "::error::out/api/abo-page.php is missing — Content Abo live proxy must be present."
+            exit 1
+          fi
+          if [ ! -f "out/api/about-page.php" ]; then
+            echo "::error::out/api/about-page.php is missing — About live proxy must be present."
             exit 1
           fi
           # Hidden files from public/ (e.g. .htaccess) must be present in the export.

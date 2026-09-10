@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
-import { AboutPage } from "@/components/about/AboutPage";
+import { AboutPageLive } from "@/components/about/AboutPageLive";
 import { getResolvedAboutPageContent } from "@/lib/content/about-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -19,7 +19,7 @@ export default async function EnglishAboutPage() {
 
   return (
     <SiteChrome locale="en">
-      <AboutPage content={content} />
+      <AboutPageLive key="en" locale="en" content={content} />
     </SiteChrome>
   );
 }
