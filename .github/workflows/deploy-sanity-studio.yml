@@ -1,0 +1,70 @@
+# Deploy standalone Sanity Studio → https://studiojeker.sanity.studio/
+# Separate from Metanet staging (deploy-staging.yml). Never uploads /out via FTPS.
+#
+# Requires repository secret: SANITY_AUTH_TOKEN
+# (Sanity deploy token with permission to deploy this project's Studio.)
+
+name: Deploy Sanity Studio
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "studio/**"
+      - ".github/workflows/deploy-sanity-studio.yml"
+
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-sanity-studio
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy Studio
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify Content Abo is in the Studio bundle
+        run: |
+          if ! grep -R -q "Content Abo" dist/static/sanity-*.js; then
+            echo "ERROR: Built Studio bundle is missing the Content Abo desk label."
+            exit 1
+          fi
+          echo "Content Abo label present in built Studio bundle."
+
+      - name: Deploy to sanity.studio
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+        run: |
+          if [ -z "${SANITY_AUTH_TOKEN}" ]; then
+            echo "ERROR: Repository secret SANITY_AUTH_TOKEN is not set."
+            exit 1
+          fi
+          npx sanity deploy -y --no-build
