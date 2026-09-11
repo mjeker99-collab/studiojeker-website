@@ -47,7 +47,7 @@ export function getBusinessCommunicationContent(
             title: "Corporate Films",
             description:
               "Authentic storytelling for companies and organisations.",
-            href: paths.workUnternehmensfilme,
+            href: paths.work,
             icon: "film",
           },
           {
@@ -55,7 +55,7 @@ export function getBusinessCommunicationContent(
             title: "Business Portraits",
             description:
               "Professional portraits for executives, teams and employees.",
-            href: paths.workBusinessportraits,
+            href: paths.work,
             icon: "portrait",
           },
           {
@@ -63,7 +63,7 @@ export function getBusinessCommunicationContent(
             title: "Reportage",
             description:
               "Real people. Real stories. For websites, recruitment and employer branding.",
-            href: paths.workBusiness,
+            href: paths.work,
             icon: "reportage",
           },
           {
@@ -71,7 +71,7 @@ export function getBusinessCommunicationContent(
             title: "Social Media",
             description:
               "Consistent content for LinkedIn, Instagram, Facebook and other platforms.",
-            href: paths.workEventvideos,
+            href: paths.work,
             icon: "internal",
           },
         ],
@@ -209,7 +209,7 @@ export function getBusinessCommunicationContent(
           title: "Unternehmensfilme",
           description:
             "Authentische Filme, die Ihr Unternehmen, Ihre Kultur und Ihre Leistungen sichtbar machen.",
-          href: paths.workUnternehmensfilme,
+          href: paths.work,
           icon: "film",
         },
         {
@@ -217,7 +217,7 @@ export function getBusinessCommunicationContent(
           title: "Businessporträts",
           description:
             "Professionelle Portraits für Geschäftsleitung, Mitarbeitende und Teams.",
-          href: paths.workBusinessportraits,
+          href: paths.work,
           icon: "portrait",
         },
         {
@@ -225,7 +225,7 @@ export function getBusinessCommunicationContent(
           title: "Reportagen",
           description:
             "Echte Menschen. Echte Geschichten. Für Website, Recruiting und Employer Branding.",
-          href: paths.workBusiness,
+          href: paths.work,
           icon: "reportage",
         },
         {
@@ -233,7 +233,7 @@ export function getBusinessCommunicationContent(
           title: "Social Media",
           description:
             "Kontinuierlicher Content für LinkedIn, Instagram, Facebook und weitere Plattformen.",
-          href: paths.workEventvideos,
+          href: paths.work,
           icon: "internal",
         },
       ],

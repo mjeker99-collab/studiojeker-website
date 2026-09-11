@@ -5,10 +5,6 @@ import { Container } from "@/components/layout/Container";
 import { Arrow } from "@/components/ui/Arrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import {
-  getWorkCategoryAnchorId,
-  getWorkItemAnchorId,
-} from "@/lib/content/work-anchors";
 import { ProjectMediaCard } from "@/components/work/ProjectMediaCard";
 import { WorkAnchorScroll } from "@/components/work/WorkAnchorScroll";
 import styles from "./WorkPage.module.css";
@@ -24,7 +20,7 @@ type WorkPageProps = {
  * Work overview — standalone portfolio grid.
  * Category labels structure projects only (no service navigation).
  * Tiles use ProjectMediaCard (image | video | slideshow) in place.
- * Stable hash IDs enable Service “Leistungen” deep links.
+ * Tile `id` comes from Sanity `itemId` for Service deep links (`/work#…`).
  */
 export function WorkPage({ content, locale }: WorkPageProps) {
   return (
@@ -67,10 +63,7 @@ export function WorkPage({ content, locale }: WorkPageProps) {
                 className={styles.category}
                 delayMs={categoryIndex * 40}
               >
-                <div
-                  id={getWorkCategoryAnchorId(category.id)}
-                  className={styles.categoryHeader}
-                >
+                <div className={styles.categoryHeader}>
                   <h3 className={styles.categoryTitle}>{category.title}</h3>
                   {/* Decorative only — Work is a portfolio, not service IA. */}
                   <span className={styles.categoryAccent} aria-hidden="true">
@@ -82,7 +75,7 @@ export function WorkPage({ content, locale }: WorkPageProps) {
                   {category.items.map((item) => (
                     <li
                       key={item.id}
-                      id={getWorkItemAnchorId(item.id)}
+                      id={item.id}
                       className={styles.tileItem}
                     >
                       <ProjectMediaCard item={item} locale={locale} />

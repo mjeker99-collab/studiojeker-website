@@ -232,10 +232,9 @@ export const service = defineType({
             }),
             defineField({
               name: "href",
-              title: "Linkziel",
+              title: "Link Target",
               type: "string",
-              description:
-                "Bestehender Website-Pfad zum Arbeitsbeispiel, inkl. Anker — z. B. /work#unternehmensfilme oder /work#businessportraits. Nicht nur /work. Externe URLs nur wenn nötig.",
+              description: "Existing site path, e.g. /work or /contact.",
               validation: (Rule) => Rule.max(200),
             }),
             defineField({

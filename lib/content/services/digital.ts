@@ -54,7 +54,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             title: "Content Production",
             description:
               "Photography, video, reels and copy — produced for digital channels.",
-            href: paths.workContentProduction,
+            href: paths.work,
             icon: "content",
           },
           {
@@ -62,7 +62,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
             title: "Social Media",
             description:
               "Publishing and presence on LinkedIn, Instagram and further platforms.",
-            href: paths.workEventvideos,
+            href: paths.work,
             icon: "social",
           },
           {
@@ -214,7 +214,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           title: "Content-Produktion",
           description:
             "Fotografie, Video, Reels und Texte — produziert für digitale Kanäle.",
-          href: paths.workContentProduction,
+          href: paths.work,
           icon: "content",
         },
         {
@@ -222,7 +222,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           title: "Social Media",
           description:
             "Publishing und Präsenz auf LinkedIn, Instagram und weiteren Plattformen.",
-          href: paths.workEventvideos,
+          href: paths.work,
           icon: "social",
         },
         {
