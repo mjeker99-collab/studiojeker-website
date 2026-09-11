@@ -6,6 +6,7 @@ import { Arrow } from "@/components/ui/Arrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ProjectMediaCard } from "@/components/work/ProjectMediaCard";
+import { WorkAnchorScroll } from "@/components/work/WorkAnchorScroll";
 import styles from "./WorkPage.module.css";
 
 export type { WorkPageContent, WorkCategory, WorkProjectItem } from "@/types/work";
@@ -19,10 +20,12 @@ type WorkPageProps = {
  * Work overview — standalone portfolio grid.
  * Category labels structure projects only (no service navigation).
  * Tiles use ProjectMediaCard (image | video | slideshow) in place.
+ * Tile `id` comes from Sanity `itemId` for Service deep links (`/work#…`).
  */
 export function WorkPage({ content, locale }: WorkPageProps) {
   return (
     <>
+      <WorkAnchorScroll />
       <section
         className={styles.hero}
         data-header-theme="light"
@@ -70,7 +73,11 @@ export function WorkPage({ content, locale }: WorkPageProps) {
 
                 <ul className={styles.categoryGrid}>
                   {category.items.map((item) => (
-                    <li key={item.id} className={styles.tileItem}>
+                    <li
+                      key={item.id}
+                      id={item.id}
+                      className={styles.tileItem}
+                    >
                       <ProjectMediaCard item={item} locale={locale} />
                     </li>
                   ))}

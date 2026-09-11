@@ -10,6 +10,7 @@ import type {
   SanityServiceSolutionItem,
 } from "@/lib/sanity/service";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
+import { localizePathname } from "@/lib/i18n/config";
 import { resolveSanityImage } from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 
@@ -69,9 +70,26 @@ function resolveIcon(
   return fallback;
 }
 
+/** Localize internal solution paths (keeps `/work#itemId` hashes). */
+function resolveSolutionHref(
+  href: string | null | undefined,
+  locale: Locale,
+  fallback: string,
+): string {
+  const value = clean(href);
+  if (!value) {
+    return fallback;
+  }
+  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+    return value;
+  }
+  return localizePathname(value, locale);
+}
+
 function mergeSolutions(
   base: ServiceSolutionItem[],
   items: SanityServiceSolutionItem[] | null | undefined,
+  locale: Locale,
 ): ServiceSolutionItem[] {
   if (!items || items.length === 0) {
     return base;
@@ -83,8 +101,28 @@ function mergeSolutions(
       id: clean(item.itemId) ?? fallback?.id ?? `solution-${index}`,
       title: clean(item.title) ?? fallback?.title ?? "",
       description: clean(item.description) ?? fallback?.description ?? "",
-      href: clean(item.href) ?? fallback?.href ?? "#",
+      href: resolveSolutionHref(item.href, locale, fallback?.href ?? "#"),
       icon: resolveIcon(item.icon, fallback?.icon ?? "content"),
+    };
+  });
+}
+
+/** EN: keep local copy, apply Sanity solution hrefs only. */
+function mergeSolutionHrefsOnly(
+  base: ServiceSolutionItem[],
+  items: SanityServiceSolutionItem[] | null | undefined,
+  locale: Locale,
+): ServiceSolutionItem[] {
+  if (!items || items.length === 0) {
+    return base;
+  }
+
+  return base.map((fallback, index) => {
+    const byId = items.find((item) => clean(item.itemId) === fallback.id);
+    const item = byId ?? items[index];
+    return {
+      ...fallback,
+      href: resolveSolutionHref(item?.href, locale, fallback.href),
     };
   });
 }
@@ -222,6 +260,15 @@ export function mergeSanityService(
     doc.clientLogos,
   );
 
+  // Solution hrefs apply on both locales (paths are language-routed).
+  if (doc.solutions && doc.solutions.length > 0 && locale !== "de") {
+    merged.solutions.items = mergeSolutionHrefsOnly(
+      base.solutions.items,
+      doc.solutions,
+      locale,
+    );
+  }
+
   // German plain-string fields only — EN keeps local copywriting.
   if (locale !== "de") {
     return merged;
@@ -254,7 +301,11 @@ export function mergeSanityService(
   if (solutionsLabel) merged.solutions.label = solutionsLabel;
   const solutionsHeadline = clean(doc.solutionsHeadline);
   if (solutionsHeadline) merged.solutions.headline = solutionsHeadline;
-  merged.solutions.items = mergeSolutions(base.solutions.items, doc.solutions);
+  merged.solutions.items = mergeSolutions(
+    base.solutions.items,
+    doc.solutions,
+    locale,
+  );
 
   const showreelLabel = clean(doc.showreelLabel);
   if (showreelLabel) merged.showreel.label = showreelLabel;

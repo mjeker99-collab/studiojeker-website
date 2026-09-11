@@ -33,11 +33,18 @@ export function ServiceOverview({ content, titleId }: ServiceOverviewProps) {
             <Reveal key={item.id} as="article" className={styles.card} delayMs={index * 70}>
               {/*
                 Restore column flex layout lost when homepage moved flex onto
-                `.cardLink` (e06ea8f). Service cards keep arrow-only links, so
-                we reuse `.cardLink` as a non-navigating flex shell.
+                `.cardLink` (e06ea8f). Service cards keep icon + arrow links only
+                (title/description stay plain text), so `.cardLink` remains a
+                non-navigating flex shell.
               */}
               <div className={styles.cardLink}>
-                <SolutionIcon id={item.icon} />
+                <Link
+                  href={item.href}
+                  className={styles.iconLink}
+                  aria-label={item.title}
+                >
+                  <SolutionIcon id={item.icon} />
+                </Link>
                 <h3 className={styles.title}>{item.title}</h3>
                 <p className={styles.description}>{item.description}</p>
                 <Link href={item.href} className={styles.link} aria-label={item.title}>

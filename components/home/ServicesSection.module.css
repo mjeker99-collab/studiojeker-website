@@ -27,6 +27,20 @@
   text-decoration: none;
 }
 
+/* Service overview only — same footprint as the icon; no layout shift. */
+.iconLink {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.iconLink:hover,
+.iconLink:focus-visible {
+  color: inherit;
+}
+
 .title {
   margin: 0;
   font-size: 0.875rem;
