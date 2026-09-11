@@ -21,6 +21,7 @@ import {
 } from "@/lib/sanity/work";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 import { extractYoutubeId } from "@/lib/sanity/youtube";
+import { sanitizeHref } from "@/lib/security/safe-href";
 
 function clean(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -345,7 +346,7 @@ export function mergeSanityWork(
         label:
           pickLocalized(cta?.ctaLabel, locale, base.finalCta.cta.label) ??
           base.finalCta.cta.label,
-        href: clean(cta?.ctaHref) ?? base.finalCta.cta.href,
+        href: sanitizeHref(clean(cta?.ctaHref)) ?? base.finalCta.cta.href,
       },
     },
   };

@@ -18,6 +18,7 @@ import type {
 } from "@/lib/sanity/homepage";
 import { resolveSanityImage, resolveSanityMedia } from "@/lib/sanity/media";
 import type { SanityMediaField } from "@/lib/sanity/media";
+import { sanitizeHref } from "@/lib/security/safe-href";
 
 type Localized = SanityLocalizedString | SanityLocalizedText | null | undefined;
 
@@ -48,12 +49,17 @@ function resolveCtaHref(
   locale: Locale,
   fallback: string,
 ): string {
-  const value = clean(href);
+  const value = sanitizeHref(clean(href));
   if (!value) {
     return fallback;
   }
 
-  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
     return value;
   }
 

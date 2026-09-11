@@ -13,6 +13,7 @@ import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 import { localizePathname } from "@/lib/i18n/config";
 import { resolveSanityImage } from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
+import { sanitizeHref } from "@/lib/security/safe-href";
 
 const SOLUTION_ICONS = new Set<ServiceSolutionItem["icon"]>([
   "film",
@@ -76,14 +77,27 @@ function resolveSolutionHref(
   locale: Locale,
   fallback: string,
 ): string {
-  const value = clean(href);
+  const value = sanitizeHref(clean(href));
   if (!value) {
     return fallback;
   }
-  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
     return value;
   }
   return localizePathname(value, locale);
+}
+
+/** Safe href for Sanity string fields; falls back when unsafe or empty. */
+function resolveSafeHref(
+  href: string | null | undefined,
+  fallback: string,
+): string {
+  return sanitizeHref(clean(href)) ?? fallback;
 }
 
 function mergeSolutions(
@@ -144,7 +158,7 @@ function mergeProjects(
       id: clean(item.itemId) ?? fallback?.id ?? `project-${index}`,
       title: clean(item.title) ?? fallback?.title ?? fallbackTitle,
       category: clean(item.category) ?? fallback?.category ?? "",
-      href: clean(item.href) ?? fallback?.href ?? fallbackHref,
+      href: resolveSafeHref(item.href, fallback?.href ?? fallbackHref),
       image: resolveSanityImage(
         item.image,
         fallback?.image ?? fallbackImage,
@@ -294,7 +308,7 @@ export function mergeSanityService(
   }
   const heroCtaLabel = clean(doc.heroCtaLabel);
   if (heroCtaLabel) merged.hero.primaryCta.label = heroCtaLabel;
-  const heroCtaHref = clean(doc.heroCtaHref);
+  const heroCtaHref = sanitizeHref(clean(doc.heroCtaHref));
   if (heroCtaHref) merged.hero.primaryCta.href = heroCtaHref;
 
   const solutionsLabel = clean(doc.solutionsLabel);
@@ -317,7 +331,7 @@ export function mergeSanityService(
   if (showreelBody) merged.showreel.body = showreelBody;
   const showreelCtaLabel = clean(doc.showreelCtaLabel);
   if (showreelCtaLabel) merged.showreel.cta.label = showreelCtaLabel;
-  const showreelCtaHref = clean(doc.showreelCtaHref);
+  const showreelCtaHref = sanitizeHref(clean(doc.showreelCtaHref));
   if (showreelCtaHref) merged.showreel.cta.href = showreelCtaHref;
 
   const projectsLabel = clean(doc.projectsLabel);
@@ -326,7 +340,7 @@ export function mergeSanityService(
   if (projectsHeadline) merged.projects.headline = projectsHeadline;
   const projectsViewAllLabel = clean(doc.projectsViewAllLabel);
   if (projectsViewAllLabel) merged.projects.viewAll.label = projectsViewAllLabel;
-  const projectsViewAllHref = clean(doc.projectsViewAllHref);
+  const projectsViewAllHref = sanitizeHref(clean(doc.projectsViewAllHref));
   if (projectsViewAllHref) merged.projects.viewAll.href = projectsViewAllHref;
 
   const aboutLabel = clean(doc.aboutLabel);
@@ -346,7 +360,7 @@ export function mergeSanityService(
   }
   const aboutCtaLabel = clean(doc.aboutCtaLabel);
   if (aboutCtaLabel) merged.about.cta.label = aboutCtaLabel;
-  const aboutCtaHref = clean(doc.aboutCtaHref);
+  const aboutCtaHref = sanitizeHref(clean(doc.aboutCtaHref));
   if (aboutCtaHref) merged.about.cta.href = aboutCtaHref;
 
   const clientsLabel = clean(doc.clientsLabel);
@@ -369,7 +383,7 @@ export function mergeSanityService(
   if (ctaText) merged.finalCta.text = ctaText;
   const ctaLabel = clean(doc.ctaLabel);
   if (ctaLabel) merged.finalCta.cta.label = ctaLabel;
-  const ctaHref = clean(doc.ctaHref);
+  const ctaHref = sanitizeHref(clean(doc.ctaHref));
   if (ctaHref) merged.finalCta.cta.href = ctaHref;
 
   return merged;

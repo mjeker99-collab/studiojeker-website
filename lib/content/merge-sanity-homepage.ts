@@ -24,6 +24,7 @@ import {
 import { pickEditorialColor } from "@/lib/sanity/editorial-color";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
+import { sanitizeHref } from "@/lib/security/safe-href";
 
 /**
  * Pure merge of Sanity Homepage document → frontend HomepageContent.
@@ -115,9 +116,18 @@ function resolveHref(
   locale: Locale,
   fallback: string,
 ): string {
-  const value = clean(href);
+  const value = sanitizeHref(clean(href));
   if (!value) {
     return fallback;
+  }
+
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
+    return value;
   }
 
   return localizePathname(value, locale);
@@ -140,12 +150,17 @@ function resolveAboCtaHref(
   locale: Locale,
   fallback: string,
 ): string {
-  const value = clean(href);
+  const value = sanitizeHref(clean(href));
   if (!value) {
     return fallback;
   }
 
-  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
     return value;
   }
 
