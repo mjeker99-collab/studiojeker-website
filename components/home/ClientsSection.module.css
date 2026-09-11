@@ -24,21 +24,6 @@
 
 .viewport {
   overflow: hidden;
-  /* Soft edge exit — barely perceptible */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 3%,
-    #000 97%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 3%,
-    #000 97%,
-    transparent 100%
-  );
 }
 
 .rail {
@@ -177,8 +162,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .viewport {
-    -webkit-mask-image: none;
-    mask-image: none;
     overflow: visible;
   }
 

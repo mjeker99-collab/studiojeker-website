@@ -78,12 +78,12 @@
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0;
+    gap: var(--space-4);
   }
 
   .card {
-    padding: 0 var(--space-4);
-    border-right: 1px solid rgb(0 0 0 / 10%);
+    padding: 0;
+    border-right: 0;
   }
 
   .card:nth-child(2n) {
@@ -106,14 +106,15 @@
 
   .grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
   }
 
   .card {
-    border-right: 1px solid rgb(0 0 0 / 10%);
+    border-right: 0;
   }
 
   .card:nth-child(2n) {
-    border-right: 1px solid rgb(0 0 0 / 10%);
+    border-right: 0;
   }
 
   .card:last-child {
@@ -121,6 +122,6 @@
   }
 
   .card:not(:first-child) {
-    padding-left: var(--space-4);
+    padding-left: 0;
   }
 }

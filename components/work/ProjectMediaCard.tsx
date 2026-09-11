@@ -32,7 +32,8 @@ function vimeoEmbedUrl(
   options: { autoplay?: boolean; muted?: boolean; loop?: boolean },
 ): string {
   const id = src.trim();
-  const base = /^\d+$/.test(id)
+  // Accept bare id, id/privacyHash, or a full player URL.
+  const base = /^\d+(\/[a-zA-Z0-9]+)?$/.test(id)
     ? `https://player.vimeo.com/video/${id}`
     : src.includes("player.vimeo.com")
       ? src.split("?")[0]
