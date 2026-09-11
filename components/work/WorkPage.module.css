@@ -46,6 +46,8 @@
   justify-content: space-between;
   gap: var(--space-2);
   min-width: 0;
+  /* Keep hash targets clear of the fixed header (no spacer blocks). */
+  scroll-margin-top: calc(var(--header-height-sticky) + var(--space-3));
 }
 
 .categoryTitle {
@@ -91,6 +93,7 @@
   min-width: 0;
   display: flex;
   width: 100%;
+  scroll-margin-top: calc(var(--header-height-sticky) + var(--space-3));
 }
 
 .tileItem > * {

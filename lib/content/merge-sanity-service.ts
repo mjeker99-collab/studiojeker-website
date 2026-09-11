@@ -10,6 +10,7 @@ import type {
   SanityServiceSolutionItem,
 } from "@/lib/sanity/service";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
+import { localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
 import { resolveSanityImage } from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 
@@ -69,12 +70,61 @@ function resolveIcon(
   return fallback;
 }
 
+/** True when CMS still points at the Work overview without a tile/category hash. */
+function isBareWorkHref(href: string): boolean {
+  const hashIndex = href.indexOf("#");
+  if (hashIndex !== -1) {
+    return false;
+  }
+  const stripped = stripLocalePrefix(href).replace(/\/$/, "") || "/";
+  return stripped === "/work";
+}
+
+/**
+ * Resolve a Service solution link for the active locale.
+ * Preserves external URLs; localizes internal paths (including `/work#…`).
+ * Bare `/work` yields to a more specific local fallback when available.
+ */
+function resolveSolutionHref(
+  href: string | null | undefined,
+  locale: Locale,
+  fallback: string,
+): string {
+  const value = clean(href);
+  if (!value) {
+    return fallback;
+  }
+
+  if (/^https?:\/\//i.test(value) || value.startsWith("mailto:")) {
+    return value;
+  }
+
+  if (isBareWorkHref(value) && fallback.includes("#")) {
+    return fallback;
+  }
+
+  return localizePathname(value, locale);
+}
+
 function mergeSolutions(
   base: ServiceSolutionItem[],
   items: SanityServiceSolutionItem[] | null | undefined,
+  locale: Locale,
+  mode: "full" | "href-only",
 ): ServiceSolutionItem[] {
   if (!items || items.length === 0) {
     return base;
+  }
+
+  if (mode === "href-only") {
+    return base.map((fallback, index) => {
+      const byId = items.find((item) => clean(item.itemId) === fallback.id);
+      const item = byId ?? items[index];
+      return {
+        ...fallback,
+        href: resolveSolutionHref(item?.href, locale, fallback.href),
+      };
+    });
   }
 
   return items.map((item, index) => {
@@ -83,7 +133,7 @@ function mergeSolutions(
       id: clean(item.itemId) ?? fallback?.id ?? `solution-${index}`,
       title: clean(item.title) ?? fallback?.title ?? "",
       description: clean(item.description) ?? fallback?.description ?? "",
-      href: clean(item.href) ?? fallback?.href ?? "#",
+      href: resolveSolutionHref(item.href, locale, fallback?.href ?? "#"),
       icon: resolveIcon(item.icon, fallback?.icon ?? "content"),
     };
   });
@@ -122,7 +172,8 @@ function mergeProjects(
  * Service schema fields are German plain strings (not localized).
  * - `de`: apply text + media from Sanity (local fallback when a field is empty)
  * - `en`: keep local English copy; still apply Sanity images/media so CMS
- *   image publishes appear on both locales
+ *   image publishes appear on both locales; solution `href` values still apply
+ *   (paths are language-routed, not copy)
  *
  * Safe for client and server. Does not fetch Sanity.
  */
@@ -222,6 +273,16 @@ export function mergeSanityService(
     doc.clientLogos,
   );
 
+  // Solution link targets apply on both locales (localized paths + hashes).
+  if (doc.solutions && doc.solutions.length > 0) {
+    merged.solutions.items = mergeSolutions(
+      base.solutions.items,
+      doc.solutions,
+      locale,
+      locale === "de" ? "full" : "href-only",
+    );
+  }
+
   // German plain-string fields only — EN keeps local copywriting.
   if (locale !== "de") {
     return merged;
@@ -254,7 +315,7 @@ export function mergeSanityService(
   if (solutionsLabel) merged.solutions.label = solutionsLabel;
   const solutionsHeadline = clean(doc.solutionsHeadline);
   if (solutionsHeadline) merged.solutions.headline = solutionsHeadline;
-  merged.solutions.items = mergeSolutions(base.solutions.items, doc.solutions);
+  // Full DE solutions already merged above (text + href + icon).
 
   const showreelLabel = clean(doc.showreelLabel);
   if (showreelLabel) merged.showreel.label = showreelLabel;

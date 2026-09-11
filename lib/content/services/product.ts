@@ -46,7 +46,7 @@ export function getProductCommunicationContent(
             title: "Product Photography",
             description:
               "Professional imagery for websites, catalogues, online shops and campaigns.",
-            href: paths.work,
+            href: paths.workProduktfotografie,
             icon: "product-photo",
           },
           {
@@ -54,7 +54,7 @@ export function getProductCommunicationContent(
             title: "Product Videos",
             description:
               "Present products with emotion, clarity and impact.",
-            href: paths.work,
+            href: paths.workProduktfilme,
             icon: "product-film",
           },
           {
@@ -62,7 +62,7 @@ export function getProductCommunicationContent(
             title: "3D Visualization",
             description:
               "Ideal for products still under development or difficult to photograph.",
-            href: paths.work,
+            href: paths.work3dVisualisierungen,
             icon: "viz3d",
           },
           {
@@ -70,7 +70,7 @@ export function getProductCommunicationContent(
             title: "3D Animation",
             description:
               "Explain complex technology with simple and engaging visual storytelling.",
-            href: paths.work,
+            href: paths.workProduktanimationen,
             icon: "animation",
           },
         ],
@@ -208,7 +208,7 @@ export function getProductCommunicationContent(
           title: "Produktfotografie",
           description:
             "Professionelle Bilder für Websites, Kataloge, Onlineshops und Marketingkampagnen.",
-          href: paths.work,
+          href: paths.workProduktfotografie,
           icon: "product-photo",
         },
         {
@@ -216,7 +216,7 @@ export function getProductCommunicationContent(
           title: "Produktfilme",
           description:
             "Produkte in Bewegung – emotional, informativ und überzeugend.",
-          href: paths.work,
+          href: paths.workProduktfilme,
           icon: "product-film",
         },
         {
@@ -224,7 +224,7 @@ export function getProductCommunicationContent(
           title: "3D-Visualisierungen",
           description:
             "Perfekt für Produkte, die noch in Entwicklung sind oder sich mit klassischer Fotografie nicht optimal darstellen lassen.",
-          href: paths.work,
+          href: paths.work3dVisualisierungen,
           icon: "viz3d",
         },
         {
@@ -232,7 +232,7 @@ export function getProductCommunicationContent(
           title: "3D-Animationen",
           description:
             "Komplexe Funktionen und technische Abläufe verständlich erklärt.",
-          href: paths.work,
+          href: paths.workProduktanimationen,
           icon: "animation",
         },
       ],

@@ -43,7 +43,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "Architectural Visualizations",
             description:
               "Photorealistic imagery for competitions, planning and marketing.",
-            href: paths.work,
+            href: paths.work3dVisualisierungen,
             icon: "architecture",
           },
           {
@@ -51,7 +51,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "3D Animation",
             description:
               "Engaging animations that communicate architecture with emotion.",
-            href: paths.work,
+            href: paths.workArchitekturvideos,
             icon: "animation",
           },
           {
@@ -59,14 +59,14 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
             title: "Drone Footage",
             description:
               "Professional aerial imagery for architecture and real estate.",
-            href: paths.work,
+            href: paths.workArchitecture,
             icon: "drone",
           },
           {
             id: "tours",
             title: "Virtual Tours",
             description: "Allow clients to experience projects from anywhere.",
-            href: paths.work,
+            href: paths.workArchitecture,
             icon: "tour",
           },
         ],
@@ -203,7 +203,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "Architekturvisualisierungen",
           description:
             "Fotorealistische Bilder für Wettbewerbe, Baueingaben und Vermarktung.",
-          href: paths.work,
+          href: paths.work3dVisualisierungen,
           icon: "architecture",
         },
         {
@@ -211,7 +211,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "3D-Animationen",
           description:
             "Beeindruckende Filme, welche Architektur verständlich und emotional präsentieren.",
-          href: paths.work,
+          href: paths.workArchitekturvideos,
           icon: "animation",
         },
         {
@@ -219,14 +219,14 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
           title: "Drohnenaufnahmen",
           description:
             "Professionelle Luftaufnahmen für Architektur, Immobilien und Bauprojekte.",
-          href: paths.work,
+          href: paths.workArchitecture,
           icon: "drone",
         },
         {
           id: "tours",
           title: "Virtuelle Rundgänge",
           description: "Immobilien digital erleben – jederzeit und überall.",
-          href: paths.work,
+          href: paths.workArchitecture,
           icon: "tour",
         },
       ],

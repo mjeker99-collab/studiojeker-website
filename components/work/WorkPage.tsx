@@ -5,7 +5,12 @@ import { Container } from "@/components/layout/Container";
 import { Arrow } from "@/components/ui/Arrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import {
+  getWorkCategoryAnchorId,
+  getWorkItemAnchorId,
+} from "@/lib/content/work-anchors";
 import { ProjectMediaCard } from "@/components/work/ProjectMediaCard";
+import { WorkAnchorScroll } from "@/components/work/WorkAnchorScroll";
 import styles from "./WorkPage.module.css";
 
 export type { WorkPageContent, WorkCategory, WorkProjectItem } from "@/types/work";
@@ -19,10 +24,12 @@ type WorkPageProps = {
  * Work overview — standalone portfolio grid.
  * Category labels structure projects only (no service navigation).
  * Tiles use ProjectMediaCard (image | video | slideshow) in place.
+ * Stable hash IDs enable Service “Leistungen” deep links.
  */
 export function WorkPage({ content, locale }: WorkPageProps) {
   return (
     <>
+      <WorkAnchorScroll />
       <section
         className={styles.hero}
         data-header-theme="light"
@@ -60,7 +67,10 @@ export function WorkPage({ content, locale }: WorkPageProps) {
                 className={styles.category}
                 delayMs={categoryIndex * 40}
               >
-                <div className={styles.categoryHeader}>
+                <div
+                  id={getWorkCategoryAnchorId(category.id)}
+                  className={styles.categoryHeader}
+                >
                   <h3 className={styles.categoryTitle}>{category.title}</h3>
                   {/* Decorative only — Work is a portfolio, not service IA. */}
                   <span className={styles.categoryAccent} aria-hidden="true">
@@ -70,7 +80,11 @@ export function WorkPage({ content, locale }: WorkPageProps) {
 
                 <ul className={styles.categoryGrid}>
                   {category.items.map((item) => (
-                    <li key={item.id} className={styles.tileItem}>
+                    <li
+                      key={item.id}
+                      id={getWorkItemAnchorId(item.id)}
+                      className={styles.tileItem}
+                    >
                       <ProjectMediaCard item={item} locale={locale} />
                     </li>
                   ))}
