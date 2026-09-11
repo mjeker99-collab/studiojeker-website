@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { Locale } from "@/types/i18n";
 import type { WpSeoFields } from "@/types/wordpress";
 import { localizePathname } from "@/lib/i18n/config";
-import { siteConfig } from "@/lib/site";
+import { isStagingSite, siteConfig } from "@/lib/site";
 
 type BuildMetadataOptions = {
   locale: Locale;
@@ -93,14 +93,15 @@ export function buildPageMetadata({
       description: pageDescription,
       images: [ogImageAbsolute],
     },
-    robots: wordpressSeo?.noindex
-      ? {
-          index: false,
-          follow: false,
-        }
-      : {
-          index: true,
-          follow: true,
-        },
+    robots:
+      isStagingSite() || wordpressSeo?.noindex
+        ? {
+            index: false,
+            follow: false,
+          }
+        : {
+            index: true,
+            follow: true,
+          },
   };
 }

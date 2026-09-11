@@ -1,14 +1,26 @@
 import type { MetadataRoute } from "next";
-import { siteConfig } from "@/lib/site";
+import { isStagingSite, siteConfig } from "@/lib/site";
 
 /** Required for `output: "export"`. */
 export const dynamic = "force-static";
 
 /**
- * Production robots — allow public indexing.
- * Preview/tunnel hosts must not be used as the sitemap base URL.
+ * robots.txt for static export.
+ * Staging (`NEXT_PUBLIC_SITE_URL=https://staging2026.studiojeker.ch`) → Disallow: /
+ * Production → Allow: /
  */
 export default function robots(): MetadataRoute.Robots {
+  if (isStagingSite()) {
+    return {
+      rules: [
+        {
+          userAgent: "*",
+          disallow: "/",
+        },
+      ],
+    };
+  }
+
   return {
     rules: [
       {
