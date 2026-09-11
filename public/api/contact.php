@@ -9,6 +9,8 @@
  */
 declare(strict_types=1);
 
+require_once __DIR__ . '/proxy-errors.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');
@@ -182,7 +184,7 @@ $rateMax = (int) ($config['rate_limit_max'] ?? 8);
 $rateWindow = (int) ($config['rate_limit_window_seconds'] ?? 600);
 
 if ($to === '' || !is_valid_email($to) || $from === '' || !is_valid_email($from)) {
-    respond(503, ['ok' => false, 'error' => 'unavailable']);
+    respond(503, ['ok' => false, 'error' => CONTACT_CLIENT_ERROR]);
 }
 
 if (!rate_limit_ok(client_ip(), $rateMax, $rateWindow)) {
@@ -257,7 +259,8 @@ if (is_valid_email($from)) {
 $sent = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, implode("\r\n", $headers), $additionalParams);
 
 if (!$sent) {
-    respond(502, ['ok' => false, 'error' => 'delivery_failed']);
+    proxy_log('contact', 'mail() returned false');
+    respond(502, ['ok' => false, 'error' => CONTACT_CLIENT_ERROR]);
 }
 
 respond(200, ['ok' => true]);
