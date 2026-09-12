@@ -178,7 +178,7 @@ export function getBusinessCommunicationContent(
   return {
     slug: "business-communication",
     seo: {
-      title: "Unternehmensfilme, Businessportraits & Erklärvideos | Studiojeker",
+      title: "Business Communication | Film & Fotografie | Studiojeker",
       description:
         "Businessportraits, Unternehmensfilme, Erklärvideos, Mitarbeiterfotografie und Social Media für Unternehmen, Organisationen und Marken.",
     },

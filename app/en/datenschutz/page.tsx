@@ -8,6 +8,7 @@ export const metadata: Metadata = buildPageMetadata({
   pathname: "/datenschutz",
   title: "Privacy | Studiojeker",
   description: "Privacy policy of Studiojeker.",
+  noindex: true,
 });
 
 export default function EnglishDatenschutzPage() {

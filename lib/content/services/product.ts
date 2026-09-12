@@ -177,7 +177,7 @@ export function getProductCommunicationContent(
   return {
     slug: "product-communication",
     seo: {
-      title: "Produktfotografie, Produktvideos & 3D Visualisierung | Studiojeker",
+      title: "Product Communication | Produktfoto & 3D | Studiojeker",
       description:
         "Produktfotografie, Produktvideos, 3D-Visualisierungen und Animationen für Industrie, Technik und innovative Produkte.",
     },

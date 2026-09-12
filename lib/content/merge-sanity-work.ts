@@ -346,7 +346,7 @@ export function mergeSanityWork(
         label:
           pickLocalized(cta?.ctaLabel, locale, base.finalCta.cta.label) ??
           base.finalCta.cta.label,
-        href: sanitizeHref(clean(cta?.ctaHref)) ?? base.finalCta.cta.href,
+        href: sanitizeHref(clean(cta?.ctaHref)) || base.finalCta.cta.href,
       },
     },
   };

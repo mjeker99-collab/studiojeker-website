@@ -238,7 +238,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
   if (locale === "en") {
     return {
       seo: {
-        title: "Work | Studiojeker",
+        title: "Work | Film, Photography, 3D & Marketing | Studiojeker",
         description:
           "Selected projects across Content & Digital Marketing, Business Communication, Product Communication and Architecture & Real Estate.",
       },
@@ -266,7 +266,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
 
   return {
     seo: {
-      title: "Work | Studiojeker",
+      title: "Work | Film, Fotografie, 3D & Marketing | Studiojeker",
       description:
         "Ausgewählte Arbeiten in Content & Digital Marketing, Business Communication, Product Communication und Architecture & Real Estate.",
     },

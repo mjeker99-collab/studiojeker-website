@@ -10,7 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     locale: "de",
     pathname: "/work",
-    title: content.seo.title,
+    // Go-live SEO: prefer curated title over short CMS seoTitle
+    title: "Work | Film, Fotografie, 3D & Marketing | Studiojeker",
     description: content.seo.description,
   });
 }
