@@ -14,21 +14,37 @@
 }
 
 .copy {
+  position: relative;
+  z-index: 1;
   display: grid;
+  /*
+   * Prefer vertical centering, but fall back to start when the copy is taller
+   * than the hero cell. Plain `center` + section `overflow: hidden` was clipping
+   * the top of long Business Communication headlines under the header.
+   */
   align-content: center;
+  align-content: safe center;
   gap: var(--space-3);
   max-width: 34rem;
+  min-width: 0;
+  color: var(--color-black);
   /* Header offset is on .section — keep only content padding here */
   padding: var(--space-3) var(--container-padding-x) var(--space-5);
 }
 
 .headline {
+  position: relative;
+  z-index: 1;
   margin: 0;
   max-width: 12em;
+  color: var(--color-black);
   font-size: clamp(2.125rem, 4.5vw, 3.75rem);
   font-weight: var(--font-weight-extrabold);
   line-height: 1.05;
   letter-spacing: -0.03em;
+  overflow-wrap: break-word;
+  /* Honor intentional line breaks from Sanity `text` heroHeadline fields. */
+  white-space: pre-line;
 }
 
 .accent {
@@ -38,6 +54,7 @@
 .subheadline {
   margin: 0;
   max-width: 28rem;
+  color: var(--color-black);
   font-size: clamp(1.0625rem, 1.7vw, 1.3125rem);
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
@@ -66,8 +83,11 @@
 
 /* Outer column shell — only stretches in the page grid */
 .mediaWrap {
+  position: relative;
+  z-index: 0;
   align-self: stretch;
   height: 100%;
+  min-width: 0;
   min-height: 18rem;
 }
 
