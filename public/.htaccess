@@ -61,7 +61,7 @@
 
   # /impressum/ and /datenschutz/ exist on both sites — no redirect.
   # /suche/, /sitemap/ — intentional 404 (no homepage dump).
-  # /agb_studiojeker_2015/ — PENDING NEW AGB PAGE (no redirect yet).
+  # /agb_studiojeker_2015/ — new site has /agb/; legacy redirect not enabled yet.
   # /author/flutura-admin/ — intentional 404.
 
   # =========================================================================
