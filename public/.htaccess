@@ -1,32 +1,152 @@
 # Studiojeker — Apache / Plesk static hosting
 # Copied into `/out` via the Next.js `public/` directory on build.
 # Requires: AllowOverride + mod_rewrite + mod_headers (typical Plesk defaults).
+#
+# Legacy 301 map (maintain alongside docs/LEGACY_URL_REDIRECTS.md):
+# WordPress + interim IA → Next.js static export. Trailing-slash targets avoid
+# a second hop. QSA keeps query strings. NC tolerates legacy casing.
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # --- Legacy / IA redirects (moved from next.config; static export cannot emit them) ---
-  RewriteRule ^services/?$ / [R=301,L]
-  RewriteRule ^en/services/?$ /en/ [R=301,L]
-  RewriteRule ^solutions/?$ / [R=301,L]
-  RewriteRule ^en/solutions/?$ /en/ [R=301,L]
+  # Do not rewrite real files/dirs from the static export (assets, existing pages).
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-  RewriteRule ^solutions/brand-business/?$ /services/business-communication/ [R=301,L]
-  RewriteRule ^en/solutions/brand-business/?$ /en/services/business-communication/ [R=301,L]
-  RewriteRule ^solutions/products-industry/?$ /services/product-communication/ [R=301,L]
-  RewriteRule ^en/solutions/products-industry/?$ /en/services/product-communication/ [R=301,L]
-  RewriteRule ^solutions/architecture-real-estate/?$ /services/architecture/ [R=301,L]
-  RewriteRule ^en/solutions/architecture-real-estate/?$ /en/services/architecture/ [R=301,L]
-  RewriteRule ^solutions/social-digital-marketing/?$ /services/digital-marketing/ [R=301,L]
-  RewriteRule ^en/solutions/social-digital-marketing/?$ /en/services/digital-marketing/ [R=301,L]
+  # =========================================================================
+  # A) Interim Next IA (solutions / references) — keep direct to final targets
+  # =========================================================================
+  RewriteRule ^services/?$ / [R=301,L,QSA,NC]
+  RewriteRule ^en/services/?$ /en/ [R=301,L,QSA,NC]
+  RewriteRule ^solutions/?$ / [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/?$ /en/ [R=301,L,QSA,NC]
 
-  # Legacy Abo landing URL → Content-Abo routes
-  RewriteRule ^solutions/sichtbarkeit-im-abo/?$ /content-abo/ [R=301,L]
-  RewriteRule ^en/solutions/sichtbarkeit-im-abo/?$ /en/content-subscription/ [R=301,L]
-  RewriteRule ^de/content-abo/?$ /content-abo/ [R=301,L]
+  RewriteRule ^solutions/brand-business/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/brand-business/?$ /en/services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^solutions/products-industry/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/products-industry/?$ /en/services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^solutions/architecture-real-estate/?$ /services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/architecture-real-estate/?$ /en/services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^solutions/social-digital-marketing/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/social-digital-marketing/?$ /en/services/digital-marketing/ [R=301,L,QSA,NC]
 
-  RewriteRule ^references(/.*)?$ /work/ [R=301,L]
-  RewriteRule ^en/references(/.*)?$ /en/work/ [R=301,L]
+  RewriteRule ^solutions/sichtbarkeit-im-abo/?$ /content-abo/ [R=301,L,QSA,NC]
+  RewriteRule ^en/solutions/sichtbarkeit-im-abo/?$ /en/content-subscription/ [R=301,L,QSA,NC]
+  RewriteRule ^de/content-abo/?$ /content-abo/ [R=301,L,QSA,NC]
+
+  RewriteRule ^references(/.*)?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^en/references(/.*)?$ /en/work/ [R=301,L,QSA,NC]
+
+  # =========================================================================
+  # B) WordPress — company / contact / legal utilities
+  # =========================================================================
+  RewriteRule ^kontakt/?$ /contact/ [R=301,L,QSA,NC]
+  RewriteRule ^team/?$ /about/ [R=301,L,QSA,NC]
+  RewriteRule ^jobs/?$ /about/ [R=301,L,QSA,NC]
+  RewriteRule ^fotostudio/?$ /about/ [R=301,L,QSA,NC]
+  RewriteRule ^mobiles-fotostudio/?$ /about/ [R=301,L,QSA,NC]
+  RewriteRule ^partners/?$ /about/ [R=301,L,QSA,NC]
+  RewriteRule ^foteri/?$ /about/ [R=301,L,QSA,NC]
+
+  RewriteRule ^referenzen/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^projects/?$ /work/ [R=301,L,QSA,NC]
+
+  RewriteRule ^content-workshop/?$ /content-abo/ [R=301,L,QSA,NC]
+  RewriteRule ^newslatter-bestellen/?$ /contact/ [R=301,L,QSA,NC]
+  RewriteRule ^newsletter-anmeldung/?$ /contact/ [R=301,L,QSA,NC]
+  RewriteRule ^danke/?$ /contact/ [R=301,L,QSA,NC]
+  RewriteRule ^privacy-policy/?$ /datenschutz/ [R=301,L,QSA,NC]
+  RewriteRule ^suche/?$ / [R=301,L,QSA,NC]
+  RewriteRule ^sitemap/?$ / [R=301,L,QSA,NC]
+
+  # /impressum/ and /datenschutz/ exist on both sites — no redirect.
+
+  # =========================================================================
+  # C) WordPress — service / topic pages → thematic Next service routes
+  # =========================================================================
+  # Business communication
+  RewriteRule ^businessfotografie/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^eventfotografie/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^imagefilm/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^filmproduktion/?$ /services/business-communication/ [R=301,L,QSA,NC]
+
+  # Product communication
+  RewriteRule ^produktfotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^werbefotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^uhrenfotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^industriefotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^produktvideo/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^3d-animation/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^3danimation/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^3d-produktanimation/?$ /services/product-communication/ [R=301,L,QSA,NC]
+
+  # Architecture & real estate
+  RewriteRule ^architekturfotografie/?$ /services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^architekturvisualisierung/?$ /services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^drohnenaufnahmen/?$ /services/architecture/ [R=301,L,QSA,NC]
+
+  # Digital marketing
+  RewriteRule ^social-media/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^erklarvideos/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^werbespots/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^augmented-reality/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^ar-app/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^metaverse/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+
+  # =========================================================================
+  # D) WordPress categories → same topical targets (no homepage dump)
+  # =========================================================================
+  RewriteRule ^category/imagefilm/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/filmproduktion/?$ /services/business-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/eventfotografie/?$ /services/business-communication/ [R=301,L,QSA,NC]
+
+  RewriteRule ^category/produktfotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/werbefotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/uhrenfotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/industriefotografie/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/produktvideo/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/3d-animation/?$ /services/product-communication/ [R=301,L,QSA,NC]
+  RewriteRule ^category/3d-produktanimation/?$ /services/product-communication/ [R=301,L,QSA,NC]
+
+  RewriteRule ^category/architekturfotografie/?$ /services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^category/visualisierung/?$ /services/architecture/ [R=301,L,QSA,NC]
+  RewriteRule ^category/drohnenaufnahmen/?$ /services/architecture/ [R=301,L,QSA,NC]
+
+  RewriteRule ^category/erklarvideos/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^category/werbespots/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+  RewriteRule ^category/ar-app/?$ /services/digital-marketing/ [R=301,L,QSA,NC]
+
+  RewriteRule ^category/uncategorized/?$ /work/ [R=301,L,QSA,NC]
+
+  # =========================================================================
+  # E) WordPress portfolio / showreel posts → Work overview (no V1 detail routes)
+  # =========================================================================
+  RewriteRule ^titoni/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^titoni-seascoper/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^arthur-flury-ag/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^sphinx-tools-medical/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^metalldruckerei/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^hotel-wellenberg/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^digmesa/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^certina/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^optotech/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^sanitized-comfort/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^bijoux-stadelmann/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^ccm-erklarvideo/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^thai-suppe/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^fit-werkstattwagen/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^jura-impressa-j9/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^aerial-drohnen-showreel/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^produktfotografie-showreel/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^architekturfotografie-showreel/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^stromwatches/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^agathon-dom-plus/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^event-showreel/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^endress-hauser/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^heiniger-produktanimation/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^magiclens-ar-app/?$ /work/ [R=301,L,QSA,NC]
+  RewriteRule ^magic-lens-demo/?$ /work/ [R=301,L,QSA,NC]
 </IfModule>
 
 <IfModule mod_headers.c>
