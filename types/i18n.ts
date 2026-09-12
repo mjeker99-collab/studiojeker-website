@@ -28,6 +28,7 @@ export type Dictionary = {
     copyright: string;
     impressum: string;
     privacy: string;
+    agb: string;
     architecture: string;
     productCommunication: string;
     businessCommunication: string;

@@ -38,6 +38,11 @@ export function Footer({ locale, dictionary }: FooterProps) {
       label: dictionary.footer.privacy,
       href: localizePathname("/datenschutz", locale),
     },
+    {
+      // German AGB only for now — EN footer also points to /agb (no EN page yet).
+      label: dictionary.footer.agb,
+      href: "/agb",
+    },
   ];
 
   return (

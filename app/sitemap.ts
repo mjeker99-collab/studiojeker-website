@@ -95,5 +95,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
+  // German AGB only — no English terms page yet.
+  const agbDe = absolute("/agb/");
+  entries.push({
+    url: agbDe,
+    changeFrequency: "yearly",
+    priority: 0.3,
+    alternates: {
+      languages: {
+        "de-CH": agbDe,
+        "x-default": agbDe,
+      },
+    },
+  });
+
   return entries;
 }
