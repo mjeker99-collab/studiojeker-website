@@ -221,7 +221,7 @@ Reason: tags mostly name former clients / products / portfolio themes; `/work/` 
 
 | Item | Status |
 |------|--------|
-| `/agb_studiojeker_2015/` | **PENDING NEW AGB PAGE** — no AGB route on the new site yet; do not redirect to an arbitrary page |
+| `/agb_studiojeker_2015/` | **Target available:** new site now has `/agb/`. Redirect from this legacy slug is not enabled yet (redirect matrix unchanged in this pass). |
 | Soft `/about/` mappings (`/jobs/`, `/partners/`, `/foteri/`) | Acceptable company fallback; revisit if a careers/partners page is added |
 | Portfolio equity on `/work/` | V1 has no case-study routes; 1:1 post URLs may be added later |
 | External backlink priority list | No GSC/Ahrefs export in repo; re-check after Search Console data is available |
