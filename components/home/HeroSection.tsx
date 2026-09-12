@@ -4,7 +4,7 @@ import { mediaPath } from "@/lib/media/paths";
 import { EditorialColorSpan } from "@/components/ui/EditorialColorSpan";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { VimeoShowreel } from "@/components/media/VimeoShowreel";
+import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
 import styles from "./HeroSection.module.css";
 
 type HeroSectionProps = {
@@ -55,9 +55,7 @@ export function HeroSection({ content }: HeroSectionProps) {
             <div className={styles.cyanBar} aria-hidden="true" />
             <div className={styles.photo}>
               {content.videoId ? (
-                <VimeoShowreel
-                  fill
-                  className={styles.image}
+                <HeroVimeoLoop
                   videoId={content.videoId}
                   title={content.media.alt}
                   poster={{
