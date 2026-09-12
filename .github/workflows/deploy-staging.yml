@@ -259,9 +259,44 @@ jobs:
           command -v lftp
           lftp --version | head -n 1
 
+          if [ -z "${METANET_FTP_SERVER}" ] || [ -z "${METANET_FTP_USERNAME}" ] || [ -z "${METANET_FTP_PASSWORD}" ]; then
+            echo "::error::Missing Metanet FTPS secrets (server/username/password)."
+            exit 1
+          fi
+
+          # Keep credentials out of process argv (no `open -u user,pass`).
+          # Write a mode-600 netrc into a temporary HOME and point lftp at it.
+          LFTP_HOME="$(mktemp -d)"
+          export LFTP_HOME
+          cleanup_lftp_home() { rm -rf "${LFTP_HOME}"; }
+          trap cleanup_lftp_home EXIT
+          umask 077
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          home = Path(os.environ["LFTP_HOME"])
+          netrc = home / ".netrc"
+          # netrc tokens are space-separated; reject values that would break the format.
+          for key in ("METANET_FTP_SERVER", "METANET_FTP_USERNAME", "METANET_FTP_PASSWORD"):
+              value = os.environ[key]
+              if any(ch.isspace() for ch in value):
+                  raise SystemExit(f"{key} contains whitespace; refusing to write netrc")
+          netrc.write_text(
+              "machine {host}\nlogin {user}\npassword {password}\n".format(
+                  host=os.environ["METANET_FTP_SERVER"],
+                  user=os.environ["METANET_FTP_USERNAME"],
+                  password=os.environ["METANET_FTP_PASSWORD"],
+              ),
+              encoding="utf-8",
+          )
+          netrc.chmod(0o600)
+          PY
+
           # Explicit FTPS (AUTH TLS on port 21), passive data channel, strict TLS.
           # mirror -R uploads out/ contents only — no --delete (server-side extras preserved).
-          lftp -e "
+          # Secrets are never echoed; lftp argv contains only the script, not user/password.
+          HOME="${LFTP_HOME}" lftp -e "
             set cmd:fail-exit true;
             set ssl:verify-certificate true;
             set ftp:ssl-force true;
@@ -273,7 +308,7 @@ jobs:
             set net:max-retries 3;
             set net:reconnect-interval-base 5;
             set net:reconnect-interval-multiplier 1;
-            open -u ${METANET_FTP_USERNAME},${METANET_FTP_PASSWORD} ftp://${METANET_FTP_SERVER}:21;
+            open ftp://${METANET_FTP_SERVER}:21;
             lcd out;
             mirror -R --verbose --parallel=1 --exclude-glob api/contact.config.php .;
             bye

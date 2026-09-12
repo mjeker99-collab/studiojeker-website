@@ -4,6 +4,10 @@
  */
 
 const VIMEO_FRAME_SOURCES = ["https://player.vimeo.com", "https://vimeo.com"];
+/** Privacy-enhanced YouTube embeds used by `ProjectMediaCard` (nocookie only). */
+const YOUTUBE_NOCOOKIE_FRAME_SOURCES = [
+  "https://www.youtube-nocookie.com",
+];
 const VIMEO_IMG_SOURCES = ["https://i.vimeocdn.com"];
 const SANITY_IMG_SOURCES = ["https://cdn.sanity.io"];
 /** Reserved for future Turnstile / Cloudflare challenge widgets. */
@@ -29,7 +33,11 @@ export function buildContentSecurityPolicy(options?: {
 
   const scriptSources = ["'self'", "'unsafe-inline'"];
   const connectSources = ["'self'"];
-  const frameSources = ["'self'", ...VIMEO_FRAME_SOURCES];
+  const frameSources = [
+    "'self'",
+    ...VIMEO_FRAME_SOURCES,
+    ...YOUTUBE_NOCOOKIE_FRAME_SOURCES,
+  ];
 
   if (options?.enableTurnstile) {
     scriptSources.push(...CLOUDFLARE_CHALLENGE_SOURCES);
@@ -109,6 +117,7 @@ export function getSecurityHeaders(options?: {
 /** Documented allow-list for future CSP expansions (not injected by default). */
 export const securityAllowlists = {
   vimeoFrames: VIMEO_FRAME_SOURCES,
+  youtubeNocookieFrames: YOUTUBE_NOCOOKIE_FRAME_SOURCES,
   vimeoImages: VIMEO_IMG_SOURCES,
   sanityImages: SANITY_IMG_SOURCES,
   cloudflareChallenges: CLOUDFLARE_CHALLENGE_SOURCES,
