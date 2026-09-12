@@ -31,17 +31,17 @@ export function Footer({ locale, dictionary }: FooterProps) {
 
   const legalLinks = [
     {
+      // German AGB only for now — EN footer also points to /agb (no EN page yet).
+      label: dictionary.footer.agb,
+      href: "/agb",
+    },
+    {
       label: dictionary.footer.impressum,
       href: localizePathname("/impressum", locale),
     },
     {
       label: dictionary.footer.privacy,
       href: localizePathname("/datenschutz", locale),
-    },
-    {
-      // German AGB only for now — EN footer also points to /agb (no EN page yet).
-      label: dictionary.footer.agb,
-      href: "/agb",
     },
   ];
 
