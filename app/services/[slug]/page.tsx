@@ -5,6 +5,7 @@ import { ServicePageLive } from "@/components/services/ServicePageLive";
 import {
   isServicePageSlug,
   servicePageSlugs,
+  type ServicePageSlug,
 } from "@/lib/content/services";
 import { getResolvedServiceContent } from "@/lib/content/service-sanity";
 import { serviceSlugToPath } from "@/lib/content/services/paths";
@@ -25,10 +26,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const content = await getResolvedServiceContent(slug, "de");
+
+  // Go-live SEO: compact titles where CMS seoTitle exceeds ~60 characters
+  const titleOverrides: Partial<Record<ServicePageSlug, string>> = {
+    "business-communication":
+      "Business Communication | Film & Fotografie | Studiojeker",
+    "product-communication":
+      "Product Communication | Produktfoto & 3D | Studiojeker",
+  };
+
   return buildPageMetadata({
     locale: "de",
     pathname: serviceSlugToPath[slug],
-    title: content.seo.title,
+    title: titleOverrides[slug] ?? content.seo.title,
     description: content.seo.description,
   });
 }

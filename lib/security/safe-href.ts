@@ -1,61 +1,50 @@
 /**
- * Validate href values from CMS / editorial inputs before they reach the UI.
- * Unsafe schemes and protocol-relative URLs must never become `href` attributes.
+ * Validate and normalize href values from CMS or untrusted content.
+ * Blocks javascript:, data:, vbscript:, and protocol-relative URLs.
+ * Rewrites absolute Studiojeker hosts (www, apex, staging) to site-relative
+ * paths so production HTML never embeds a staging origin in internal links.
  */
 
-const ALLOWED_ABSOLUTE =
-  /^(https:|mailto:|tel:)/i;
+const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript):/i;
 
-const BLOCKED_SCHEME =
-  /^(javascript:|data:|vbscript:|file:)/i;
-
-/**
- * Returns a trimmed safe href, or `null` when the value must not be rendered.
- *
- * Allowed:
- * - internal paths starting with `/` (not `//`)
- * - fragment-only anchors starting with `#`
- * - `https:`, `mailto:`, `tel:`
- *
- * Rejected:
- * - empty / whitespace-only
- * - `javascript:`, `data:`, `vbscript:`, `file:`
- * - protocol-relative URLs (`//…`)
- * - any other scheme or non-path relative value
- */
-export function sanitizeHref(
-  href: string | null | undefined,
-): string | null {
-  if (href == null) {
-    return null;
-  }
-
-  const value = href.trim();
-  if (!value) {
-    return null;
-  }
-
-  // Protocol-relative URLs (e.g. //evil.example) — check before path allow.
-  if (value.startsWith("//")) {
-    return null;
-  }
-
-  if (BLOCKED_SCHEME.test(value)) {
-    return null;
-  }
-
-  if (value.startsWith("/") || value.startsWith("#")) {
-    return value;
-  }
-
-  if (ALLOWED_ABSOLUTE.test(value)) {
-    return value;
-  }
-
-  return null;
+function isStudiojekerHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return host === "studiojeker.ch" || host.endsWith(".studiojeker.ch");
 }
 
-/** True when `href` is safe to use as an anchor destination. */
-export function isSafeHref(href: string | null | undefined): boolean {
-  return sanitizeHref(href) !== null;
+/**
+ * Absolute https://www.studiojeker.ch/... (and staging / apex) → /...
+ * External https:// URLs stay absolute. Relative paths are unchanged.
+ */
+/** Empty string = blocked or invalid (callers fall back). */
+export function sanitizeHref(href: string | null | undefined): string {
+  const trimmed = (href ?? "").trim();
+  if (!trimmed) return "";
+  if (BLOCKED_PROTOCOLS.test(trimmed)) return "";
+  if (trimmed.startsWith("//")) return "";
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        return "";
+      }
+      if (isStudiojekerHost(url.hostname)) {
+        return `${url.pathname}${url.search}${url.hash}` || "/";
+      }
+      return trimmed;
+    } catch {
+      return "";
+    }
+  }
+
+  if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("?")) {
+    return trimmed;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return "";
+  }
+
+  return trimmed.startsWith("./") || trimmed.startsWith("../") ? trimmed : `/${trimmed}`;
 }

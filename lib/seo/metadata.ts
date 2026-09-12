@@ -17,6 +17,11 @@ type BuildMetadataOptions = {
    * so hreflang alternates stay correct.
    */
   languageAlternates?: { de: string; en: string };
+  /**
+   * Placeholder / incomplete pages: `noindex, follow`.
+   * Staging builds still force `noindex, nofollow` via `isStagingSite()`.
+   */
+  noindex?: boolean;
 };
 
 function absoluteUrl(pathname: string): string {
@@ -35,6 +40,7 @@ export function buildPageMetadata({
   wordpressSeo,
   ogImagePath,
   languageAlternates,
+  noindex = false,
 }: BuildMetadataOptions): Metadata {
   const localizedPath = languageAlternates
     ? languageAlternates[locale]
@@ -60,6 +66,14 @@ export function buildPageMetadata({
   const ogImageAbsolute = ogImage.startsWith("http")
     ? ogImage
     : absoluteUrl(ogImage);
+
+  const robots = isStagingSite()
+    ? { index: false, follow: false }
+    : noindex
+      ? { index: false, follow: true }
+      : wordpressSeo?.noindex
+        ? { index: false, follow: false }
+        : { index: true, follow: true };
 
   return {
     title: {
@@ -93,15 +107,6 @@ export function buildPageMetadata({
       description: pageDescription,
       images: [ogImageAbsolute],
     },
-    robots:
-      isStagingSite() || wordpressSeo?.noindex
-        ? {
-            index: false,
-            follow: false,
-          }
-        : {
-            index: true,
-            follow: true,
-          },
+    robots,
   };
 }

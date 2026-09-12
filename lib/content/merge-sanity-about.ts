@@ -108,11 +108,15 @@ export function mergeSanityAbout(
     },
   };
 
-  const seoTitle = clean(doc.seoTitle);
-  if (seoTitle) merged.seo.title = seoTitle;
+  // About SEO fields in Sanity are monolingual (German-primary).
+  // Never overwrite English route metadata with German CMS strings.
+  if (locale === "de") {
+    const seoTitle = clean(doc.seoTitle);
+    if (seoTitle) merged.seo.title = seoTitle;
 
-  const seoDescription = clean(doc.seoDescription);
-  if (seoDescription) merged.seo.description = seoDescription;
+    const seoDescription = clean(doc.seoDescription);
+    if (seoDescription) merged.seo.description = seoDescription;
+  }
 
   const heroLabel = clean(doc.heroLabel);
   if (heroLabel) merged.hero.label = heroLabel;

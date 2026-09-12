@@ -10,7 +10,7 @@ import type {
   SanityServiceSolutionItem,
 } from "@/lib/sanity/service";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
-import { localizePathname } from "@/lib/i18n/config";
+import { getAlternateLocalePath } from "@/lib/i18n/config";
 import { resolveSanityImage } from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 import { sanitizeHref } from "@/lib/security/safe-href";
@@ -71,7 +71,11 @@ function resolveIcon(
   return fallback;
 }
 
-/** Localize internal solution paths (keeps `/work#itemId` hashes). */
+/**
+ * Localize internal solution paths (keeps `/work#itemId` hashes).
+ * Uses alternate-locale mapping so `/content-abo` → `/en/content-subscription`.
+ * Absolute Studiojeker/staging hosts are normalized by `sanitizeHref` first.
+ */
 function resolveSolutionHref(
   href: string | null | undefined,
   locale: Locale,
@@ -89,15 +93,31 @@ function resolveSolutionHref(
   ) {
     return value;
   }
-  return localizePathname(value, locale);
+  return getAlternateLocalePath(value, locale);
 }
 
-/** Safe href for Sanity string fields; falls back when unsafe or empty. */
+/**
+ * Safe href for Sanity string fields; falls back when unsafe or empty.
+ * Internal paths are locale-mapped (including translated abo slugs).
+ */
 function resolveSafeHref(
   href: string | null | undefined,
   fallback: string,
+  locale: Locale,
 ): string {
-  return sanitizeHref(clean(href)) ?? fallback;
+  const value = sanitizeHref(clean(href));
+  if (!value) {
+    return fallback;
+  }
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
+    return value;
+  }
+  return getAlternateLocalePath(value, locale);
 }
 
 function mergeSolutions(
@@ -147,6 +167,7 @@ function mergeProjects(
   fallbackImage: HomepageMedia,
   fallbackHref: string,
   fallbackTitle: string,
+  locale: Locale,
 ): HomepageProject[] {
   if (!items || items.length === 0) {
     return base;
@@ -158,7 +179,11 @@ function mergeProjects(
       id: clean(item.itemId) ?? fallback?.id ?? `project-${index}`,
       title: clean(item.title) ?? fallback?.title ?? fallbackTitle,
       category: clean(item.category) ?? fallback?.category ?? "",
-      href: resolveSafeHref(item.href, fallback?.href ?? fallbackHref),
+      href: resolveSafeHref(
+        item.href,
+        fallback?.href ?? fallbackHref,
+        locale,
+      ),
       image: resolveSanityImage(
         item.image,
         fallback?.image ?? fallbackImage,
@@ -265,6 +290,7 @@ export function mergeSanityService(
       base.hero.media,
       base.projects.viewAll.href,
       base.hero.label,
+      locale,
     );
   }
 

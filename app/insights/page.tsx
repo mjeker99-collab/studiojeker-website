@@ -8,6 +8,7 @@ export const metadata: Metadata = buildPageMetadata({
   pathname: "/insights",
   title: "Insights | Studiojeker",
   description: "Insights und Fachbeiträge von Studiojeker — Inhalte folgen.",
+  noindex: true,
 });
 
 export default function GermanInsightsPage() {
