@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { SimpleContentPage } from "@/components/pages/SimpleContentPage";
+import { datenschutzDeBlocks } from "@/lib/content/legal-datenschutz-de";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -16,10 +17,7 @@ export default function GermanDatenschutzPage() {
       <SimpleContentPage
         label="Rechtliches"
         title="Datenschutz"
-        body={[
-          "Die vollständige Datenschutzerklärung folgt mit freigegebenem Rechtstext.",
-          "Bis dahin erfassen wir über diese Website nur die Daten, die Sie uns bewusst übermitteln.",
-        ]}
+        blocks={datenschutzDeBlocks}
       />
     </SiteChrome>
   );

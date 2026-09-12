@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/proxy-errors.php';
+
 /**
  * Runtime Homepage proxy for Metanet static hosting.
  *
@@ -178,9 +180,7 @@ $url = sprintf(
 
 $ch = curl_init($url);
 if ($ch === false) {
-  http_response_code(500);
-  echo json_encode(['ok' => false, 'error' => 'Unable to initialize request.']);
-  exit;
+  proxy_client_error(500, 'homepage', 'curl_init failed');
 }
 
 curl_setopt_array($ch, [
@@ -200,32 +200,20 @@ $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($responseBody === false || $statusCode < 200 || $statusCode >= 300) {
-  http_response_code(502);
-  echo json_encode([
-    'ok' => false,
-    'error' => 'Failed to load Homepage from Sanity.',
-    'upstreamStatus' => $statusCode > 0 ? $statusCode : null,
-    'detail' => $curlError !== '' ? $curlError : null,
+  proxy_client_error(502, 'homepage', 'Sanity request failed', [
+    'http' => $statusCode > 0 ? $statusCode : null,
+    'curl' => $curlError !== '' ? $curlError : null,
   ]);
-  exit;
 }
 
 $decoded = json_decode($responseBody, true);
 if (!is_array($decoded) || !array_key_exists('result', $decoded)) {
-  http_response_code(502);
-  echo json_encode(['ok' => false, 'error' => 'Unexpected Sanity response.']);
-  exit;
+  proxy_client_error(502, 'homepage', 'Unexpected Sanity response shape');
 }
 
 $result = $decoded['result'];
 if ($result === null) {
-  http_response_code(404);
-  echo json_encode([
-    'ok' => false,
-    'error' => 'Homepage document not found.',
-    'id' => HOMEPAGE_DOCUMENT_ID,
-  ]);
-  exit;
+  proxy_client_error(404, 'homepage', 'Document not found');
 }
 
 echo json_encode([

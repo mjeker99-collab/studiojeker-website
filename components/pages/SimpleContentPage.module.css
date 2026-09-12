@@ -27,3 +27,16 @@
   font-size: 1.0625rem;
   line-height: 1.55;
 }
+
+/* Section titles for long legal copy — same type scale as body, stronger weight. */
+.body h2 {
+  margin: 0.85rem 0 0;
+  font-size: 1.0625rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.body h2:first-child {
+  margin-top: 0;
+}
