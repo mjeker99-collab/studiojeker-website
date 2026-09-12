@@ -436,7 +436,12 @@ export const workMediaField = defineType({
               name: "alt",
               title: "Alt Text",
               type: "string",
-              validation: (Rule) => Rule.required(),
+              description:
+                "Recommended for accessibility. Optional so existing slides without alt remain editable.",
+              validation: (Rule) =>
+                Rule.max(160).warning(
+                  "Add alt text when possible for accessibility.",
+                ),
             }),
             defineField({
               name: "caption",
@@ -637,12 +642,15 @@ export const workCategory = defineType({
     select: {
       titleDe: "title.de",
       categoryId: "categoryId",
-      count: "items.length",
+      // Select the array itself — `items.length` is not resolved by Sanity previews
+      // and always showed "0 tile(s)" even when items existed.
+      items: "items",
     },
-    prepare({ titleDe, categoryId, count }) {
+    prepare({ titleDe, categoryId, items }) {
+      const count = Array.isArray(items) ? items.length : 0;
       return {
         title: titleDe || categoryId || "Category",
-        subtitle: `${count ?? 0} tile(s)`,
+        subtitle: `${count} tile(s)`,
       };
     },
   },
