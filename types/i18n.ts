@@ -12,6 +12,7 @@ export type Dictionary = {
     about: string;
     services: string;
     work: string;
+    ai: string;
     insights: string;
     contact: string;
     cta: string;

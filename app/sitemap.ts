@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 import { aboLanguageAlternates } from "@/lib/content/abo-page";
+import { aiLanguageAlternates } from "@/lib/content/ai-page";
 
 /** Required for `output: "export"`. */
 export const dynamic = "force-static";
@@ -91,6 +92,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
         "de-CH": aboDe,
         en: aboEn,
         "x-default": aboDe,
+      },
+    },
+  });
+
+  const aiDe = absolute(withTrailingSlash(aiLanguageAlternates.de));
+  const aiEn = absolute(withTrailingSlash(aiLanguageAlternates.en));
+
+  entries.push({
+    url: aiDe,
+    changeFrequency: "monthly",
+    priority: 0.8,
+    alternates: {
+      languages: {
+        "de-CH": aiDe,
+        en: aiEn,
+        "x-default": aiDe,
+      },
+    },
+  });
+
+  entries.push({
+    url: aiEn,
+    changeFrequency: "monthly",
+    priority: 0.7,
+    alternates: {
+      languages: {
+        "de-CH": aiDe,
+        en: aiEn,
+        "x-default": aiDe,
       },
     },
   });

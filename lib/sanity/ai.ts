@@ -1,0 +1,140 @@
+import groq from "groq";
+import { getSanityClient } from "@/lib/sanity/client";
+import {
+  localizedStringProjection,
+  localizedTextProjection,
+  sanityImageProjection,
+  sanityMediaProjection,
+  type SanityImageProjection,
+  type SanityMediaField,
+} from "@/lib/sanity/media";
+import type {
+  SanityLocalizedString,
+  SanityLocalizedText,
+} from "@/lib/sanity/homepage";
+
+/** Deterministic KI/AI singleton ID (matches Studio desk structure). */
+export const AI_DOCUMENT_ID = "ai";
+
+export type SanityAiCta = {
+  label?: SanityLocalizedString;
+  href?: string | null;
+} | null;
+
+export type SanityAiApplicationItem = {
+  _key?: string;
+  id?: string | null;
+  number?: string | null;
+  title?: SanityLocalizedString;
+  description?: SanityLocalizedText;
+} | null;
+
+export type SanityAiTextSection = {
+  headline?: SanityLocalizedString;
+  text?: SanityLocalizedText;
+  media?: SanityMediaField;
+} | null;
+
+export type SanityAi = {
+  _id?: string | null;
+  heroSection?: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    text?: SanityLocalizedText;
+    media?: SanityMediaField;
+  } | null;
+  introSection?: SanityAiTextSection;
+  applicationsSection?: {
+    headline?: SanityLocalizedString;
+    items?: SanityAiApplicationItem[] | null;
+    media?: SanityMediaField;
+  } | null;
+  modelsSection?: SanityAiTextSection;
+  experienceSection?: SanityAiTextSection;
+  approachSection?: SanityAiTextSection;
+  closingSection?: {
+    headline?: SanityLocalizedString;
+    text?: SanityLocalizedText;
+    cta?: SanityAiCta;
+  } | null;
+  clientsLabel?: SanityLocalizedString;
+  seoSection?: {
+    title?: SanityLocalizedString;
+    description?: SanityLocalizedText;
+    ogImage?: SanityImageProjection;
+  } | null;
+};
+
+const ctaProjection = `{ label${localizedStringProjection}, href }`;
+
+/**
+ * Published KI/AI singleton projection.
+ * Keep in sync with `public/api/ai-page.php`.
+ */
+export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
+  _id,
+  heroSection{
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  introSection{
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  applicationsSection{
+    headline${localizedStringProjection},
+    items[]{
+      _key,
+      id,
+      number,
+      title${localizedStringProjection},
+      description${localizedTextProjection}
+    },
+    media${sanityMediaProjection}
+  },
+  modelsSection{
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  experienceSection{
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  approachSection{
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  closingSection{
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    cta${ctaProjection}
+  },
+  clientsLabel${localizedStringProjection},
+  seoSection{
+    title${localizedStringProjection},
+    description${localizedTextProjection},
+    ogImage${sanityImageProjection}
+  }
+}`;
+
+/**
+ * Fetch the published KI/AI singleton at build time.
+ * Returns null when Sanity is unreachable or the document is missing.
+ */
+export async function fetchSanityAi(): Promise<SanityAi | null> {
+  try {
+    const client = getSanityClient();
+    const doc = await client.fetch<SanityAi | null>(aiQuery, {
+      id: AI_DOCUMENT_ID,
+    });
+    return doc?._id ? doc : null;
+  } catch {
+    return null;
+  }
+}

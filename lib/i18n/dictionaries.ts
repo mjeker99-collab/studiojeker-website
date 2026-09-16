@@ -16,6 +16,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       about: "About",
       services: "Services",
       work: "Work",
+      ai: "KI",
       insights: "Insights",
       contact: "Contact",
       cta: "Projekt besprechen",
@@ -24,6 +25,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       primaryNav: "Hauptnavigation",
       language: "Sprache",
     },
+
     footer: {
       brand: "Studiojeker",
       navigation: "Navigation",
@@ -74,6 +76,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       about: "About",
       services: "Services",
       work: "Work",
+      ai: "AI",
       insights: "Insights",
       contact: "Contact",
       cta: "Let's Talk",
@@ -82,6 +85,7 @@ const dictionaries: Record<Locale, Dictionary> = {
       primaryNav: "Primary navigation",
       language: "Language",
     },
+
     footer: {
       brand: "Studiojeker",
       navigation: "Navigation",

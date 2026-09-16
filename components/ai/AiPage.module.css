@@ -1,0 +1,189 @@
+/**
+ * KI / AI page — About / homepage visual system.
+ * Layout overrides for this page only — do not change global hero CSS.
+ */
+
+.hero {
+  padding-top: var(--header-height);
+  min-height: min(70svh, 38rem);
+  z-index: 0;
+}
+
+.heroCopy {
+  align-content: start;
+  padding-top: clamp(2.75rem, 6vw, 5rem);
+  padding-bottom: var(--space-5);
+}
+
+.sectionHeadline {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
+.sectionBody {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.sectionBody p {
+  margin: 0;
+  max-width: 40rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.textSection {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.textSectionAlt {
+  background: var(--color-white);
+}
+
+.textSectionGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.textSectionWithMedia {
+  align-items: center;
+}
+
+.textSectionCopy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+}
+
+.textSectionMedia {
+  min-width: 0;
+}
+
+.sectionMediaFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--color-neutral);
+}
+
+.sectionImage {
+  object-fit: cover;
+}
+
+.applications {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.applicationsHeader {
+  margin-bottom: var(--space-4);
+  max-width: 36rem;
+}
+
+.applicationsGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.application {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 36rem;
+}
+
+.applicationNumber {
+  margin: 0;
+  color: var(--color-cyan);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.applicationTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.applicationText {
+  margin: 0;
+  max-width: 32rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.applicationsMedia {
+  margin-top: var(--space-5);
+}
+
+.closing {
+  background: var(--color-black);
+  color: var(--color-white);
+  padding-block: var(--section-padding-y);
+}
+
+.closingInner {
+  width: min(100% - (2 * var(--container-padding-x)), var(--container-max));
+  margin-inline: auto;
+}
+
+.closingContent {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+  justify-items: start;
+}
+
+.closingCopy {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 40rem;
+}
+
+.closingHeadline {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.closingText {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+@media (min-width: 768px) {
+  .applicationsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
+  }
+
+  .closingContent {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-5);
+  }
+}
+
+@media (min-width: 1024px) {
+  .textSectionWithMedia {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: var(--space-5);
+  }
+
+  .applicationsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
