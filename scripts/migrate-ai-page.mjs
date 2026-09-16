@@ -5,6 +5,16 @@
  * already exists). Does NOT mutate other page documents.
  *
  * Usage: node scripts/migrate-ai-page.mjs
+ *
+ * Requires a Sanity token with create + write on dataset `production`.
+ * Prefer SANITY_API_WRITE_TOKEN. Falls back to SANITY_AUTH_TOKEN only when
+ * WRITE is missing or fails a create probe (expired WRITE must not block a
+ * working AUTH token that has write rights).
+ *
+ * Manual alternative (no script):
+ * 1. Deploy Studio with the `ai` schema (`studio/` → Sanity).
+ * 2. Open desk item "KI / AI" and publish the singleton once
+ *    (or create document with ID `ai`, type `ai`).
  */
 import { createReadStream, existsSync } from "node:fs";
 import { basename } from "node:path";
@@ -15,20 +25,7 @@ const projectId = "tgx6e6jg";
 const dataset = "production";
 const apiVersion = "2025-01-01";
 const AI_ID = "ai";
-
-const token = process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_AUTH_TOKEN;
-if (!token) {
-  console.error("Missing SANITY_API_WRITE_TOKEN or SANITY_AUTH_TOKEN");
-  process.exit(1);
-}
-
-const client = createClient({
-  projectId,
-  dataset,
-  apiVersion,
-  token,
-  useCdn: false,
-});
+const PROBE_ID = "ai-write-probe";
 
 const HERO_IMAGE =
   "public/images/Social marketing/Social marketing/PHOTO-2023-05-11-15-00-27.jpg";
@@ -45,7 +42,75 @@ function key() {
   return randomUUID().replace(/-/g, "").slice(0, 12);
 }
 
-async function resolveHeroImageRef() {
+function makeClient(token) {
+  return createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    token,
+    useCdn: false,
+  });
+}
+
+/**
+ * Pick the first env token that can create documents.
+ * Tries WRITE first, then AUTH — never lets an expired WRITE shadow a
+ * working AUTH without probing.
+ */
+async function resolveWritableClient() {
+  const candidates = [
+    ["SANITY_API_WRITE_TOKEN", process.env.SANITY_API_WRITE_TOKEN],
+    ["SANITY_AUTH_TOKEN", process.env.SANITY_AUTH_TOKEN],
+  ].filter(([, value]) => typeof value === "string" && value.trim());
+
+  if (candidates.length === 0) {
+    console.error(
+      "Missing SANITY_API_WRITE_TOKEN or SANITY_AUTH_TOKEN.\n" +
+        "Provide a Sanity token with create+write on dataset production,\n" +
+        "or create the `ai` singleton manually in Studio after deploying the schema.",
+    );
+    process.exit(1);
+  }
+
+  const failures = [];
+
+  for (const [name, token] of candidates) {
+    const client = makeClient(token);
+    try {
+      await client.createIfNotExists({
+        _id: PROBE_ID,
+        _type: "ai",
+        heroSection: {
+          label: locString("probe", "probe"),
+        },
+      });
+      await client.delete(PROBE_ID);
+      console.log(`Using writable token from ${name}.`);
+      return client;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(`${name}: ${message.split("\n")[0]}`);
+      try {
+        await client.delete(PROBE_ID);
+      } catch {
+        // Probe may never have been created.
+      }
+    }
+  }
+
+  console.error(
+    "No writable Sanity token available to create `_id: ai`.\n" +
+      "Failures:\n- " +
+      failures.join("\n- ") +
+      "\n\nManual steps:\n" +
+      "1. Rotate/create a Sanity API token with Editor (or create+write) on project tgx6e6jg / dataset production.\n" +
+      "2. Set SANITY_API_WRITE_TOKEN (do not commit it) and re-run: node scripts/migrate-ai-page.mjs\n" +
+      "3. Or deploy Studio with the `ai` schema and publish the “KI / AI” singleton once in the desk.",
+  );
+  process.exit(1);
+}
+
+async function resolveHeroImageRef(client) {
   if (existsSync(HERO_IMAGE)) {
     try {
       const asset = await client.assets.upload(
@@ -74,6 +139,8 @@ async function resolveHeroImageRef() {
 }
 
 async function main() {
+  const client = await resolveWritableClient();
+
   const existing = await client.getDocument(AI_ID).catch(() => null);
   if (existing) {
     console.log(
@@ -82,7 +149,7 @@ async function main() {
     return;
   }
 
-  const imageRef = await resolveHeroImageRef();
+  const imageRef = await resolveHeroImageRef(client);
 
   const mediaField = {
     _type: "mediaField",

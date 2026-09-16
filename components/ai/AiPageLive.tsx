@@ -49,9 +49,20 @@ export function AiPageLive({ locale, content }: AiPageLiveProps) {
         const payload = (await response.json()) as AiProxyResponse;
         if (cancelled || !payload.ok || !payload.document) return;
 
-        setLive(
-          mergeSanityAi(getAiPageContent(locale), payload.document, locale),
+        // Preserve build-time client logos (fetched server-side). The PHP proxy
+        // returns only the AI singleton — same limitation as About Live.
+        const merged = mergeSanityAi(
+          getAiPageContent(locale),
+          payload.document,
+          locale,
         );
+        setLive({
+          ...merged,
+          clients: {
+            ...merged.clients,
+            logos: content.clients.logos,
+          },
+        });
       } catch {
         // Keep build-time content when the proxy is unavailable.
       }
@@ -81,14 +92,26 @@ export function AiPageLive({ locale, content }: AiPageLiveProps) {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [locale]);
+  }, [locale, content.clients.logos]);
 
+  // Remount when published media changes so next/image and HeroVimeoLoop
+  // pick up new Sanity CDN URLs / Vimeo IDs immediately after publish.
   const contentKey = [
     resolved.hero.headline,
     resolved.hero.media.src,
     resolved.hero.videoId ?? "",
     resolved.intro.media?.src ?? "",
+    resolved.intro.videoId ?? "",
+    resolved.applications.media?.src ?? "",
+    resolved.applications.videoId ?? "",
+    resolved.models.media?.src ?? "",
+    resolved.models.videoId ?? "",
+    resolved.experience.media?.src ?? "",
+    resolved.experience.videoId ?? "",
+    resolved.approach.media?.src ?? "",
+    resolved.approach.videoId ?? "",
     resolved.applications.items.map((item) => item.title).join(","),
+    resolved.closing.headline,
   ].join("|");
 
   return <AiPage key={contentKey} content={resolved} />;

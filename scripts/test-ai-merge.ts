@@ -7,6 +7,7 @@ import { mergeSanityAi } from "../lib/content/merge-sanity-ai";
 import { fetchSanityAi } from "../lib/sanity/ai";
 import type { SanityAi } from "../lib/sanity/ai";
 import { getAlternateLocalePath, getAiPath } from "../lib/i18n/config";
+import { buildPageMetadata } from "../lib/seo/metadata";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -39,6 +40,52 @@ async function main() {
   assert(
     getAlternateLocalePath("/en/ai", "de") === "/ki",
     "language switcher EN→DE",
+  );
+
+  const metaDe = buildPageMetadata({
+    locale: "de",
+    pathname: "/ki",
+    title: baseDe.seo.title,
+    description: baseDe.seo.description,
+    languageAlternates: aiLanguageAlternates,
+  });
+  const metaEn = buildPageMetadata({
+    locale: "en",
+    pathname: "/ai",
+    title: baseEn.seo.title,
+    description: baseEn.seo.description,
+    languageAlternates: aiLanguageAlternates,
+  });
+
+  const deCanonical = String(metaDe.alternates?.canonical ?? "");
+  const enCanonical = String(metaEn.alternates?.canonical ?? "");
+  assert(
+    deCanonical.endsWith("/ki") || deCanonical.endsWith("/ki/"),
+    `DE canonical ends with /ki — got ${deCanonical}`,
+  );
+  assert(
+    enCanonical.endsWith("/en/ai") || enCanonical.endsWith("/en/ai/"),
+    `EN canonical ends with /en/ai — got ${enCanonical}`,
+  );
+  assert(
+    !deCanonical.includes("studiojeker.ch/ai"),
+    "DE canonical is not /ai",
+  );
+  assert(enCanonical.includes("/en/ai"), "EN canonical includes /en/ai");
+
+  const languages = metaEn.alternates?.languages as
+    | Record<string, string>
+    | undefined;
+  assert(languages?.["de-CH"]?.includes("/ki"), "hreflang de-CH → /ki");
+  assert(languages?.en?.includes("/en/ai"), "hreflang en → /en/ai");
+  assert(languages?.["x-default"]?.includes("/ki"), "hreflang x-default → /ki");
+  assert(
+    !deCanonical.toLowerCase().includes("staging"),
+    "no staging in DE canonical",
+  );
+  assert(
+    !enCanonical.toLowerCase().includes("staging"),
+    "no staging in EN canonical",
   );
 
   const stub: SanityAi = {
@@ -125,13 +172,40 @@ async function main() {
   const withVideo = mergeSanityAi(baseDe, videoStub, "de");
   assert(withVideo.hero.videoId === "1216347773", "hero Vimeo id resolved");
 
+  const clearedVideo: SanityAi = {
+    ...stub,
+    heroSection: {
+      ...stub.heroSection,
+      media: {
+        mediaType: "image",
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-hero.jpg",
+          dimensions: { width: 1600, height: 1200 },
+          alt: "AI hero",
+          asset: { _ref: "image-ai-hero", _type: "reference" },
+        },
+      },
+    },
+  };
+  const afterClear = mergeSanityAi(
+    { ...withVideo, hero: { ...withVideo.hero } },
+    clearedVideo,
+    "de",
+  );
+  assert(
+    !afterClear.hero.videoId,
+    "cleared CMS video removes stale hero videoId",
+  );
+
   const live = await fetchSanityAi();
   if (live?._id === "ai") {
     const fromCms = mergeSanityAi(baseDe, live, "de");
     assert(fromCms.hero.headline.length > 0, "live Sanity headline present");
     console.log("Live Sanity document present and merges cleanly.");
   } else {
-    console.log("No live Sanity AI document yet — stub merge checks passed.");
+    console.log(
+      "No live Sanity AI document yet — stub merge checks passed. Seed with a writable token: node scripts/migrate-ai-page.mjs",
+    );
   }
 
   console.log("All KI/AI merge checks passed.");

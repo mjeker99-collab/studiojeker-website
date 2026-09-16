@@ -86,9 +86,9 @@ function resolveCta(
 function mergeOptionalMedia(
   field: SanityMediaField | undefined,
   fallback?: HomepageMedia,
-): { media?: HomepageMedia; videoId?: string } {
+): { media?: HomepageMedia; videoId: string } {
   if (!field) {
-    return fallback ? { media: fallback } : {};
+    return fallback ? { media: fallback, videoId: "" } : { videoId: "" };
   }
 
   if (!fallback) {
@@ -100,18 +100,19 @@ function mergeOptionalMedia(
     };
     const resolved = resolveSanityMedia(field, empty);
     if (!resolved.media.src) {
-      return {};
+      return { videoId: "" };
     }
     return {
       media: resolved.media,
-      videoId: resolved.videoId,
+      // Always assign (incl. "") so a cleared CMS video does not leave a stale ID.
+      videoId: resolved.videoId ?? "",
     };
   }
 
   const resolved = resolveSanityMedia(field, fallback);
   return {
     media: resolved.media,
-    videoId: resolved.videoId,
+    videoId: resolved.videoId ?? "",
   };
 }
 
@@ -124,13 +125,20 @@ function mergeTextSection(
   const text = pickLocalized(section?.text, locale);
   const body = text ? splitParagraphs(text) : base.body;
   const mediaResult = mergeOptionalMedia(section?.media, base.media);
-
-  return {
+  const next: AiTextBlock = {
     headline,
     body: body.length > 0 ? body : base.body,
-    ...(mediaResult.media ? { media: mediaResult.media } : {}),
-    ...(mediaResult.videoId ? { videoId: mediaResult.videoId } : {}),
   };
+  if (mediaResult.media) {
+    next.media = mediaResult.media;
+  }
+  // Match Abo showreel: always set videoId when CMS media was present.
+  if (section?.media) {
+    next.videoId = mediaResult.videoId;
+  } else if (base.videoId) {
+    next.videoId = base.videoId;
+  }
+  return next;
 }
 
 function mergeApplications(
@@ -246,11 +254,8 @@ export function mergeSanityAi(
       merged.hero.media,
     );
     merged.hero.media = heroMedia.media;
-    if (heroMedia.videoId) {
-      merged.hero.videoId = heroMedia.videoId;
-    } else {
-      delete merged.hero.videoId;
-    }
+    // Always assign (incl. "") — same stale-ID guard as Abo showreel merge.
+    merged.hero.videoId = heroMedia.videoId ?? "";
   }
 
   merged.intro = mergeTextSection(merged.intro, doc.introSection, locale);
@@ -267,17 +272,15 @@ export function mergeSanityAi(
     doc.applicationsSection?.items,
     locale,
   );
-  const applicationsMedia = mergeOptionalMedia(
-    doc.applicationsSection?.media,
-    merged.applications.media,
-  );
-  if (applicationsMedia.media) {
-    merged.applications.media = applicationsMedia.media;
-  }
-  if (applicationsMedia.videoId) {
+  if (doc.applicationsSection?.media) {
+    const applicationsMedia = mergeOptionalMedia(
+      doc.applicationsSection.media,
+      merged.applications.media,
+    );
+    if (applicationsMedia.media) {
+      merged.applications.media = applicationsMedia.media;
+    }
     merged.applications.videoId = applicationsMedia.videoId;
-  } else {
-    delete merged.applications.videoId;
   }
 
   merged.models = mergeTextSection(merged.models, doc.modelsSection, locale);

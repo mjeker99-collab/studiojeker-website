@@ -125,7 +125,8 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
 
 /**
  * Fetch the published KI/AI singleton at build time.
- * Returns null when Sanity is unreachable or the document is missing.
+ * Returns null when Sanity is unreachable or the document is missing
+ * so callers can fall back to local content (same pattern as Content-Abo).
  */
 export async function fetchSanityAi(): Promise<SanityAi | null> {
   try {
@@ -134,7 +135,11 @@ export async function fetchSanityAi(): Promise<SanityAi | null> {
       id: AI_DOCUMENT_ID,
     });
     return doc?._id ? doc : null;
-  } catch {
+  } catch (error) {
+    console.warn(
+      "[sanity] KI/AI fetch failed — falling back to local content.",
+      error instanceof Error ? error.message : error,
+    );
     return null;
   }
 }
