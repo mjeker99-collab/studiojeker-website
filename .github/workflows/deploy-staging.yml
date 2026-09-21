@@ -1,92 +1,4 @@
-# Staging deploy → staging2026.studiojeker.ch (Metanet/Plesk FTPS).
-# Does NOT deploy to production / studiojeker.ch.
-#
-# Triggers:
-#   A) push to main          — code changes rebuild + deploy staging
-#   B) workflow_dispatch     — manual Actions run (requires confirm_target)
-#   C) repository_dispatch   — Sanity CMS publish webhooks
-#
-# Architecture (static export on Apache):
-#   - Build bakes published Sanity into HTML (useCdn: false).
-#   - Same-origin PHP proxies (/api/*-page.php) refresh CMS content in the
-#     browser without waiting for a redeploy.
-#   - Webhooks rebuild baked HTML / SEO so first paint stays current.
-#
-# Critical guard:
-#   Refuse FTPS upload when this run's commit is behind origin/main.
-#   Prevents stale re-runs / queued older pushes from overwriting a newer deploy
-#   (observed 2026-09-09: run attempt of #63 @ 1ceaf3f overwrote #66 @ 631b6b1).
-
-name: Deploy staging (Metanet)
-
-on:
-  push:
-    branches:
-      - main
-
-  workflow_dispatch:
-    inputs:
-      confirm_target:
-        description: "Type staging2026 to confirm this deploys ONLY to staging"
-        required: true
-        type: string
-
-  # Sanity → GitHub repository_dispatch (configure webhooks in Sanity Manage).
-  repository_dispatch:
-    types:
-      - sanity-homepage-published
-      - sanity-abo-published
-      - sanity-about-published
-      - sanity-contact-published
-      - sanity-work-published
-      - sanity-service-published
-      - sanity-cms-published
-
-# Keep cancel-in-progress false so an in-flight FTPS mirror is not interrupted
-# mid-upload (partial tree). Stale runs are blocked by the tip-of-main guard.
-concurrency:
-  group: deploy-staging-metanet
-  cancel-in-progress: false
-
-permissions:
-  contents: read
-
-jobs:
-  deploy-staging:
-    name: Build static export and deploy to staging FTP
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Confirm trigger and staging-only target
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          CONFIRM_TARGET: ${{ inputs.confirm_target }}
-          DISPATCH_TYPE: ${{ github.event.action }}
-          CLIENT_DOCUMENT_TYPE: ${{ github.event.client_payload.documentType }}
-        run: |
-          set -euo pipefail
-
-          echo "Event: ${EVENT_NAME}"
-          echo "Ref: ${GITHUB_REF}"
-          echo "SHA: ${GITHUB_SHA}"
-
-          case "${EVENT_NAME}" in
-            workflow_dispatch)
-              if [ "${CONFIRM_TARGET}" != "staging2026" ]; then
-                echo "::error::Refusing deploy. Type exactly 'staging2026' in confirm_target."
-                exit 1
-              fi
-              echo "Confirmed manual staging deploy: staging2026.studiojeker.ch"
-              ;;
-            push)
-              echo "Push to main — deploying staging2026.studiojeker.ch"
-              ;;
-            repository_dispatch)
-              case "${DISPATCH_TYPE}" in
-                sanity-homepage-published|sanity-abo-published|sanity-about-published|sanity-contact-published|sanity-work-published|sanity-service-published|sanity-cms-published) ;;
-                *)
-                  echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
+echo "::error::Unexpected repository_dispatch type: ${DISPATCH_TYPE}"
                   exit 1
                   ;;
               esac
@@ -269,3 +181,4 @@ jobs:
       # Credentials are passed directly to lftp; GitHub masks the secret values.
         
           lftp -u "${METANET_FTP_USERNAME}","${METANET_FTP_PASSWORD}" -e "set cmd:fail-exit true; set ftp:ssl-allow false; set ftp:passive-mode true; set ftp:prefer-epsv false; set net:timeout 60; set net:max-retries 3; open ftp://${METANET_FTP_SERVER}:21; lcd out; mirror -R --verbose --parallel=1 --exclude-glob api/contact.config.php .; bye"
+                  
