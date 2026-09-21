@@ -262,7 +262,8 @@ jobs:
           if [ -z "${METANET_FTP_SERVER}" ] || [ -z "${METANET_FTP_USERNAME}" ] || [ -z "${METANET_FTP_PASSWORD}" ]; then
             echo "::error::Missing Metanet FTPS secrets (server/username/password)."
             exit 1
-
+            fi
+fi
 
         # Connect exactly as verified manually: plain FTP on port 21, passive mode.
       # Credentials are passed directly to lftp; GitHub masks the secret values.
