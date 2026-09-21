@@ -269,16 +269,16 @@ jobs:
       # Credentials are passed directly to lftp; GitHub masks the secret values.
         
         lftp -u "${METANET_FTP_USERNAME}","${METANET_FTP_PASSWORD}" -e "
-        set cmd:fail-exit true;
-        set ftp:ssl-allow false;
-        set ftp:passive-mode true;
-        set ftp:prefer-epsv false;
-        set net:timeout 60;
-        set net:max-retries 3;
-        set net:reconnect-interval-base 5;
-        set net:reconnect-interval-multiplier 1;
-        open ftp://${METANET_FTP_SERVER}:21;
-        lcd out;
-        mirror -R --verbose --parallel=1 --exclude-glob api/contact.config.php .;
-        bye
-      "
+          set cmd:fail-exit true;
+          set jftp:ssl-allow false;
+          set ftp:passive-mode true;
+          set ftp:prefer-epsv false;
+          set net:timeout 60;
+          set net:max-retries 3;
+          set net:reconnect-interval-base 5;
+          set net:reconnect-interval-multiplier 1;
+          open ftp://${METANET_FTP_SERVER}:21;
+          lcd out;
+          mirror -R --verbose --parallel=1 --exclude-glob api/contact.config.php .;
+          bye
+        "
