@@ -267,8 +267,8 @@ jobs:
 
         # Connect exactly as verified manually: plain FTP on port 21, passive mode.
       # Credentials are passed directly to lftp; GitHub masks the secret values.
-      set +x
-      lftp -u "${METANET_FTP_USERNAME}","${METANET_FTP_PASSWORD}" -e "
+        set +x
+        lftp -u "${METANET_FTP_USERNAME}","${METANET_FTP_PASSWORD}" -e "
         set cmd:fail-exit true;
         set ftp:ssl-allow false;
         set ftp:passive-mode true;
