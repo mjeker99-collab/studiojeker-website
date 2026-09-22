@@ -14,8 +14,9 @@ type AiTeaserSectionProps = {
 };
 
 /**
- * Homepage KI / AI teaser — reuses the Showreel black two-column pattern.
+ * Homepage KI / AI teaser — Showreel pattern, media left / copy right on desktop.
  * Video (muted autoplay loop) wins over image; no media → copy only, no empty frame.
+ * Mobile keeps copy → media stacking.
  */
 export function AiTeaserSection({ content }: AiTeaserSectionProps) {
   if (!content.enabled) {
