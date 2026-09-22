@@ -1,0 +1,53 @@
+name: Staging FTP Connection Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Test FTPS connection
+        env:
+          FTP_HOST: ${{ secrets.STAGING_FTP_HOST }}
+          FTP_USER: ${{ secrets.STAGING_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
+        run: |
+          set -e
+
+          echo "Testing connection to staging FTP..."
+          echo "Host: $FTP_HOST"
+          echo "Port: 21"
+          echo "Mode: Explicit FTPS / Passive"
+          echo
+
+          lftp -u "$FTP_USER","$FTP_PASSWORD" \
+            -e "
+              set ftp:ssl-force true;
+              set ftp:ssl-protect-data true;
+              set ftp:ssl-protect-list true;
+              set ftp:passive-mode true;
+              set ftp:prefer-epsv false;
+              set ssl:verify-certificate true;
+              set net:timeout 30;
+              set net:max-retries 1;
+
+              open ftp://$FTP_HOST:21;
+
+              echo ===== CURRENT DIRECTORY =====;
+              pwd;
+
+              echo ===== STAGING CONTENT =====;
+              cls -la;
+
+              bye;
+            "
+
+          echo
+          echo "FTPS connection test completed successfully."
