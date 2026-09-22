@@ -131,7 +131,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       },
       hero: {
         label: "ARTIFICIAL INTELLIGENCE",
-        headline: "AI. Where experience meets new possibilities.",
+        headline: "AI. Where experience\nmeets new possibilities.",
         body: "Studiojeker integrates artificial intelligence into an established production process: strategy, creative concept, photography, film, 3D – and targeted distribution across digital channels. AI accelerates where it adds value. Studiojeker delivers concept, craft, quality and visibility.",
         media,
       },
@@ -282,7 +282,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
     },
     hero: {
       label: "KÜNSTLICHE INTELLIGENZ",
-      headline: "KI. Wenn Erfahrung auf neue Möglichkeiten trifft.",
+      headline: "KI. Wenn Erfahrung\nauf neue Möglichkeiten trifft.",
       body: "Studiojeker integriert künstliche Intelligenz in einen etablierten Produktionsprozess: Strategie, kreative Konzeption, Fotografie, Film, 3D – und gezielte Distribution über digitale Kanäle. KI beschleunigt dort, wo sie Mehrwert schafft. Studiojeker liefert Konzept, Handwerk, Qualität und Sichtbarkeit.",
       media,
     },
