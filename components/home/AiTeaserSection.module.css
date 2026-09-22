@@ -20,6 +20,11 @@
   padding: var(--section-padding-y-compact) var(--container-padding-x);
 }
 
+/* When CMS has no image/video yet, avoid a hollow right column. */
+.grid:not(.gridWithMedia) .copy {
+  max-width: min(40rem, 100%);
+}
+
 .headline {
   margin: 0;
   max-width: 12em;
