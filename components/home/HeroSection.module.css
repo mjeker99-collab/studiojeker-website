@@ -26,6 +26,8 @@
 .headline {
   margin: 0;
   max-width: 7.2em;
+  /* Explicit black — hero copy is always on white; CMS white is filtered in TSX */
+  color: var(--color-black);
   /* Homepage + About shared H1 — 20% smaller than previous clamp */
   font-size: clamp(2.2rem, 6vw, 4.4rem);
   font-weight: var(--font-weight-extrabold);

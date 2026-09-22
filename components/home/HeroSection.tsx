@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { HomepageContent } from "@/types/homepage";
+import type { EditorialColorValue } from "@/types/editorial-color";
 import { mediaPath } from "@/lib/media/paths";
 import { EditorialColorSpan } from "@/components/ui/EditorialColorSpan";
 import { Button } from "@/components/ui/Button";
@@ -11,13 +12,28 @@ type HeroSectionProps = {
   content: HomepageContent["hero"];
 };
 
+/**
+ * Homepage hero copy sits on a white background — CMS white is unreadable.
+ * Keep other editorial colors; fall back to CSS black for white/empty.
+ */
+function colorOnLightHero(
+  color?: EditorialColorValue,
+): EditorialColorValue | undefined {
+  if (!color || color.preset === "white") {
+    return undefined;
+  }
+  return color;
+}
+
 export function HeroSection({ content }: HeroSectionProps) {
+  const headlineColor = colorOnLightHero(content.headlineColor);
+
   return (
     <section className={styles.section} data-header-theme="light" aria-labelledby="home-hero-title">
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <h1 id="home-hero-title" className={styles.headline}>
-            <EditorialColorSpan color={content.headlineColor}>
+            <EditorialColorSpan color={headlineColor}>
               {content.headline}
             </EditorialColorSpan>
             {content.headlineAccent ? (
