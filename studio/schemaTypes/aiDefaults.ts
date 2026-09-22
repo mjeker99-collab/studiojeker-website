@@ -275,7 +275,7 @@ export const aiPageInitialValues = {
       ]),
     ),
   },
-  // visualMedia slots stay empty — editors upload originals in Studio.
+  // visualMedia / landscapeBreaks slots stay empty — editors upload originals in Studio.
   closingSection: {
     headline: locString(
       "Was können wir mit KI für Sie möglich machen?",

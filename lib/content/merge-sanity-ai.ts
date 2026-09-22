@@ -252,6 +252,7 @@ export function mergeSanityAi(
       ...(base.approach.media ? { media: { ...base.approach.media } } : {}),
     },
     visuals: { ...base.visuals },
+    landscapeBreaks: { ...base.landscapeBreaks },
     clients: {
       ...base.clients,
       logos: [...base.clients.logos],
@@ -425,6 +426,45 @@ export function mergeSanityAi(
     );
     if (distributionChannels) {
       merged.visuals.distributionChannels = distributionChannels;
+    }
+  }
+
+  if (doc.landscapeBreaks) {
+    const stillFallback: HomepageMedia = {
+      src: "",
+      alt: "",
+      width: 1920,
+      height: 1080,
+    };
+    const mergeBreak = (
+      slot: { image?: Parameters<typeof resolveSanityImage>[0] } | null | undefined,
+    ): HomepageMedia | undefined => {
+      if (!slot?.image) return undefined;
+      const resolved = resolveSanityImage(slot.image, stillFallback);
+      return resolved.src ? resolved : undefined;
+    };
+
+    const afterAi = mergeBreak(doc.landscapeBreaks.afterAi);
+    if (afterAi) merged.landscapeBreaks.afterAi = afterAi;
+
+    const afterDistribution = mergeBreak(doc.landscapeBreaks.afterDistribution);
+    if (afterDistribution) {
+      merged.landscapeBreaks.afterDistribution = afterDistribution;
+    }
+
+    const afterVisibility = mergeBreak(doc.landscapeBreaks.afterVisibility);
+    if (afterVisibility) {
+      merged.landscapeBreaks.afterVisibility = afterVisibility;
+    }
+
+    const afterApplications = mergeBreak(doc.landscapeBreaks.afterApplications);
+    if (afterApplications) {
+      merged.landscapeBreaks.afterApplications = afterApplications;
+    }
+
+    const afterExperience = mergeBreak(doc.landscapeBreaks.afterExperience);
+    if (afterExperience) {
+      merged.landscapeBreaks.afterExperience = afterExperience;
     }
   }
 

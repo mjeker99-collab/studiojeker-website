@@ -238,6 +238,42 @@
   padding-block: 0.15rem;
 }
 
+/*
+ * Large ~16:9 landscape breaks — full content width, cover crop,
+ * no radius / shadow / border / overlay.
+ */
+.landscapeSection {
+  background: var(--color-white);
+  padding-block: var(--space-4);
+}
+
+.landscapeBreak {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.landscapeBreakFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.landscapeBreakImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.processLandscape {
+  width: 100%;
+  min-width: 0;
+  margin-block: var(--space-3) var(--space-2);
+}
+
 .applications {
   background: var(--color-white);
   padding-block: var(--section-padding-y-compact);
@@ -328,34 +364,34 @@
     gap: var(--space-4);
   }
 
+  /*
+   * Process stays vertical (text → landscape → text) on all breakpoints
+   * so Sanity landscape breaks can interrupt the flow at full content width.
+   * Step copy and ↓ arrows are unchanged.
+   */
   .processFlow {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 0;
+    display: grid;
+    gap: var(--space-3);
   }
 
   .processItem {
-    display: flex;
-    flex: 1 1 0;
-    align-items: flex-start;
-    gap: 0;
-    min-width: 0;
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
   }
 
   .processStep {
-    flex: 1 1 auto;
-    max-width: none;
-    padding-inline-end: var(--space-2);
+    max-width: 36rem;
   }
 
   .processArrow {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: flex-start;
-    padding-top: 0.1rem;
-    transform: rotate(-90deg);
-    font-size: 1rem;
+    transform: none;
+    font-size: 1.25rem;
+    padding-top: 0;
+  }
+
+  .processLandscape {
+    margin-block: var(--space-4) var(--space-3);
   }
 
   .applicationsGrid {

@@ -43,6 +43,11 @@ export type SanityAiTextSection = {
   caption?: SanityLocalizedString;
 } | null;
 
+export type SanityAiLandscapeBreak = {
+  image?: SanityImageProjection;
+  caption?: SanityLocalizedString;
+} | null;
+
 export type SanityAi = {
   _id?: string | null;
   heroSection?: {
@@ -80,6 +85,13 @@ export type SanityAi = {
     photoVilla?: SanityImageProjection;
     contentFormats?: SanityImageProjection;
     distributionChannels?: SanityImageProjection;
+  } | null;
+  landscapeBreaks?: {
+    afterAi?: SanityAiLandscapeBreak;
+    afterDistribution?: SanityAiLandscapeBreak;
+    afterVisibility?: SanityAiLandscapeBreak;
+    afterApplications?: SanityAiLandscapeBreak;
+    afterExperience?: SanityAiLandscapeBreak;
   } | null;
   closingSection?: {
     headline?: SanityLocalizedString;
@@ -168,6 +180,28 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
     photoVilla${sanityImageProjection},
     contentFormats${sanityImageProjection},
     distributionChannels${sanityImageProjection}
+  },
+  landscapeBreaks{
+    afterAi{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
+    afterDistribution{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
+    afterVisibility{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
+    afterApplications{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
+    afterExperience{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    }
   },
   closingSection{
     headline${localizedStringProjection},
