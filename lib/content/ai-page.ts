@@ -1,11 +1,18 @@
 import type { Locale } from "@/types/i18n";
 import type { HomepageClientLogo, HomepageMedia } from "@/types/homepage";
 import { getClientLogos } from "@/lib/content/clients";
+import { showreels } from "@/lib/content/showreels";
 import { getAiPath, localizePathname } from "@/lib/i18n/config";
 
 export type AiApplicationItem = {
   id: string;
   number: string;
+  title: string;
+  description: string;
+};
+
+export type AiProcessStep = {
+  id: string;
   title: string;
   description: string;
 };
@@ -31,6 +38,20 @@ export type AiPageContent = {
     videoId?: string;
   };
   intro: AiTextBlock;
+  process: {
+    label: string;
+    headline: string;
+    introduction: string;
+    steps: AiProcessStep[];
+  };
+  showreel: {
+    label: string;
+    headline: string;
+    body: string;
+    cta: { label: string; href: string };
+    media: HomepageMedia;
+    videoId?: string;
+  };
   applications: {
     headline: string;
     items: AiApplicationItem[];
@@ -69,7 +90,8 @@ const FALLBACK_MEDIA: HomepageMedia = {
 /**
  * Local fallback for the KI / AI page.
  * DE path: `/ki` · EN path: `/en/ai`.
- * Marketing copy matches the approved brief; Sanity overrides when published.
+ * Positioning: strategy + production + AI + distribution → visibility.
+ * Sanity overrides when published. Showreel: Vimeo 1228871502.
  */
 export function getAiPageContent(locale: Locale): AiPageContent {
   const contact = localizePathname("/contact", locale);
@@ -81,27 +103,80 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         ? "Studiojeker visual production"
         : "Studiojeker visuelle Produktion",
   };
+  const showreelMedia: HomepageMedia = {
+    ...media,
+    alt:
+      locale === "en"
+        ? "Studiojeker AI and visibility showreel"
+        : "Studiojeker KI- und Visibility-Showreel",
+  };
 
   if (locale === "en") {
     return {
       seo: {
         title: "AI for Image, Video & 3D | Studiojeker",
         description:
-          "Studiojeker combines artificial intelligence with more than 30 years of experience in photography, film, 3D and visual communication.",
+          "Studiojeker combines strategy, creative concept, classical content production and AI into one continuous process – from idea to distribution and visibility.",
       },
       hero: {
         label: "ARTIFICIAL INTELLIGENCE",
         headline: "AI. Where experience meets new possibilities.",
-        body: "Studiojeker uses artificial intelligence wherever it can expand creative possibilities, make production more efficient and open up new ways of creating visual content. We combine state-of-the-art AI technologies with more than 30 years of experience in communication, photography, film and 3D.",
+        body: "Studiojeker integrates artificial intelligence into an established production process: strategy, creative concept, photography, film, 3D – and targeted distribution across digital channels. AI accelerates where it adds value. Studiojeker delivers concept, craft, quality and visibility.",
         media,
       },
       intro: {
         headline: "AI is a tool. An incredibly powerful one.",
         body: [
-          "Artificial intelligence is fundamentally changing what is possible in visual communication. At Studiojeker, however, it does not replace creative ideas, experience or professional design expertise.",
-          "We integrate AI into our established workflows – from the first idea to the finished image, film or 3D animation. What matters is not which technology is used, but what we create with it.",
-          "Our ambition remains the same: maximum quality, powerful visual communication and production processes that make economic sense for our clients.",
+          "Artificial intelligence expands what is possible in visual communication. At Studiojeker it does not replace ideas, experience or professional design expertise – and it does not turn us into a pure AI agency.",
+          "We combine strategy, creative concept, classical content production and AI into one continuous workflow – from the first idea through production to distribution on social media and other digital channels.",
+          "What matters is not which technology is used, but what we create with it: maximum quality, strong visual communication and production that makes economic sense for our clients.",
         ],
+      },
+      process: {
+        label: "Process",
+        headline: "From concept to visibility.",
+        introduction:
+          "One continuous path: concept, production, AI where it helps, distribution across channels – and lasting visibility.",
+        steps: [
+          {
+            id: "concept",
+            title: "CONCEPT",
+            description:
+              "Strategy and creative direction. Ideas, messaging and visual concepts before production begins.",
+          },
+          {
+            id: "production",
+            title: "PRODUCTION",
+            description:
+              "Photography, film, 3D and established craft – the foundation of professional content.",
+          },
+          {
+            id: "ai",
+            title: "AI",
+            description:
+              "Artificial intelligence as a tool and accelerator – integrated where quality, options or efficiency improve.",
+          },
+          {
+            id: "distribution",
+            title: "DISTRIBUTION",
+            description:
+              "Content reaches the right channels – especially social media and digital platforms.",
+          },
+          {
+            id: "visibility",
+            title: "VISIBILITY",
+            description:
+              "Consistent presence. Content that works – not as a one-off, but as an ongoing process.",
+          },
+        ],
+      },
+      showreel: {
+        label: "Showreel",
+        headline: "AI in the Studiojeker process",
+        body: "How concept, production, AI and distribution come together – for content that creates visibility.",
+        cta: { label: "DISCUSS YOUR PROJECT", href: contact },
+        media: showreelMedia,
+        videoId: showreels.ai,
       },
       applications: {
         headline: "Where we use AI",
@@ -155,7 +230,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         body: [
           "Artificial intelligence is evolving at extraordinary speed. That is why we do not commit ourselves to individual platforms or models.",
           "Studiojeker works with the most capable AI models and technologies available for each specific project. The key is choosing the right tool for the task.",
-          "Our AI specialists continuously explore new models, workflows and production methods. This allows us to improve our processes and continually push the boundaries of what can be achieved with AI at a professional level.",
+          "Our specialists continuously explore new models, workflows and production methods – always in service of concept, craft and distribution.",
         ],
       },
       experience: {
@@ -163,14 +238,14 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         body: [
           "A powerful AI model alone does not create powerful communication.",
           "Quality comes from ideas, experience, art direction, precise prompting, selection, control and professional postproduction.",
-          "This is where our strength lies: combining new AI technologies with decades of experience in visual communication and professional content production.",
+          "This is where our strength lies: combining new AI technologies with decades of experience in visual communication, content production and channel-ready delivery.",
         ],
       },
       approach: {
         headline: "Focused. Responsible. Efficient.",
         body: [
           "We use AI consciously and according to the requirements of each project. Not everything that is technically possible makes sense for every production.",
-          "Our goal is therefore not to maximise the use of AI, but to create the best possible production process for each task.",
+          "Our goal is therefore not to maximise the use of AI, but to create the best possible production process for each task – including distribution.",
           "Where AI delivers better results, additional creative possibilities or greater production efficiency, we use it. Where traditional photography, filmmaking, 3D or human creative work is the better solution, we continue to rely on those methods.",
           "The result is the best possible combination of quality, creativity and cost efficiency for our clients.",
         ],
@@ -181,7 +256,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       },
       closing: {
         headline: "What can we make possible with AI?",
-        text: "Tell us about your idea. We will show you which combination of traditional production, 3D and AI makes the most sense.",
+        text: "Tell us about your idea. We will show you which combination of strategy, classical production, 3D, AI and distribution makes the most sense.",
         cta: { label: "DISCUSS YOUR PROJECT", href: contact },
       },
     };
@@ -191,21 +266,67 @@ export function getAiPageContent(locale: Locale): AiPageContent {
     seo: {
       title: "KI für Bild, Video & 3D | Studiojeker",
       description:
-        "Studiojeker verbindet künstliche Intelligenz mit über 30 Jahren Erfahrung in Fotografie, Film, 3D und visueller Kommunikation.",
+        "Studiojeker verbindet Strategie, kreative Konzeption, klassische Content-Produktion und KI zu einem durchgängigen Prozess – von der Idee bis zur Distribution und Sichtbarkeit.",
     },
     hero: {
       label: "KÜNSTLICHE INTELLIGENZ",
       headline: "KI. Wenn Erfahrung auf neue Möglichkeiten trifft.",
-      body: "Studiojeker setzt künstliche Intelligenz gezielt dort ein, wo sie kreative Prozesse erweitert, Produktionen effizienter macht und neue visuelle Möglichkeiten eröffnet. Dabei verbinden wir modernste KI-Technologien mit über 30 Jahren Erfahrung in Kommunikation, Fotografie, Film und 3D.",
+      body: "Studiojeker integriert künstliche Intelligenz in einen etablierten Produktionsprozess: Strategie, kreative Konzeption, Fotografie, Film, 3D – und gezielte Distribution über digitale Kanäle. KI beschleunigt dort, wo sie Mehrwert schafft. Studiojeker liefert Konzept, Handwerk, Qualität und Sichtbarkeit.",
       media,
     },
     intro: {
       headline: "KI ist für uns ein Werkzeug. Ein verdammt gutes.",
       body: [
-        "Künstliche Intelligenz verändert die Möglichkeiten visueller Kommunikation grundlegend. Für Studiojeker ersetzt sie jedoch weder kreative Ideen noch Erfahrung und gestalterisches Know-how.",
-        "Wir integrieren KI gezielt in unsere bestehenden Workflows – von der ersten Idee bis zum fertigen Bild, Film oder zur 3D-Animation. Entscheidend ist nicht, welche Technologie eingesetzt wird, sondern was am Ende entsteht.",
-        "Unser Anspruch bleibt derselbe: maximale Qualität, starke visuelle Kommunikation und eine Produktion, die für unsere Kunden wirtschaftlich sinnvoll ist.",
+        "Künstliche Intelligenz erweitert die Möglichkeiten visueller Kommunikation. Für Studiojeker ersetzt sie weder Ideen, Erfahrung noch gestalterisches Know-how – und wir positionieren uns nicht als reine AI-Agentur.",
+        "Wir verbinden Strategie, kreative Konzeption, klassische Content-Produktion und KI zu einem durchgängigen Workflow – von der ersten Idee über die Produktion bis zur Distribution in Social Media und weiteren digitalen Kanälen.",
+        "Entscheidend ist nicht, welche Technologie eingesetzt wird, sondern was am Ende entsteht: maximale Qualität, starke visuelle Kommunikation und eine Produktion, die für unsere Kunden wirtschaftlich sinnvoll ist.",
       ],
+    },
+    process: {
+      label: "Prozess",
+      headline: "Vom Konzept zur Sichtbarkeit.",
+      introduction:
+        "Ein durchgängiger Ablauf: Konzept, Produktion, KI wo sie hilft, Distribution über die Kanäle – und nachhaltige Sichtbarkeit.",
+      steps: [
+        {
+          id: "concept",
+          title: "CONCEPT",
+          description:
+            "Strategie und kreative Richtung. Ideen, Botschaften und visuelle Konzepte vor dem Produktionsstart.",
+        },
+        {
+          id: "production",
+          title: "PRODUCTION",
+          description:
+            "Fotografie, Film, 3D und etabliertes Handwerk – die Basis professioneller Inhalte.",
+        },
+        {
+          id: "ai",
+          title: "AI",
+          description:
+            "Künstliche Intelligenz als Werkzeug und Beschleuniger – gezielt dort, wo Qualität, Möglichkeiten oder Effizienz steigen.",
+        },
+        {
+          id: "distribution",
+          title: "DISTRIBUTION",
+          description:
+            "Content erreicht die richtigen Kanäle – insbesondere Social Media und digitale Plattformen.",
+        },
+        {
+          id: "visibility",
+          title: "VISIBILITY",
+          description:
+            "Kontinuierliche Präsenz. Inhalte, die wirken – nicht einmalig, sondern als Prozess.",
+        },
+      ],
+    },
+    showreel: {
+      label: "Showreel",
+      headline: "KI im Studiojeker-Prozess",
+      body: "Wie Konzept, Produktion, KI und Distribution zusammenspielen – für Content, der Sichtbarkeit schafft.",
+      cta: { label: "PROJEKT BESPRECHEN", href: contact },
+      media: showreelMedia,
+      videoId: showreels.ai,
     },
     applications: {
       headline: "Wo wir KI einsetzen",
@@ -259,7 +380,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       body: [
         "Die Entwicklung im Bereich künstlicher Intelligenz ist extrem dynamisch. Deshalb legen wir uns nicht auf einzelne Plattformen oder Modelle fest.",
         "Studiojeker arbeitet projektbezogen mit den jeweils leistungsfähigsten verfügbaren KI-Modellen und Technologien. Entscheidend ist, für jede Aufgabe das richtige Werkzeug einzusetzen.",
-        "Unsere KI-Spezialisten beschäftigen sich kontinuierlich mit neuen Modellen, Workflows und Produktionsmethoden. So verbessern wir unsere Prozesse laufend und erweitern die Grenzen dessen, was sich mit KI qualitativ sinnvoll realisieren lässt.",
+        "Unsere Spezialisten beschäftigen sich kontinuierlich mit neuen Modellen, Workflows und Produktionsmethoden – immer im Dienst von Konzept, Handwerk und Distribution.",
       ],
     },
     experience: {
@@ -267,14 +388,14 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       body: [
         "Ein gutes KI-Modell allein produziert noch keine gute Kommunikation.",
         "Qualität entsteht durch Ideen, Erfahrung, Art Direction, präzise Prompts, Auswahl, Kontrolle und professionelle Weiterverarbeitung.",
-        "Genau hier liegt unsere Stärke: Wir verbinden neue KI-Technologien mit jahrzehntelanger Erfahrung in visueller Kommunikation und professioneller Content-Produktion.",
+        "Genau hier liegt unsere Stärke: Wir verbinden neue KI-Technologien mit jahrzehntelanger Erfahrung in visueller Kommunikation, Content-Produktion und kanalgerechter Ausspielung.",
       ],
     },
     approach: {
       headline: "Gezielt. Verantwortungsbewusst. Effizient.",
       body: [
         "Wir setzen KI bewusst und projektbezogen ein. Nicht alles, was technisch möglich ist, ist für jedes Projekt sinnvoll.",
-        "Unser Ziel ist deshalb nicht maximaler KI-Einsatz, sondern der optimale Produktionsprozess für die jeweilige Aufgabe.",
+        "Unser Ziel ist deshalb nicht maximaler KI-Einsatz, sondern der optimale Produktionsprozess für die jeweilige Aufgabe – inklusive Distribution.",
         "Wo KI bessere Resultate, zusätzliche kreative Möglichkeiten oder eine effizientere Produktion ermöglicht, nutzen wir sie. Wo klassische Fotografie, Filmproduktion, 3D oder menschliche Kreativarbeit die bessere Lösung ist, setzen wir weiterhin darauf.",
         "So entsteht für unsere Kunden die bestmögliche Kombination aus Qualität, Kreativität und Kosteneffizienz.",
       ],
@@ -285,7 +406,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
     },
     closing: {
       headline: "Was können wir mit KI für Sie möglich machen?",
-      text: "Erzählen Sie uns von Ihrer Idee. Wir zeigen Ihnen, welche Kombination aus klassischer Produktion, 3D und KI dafür am meisten Sinn macht.",
+      text: "Erzählen Sie uns von Ihrer Idee. Wir zeigen Ihnen, welche Kombination aus Strategie, klassischer Produktion, 3D, KI und Distribution dafür am meisten Sinn macht.",
       cta: { label: "PROJEKT BESPRECHEN", href: contact },
     },
   };

@@ -29,6 +29,13 @@ export type SanityAiApplicationItem = {
   description?: SanityLocalizedText;
 } | null;
 
+export type SanityAiProcessStep = {
+  _key?: string;
+  id?: string | null;
+  title?: SanityLocalizedString;
+  description?: SanityLocalizedText;
+} | null;
+
 export type SanityAiTextSection = {
   headline?: SanityLocalizedString;
   text?: SanityLocalizedText;
@@ -44,6 +51,19 @@ export type SanityAi = {
     media?: SanityMediaField;
   } | null;
   introSection?: SanityAiTextSection;
+  processSection?: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    introduction?: SanityLocalizedText;
+    steps?: SanityAiProcessStep[] | null;
+  } | null;
+  showreelSection?: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    text?: SanityLocalizedText;
+    cta?: SanityAiCta;
+    media?: SanityMediaField;
+  } | null;
   applicationsSection?: {
     headline?: SanityLocalizedString;
     items?: SanityAiApplicationItem[] | null;
@@ -82,6 +102,24 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
   introSection{
     headline${localizedStringProjection},
     text${localizedTextProjection},
+    media${sanityMediaProjection}
+  },
+  processSection{
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    introduction${localizedTextProjection},
+    steps[]{
+      _key,
+      id,
+      title${localizedStringProjection},
+      description${localizedTextProjection}
+    }
+  },
+  showreelSection{
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    cta${ctaProjection},
     media${sanityMediaProjection}
   },
   applicationsSection{

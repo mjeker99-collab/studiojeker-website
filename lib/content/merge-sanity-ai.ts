@@ -4,6 +4,7 @@ import {
   getAiPageContent,
   type AiApplicationItem,
   type AiPageContent,
+  type AiProcessStep,
   type AiTextBlock,
 } from "@/lib/content/ai-page";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
@@ -12,6 +13,7 @@ import type {
   SanityAi,
   SanityAiApplicationItem,
   SanityAiCta,
+  SanityAiProcessStep,
   SanityAiTextSection,
 } from "@/lib/sanity/ai";
 import type {
@@ -171,6 +173,31 @@ function mergeApplications(
   });
 }
 
+function mergeProcessSteps(
+  base: AiProcessStep[],
+  items: SanityAiProcessStep[] | null | undefined,
+  locale: Locale,
+): AiProcessStep[] {
+  const source = (items ?? []).filter(
+    (item): item is NonNullable<SanityAiProcessStep> =>
+      Boolean(item && (item.id || item.title)),
+  );
+
+  if (source.length === 0) {
+    return base.map((item) => ({ ...item }));
+  }
+
+  return source.map((item, index) => {
+    const fallback = base[index];
+    const id = clean(item.id) ?? fallback?.id ?? `step-${index + 1}`;
+    const title =
+      pickLocalized(item.title, locale) ?? fallback?.title ?? "Step";
+    const description =
+      pickLocalized(item.description, locale) ?? fallback?.description ?? "";
+    return { id, title, description };
+  });
+}
+
 /**
  * Pure merge of Sanity KI/AI document → frontend content.
  * Safe for client and server. Does not fetch Sanity.
@@ -188,6 +215,15 @@ export function mergeSanityAi(
       ...base.intro,
       body: [...base.intro.body],
       ...(base.intro.media ? { media: { ...base.intro.media } } : {}),
+    },
+    process: {
+      ...base.process,
+      steps: base.process.steps.map((step) => ({ ...step })),
+    },
+    showreel: {
+      ...base.showreel,
+      cta: { ...base.showreel.cta },
+      media: { ...base.showreel.media },
     },
     applications: {
       ...base.applications,
@@ -259,6 +295,40 @@ export function mergeSanityAi(
   }
 
   merged.intro = mergeTextSection(merged.intro, doc.introSection, locale);
+
+  const processLabel = pickLocalized(doc.processSection?.label, locale);
+  if (processLabel) merged.process.label = processLabel;
+  const processHeadline = pickLocalized(doc.processSection?.headline, locale);
+  if (processHeadline) merged.process.headline = processHeadline;
+  const processIntro = pickLocalized(doc.processSection?.introduction, locale);
+  if (processIntro) merged.process.introduction = processIntro;
+  merged.process.steps = mergeProcessSteps(
+    merged.process.steps,
+    doc.processSection?.steps,
+    locale,
+  );
+
+  const showreelLabel = pickLocalized(doc.showreelSection?.label, locale);
+  if (showreelLabel) merged.showreel.label = showreelLabel;
+  const showreelHeadline = pickLocalized(doc.showreelSection?.headline, locale);
+  if (showreelHeadline) merged.showreel.headline = showreelHeadline;
+  const showreelText = pickLocalized(doc.showreelSection?.text, locale);
+  if (showreelText) merged.showreel.body = showreelText;
+  if (doc.showreelSection?.cta) {
+    merged.showreel.cta = resolveCta(
+      doc.showreelSection.cta,
+      locale,
+      merged.showreel.cta,
+    );
+  }
+  if (doc.showreelSection?.media) {
+    const showreelMedia = resolveSanityMedia(
+      doc.showreelSection.media,
+      merged.showreel.media,
+    );
+    merged.showreel.media = showreelMedia.media;
+    merged.showreel.videoId = showreelMedia.videoId ?? "";
+  }
 
   const applicationsHeadline = pickLocalized(
     doc.applicationsSection?.headline,

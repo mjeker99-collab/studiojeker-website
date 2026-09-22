@@ -3,6 +3,7 @@ import type { AiPageContent, AiTextBlock } from "@/lib/content/ai-page";
 import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
+import { ShowreelSection } from "@/components/home/ShowreelSection";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
@@ -103,8 +104,8 @@ function TextSection({
 }
 
 /**
- * KI / AI page — About / homepage visual system.
- * Layout overrides live in AiPage.module.css only.
+ * KI / AI page — About / homepage / Content-Abo visual system.
+ * Process flow + existing ShowreelSection. Layout only in AiPage.module.css.
  */
 export function AiPage({ content }: AiPageProps) {
   return (
@@ -155,6 +156,47 @@ export function AiPage({ content }: AiPageProps) {
       </section>
 
       <TextSection id="ai-intro-title" content={content.intro} />
+
+      <section
+        className={styles.process}
+        data-header-theme="light"
+        aria-labelledby="ai-process-title"
+      >
+        <Container>
+          <Reveal className={styles.processHeader}>
+            <SectionLabel>{content.process.label}</SectionLabel>
+            <h2 id="ai-process-title" className={styles.sectionHeadline}>
+              {content.process.headline}
+            </h2>
+            <p className={styles.processIntro}>{content.process.introduction}</p>
+          </Reveal>
+
+          <ol className={styles.processFlow}>
+            {content.process.steps.map((step, index) => (
+              <li key={step.id} className={styles.processItem}>
+                <Reveal
+                  as="article"
+                  className={styles.processStep}
+                  delayMs={index * 40}
+                >
+                  <h3 className={styles.processTitle}>{step.title}</h3>
+                  <p className={styles.processText}>{step.description}</p>
+                </Reveal>
+                {index < content.process.steps.length - 1 ? (
+                  <span className={styles.processArrow} aria-hidden="true">
+                    ↓
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </section>
+
+      <ShowreelSection
+        key={`${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
+        content={content.showreel}
+      />
 
       <section
         className={styles.applications}

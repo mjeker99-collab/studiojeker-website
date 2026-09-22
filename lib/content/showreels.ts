@@ -10,5 +10,7 @@ export const showreels = {
   businessCommunication: "1216349221",
   productCommunication: "1216349221", // temporary until dedicated product reel is added
   architecture: "1216349245",
+  /** KI / Visibility showreel for /ki and /en/ai */
+  ai: "1228871502",
 } as const;
 

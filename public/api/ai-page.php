@@ -68,6 +68,24 @@ $query = <<<GROQ
     text{$localized},
     media{$mediaProjection}
   },
+  processSection{
+    label{$localized},
+    headline{$localized},
+    introduction{$localized},
+    steps[]{
+      _key,
+      id,
+      title{$localized},
+      description{$localized}
+    }
+  },
+  showreelSection{
+    label{$localized},
+    headline{$localized},
+    text{$localized},
+    cta{$cta},
+    media{$mediaProjection}
+  },
   applicationsSection{
     headline{$localized},
     items[]{

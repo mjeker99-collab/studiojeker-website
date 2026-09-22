@@ -11,11 +11,13 @@ export const ai = defineType({
   type: "document",
   groups: [
     { name: "hero", title: "Hero", default: true },
-    { name: "intro", title: "Section 1 — Intro" },
-    { name: "applications", title: "Section 2 — Applications" },
-    { name: "models", title: "Section 3 — Models" },
-    { name: "experience", title: "Section 4 — Experience" },
-    { name: "approach", title: "Section 5 — Approach" },
+    { name: "intro", title: "Intro" },
+    { name: "process", title: "Process flow" },
+    { name: "showreel", title: "Showreel" },
+    { name: "applications", title: "Applications" },
+    { name: "models", title: "Models" },
+    { name: "experience", title: "Experience" },
+    { name: "approach", title: "Approach" },
     { name: "cta", title: "Closing CTA" },
     { name: "seo", title: "SEO" },
   ],
@@ -55,7 +57,7 @@ export const ai = defineType({
 
     defineField({
       name: "introSection",
-      title: "Section 1 — Intro",
+      title: "Intro",
       type: "object",
       group: "intro",
       options: { collapsible: true },
@@ -81,8 +83,115 @@ export const ai = defineType({
     }),
 
     defineField({
+      name: "processSection",
+      title: "Process flow",
+      type: "object",
+      group: "process",
+      options: { collapsible: true },
+      description:
+        "CONCEPT → PRODUCTION → AI → DISTRIBUTION → VISIBILITY. Order = display order.",
+      fields: [
+        defineField({
+          name: "label",
+          title: "Eyebrow",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "introduction",
+          title: "Introduction",
+          type: "localizedText",
+        }),
+        defineField({
+          name: "steps",
+          title: "Process steps",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "object",
+              name: "aiProcessStep",
+              fields: [
+                defineField({
+                  name: "id",
+                  title: "Step ID",
+                  type: "string",
+                  description:
+                    "Stable key (concept, production, ai, distribution, visibility).",
+                  validation: (Rule) => Rule.required().max(60),
+                }),
+                defineField({
+                  name: "title",
+                  title: "Title",
+                  type: "localizedString",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "description",
+                  title: "Description",
+                  type: "localizedText",
+                }),
+              ],
+              preview: {
+                select: { titleDe: "title.de", id: "id" },
+                prepare({ titleDe, id }) {
+                  return {
+                    title: titleDe || id || "Step",
+                  };
+                },
+              },
+            }),
+          ],
+          validation: (Rule) => Rule.max(8),
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "showreelSection",
+      title: "Showreel",
+      type: "object",
+      group: "showreel",
+      options: { collapsible: true },
+      description:
+        "Central KI / Visibility showreel. Prefer Media Type Video (Vimeo), e.g. https://vimeo.com/1228871502.",
+      fields: [
+        defineField({
+          name: "label",
+          title: "Eyebrow",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "text",
+          title: "Body Text",
+          type: "localizedText",
+        }),
+        defineField({
+          name: "cta",
+          title: "CTA",
+          type: "ctaField",
+        }),
+        defineField({
+          name: "media",
+          title: "Showreel media",
+          type: "mediaField",
+          description:
+            "Image poster and/or Vimeo URL. Uses the existing website showreel player.",
+        }),
+      ],
+    }),
+
+    defineField({
       name: "applicationsSection",
-      title: "Section 2 — Where we use AI",
+      title: "Where we use AI",
       type: "object",
       group: "applications",
       options: { collapsible: true },

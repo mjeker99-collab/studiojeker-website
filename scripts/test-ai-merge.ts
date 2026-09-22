@@ -29,6 +29,15 @@ async function main() {
   );
   assert(baseDe.applications.items.length === 6, "six DE application areas");
   assert(baseEn.applications.items.length === 6, "six EN application areas");
+  assert(baseDe.process.steps.length === 5, "five DE process steps");
+  assert(baseEn.process.steps.length === 5, "five EN process steps");
+  assert(
+    baseDe.process.steps.map((s) => s.id).join(">") ===
+      "concept>production>ai>distribution>visibility",
+    "DE process order",
+  );
+  assert(baseDe.showreel.videoId === "1228871502", "DE showreel Vimeo id");
+  assert(baseEn.showreel.videoId === "1228871502", "EN showreel Vimeo id");
   assert(aiLanguageAlternates.de === "/ki", "DE path is /ki");
   assert(aiLanguageAlternates.en === "/en/ai", "EN path is /en/ai");
   assert(getAiPath("de") === "/ki", "getAiPath de");
