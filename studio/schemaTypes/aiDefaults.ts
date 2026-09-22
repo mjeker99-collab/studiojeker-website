@@ -275,8 +275,7 @@ export const aiPageInitialValues = {
       ]),
     ),
   },
-  // visualMedia slots stay empty — editors upload originals in Studio.
-  // landscapeBreaks: website ships architecture/3D defaults; override in Studio.
+  // visualMedia and landscapeBreaks stay empty — editors upload originals in Studio.
   closingSection: {
     headline: locString(
       "Was können wir mit KI für Sie möglich machen?",

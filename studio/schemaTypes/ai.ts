@@ -334,7 +334,7 @@ export const ai = defineType({
       group: "landscapeBreaks",
       options: { collapsible: true, collapsed: false },
       description:
-        "Large landscape (~16:9) stills between process steps and lower text blocks. The website shows architecture/3D defaults until you upload here. Empty CMS slots keep those defaults (DE and EN share images).",
+        "Optional large landscape (~16:9) stills between process steps and lower text blocks. Empty slots collapse on the website — no placeholders.",
       fields: [
         defineField({
           name: "afterAi",

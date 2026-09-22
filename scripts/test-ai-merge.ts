@@ -421,20 +421,16 @@ async function main() {
   );
   const emptyLandscape = mergeSanityAi(baseDe, stub, "de");
   assert(
-    Boolean(emptyLandscape.landscapeBreaks.afterAi?.src),
-    "empty Sanity landscape keeps local default afterAi visible",
+    !emptyLandscape.landscapeBreaks.afterAi?.src,
+    "empty Sanity landscape collapses afterAi (no local defaults)",
   );
   assert(
-    Boolean(emptyLandscape.landscapeBreaks.midApplications?.src),
-    "empty Sanity landscape keeps local default midApplications visible",
+    !emptyLandscape.landscapeBreaks.midApplications?.src,
+    "empty Sanity landscape collapses midApplications (no local defaults)",
   );
   assert(
-    Boolean(emptyLandscape.landscapeBreaks.afterModels?.src),
-    "empty Sanity landscape keeps local default afterModels visible",
-  );
-  assert(
-    emptyLandscape.landscapeBreaks.afterAi.src.includes("architecture/"),
-    "default landscape uses architecture assets",
+    !emptyLandscape.landscapeBreaks.afterModels?.src,
+    "empty Sanity landscape collapses afterModels (no local defaults)",
   );
 
   const captionStub: SanityAi = {
