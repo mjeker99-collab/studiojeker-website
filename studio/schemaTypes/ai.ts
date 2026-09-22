@@ -14,6 +14,7 @@ export const ai = defineType({
     { name: "intro", title: "Intro" },
     { name: "process", title: "Process flow" },
     { name: "showreel", title: "Showreel" },
+    { name: "visuals", title: "Showreel stills" },
     { name: "applications", title: "Applications" },
     { name: "models", title: "Models" },
     { name: "experience", title: "Experience" },
@@ -184,7 +185,94 @@ export const ai = defineType({
           title: "Showreel media",
           type: "mediaField",
           description:
-            "Image poster and/or Vimeo URL. Uses the existing website showreel player.",
+            "Image poster and/or Vimeo URL. Uses the existing website showreel player. Vimeo must stay editable here.",
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "visualMedia",
+      title: "Showreel stills",
+      type: "object",
+      group: "visuals",
+      options: { collapsible: true, collapsed: false },
+      description:
+        "Five stills from the KI showreel. Upload originals only — no crop that cuts important content. Layout preserves aspect ratio (contain).",
+      fields: [
+        defineField({
+          name: "keyVisual",
+          title: "Bild 1 — AI Keyvisual",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Designer/Motorrad vor Alpen. Shown with the intro (“KI ist für uns ein Werkzeug…”).",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
+        }),
+        defineField({
+          name: "clayVilla",
+          title: "Bild 2 — 3D / Clay Villa",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Weisses Clay-Rendering der Villa. Pairs with Bild 3 (Production / 3D).",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
+        }),
+        defineField({
+          name: "photoVilla",
+          title: "Bild 3 — Photorealistische Villa",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Fotorealistische Villa mit Motorrad. Visual counterpart to Bild 2.",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
+        }),
+        defineField({
+          name: "contentFormats",
+          title: "Bild 4 — Content Formate",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Mehrere Formate auf schwarzem Grund. DISTRIBUTION section.",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
+        }),
+        defineField({
+          name: "distributionChannels",
+          title: "Bild 5 — Distribution / Social Channels",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Formate mit Social-Media-Symbolen. End of Distribution / Visibility.",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt Text",
+              type: "string",
+            }),
+          ],
         }),
       ],
     }),

@@ -1,9 +1,13 @@
 import Image from "next/image";
-import type { AiPageContent, AiTextBlock } from "@/lib/content/ai-page";
+import type {
+  AiPageContent,
+  AiTextBlock,
+} from "@/lib/content/ai-page";
+import type { HomepageMedia } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
-import { ShowreelSection } from "@/components/home/ShowreelSection";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
@@ -14,6 +18,35 @@ import styles from "./AiPage.module.css";
 type AiPageProps = {
   content: AiPageContent;
 };
+
+/**
+ * Showreel still — preserves native aspect ratio (no aggressive cover crop).
+ * Only renders when Sanity has published a src.
+ */
+function StillFigure({
+  media,
+  sizes,
+  className,
+}: {
+  media: HomepageMedia;
+  sizes: string;
+  className?: string;
+}) {
+  if (!media.src) return null;
+
+  return (
+    <figure className={[styles.still, className].filter(Boolean).join(" ")}>
+      <Image
+        src={mediaPath(media.src)}
+        alt={media.alt}
+        width={media.width}
+        height={media.height}
+        sizes={sizes}
+        className={styles.stillImage}
+      />
+    </figure>
+  );
+}
 
 function SectionMedia({
   media,
@@ -105,9 +138,22 @@ function TextSection({
 
 /**
  * KI / AI page — About / homepage / Content-Abo visual system.
- * Process flow + existing ShowreelSection. Layout only in AiPage.module.css.
+ * Showreel + stills only; copy unchanged. Layout in AiPage.module.css.
  */
 export function AiPage({ content }: AiPageProps) {
+  const { visuals } = content;
+  const hasVillaPair = Boolean(
+    visuals.clayVilla?.src || visuals.photoVilla?.src,
+  );
+  const showreelPoster = content.showreel.media
+    ? {
+        src: mediaPath(content.showreel.media.src),
+        alt: content.showreel.media.alt,
+        width: content.showreel.media.width,
+        height: content.showreel.media.height,
+      }
+    : undefined;
+
   return (
     <>
       <section
@@ -157,6 +203,68 @@ export function AiPage({ content }: AiPageProps) {
 
       <TextSection id="ai-intro-title" content={content.intro} />
 
+      {visuals.keyVisual?.src ? (
+        <section
+          className={styles.stillSection}
+          data-header-theme="light"
+          aria-label={visuals.keyVisual.alt}
+        >
+          <Container>
+            <Reveal>
+              <StillFigure
+                media={visuals.keyVisual}
+                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+                className={styles.stillKey}
+              />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
+
+      <section
+        className={styles.showreel}
+        data-header-theme="dark"
+        aria-labelledby="ai-showreel-title"
+      >
+        <Container>
+          <Reveal className={styles.showreelCopy}>
+            <SectionLabel inverse>{content.showreel.label}</SectionLabel>
+            <h2 id="ai-showreel-title" className={styles.showreelHeadline}>
+              {content.showreel.headline}
+              <span className={styles.showreelAccent}>.</span>
+            </h2>
+            <p className={styles.showreelBody}>{content.showreel.body}</p>
+            <div>
+              <Button href={content.showreel.cta.href} variant="cyan">
+                {content.showreel.cta.label}
+              </Button>
+            </div>
+          </Reveal>
+
+          <Reveal className={styles.showreelMedia} delayMs={80}>
+            {content.showreel.videoId ? (
+              <VimeoShowreel
+                key={`ai-showreel-${content.showreel.videoId}-${content.showreel.media.src}`}
+                videoId={content.showreel.videoId}
+                title={`${content.showreel.media.alt} – Showreel`}
+                poster={showreelPoster}
+              />
+            ) : content.showreel.media.src ? (
+              <div className={styles.showreelPosterOnly}>
+                <Image
+                  src={mediaPath(content.showreel.media.src)}
+                  alt={content.showreel.media.alt}
+                  width={content.showreel.media.width}
+                  height={content.showreel.media.height}
+                  sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+                  className={styles.stillImage}
+                />
+              </div>
+            ) : null}
+          </Reveal>
+        </Container>
+      </section>
+
       <section
         className={styles.process}
         data-header-theme="light"
@@ -192,11 +300,6 @@ export function AiPage({ content }: AiPageProps) {
           </ol>
         </Container>
       </section>
-
-      <ShowreelSection
-        key={`${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
-        content={content.showreel}
-      />
 
       <section
         className={styles.applications}
@@ -242,9 +345,72 @@ export function AiPage({ content }: AiPageProps) {
         </Container>
       </section>
 
+      {hasVillaPair ? (
+        <section
+          className={styles.stillSection}
+          data-header-theme="light"
+          aria-label="3D visualisation and production"
+        >
+          <Container>
+            <div className={styles.villaPair}>
+              {visuals.clayVilla?.src ? (
+                <Reveal>
+                  <StillFigure
+                    media={visuals.clayVilla}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </Reveal>
+              ) : null}
+              {visuals.photoVilla?.src ? (
+                <Reveal delayMs={80}>
+                  <StillFigure
+                    media={visuals.photoVilla}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </Reveal>
+              ) : null}
+            </div>
+          </Container>
+        </section>
+      ) : null}
+
       <TextSection id="ai-models-title" content={content.models} inverted />
       <TextSection id="ai-experience-title" content={content.experience} />
       <TextSection id="ai-approach-title" content={content.approach} inverted />
+
+      {visuals.contentFormats?.src ? (
+        <section
+          className={styles.stillSection}
+          data-header-theme="light"
+          aria-label={visuals.contentFormats.alt}
+        >
+          <Container>
+            <Reveal>
+              <StillFigure
+                media={visuals.contentFormats}
+                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+              />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
+
+      {visuals.distributionChannels?.src ? (
+        <section
+          className={styles.stillSection}
+          data-header-theme="light"
+          aria-label={visuals.distributionChannels.alt}
+        >
+          <Container>
+            <Reveal>
+              <StillFigure
+                media={visuals.distributionChannels}
+                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+              />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
 
       <ClientsSection content={content.clients} />
 

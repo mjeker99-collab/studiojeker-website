@@ -72,6 +72,13 @@ export type SanityAi = {
   modelsSection?: SanityAiTextSection;
   experienceSection?: SanityAiTextSection;
   approachSection?: SanityAiTextSection;
+  visualMedia?: {
+    keyVisual?: SanityImageProjection;
+    clayVilla?: SanityImageProjection;
+    photoVilla?: SanityImageProjection;
+    contentFormats?: SanityImageProjection;
+    distributionChannels?: SanityImageProjection;
+  } | null;
   closingSection?: {
     headline?: SanityLocalizedString;
     text?: SanityLocalizedText;
@@ -147,6 +154,13 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
     headline${localizedStringProjection},
     text${localizedTextProjection},
     media${sanityMediaProjection}
+  },
+  visualMedia{
+    keyVisual${sanityImageProjection},
+    clayVilla${sanityImageProjection},
+    photoVilla${sanityImageProjection},
+    contentFormats${sanityImageProjection},
+    distributionChannels${sanityImageProjection}
   },
   closingSection{
     headline${localizedStringProjection},

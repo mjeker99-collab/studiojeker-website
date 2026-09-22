@@ -112,6 +112,13 @@ $query = <<<GROQ
     text{$localized},
     media{$mediaProjection}
   },
+  visualMedia{
+    keyVisual{$imageProjection},
+    clayVilla{$imageProjection},
+    photoVilla{$imageProjection},
+    contentFormats{$imageProjection},
+    distributionChannels{$imageProjection}
+  },
   closingSection{
     headline{$localized},
     text{$localized},

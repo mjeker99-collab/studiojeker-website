@@ -187,6 +187,86 @@
   margin-top: var(--space-5);
 }
 
+/* Showreel stills — native aspect ratio, no cover crop */
+.stillSection {
+  background: var(--color-white);
+  padding-block: var(--space-4);
+}
+
+.still {
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.stillImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.stillKey {
+  max-width: 100%;
+}
+
+.villaPair {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.showreel {
+  background: var(--color-black);
+  color: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.showreelCopy {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 36rem;
+  margin-bottom: var(--space-4);
+}
+
+.showreelHeadline {
+  margin: 0;
+  max-width: 12em;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.showreelAccent {
+  color: var(--color-cyan);
+}
+
+.showreelBody {
+  margin: 0;
+  max-width: 32rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.showreelMedia {
+  min-width: 0;
+  width: 100%;
+}
+
+.showreelPosterOnly {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--color-dark);
+}
+
+.showreelPosterOnly .stillImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .closing {
   background: var(--color-black);
   color: var(--color-white);
@@ -228,6 +308,11 @@
 }
 
 @media (min-width: 768px) {
+  .villaPair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
   .processFlow {
     display: flex;
     flex-wrap: nowrap;
