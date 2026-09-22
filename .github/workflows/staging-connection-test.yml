@@ -1,3 +1,4 @@
+# Trigger staging deployment after FTPS configuration fix
 name: Staging FTP Connection Test
 
 on:
