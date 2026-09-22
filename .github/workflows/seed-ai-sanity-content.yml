@@ -1,0 +1,33 @@
+# One-shot: fill empty KI/AI Sanity text fields from approved /ki copy.
+# Does not overwrite existing media or non-empty edits.
+# Requires repository secret SANITY_API_WRITE_TOKEN (Editor create+update)
+# or SANITY_AUTH_TOKEN with update permission on dataset production.
+#
+# Run: Actions → “Seed KI Sanity content” → Run workflow
+name: Seed KI Sanity content
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Fill empty AI fields
+        env:
+          SANITY_API_WRITE_TOKEN: ${{ secrets.SANITY_API_WRITE_TOKEN }}
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+        run: npx tsx scripts/fill-ai-page-defaults.ts

@@ -1,6 +1,7 @@
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
+import { withFillAiApprovedCopyAction } from "./actions/fillAiApprovedCopyAction";
 import { schemaTypes } from "./schemaTypes";
 import { singletonTypes, structure } from "./structure";
 
@@ -17,6 +18,9 @@ export default defineConfig({
     structureTool({ structure }),
     visionTool(),
   ],
+  document: {
+    actions: (prev, context) => withFillAiApprovedCopyAction(prev, context),
+  },
   schema: {
     types: schemaTypes,
     // Prevent creating multiple Homepage / About / Global Settings docs.

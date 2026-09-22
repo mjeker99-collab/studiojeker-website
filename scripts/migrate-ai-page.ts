@@ -128,10 +128,15 @@ async function main() {
       `KI/AI singleton ${AI_ID} already exists (_updatedAt=${existing._updatedAt}).`,
     );
     console.log(
-      "Skipping create. To fill empty text fields without overwriting edits, run:\n" +
-        "  npx tsx scripts/fill-ai-page-defaults.ts",
+      "Running fill-empty so Studio shows the approved /ki copy (media preserved)…",
     );
-    return;
+    const { spawnSync } = await import("node:child_process");
+    const result = spawnSync(
+      "npx",
+      ["tsx", "scripts/fill-ai-page-defaults.ts", ...process.argv.slice(2)],
+      { stdio: "inherit", env: process.env },
+    );
+    process.exit(result.status ?? 1);
   }
 
   const defaults = structuredClone(aiPageInitialValues);
