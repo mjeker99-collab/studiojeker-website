@@ -41,7 +41,7 @@ export const ai = defineType({
     { name: "intro", title: "Intro" },
     { name: "process", title: "Process flow" },
     { name: "showreel", title: "Showreel" },
-    { name: "visuals", title: "Showreel stills" },
+    { name: "visuals", title: "Content images" },
     { name: "applications", title: "Applications" },
     { name: "models", title: "Models" },
     { name: "experience", title: "Experience" },
@@ -80,7 +80,7 @@ export const ai = defineType({
           title: "Hero Media",
           type: "mediaField",
           description:
-            "Image or short Vimeo loop for the hero. Video plays muted, autoplay, loop, no controls.",
+            "Image or short Vimeo loop (same as Homepage hero). For video: set Media Type → Video, paste Vimeo URL, and add a Poster. If Video is selected without a Vimeo URL, the Image/Poster still is shown as fallback. Video plays muted, autoplay, loop, no controls.",
         }),
       ],
     }),
@@ -216,20 +216,20 @@ export const ai = defineType({
 
     defineField({
       name: "visualMedia",
-      title: "Showreel stills",
+      title: "Content images (5)",
       type: "object",
       group: "visuals",
       options: { collapsible: true, collapsed: false },
       description:
-        "Optional stills from the KI showreel (upload originals only). Used when the matching section media slot below is empty.",
+        "Five showreel stills for the KI page. Upload originals only. Empty slots are hidden on the website (no grey placeholders). Section Media fields override these when set.",
       fields: [
         defineField({
           name: "keyVisual",
-          title: "Bild 1 — AI Keyvisual",
+          title: "AI Keyvisual",
           type: "image",
           options: { hotspot: true },
           description:
-            "Fallback for Intro media when Intro → Section Media is empty.",
+            "Bild 1 — Designer/Motorrad. Shown with “KI ist für uns ein Werkzeug…”.",
           fields: [
             defineField({
               name: "alt",
@@ -240,10 +240,10 @@ export const ai = defineType({
         }),
         defineField({
           name: "clayVilla",
-          title: "Bild 2 — 3D / Clay Villa",
+          title: "3D / Clay Villa",
           type: "image",
           options: { hotspot: true },
-          description: "Paired with Bild 3 after Applications.",
+          description: "Bild 2 — Clay villa. Paired with Photoreal Production.",
           fields: [
             defineField({
               name: "alt",
@@ -254,10 +254,11 @@ export const ai = defineType({
         }),
         defineField({
           name: "photoVilla",
-          title: "Bild 3 — Photorealistische Villa",
+          title: "Photoreal Production",
           type: "image",
           options: { hotspot: true },
-          description: "Visual counterpart to Bild 2.",
+          description:
+            "Bild 3 — Photoreal villa. Visual counterpart to 3D / Clay.",
           fields: [
             defineField({
               name: "alt",
@@ -268,11 +269,10 @@ export const ai = defineType({
         }),
         defineField({
           name: "contentFormats",
-          title: "Bild 4 — Content Formate",
+          title: "Content Formats",
           type: "image",
           options: { hotspot: true },
-          description:
-            "Fallback for Experience section media when that slot is empty.",
+          description: "Bild 4 — Distribution / multiple formats.",
           fields: [
             defineField({
               name: "alt",
@@ -283,11 +283,10 @@ export const ai = defineType({
         }),
         defineField({
           name: "distributionChannels",
-          title: "Bild 5 — Distribution / Social Channels",
+          title: "Distribution / Social Channels",
           type: "image",
           options: { hotspot: true },
-          description:
-            "Fallback for Approach section media when that slot is empty.",
+          description: "Bild 5 — Formats + social channels → Visibility.",
           fields: [
             defineField({
               name: "alt",
