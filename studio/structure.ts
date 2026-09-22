@@ -99,7 +99,7 @@ function singletonListItem(
 
 /**
  * Editorial desk order (non-technical editors):
- * Homepage → About → Content Abo → KI/AI → Contact → Work → Services → …
+ * Homepage → About → Content Abo → Contact → Work → Services → KI/AI → …
  */
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -108,10 +108,10 @@ export const structure: StructureResolver = (S) =>
       singletonListItem(S, SINGLETON_DOCS.homepage),
       singletonListItem(S, SINGLETON_DOCS.about),
       singletonListItem(S, SINGLETON_DOCS.abo),
-      singletonListItem(S, SINGLETON_DOCS.ai),
       singletonListItem(S, SINGLETON_DOCS.contact),
       workStructure(S),
       S.documentTypeListItem("service").title("Services"),
+      singletonListItem(S, SINGLETON_DOCS.ai),
       S.documentTypeListItem("project").title("Project teasers"),
       S.documentTypeListItem("teamMember").title(
         "Team directory (not About portraits)",

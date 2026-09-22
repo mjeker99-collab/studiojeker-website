@@ -8,17 +8,32 @@ Editors use the hosted Studio at:
 - https://studiojeker.sanity.studio/
 - Sanity appId (see `studio/sanity.cli.ts`): `ofbist72j0e7x9uewc5py90y`
 
-## Why Content Abo can be missing
+## Why Content Abo or KI / AI can be missing
 
 Schema + desk structure for the **Content Abo** singleton (`_type: abo`, `_id: abo`) live in:
 
 - `studio/schemaTypes/abo.ts`
 - `studio/schemaTypes/index.ts` (registered)
-- `studio/structure.ts` (nav: Homepage → About → **Content Abo** → Contact → …)
+- `studio/structure.ts` (nav item **Content Abo**)
+
+Schema + desk structure for the **KI / AI** singleton (`_type: ai`, `_id: ai`) live in:
+
+- `studio/schemaTypes/ai.ts` (+ `aiDefaults.ts` initial values)
+- `studio/schemaTypes/index.ts` (registered)
+- `studio/structure.ts` (nav item **KI / AI**)
+- Frontend: `lib/sanity/ai.ts`, `lib/content/merge-sanity-ai.ts`, `/ki` + `/en/ai`
 
 Homepage still has a separate teaser group **Sichtbarkeit im Abo** (`aboSection`). That is intentional and is **not** the Content Abo landing document.
 
-If the hosted Studio only shows Homepage / teaser fields and not the **Content Abo** menu item, the hosted Studio build is **out of date**. Pushing schema changes to `main` does not update `*.sanity.studio` until `sanity deploy` runs.
+If the hosted Studio only shows Homepage / teaser fields and not the **Content Abo** or **KI / AI** menu item, the hosted Studio build is **out of date**. Pushing schema changes to `main` does not update `*.sanity.studio` until `sanity deploy` runs.
+
+Seed the KI/AI document once (create-only, never overwrites):
+
+```bash
+node scripts/migrate-ai-page.mjs
+```
+
+Requires `SANITY_API_WRITE_TOKEN` (Editor / create+write). Opening **KI / AI** in Studio also prefills from schema `initialValue` when the singleton does not exist yet.
 
 ## Deploy (manual)
 
@@ -53,7 +68,8 @@ cd studio
 npm ci
 npm run typecheck
 npm run build
-# Confirm the desk label is in the bundle:
+# Confirm desk labels are in the bundle:
 grep -R "Content Abo" dist/static/sanity-*.js
+grep -R "KI / AI" dist/static/sanity-*.js
 npm run dev   # http://localhost:3333
 ```
