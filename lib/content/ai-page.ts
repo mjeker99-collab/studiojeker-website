@@ -61,6 +61,17 @@ export type AiPageContent = {
   models: AiTextBlock;
   experience: AiTextBlock;
   approach: AiTextBlock;
+  /**
+   * Optional stills from the KI showreel (Sanity uploads).
+   * Omitted/empty until published — page never invents placeholder art.
+   */
+  visuals: {
+    keyVisual?: HomepageMedia;
+    clayVilla?: HomepageMedia;
+    photoVilla?: HomepageMedia;
+    contentFormats?: HomepageMedia;
+    distributionChannels?: HomepageMedia;
+  };
   clients: {
     label: string;
     logos: HomepageClientLogo[];
@@ -250,6 +261,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
           "The result is the best possible combination of quality, creativity and cost efficiency for our clients.",
         ],
       },
+      visuals: {},
       clients: {
         label: "Selected clients",
         logos,
@@ -400,6 +412,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         "So entsteht für unsere Kunden die bestmögliche Kombination aus Qualität, Kreativität und Kosteneffizienz.",
       ],
     },
+    visuals: {},
     clients: {
       label: "Ausgewählte Kunden",
       logos,

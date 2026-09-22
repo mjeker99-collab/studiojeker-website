@@ -206,6 +206,92 @@ async function main() {
     "cleared CMS video removes stale hero videoId",
   );
 
+  assert(
+    Object.keys(baseDe.visuals).length === 0,
+    "fallback visuals empty until Sanity uploads",
+  );
+
+  const visualsStub: SanityAi = {
+    ...stub,
+    showreelSection: {
+      media: {
+        mediaType: "video",
+        vimeoUrl: "https://vimeo.com/1228871502",
+        poster: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-showreel.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Showreel poster",
+          asset: { _ref: "image-ai-showreel", _type: "reference" },
+        },
+      },
+    },
+    visualMedia: {
+      keyVisual: {
+        url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-key.jpg",
+        dimensions: { width: 1800, height: 1200 },
+        alt: "Keyvisual Motorrad Alpen",
+        asset: { _ref: "image-ai-key", _type: "reference" },
+      },
+      clayVilla: {
+        url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-clay.jpg",
+        dimensions: { width: 1600, height: 1000 },
+        alt: "Clay Villa",
+        asset: { _ref: "image-ai-clay", _type: "reference" },
+      },
+      photoVilla: {
+        url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-photo.jpg",
+        dimensions: { width: 1600, height: 1000 },
+        alt: "Photo Villa",
+        asset: { _ref: "image-ai-photo", _type: "reference" },
+      },
+      contentFormats: {
+        url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-formats.jpg",
+        dimensions: { width: 1800, height: 1200 },
+        alt: "Content Formate",
+        asset: { _ref: "image-ai-formats", _type: "reference" },
+      },
+      distributionChannels: {
+        url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-dist.jpg",
+        dimensions: { width: 1800, height: 1200 },
+        alt: "Distribution Channels",
+        asset: { _ref: "image-ai-dist", _type: "reference" },
+      },
+    },
+  };
+  const withVisuals = mergeSanityAi(baseDe, visualsStub, "de");
+  assert(
+    withVisuals.showreel.videoId === "1228871502",
+    "showreel Vimeo URL editable via Sanity",
+  );
+  assert(
+    withVisuals.visuals.keyVisual?.src?.includes("ai-key"),
+    "Bild 1 keyVisual merges",
+  );
+  assert(
+    withVisuals.visuals.keyVisual?.alt === "Keyvisual Motorrad Alpen",
+    "Bild 1 alt editable",
+  );
+  assert(
+    withVisuals.visuals.clayVilla?.src?.includes("ai-clay"),
+    "Bild 2 clayVilla merges",
+  );
+  assert(
+    withVisuals.visuals.photoVilla?.src?.includes("ai-photo"),
+    "Bild 3 photoVilla merges",
+  );
+  assert(
+    withVisuals.visuals.contentFormats?.src?.includes("ai-formats"),
+    "Bild 4 contentFormats merges",
+  );
+  assert(
+    withVisuals.visuals.distributionChannels?.src?.includes("ai-dist"),
+    "Bild 5 distributionChannels merges",
+  );
+  assert(
+    withVisuals.intro.headline === baseDe.intro.headline,
+    "existing intro headline unchanged by visual merge",
+  );
+
   const live = await fetchSanityAi();
   if (live?._id === "ai") {
     const fromCms = mergeSanityAi(baseDe, live, "de");

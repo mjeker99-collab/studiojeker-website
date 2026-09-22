@@ -247,6 +247,7 @@ export function mergeSanityAi(
       body: [...base.approach.body],
       ...(base.approach.media ? { media: { ...base.approach.media } } : {}),
     },
+    visuals: { ...base.visuals },
     clients: {
       ...base.clients,
       logos: [...base.clients.logos],
@@ -364,6 +365,41 @@ export function mergeSanityAi(
     doc.approachSection,
     locale,
   );
+
+  if (doc.visualMedia) {
+    const stillFallback: HomepageMedia = {
+      src: "",
+      alt: "",
+      width: 1920,
+      height: 1080,
+    };
+    const mergeStill = (
+      image: Parameters<typeof resolveSanityImage>[0],
+    ): HomepageMedia | undefined => {
+      if (!image) return undefined;
+      const resolved = resolveSanityImage(image, stillFallback);
+      return resolved.src ? resolved : undefined;
+    };
+
+    const keyVisual = mergeStill(doc.visualMedia.keyVisual);
+    if (keyVisual) merged.visuals.keyVisual = keyVisual;
+
+    const clayVilla = mergeStill(doc.visualMedia.clayVilla);
+    if (clayVilla) merged.visuals.clayVilla = clayVilla;
+
+    const photoVilla = mergeStill(doc.visualMedia.photoVilla);
+    if (photoVilla) merged.visuals.photoVilla = photoVilla;
+
+    const contentFormats = mergeStill(doc.visualMedia.contentFormats);
+    if (contentFormats) merged.visuals.contentFormats = contentFormats;
+
+    const distributionChannels = mergeStill(
+      doc.visualMedia.distributionChannels,
+    );
+    if (distributionChannels) {
+      merged.visuals.distributionChannels = distributionChannels;
+    }
+  }
 
   const clientsLabel = pickLocalized(doc.clientsLabel, locale);
   if (clientsLabel) merged.clients.label = clientsLabel;
