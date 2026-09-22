@@ -1,14 +1,18 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { aiPageInitialValues } from "./aiDefaults";
 
 /**
  * KI / AI page singleton.
  * DE: /ki · EN: /en/ai
  * Reuses localizedString, localizedText, ctaField, mediaField — no parallel CMS structures.
+ * Singleton desk ID: `ai` (see `studio/structure.ts`).
  */
 export const ai = defineType({
   name: "ai",
   title: "KI / AI",
   type: "document",
+  // Prefill when the singleton is first created in Studio (matches live /ki copy).
+  initialValue: aiPageInitialValues,
   groups: [
     { name: "hero", title: "Hero", default: true },
     { name: "intro", title: "Intro" },
