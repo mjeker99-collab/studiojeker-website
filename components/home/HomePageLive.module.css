@@ -1,0 +1,16 @@
+/**
+ * Homepage-only vertical rhythm between complete topic sections.
+ * Gap sits outside each section so image/copy units stay intact.
+ */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem; /* 28px — mobile */
+  background: var(--color-white);
+}
+
+@media (min-width: 48rem) {
+  .stack {
+    gap: 3.5rem; /* 56px — tablet + desktop */
+  }
+}

@@ -15,6 +15,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { ProjectsSection } from "@/components/home/ProjectsSection";
 import { ServicesSection } from "@/components/home/ServicesSection";
 import { ShowreelSection } from "@/components/home/ShowreelSection";
+import styles from "./HomePageLive.module.css";
 
 type HomePageLiveProps = {
   locale: Locale;
@@ -94,7 +95,7 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
   }, [locale]);
 
   return (
-    <>
+    <div className={styles.stack}>
       <HeroSection
         key={`hero-${resolved.hero.headline}-${resolved.hero.media.src}-${resolved.hero.videoId ?? "image"}`}
         content={resolved.hero}
@@ -119,6 +120,6 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
       />
       <ClientsSection content={resolved.clients} />
       <FinalCtaSection content={resolved.finalCta} />
-    </>
+    </div>
   );
 }
