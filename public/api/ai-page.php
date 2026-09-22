@@ -66,7 +66,8 @@ $query = <<<GROQ
   introSection{
     headline{$localized},
     text{$localized},
-    media{$mediaProjection}
+    media{$mediaProjection},
+    caption{$localized}
   },
   processSection{
     label{$localized},
@@ -95,22 +96,26 @@ $query = <<<GROQ
       title{$localized},
       description{$localized}
     },
-    media{$mediaProjection}
+    media{$mediaProjection},
+    caption{$localized}
   },
   modelsSection{
     headline{$localized},
     text{$localized},
-    media{$mediaProjection}
+    media{$mediaProjection},
+    caption{$localized}
   },
   experienceSection{
     headline{$localized},
     text{$localized},
-    media{$mediaProjection}
+    media{$mediaProjection},
+    caption{$localized}
   },
   approachSection{
     headline{$localized},
     text{$localized},
-    media{$mediaProjection}
+    media{$mediaProjection},
+    caption{$localized}
   },
   visualMedia{
     keyVisual{$imageProjection},

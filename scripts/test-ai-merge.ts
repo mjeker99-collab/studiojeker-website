@@ -292,6 +292,46 @@ async function main() {
     "existing intro headline unchanged by visual merge",
   );
 
+  const captionStub: SanityAi = {
+    ...stub,
+    experienceSection: {
+      headline: {
+        de: "KI + Erfahrung",
+        en: "AI + Experience",
+      },
+      text: {
+        de: "Absatz eins.\n\nAbsatz zwei.",
+        en: "Para one.\n\nPara two.",
+      },
+      caption: {
+        de: "Bildunterschrift DE",
+        en: "Caption EN",
+      },
+      media: {
+        mediaType: "image",
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-exp.jpg",
+          dimensions: { width: 1600, height: 1000 },
+          alt: "Experience media",
+          asset: { _ref: "image-ai-exp", _type: "reference" },
+        },
+      },
+    },
+  };
+  const withCaption = mergeSanityAi(baseDe, captionStub, "de");
+  assert(
+    withCaption.experience.caption === "Bildunterschrift DE",
+    "experience caption merges",
+  );
+  assert(
+    withCaption.experience.media?.src?.includes("ai-exp"),
+    "experience section media merges",
+  );
+  assert(
+    withCaption.experience.body.length === 2,
+    "experience body paragraphs preserved",
+  );
+
   const live = await fetchSanityAi();
   if (live?._id === "ai") {
     const fromCms = mergeSanityAi(baseDe, live, "de");

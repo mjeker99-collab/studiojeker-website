@@ -45,6 +45,34 @@
   min-width: 0;
 }
 
+/*
+ * Tablet / mid-desktop while 2-col hero is active: slightly smaller type and
+ * extra gap before the cyan bar so the headline never crowds the media.
+ */
+@media (min-width: 64rem) and (max-width: 75rem) {
+  .hero .heroCopy {
+    padding-right: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .hero .heroCopy .heroHeadline {
+    font-size: clamp(2rem, 3.4vw, 3.25rem);
+    line-height: 1.05;
+    max-width: min(11em, 100%);
+  }
+}
+
+@media (max-width: 63.9375rem) {
+  .hero {
+    min-height: auto;
+  }
+
+  .hero .heroCopy .heroHeadline {
+    font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+    line-height: 1.06;
+    max-width: 100%;
+  }
+}
+
 .sectionHeadline {
   margin: 0;
   font-size: clamp(1.5rem, 2.8vw, 2.25rem);
@@ -93,6 +121,34 @@
 
 .textSectionMedia {
   min-width: 0;
+}
+
+.mediaSlot {
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mediaVideoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--color-dark);
+}
+
+.mediaCaption {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.62);
+}
+
+.applicationsMedia {
+  margin-top: var(--space-5);
 }
 
 /* Showreel stills — native aspect ratio, no cover crop */

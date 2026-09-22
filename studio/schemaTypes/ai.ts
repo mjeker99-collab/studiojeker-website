@@ -1,11 +1,34 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
 import { aiPageInitialValues } from "./aiDefaults";
 
+/** Shared optional media + caption for KI text sections (uses existing mediaField). */
+const aiSectionMediaFields = [
+  defineField({
+    name: "media",
+    title: "Section Media (optional)",
+    type: "mediaField",
+    description:
+      "Optional image or Vimeo video. Choose Media Type in the field. Leave empty for text-only — no placeholder is shown.",
+  }),
+  defineField({
+    name: "caption",
+    title: "Media Caption (optional)",
+    type: "localizedString",
+    description: "Short caption under the image/video when media is set.",
+  }),
+];
+
 /**
  * KI / AI page singleton.
  * DE: /ki · EN: /en/ai
  * Reuses localizedString, localizedText, ctaField, mediaField — no parallel CMS structures.
  * Singleton desk ID: `ai` (see `studio/structure.ts`).
+ *
+ * Field ↔ frontend map (see also `aiDefaults.ts`):
+ * heroSection → hero · introSection → intro · processSection → process
+ * showreelSection → showreel · applicationsSection → applications
+ * modelsSection → models · experienceSection → experience · approachSection → approach
+ * visualMedia → optional showreel stills · closingSection → closing · seoSection → seo
  */
 export const ai = defineType({
   name: "ai",
@@ -43,6 +66,8 @@ export const ai = defineType({
           name: "headline",
           title: "Headline",
           type: "localizedString",
+          description:
+            "Optional soft line break with a newline (like About). Wording must stay unchanged.",
         }),
         defineField({
           name: "text",
@@ -78,12 +103,7 @@ export const ai = defineType({
           type: "localizedText",
           description: "Separate paragraphs with a blank line.",
         }),
-        defineField({
-          name: "media",
-          title: "Section Media (optional)",
-          type: "mediaField",
-          description: "Optional image or short video for this section.",
-        }),
+        ...aiSectionMediaFields,
       ],
     }),
 
@@ -162,7 +182,7 @@ export const ai = defineType({
       group: "showreel",
       options: { collapsible: true },
       description:
-        "Central KI / Visibility showreel. Prefer Media Type Video (Vimeo), e.g. https://vimeo.com/1228871502.",
+        "Central KI / Visibility showreel. Prefer Media Type Video (Vimeo), e.g. https://vimeo.com/1228871502. Layout matches About.",
       fields: [
         defineField({
           name: "label",
@@ -201,7 +221,7 @@ export const ai = defineType({
       group: "visuals",
       options: { collapsible: true, collapsed: false },
       description:
-        "Five stills from the KI showreel. Upload originals only — no crop that cuts important content. Layout preserves aspect ratio (contain).",
+        "Optional stills from the KI showreel (upload originals only). Used when the matching section media slot below is empty.",
       fields: [
         defineField({
           name: "keyVisual",
@@ -209,7 +229,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Designer/Motorrad vor Alpen. Shown with the intro (“KI ist für uns ein Werkzeug…”).",
+            "Fallback for Intro media when Intro → Section Media is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -223,8 +243,7 @@ export const ai = defineType({
           title: "Bild 2 — 3D / Clay Villa",
           type: "image",
           options: { hotspot: true },
-          description:
-            "Weisses Clay-Rendering der Villa. Pairs with Bild 3 (Production / 3D).",
+          description: "Paired with Bild 3 after Applications.",
           fields: [
             defineField({
               name: "alt",
@@ -238,8 +257,7 @@ export const ai = defineType({
           title: "Bild 3 — Photorealistische Villa",
           type: "image",
           options: { hotspot: true },
-          description:
-            "Fotorealistische Villa mit Motorrad. Visual counterpart to Bild 2.",
+          description: "Visual counterpart to Bild 2.",
           fields: [
             defineField({
               name: "alt",
@@ -254,7 +272,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Mehrere Formate auf schwarzem Grund. DISTRIBUTION section.",
+            "Fallback for Experience section media when that slot is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -269,7 +287,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Formate mit Social-Media-Symbolen. End of Distribution / Visibility.",
+            "Fallback for Approach section media when that slot is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -345,11 +363,7 @@ export const ai = defineType({
           ],
           validation: (Rule) => Rule.max(8),
         }),
-        defineField({
-          name: "media",
-          title: "Section Media (optional)",
-          type: "mediaField",
-        }),
+        ...aiSectionMediaFields,
       ],
     }),
 
@@ -371,11 +385,7 @@ export const ai = defineType({
           type: "localizedText",
           description: "Separate paragraphs with a blank line.",
         }),
-        defineField({
-          name: "media",
-          title: "Section Media (optional)",
-          type: "mediaField",
-        }),
+        ...aiSectionMediaFields,
       ],
     }),
 
@@ -397,11 +407,7 @@ export const ai = defineType({
           type: "localizedText",
           description: "Separate paragraphs with a blank line.",
         }),
-        defineField({
-          name: "media",
-          title: "Section Media (optional)",
-          type: "mediaField",
-        }),
+        ...aiSectionMediaFields,
       ],
     }),
 
@@ -423,11 +429,7 @@ export const ai = defineType({
           type: "localizedText",
           description: "Separate paragraphs with a blank line.",
         }),
-        defineField({
-          name: "media",
-          title: "Section Media (optional)",
-          type: "mediaField",
-        }),
+        ...aiSectionMediaFields,
       ],
     }),
 

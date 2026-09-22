@@ -154,8 +154,8 @@ export const aiPageInitialValues = {
   heroSection: {
     label: locString("KÜNSTLICHE INTELLIGENZ", "ARTIFICIAL INTELLIGENCE"),
     headline: locString(
-      "KI. Wenn Erfahrung auf neue Möglichkeiten trifft.",
-      "AI. Where experience meets new possibilities.",
+      "KI. Wenn Erfahrung\nauf neue Möglichkeiten trifft.",
+      "AI. Where experience\nmeets new possibilities.",
     ),
     text: locText(
       "Studiojeker integriert künstliche Intelligenz in einen etablierten Produktionsprozess: Strategie, kreative Konzeption, Fotografie, Film, 3D – und gezielte Distribution über digitale Kanäle. KI beschleunigt dort, wo sie Mehrwert schafft. Studiojeker liefert Konzept, Handwerk, Qualität und Sichtbarkeit.",
