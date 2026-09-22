@@ -139,7 +139,18 @@ export function AiPage({ content }: AiPageProps) {
               id="ai-hero-title"
               className={[heroStyles.headline, styles.heroHeadline].join(" ")}
             >
-              {content.hero.headline}
+              {content.hero.headline
+                .split("\n")
+                .filter(Boolean)
+                .map((line, index, lines) => {
+                  const isLast = index === lines.length - 1;
+                  return (
+                    <span key={`${line}-${index}`}>
+                      {line}
+                      {!isLast ? <br /> : null}
+                    </span>
+                  );
+                })}
             </h1>
             <p className={heroStyles.subheadline}>{content.hero.body}</p>
           </Reveal>

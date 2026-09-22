@@ -10,8 +10,9 @@
 }
 
 /*
- * ServiceHero pattern: allow the grid column to shrink, keep copy above media,
- * and let the long DE headline wrap inside the text track (never under the photo).
+ * ServiceHero / About pattern: shrinkable text column, copy above media.
+ * H1 type (size + line-height) comes only from HeroSection.module.css —
+ * same as About. Do not override font-size or line-height here.
  */
 .hero .heroCopy {
   position: relative;
@@ -21,18 +22,21 @@
   max-width: 100%;
   padding-top: clamp(2.75rem, 6vw, 5rem);
   padding-bottom: var(--space-5);
-  overflow-wrap: break-word;
 }
 
-/* Specificity over shared HeroSection `.headline { max-width: 7.2em }` */
+/*
+ * Keep About measure (7.2em) when the column allows it; never exceed the
+ * text track (avoids headline-under-image). No mid-word breaks.
+ */
 .hero .heroCopy .heroHeadline {
   position: relative;
   z-index: 1;
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: min(7.2em, 100%);
   min-width: 0;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .hero .heroMediaWrap {
