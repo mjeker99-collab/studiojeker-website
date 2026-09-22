@@ -243,21 +243,23 @@ export function AiPage({ content }: AiPageProps) {
 
           <Reveal className={styles.showreelMedia} delayMs={80}>
             {content.showreel.videoId ? (
-              <VimeoShowreel
-                key={`ai-showreel-${content.showreel.videoId}-${content.showreel.media.src}`}
-                videoId={content.showreel.videoId}
-                title={`${content.showreel.media.alt} – Showreel`}
-                poster={showreelPoster}
-              />
+              <div className={styles.showreelFrame}>
+                <VimeoShowreel
+                  key={`ai-showreel-${content.showreel.videoId}-${content.showreel.media.src}`}
+                  videoId={content.showreel.videoId}
+                  title={`${content.showreel.media.alt} – Showreel`}
+                  poster={showreelPoster}
+                  fill
+                />
+              </div>
             ) : content.showreel.media.src ? (
-              <div className={styles.showreelPosterOnly}>
+              <div className={styles.showreelFrame}>
                 <Image
                   src={mediaPath(content.showreel.media.src)}
                   alt={content.showreel.media.alt}
-                  width={content.showreel.media.width}
-                  height={content.showreel.media.height}
+                  fill
                   sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-                  className={styles.stillImage}
+                  className={styles.showreelPosterImage}
                 />
               </div>
             ) : null}

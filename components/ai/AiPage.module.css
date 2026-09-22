@@ -253,7 +253,8 @@
   width: 100%;
 }
 
-.showreelPosterOnly {
+/* Strict 16:9 — avoids VimeoShowreel min-height stretching on narrow viewports */
+.showreelFrame {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -261,9 +262,7 @@
   background: var(--color-dark);
 }
 
-.showreelPosterOnly .stillImage {
-  width: 100%;
-  height: 100%;
+.showreelPosterImage {
   object-fit: cover;
 }
 
