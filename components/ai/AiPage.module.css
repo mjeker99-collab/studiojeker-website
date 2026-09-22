@@ -9,10 +9,36 @@
   z-index: 0;
 }
 
-.heroCopy {
+/*
+ * ServiceHero pattern: allow the grid column to shrink, keep copy above media,
+ * and let the long DE headline wrap inside the text track (never under the photo).
+ */
+.hero .heroCopy {
+  position: relative;
+  z-index: 1;
   align-content: start;
+  min-width: 0;
+  max-width: 100%;
   padding-top: clamp(2.75rem, 6vw, 5rem);
   padding-bottom: var(--space-5);
+  overflow-wrap: break-word;
+}
+
+/* Specificity over shared HeroSection `.headline { max-width: 7.2em }` */
+.hero .heroCopy .heroHeadline {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.hero .heroMediaWrap {
+  position: relative;
+  z-index: 0;
+  min-width: 0;
 }
 
 .sectionHeadline {
@@ -58,22 +84,35 @@
   display: grid;
   gap: var(--space-3);
   max-width: 42rem;
+  min-width: 0;
 }
 
 .textSectionMedia {
   min-width: 0;
 }
 
-.sectionMediaFrame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  background: var(--color-neutral);
+/* Showreel stills — native aspect ratio, no cover crop */
+.stillSection {
+  background: var(--color-white);
+  padding-block: var(--space-4);
 }
 
-.sectionImage {
-  object-fit: cover;
+.still {
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.stillImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.villaPair {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .process {
@@ -183,89 +222,6 @@
   line-height: 1.5;
 }
 
-.applicationsMedia {
-  margin-top: var(--space-5);
-}
-
-/* Showreel stills — native aspect ratio, no cover crop */
-.stillSection {
-  background: var(--color-white);
-  padding-block: var(--space-4);
-}
-
-.still {
-  margin: 0;
-  min-width: 0;
-  width: 100%;
-}
-
-.stillImage {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.stillKey {
-  max-width: 100%;
-}
-
-.villaPair {
-  display: grid;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.showreel {
-  background: var(--color-black);
-  color: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
-}
-
-.showreelCopy {
-  display: grid;
-  gap: var(--space-3);
-  max-width: 36rem;
-  margin-bottom: var(--space-4);
-}
-
-.showreelHeadline {
-  margin: 0;
-  max-width: 12em;
-  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.showreelAccent {
-  color: var(--color-cyan);
-}
-
-.showreelBody {
-  margin: 0;
-  max-width: 32rem;
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.showreelMedia {
-  min-width: 0;
-  width: 100%;
-}
-
-/* Strict 16:9 — avoids VimeoShowreel min-height stretching on narrow viewports */
-.showreelFrame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  background: var(--color-dark);
-}
-
-.showreelPosterImage {
-  object-fit: cover;
-}
-
 .closing {
   background: var(--color-black);
   color: var(--color-white);
@@ -358,6 +314,19 @@
   .textSectionWithMedia {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     gap: var(--space-5);
+  }
+
+  /* BILD + TEXT rhythm (still in first column on desktop) */
+  .textSectionStillFirst {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .textSectionStillFirst .textSectionCopy {
+    order: 2;
+  }
+
+  .textSectionStillFirst .textSectionMedia {
+    order: 1;
   }
 
   .applicationsGrid {

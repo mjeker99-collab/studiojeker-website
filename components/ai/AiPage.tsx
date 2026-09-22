@@ -5,9 +5,9 @@ import type {
 } from "@/lib/content/ai-page";
 import type { HomepageMedia } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
+import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
-import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
@@ -20,8 +20,8 @@ type AiPageProps = {
 };
 
 /**
- * Showreel still — preserves native aspect ratio (no aggressive cover crop).
- * Only renders when Sanity has published a src.
+ * Showreel still — native aspect ratio (no aggressive cover crop).
+ * Renders nothing when Sanity has not published a src (no grey placeholders).
  */
 function StillFigure({
   media,
@@ -48,51 +48,24 @@ function StillFigure({
   );
 }
 
-function SectionMedia({
-  media,
-  videoId,
-  sizes,
-}: {
-  media: NonNullable<AiTextBlock["media"]>;
-  videoId?: string;
-  sizes: string;
-}) {
-  return (
-    <div className={styles.sectionMediaFrame}>
-      {videoId ? (
-        <HeroVimeoLoop
-          videoId={videoId}
-          title={media.alt}
-          poster={{
-            src: mediaPath(media.src),
-            alt: media.alt,
-            width: media.width,
-            height: media.height,
-          }}
-        />
-      ) : media.src ? (
-        <Image
-          src={mediaPath(media.src)}
-          alt={media.alt}
-          fill
-          sizes={sizes}
-          className={styles.sectionImage}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function TextSection({
+/**
+ * Text + optional still in the existing two-column Studiojeker rhythm.
+ * When still is missing, layout collapses to text-only (no empty media slot).
+ */
+function TextWithStill({
   id,
   content,
+  still,
   inverted = false,
+  stillFirst = false,
 }: {
   id: string;
   content: AiTextBlock;
+  still?: HomepageMedia;
   inverted?: boolean;
+  stillFirst?: boolean;
 }) {
-  const hasMedia = Boolean(content.media?.src || content.videoId);
+  const hasStill = Boolean(still?.src);
 
   return (
     <section
@@ -106,7 +79,8 @@ function TextSection({
         <div
           className={[
             styles.textSectionGrid,
-            hasMedia ? styles.textSectionWithMedia : "",
+            hasStill ? styles.textSectionWithMedia : "",
+            hasStill && stillFirst ? styles.textSectionStillFirst : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -121,11 +95,10 @@ function TextSection({
               ))}
             </div>
           </Reveal>
-          {hasMedia && content.media ? (
+          {hasStill && still ? (
             <Reveal className={styles.textSectionMedia} delayMs={80}>
-              <SectionMedia
-                media={content.media}
-                videoId={content.videoId}
+              <StillFigure
+                media={still}
                 sizes="(max-width: 1024px) 100vw, 48vw"
               />
             </Reveal>
@@ -137,22 +110,16 @@ function TextSection({
 }
 
 /**
- * KI / AI page — About / homepage / Content-Abo visual system.
- * Showreel + stills only; copy unchanged. Layout in AiPage.module.css.
+ * KI / AI page — About / homepage visual system.
+ * Hero matches About/Services grid rules; showreel reuses AboutSection.
  */
 export function AiPage({ content }: AiPageProps) {
   const { visuals } = content;
   const hasVillaPair = Boolean(
     visuals.clayVilla?.src || visuals.photoVilla?.src,
   );
-  const showreelPoster = content.showreel.media
-    ? {
-        src: mediaPath(content.showreel.media.src),
-        alt: content.showreel.media.alt,
-        width: content.showreel.media.width,
-        height: content.showreel.media.height,
-      }
-    : undefined;
+
+  const showreelHeadline = content.showreel.headline.replace(/\.$/, "");
 
   return (
     <>
@@ -162,15 +129,25 @@ export function AiPage({ content }: AiPageProps) {
         aria-labelledby="ai-hero-title"
       >
         <div className={heroStyles.grid}>
+          {/*
+            min-width: 0 + break-word on page-local heroCopy — same fix as
+            ServiceHero — so the long DE headline cannot overflow into media.
+          */}
           <Reveal className={[heroStyles.copy, styles.heroCopy].join(" ")}>
             <SectionLabel>{content.hero.label}</SectionLabel>
-            <h1 id="ai-hero-title" className={heroStyles.headline}>
+            <h1
+              id="ai-hero-title"
+              className={[heroStyles.headline, styles.heroHeadline].join(" ")}
+            >
               {content.hero.headline}
             </h1>
             <p className={heroStyles.subheadline}>{content.hero.body}</p>
           </Reveal>
 
-          <Reveal className={heroStyles.mediaWrap} delayMs={120}>
+          <Reveal
+            className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
+            delayMs={120}
+          >
             <div className={heroStyles.media}>
               <div className={heroStyles.cyanBar} aria-hidden="true" />
               <div className={heroStyles.photo}>
@@ -201,71 +178,31 @@ export function AiPage({ content }: AiPageProps) {
         </div>
       </section>
 
-      <TextSection id="ai-intro-title" content={content.intro} />
+      {/* Bild 1 — keyvisual with intro text */}
+      <TextWithStill
+        id="ai-intro-title"
+        content={content.intro}
+        still={visuals.keyVisual}
+      />
 
-      {visuals.keyVisual?.src ? (
-        <section
-          className={styles.stillSection}
-          data-header-theme="light"
-          aria-label={visuals.keyVisual.alt}
-        >
-          <Container>
-            <Reveal>
-              <StillFigure
-                media={visuals.keyVisual}
-                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-                className={styles.stillKey}
-              />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
-
-      <section
-        className={styles.showreel}
-        data-header-theme="dark"
-        aria-labelledby="ai-showreel-title"
-      >
-        <Container>
-          <Reveal className={styles.showreelCopy}>
-            <SectionLabel inverse>{content.showreel.label}</SectionLabel>
-            <h2 id="ai-showreel-title" className={styles.showreelHeadline}>
-              {content.showreel.headline}
-              <span className={styles.showreelAccent}>.</span>
-            </h2>
-            <p className={styles.showreelBody}>{content.showreel.body}</p>
-            <div>
-              <Button href={content.showreel.cta.href} variant="cyan">
-                {content.showreel.cta.label}
-              </Button>
-            </div>
-          </Reveal>
-
-          <Reveal className={styles.showreelMedia} delayMs={80}>
-            {content.showreel.videoId ? (
-              <div className={styles.showreelFrame}>
-                <VimeoShowreel
-                  key={`ai-showreel-${content.showreel.videoId}-${content.showreel.media.src}`}
-                  videoId={content.showreel.videoId}
-                  title={`${content.showreel.media.alt} – Showreel`}
-                  poster={showreelPoster}
-                  fill
-                />
-              </div>
-            ) : content.showreel.media.src ? (
-              <div className={styles.showreelFrame}>
-                <Image
-                  src={mediaPath(content.showreel.media.src)}
-                  alt={content.showreel.media.alt}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-                  className={styles.showreelPosterImage}
-                />
-              </div>
-            ) : null}
-          </Reveal>
-        </Container>
-      </section>
+      {/*
+        Showreel — identical About video block (AboutSection + VimeoShowreel).
+        About page itself is not modified; we only reuse the component.
+      */}
+      <AboutSection
+        key={`ai-showreel-${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
+        compact
+        content={{
+          label: content.showreel.label,
+          headline: showreelHeadline,
+          headlineAccent: ".",
+          subheadline: "",
+          body: [content.showreel.body],
+          cta: content.showreel.cta,
+          media: content.showreel.media,
+          videoId: content.showreel.videoId,
+        }}
+      />
 
       <section
         className={styles.process}
@@ -328,25 +265,10 @@ export function AiPage({ content }: AiPageProps) {
               </Reveal>
             ))}
           </div>
-          {content.applications.media?.src || content.applications.videoId ? (
-            <Reveal className={styles.applicationsMedia} delayMs={80}>
-              <SectionMedia
-                media={
-                  content.applications.media ?? {
-                    src: "",
-                    alt: "",
-                    width: 1600,
-                    height: 900,
-                  }
-                }
-                videoId={content.applications.videoId}
-                sizes="100vw"
-              />
-            </Reveal>
-          ) : null}
         </Container>
       </section>
 
+      {/* Bild 2 + 3 — Clay / photoreal pair (Production ↔ 3D) */}
       {hasVillaPair ? (
         <section
           className={styles.stillSection}
@@ -376,43 +298,23 @@ export function AiPage({ content }: AiPageProps) {
         </section>
       ) : null}
 
-      <TextSection id="ai-models-title" content={content.models} inverted />
-      <TextSection id="ai-experience-title" content={content.experience} />
-      <TextSection id="ai-approach-title" content={content.approach} inverted />
+      <TextWithStill id="ai-models-title" content={content.models} inverted />
 
-      {visuals.contentFormats?.src ? (
-        <section
-          className={styles.stillSection}
-          data-header-theme="light"
-          aria-label={visuals.contentFormats.alt}
-        >
-          <Container>
-            <Reveal>
-              <StillFigure
-                media={visuals.contentFormats}
-                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-              />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
+      {/* Bild 4 — content formats / Distribution */}
+      <TextWithStill
+        id="ai-experience-title"
+        content={content.experience}
+        still={visuals.contentFormats}
+        stillFirst
+      />
 
-      {visuals.distributionChannels?.src ? (
-        <section
-          className={styles.stillSection}
-          data-header-theme="light"
-          aria-label={visuals.distributionChannels.alt}
-        >
-          <Container>
-            <Reveal>
-              <StillFigure
-                media={visuals.distributionChannels}
-                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-              />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
+      {/* Bild 5 — channels / Visibility */}
+      <TextWithStill
+        id="ai-approach-title"
+        content={content.approach}
+        still={visuals.distributionChannels}
+        inverted
+      />
 
       <ClientsSection content={content.clients} />
 
