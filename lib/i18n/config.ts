@@ -57,6 +57,7 @@ export function localizePathname(pathname: string, locale: Locale): string {
  */
 const translatedPathPairs: ReadonlyArray<{ de: string; en: string }> = [
   { de: "/content-abo", en: "/content-subscription" },
+  { de: "/ki", en: "/ai" },
 ];
 
 function normalizePath(pathname: string): string {
@@ -73,6 +74,11 @@ export function getAboPath(locale: Locale): string {
     locale === "en" ? "/content-subscription" : "/content-abo",
     locale,
   );
+}
+
+/** Locale-correct path for the KI / AI page. */
+export function getAiPath(locale: Locale): string {
+  return localizePathname(locale === "en" ? "/ai" : "/ki", locale);
 }
 
 /**

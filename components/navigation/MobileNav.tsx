@@ -22,6 +22,7 @@ export function MobileNav({ locale, dictionary, open, onClose }: MobileNavProps)
     about: dictionary.nav.about,
     services: dictionary.nav.services,
     work: dictionary.nav.work,
+    ai: dictionary.nav.ai,
     contact: dictionary.nav.contact,
   };
 

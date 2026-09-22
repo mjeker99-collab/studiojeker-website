@@ -28,6 +28,7 @@ export function DesktopNav({ locale, dictionary }: DesktopNavProps) {
     about: dictionary.nav.about,
     services: dictionary.nav.services,
     work: dictionary.nav.work,
+    ai: dictionary.nav.ai,
     contact: dictionary.nav.contact,
   };
   const servicesActive = isServicesPath(pathname);

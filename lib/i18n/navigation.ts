@@ -1,8 +1,8 @@
 import type { Dictionary, Locale } from "@/types/i18n";
-import { localizePathname } from "@/lib/i18n/config";
+import { getAiPath, localizePathname } from "@/lib/i18n/config";
 
 export type NavItem = {
-  id: "about" | "services" | "work" | "insights" | "contact";
+  id: "about" | "services" | "work" | "ai" | "insights" | "contact";
   /** Omitted for Services — dropdown trigger only, no overview page. */
   href?: string;
   hasChildren?: boolean;
@@ -16,7 +16,7 @@ export type ServiceNavLink = {
 
 /**
  * Final primary navigation:
- * ABOUT | SERVICES | WORK | CONTACT | DE
+ * ABOUT | SERVICES | WORK | KI/AI | CONTACT | DE
  *
  * Services is a dropdown trigger only — no /services overview.
  * Insights remains routed/available but is not shown in the main nav.
@@ -29,6 +29,7 @@ export function getPrimaryNav(locale: Locale): NavItem[] {
       hasChildren: true,
     },
     { id: "work", href: localizePathname("/work", locale) },
+    { id: "ai", href: getAiPath(locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
   ];
 }
@@ -41,6 +42,7 @@ export function getFooterNav(locale: Locale): Array<NavItem & { href: string }> 
   return [
     { id: "about", href: localizePathname("/about", locale) },
     { id: "work", href: localizePathname("/work", locale) },
+    { id: "ai", href: getAiPath(locale) },
     { id: "contact", href: localizePathname("/contact", locale) },
   ];
 }
