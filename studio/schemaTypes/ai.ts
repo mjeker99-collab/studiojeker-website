@@ -334,7 +334,7 @@ export const ai = defineType({
       group: "landscapeBreaks",
       options: { collapsible: true, collapsed: false },
       description:
-        "Large landscape (~16:9) stills between process steps and lower text blocks. Empty slots are hidden (no grey placeholders). DE and EN share the same images.",
+        "Large landscape (~16:9) stills between process steps and lower text blocks. The website shows architecture/3D defaults until you upload here. Empty CMS slots keep those defaults (DE and EN share images).",
       fields: [
         defineField({
           name: "afterAi",
@@ -363,12 +363,30 @@ export const ai = defineType({
           fields: landscapeBreakImageFields,
         }),
         defineField({
-          name: "afterApplications",
-          title: "After Applications",
+          name: "midApplications",
+          title: "Mid Applications (after 01–03)",
           type: "object",
           options: { collapsible: true, collapsed: false },
           description:
-            "Between “Wo wir KI einsetzen” and “Die besten Modelle…”.",
+            "Between application items 01–03 and 04–06 (“Wo wir KI einsetzen”).",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterApplications",
+          title: "After Applications (after 04–06)",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "After “Wo wir KI einsetzen”, before “Die besten Modelle…”.",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterModels",
+          title: "After Models",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "Between “Die besten Modelle…” and “KI + Erfahrung”.",
           fields: landscapeBreakImageFields,
         }),
         defineField({

@@ -348,12 +348,28 @@ async function main() {
           asset: { _ref: "image-ai-break-vis", _type: "reference" },
         },
       },
+      midApplications: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-mid.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Mid Applications Break",
+          asset: { _ref: "image-ai-break-mid", _type: "reference" },
+        },
+      },
       afterApplications: {
         image: {
           url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-apps.jpg",
           dimensions: { width: 1920, height: 1080 },
           alt: "Applications Break",
           asset: { _ref: "image-ai-break-apps", _type: "reference" },
+        },
+      },
+      afterModels: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-models.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Models Break",
+          asset: { _ref: "image-ai-break-models", _type: "reference" },
         },
       },
       afterExperience: {
@@ -386,24 +402,39 @@ async function main() {
     "landscape afterVisibility merges",
   );
   assert(
+    withLandscape.landscapeBreaks.midApplications?.src?.includes("ai-break-mid"),
+    "landscape midApplications merges",
+  );
+  assert(
     withLandscape.landscapeBreaks.afterApplications?.src?.includes(
       "ai-break-apps",
     ),
     "landscape afterApplications merges",
   );
   assert(
+    withLandscape.landscapeBreaks.afterModels?.src?.includes("ai-break-models"),
+    "landscape afterModels merges",
+  );
+  assert(
     withLandscape.landscapeBreaks.afterExperience?.src?.includes("ai-break-exp"),
     "landscape afterExperience merges",
   );
-  assert(
-    !withLandscape.landscapeBreaks.afterAi ||
-      Boolean(withLandscape.landscapeBreaks.afterAi.src),
-    "landscape empty slots stay collapsed when missing",
-  );
   const emptyLandscape = mergeSanityAi(baseDe, stub, "de");
   assert(
-    !emptyLandscape.landscapeBreaks.afterAi?.src,
-    "empty landscape afterAi collapses",
+    Boolean(emptyLandscape.landscapeBreaks.afterAi?.src),
+    "empty Sanity landscape keeps local default afterAi visible",
+  );
+  assert(
+    Boolean(emptyLandscape.landscapeBreaks.midApplications?.src),
+    "empty Sanity landscape keeps local default midApplications visible",
+  );
+  assert(
+    Boolean(emptyLandscape.landscapeBreaks.afterModels?.src),
+    "empty Sanity landscape keeps local default afterModels visible",
+  );
+  assert(
+    emptyLandscape.landscapeBreaks.afterAi.src.includes("architecture/"),
+    "default landscape uses architecture assets",
   );
 
   const captionStub: SanityAi = {

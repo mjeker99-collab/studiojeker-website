@@ -76,15 +76,18 @@ export type AiPageContent = {
     distributionChannels?: HomepageMedia;
   };
   /**
-   * Optional 16:9 landscape breaks between process steps / text blocks.
-   * Empty slots collapse — no grey placeholders.
+   * 16:9 landscape breaks between process steps / text blocks.
+   * Local defaults keep positions visible until Sanity overrides each slot.
    */
   landscapeBreaks: {
-    afterAi?: HomepageMedia;
-    afterDistribution?: HomepageMedia;
-    afterVisibility?: HomepageMedia;
-    afterApplications?: HomepageMedia;
-    afterExperience?: HomepageMedia;
+    afterAi: HomepageMedia;
+    afterDistribution: HomepageMedia;
+    afterVisibility: HomepageMedia;
+    /** After applications 01–03, before 04–06. */
+    midApplications: HomepageMedia;
+    afterApplications: HomepageMedia;
+    afterModels: HomepageMedia;
+    afterExperience: HomepageMedia;
   };
   clients: {
     label: string;
@@ -111,6 +114,97 @@ const FALLBACK_MEDIA: HomepageMedia = {
   width: 1200,
   height: 900,
 };
+
+/**
+ * Initial landscape stills (architecture / 3D production assets).
+ * Visible until each slot is replaced in Sanity → Landscape breaks.
+ * DE and EN share the same files; alt text is localized in getAiPageContent.
+ */
+const LANDSCAPE_DEFAULTS = {
+  afterAi: {
+    src: "/images/architecture/hero-villa-master.jpg",
+    width: 1785,
+    height: 977,
+  },
+  afterDistribution: {
+    src: "/images/architecture/Architekturvisualisierung.jpg",
+    width: 1140,
+    height: 641,
+  },
+  afterVisibility: {
+    src: "/images/architecture/3D_2.jpg",
+    width: 1200,
+    height: 606,
+  },
+  midApplications: {
+    src: "/images/architecture/troesch4.jpg",
+    width: 960,
+    height: 540,
+  },
+  afterApplications: {
+    src: "/images/3d/Augmented-Reality-3-1-scaled.jpg",
+    width: 1920,
+    height: 1080,
+  },
+  afterModels: {
+    src: "/images/3d/Produktvisualisierung-1140.jpg",
+    width: 1140,
+    height: 731,
+  },
+  afterExperience: {
+    src: "/images/architecture/v5_02_korr.jpg",
+    width: 1920,
+    height: 1376,
+  },
+} as const;
+
+function landscapeDefaults(locale: Locale): AiPageContent["landscapeBreaks"] {
+  const de = locale !== "en";
+  return {
+    afterAi: {
+      ...LANDSCAPE_DEFAULTS.afterAi,
+      alt: de
+        ? "Architekturvisualisierung – Produktion und KI"
+        : "Architectural visualisation — production and AI",
+    },
+    afterDistribution: {
+      ...LANDSCAPE_DEFAULTS.afterDistribution,
+      alt: de
+        ? "3D-Architekturvisualisierung – Distribution"
+        : "3D architectural visualisation — distribution",
+    },
+    afterVisibility: {
+      ...LANDSCAPE_DEFAULTS.afterVisibility,
+      alt: de
+        ? "3D-Visualisierung – Visibility"
+        : "3D visualisation — visibility",
+    },
+    midApplications: {
+      ...LANDSCAPE_DEFAULTS.midApplications,
+      alt: de
+        ? "Architekturprojekt – KI-Anwendungen"
+        : "Architecture project — AI applications",
+    },
+    afterApplications: {
+      ...LANDSCAPE_DEFAULTS.afterApplications,
+      alt: de
+        ? "Augmented Reality – Content-Formate"
+        : "Augmented reality — content formats",
+    },
+    afterModels: {
+      ...LANDSCAPE_DEFAULTS.afterModels,
+      alt: de
+        ? "Produktvisualisierung – Modelle und Know-how"
+        : "Product visualisation — models and know-how",
+    },
+    afterExperience: {
+      ...LANDSCAPE_DEFAULTS.afterExperience,
+      alt: de
+        ? "Architekturvisualisierung – KI und Erfahrung"
+        : "Architectural visualisation — AI and experience",
+    },
+  };
+}
 
 /**
  * Local fallback for the KI / AI page.
@@ -276,7 +370,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         ],
       },
       visuals: {},
-      landscapeBreaks: {},
+      landscapeBreaks: landscapeDefaults("en"),
       clients: {
         label: "Selected clients",
         logos,
@@ -428,7 +522,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       ],
     },
     visuals: {},
-    landscapeBreaks: {},
+    landscapeBreaks: landscapeDefaults("de"),
     clients: {
       label: "Ausgewählte Kunden",
       logos,

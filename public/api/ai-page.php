@@ -137,7 +137,15 @@ $query = <<<GROQ
       image{$imageProjection},
       caption{$localized}
     },
+    midApplications{
+      image{$imageProjection},
+      caption{$localized}
+    },
     afterApplications{
+      image{$imageProjection},
+      caption{$localized}
+    },
+    afterModels{
       image{$imageProjection},
       caption{$localized}
     },
