@@ -21,33 +21,31 @@ jobs:
         run: |
           set -e
 
-          echo "Testing connection to staging FTP..."
-          echo "Host: $FTP_HOST"
-          echo "Port: 21"
-          echo "Mode: Explicit FTPS / Passive"
-          echo
+          echo "Testing staging FTPS..."
+          echo "Host configured: yes"
+          echo "Username length: ${#FTP_USER}"
+          echo "Password length: ${#FTP_PASSWORD}"
 
-          lftp -u "$FTP_USER","$FTP_PASSWORD" \
-            -e "
-              set ftp:ssl-force true;
-              set ftp:ssl-protect-data true;
-              set ftp:ssl-protect-list true;
-              set ftp:passive-mode true;
-              set ftp:prefer-epsv false;
-              set ssl:verify-certificate true;
-              set net:timeout 30;
-              set net:max-retries 1;
+          lftp <<EOF
+          set cmd:fail-exit true
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ftp:ssl-protect-list true
+          set ftp:passive-mode true
+          set ftp:prefer-epsv false
+          set ssl:verify-certificate true
+          set net:timeout 30
+          set net:max-retries 1
 
-              open ftp://$FTP_HOST:21;
+          open -u "$FTP_USER","$FTP_PASSWORD" "ftp://$FTP_HOST:21"
 
-              echo ===== CURRENT DIRECTORY =====;
-              pwd;
+          echo ===== CURRENT DIRECTORY =====
+          pwd
 
-              echo ===== STAGING CONTENT =====;
-              cls -la;
+          echo ===== STAGING CONTENT =====
+          cls -la
 
-              bye;
-            "
+          bye
+          EOF
 
-          echo
-          echo "FTPS connection test completed successfully."
+          echo "FTPS LOGIN SUCCESSFUL"
