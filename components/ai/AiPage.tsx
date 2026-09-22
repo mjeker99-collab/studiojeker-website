@@ -165,11 +165,57 @@ function StillFigure({
 }
 
 /**
+ * Full-width ~16:9 landscape break. Renders nothing when media is empty.
+ * No borders, shadows, overlays, or animations.
+ */
+function LandscapeBreak({
+  media,
+  sizes = "(max-width: 1024px) 100vw, min(100vw, 72rem)",
+}: {
+  media?: HomepageMedia;
+  sizes?: string;
+}) {
+  if (!media?.src) return null;
+
+  return (
+    <figure className={styles.landscapeBreak}>
+      <div className={styles.landscapeBreakFrame}>
+        <Image
+          src={mediaPath(media.src)}
+          alt={media.alt}
+          width={media.width || 1920}
+          height={media.height || 1080}
+          sizes={sizes}
+          className={styles.landscapeBreakImage}
+        />
+      </div>
+    </figure>
+  );
+}
+
+/** Map process step id → landscape break after that step. */
+function processBreakAfterStep(
+  stepId: string,
+  breaks: AiPageContent["landscapeBreaks"],
+): HomepageMedia | undefined {
+  switch (stepId) {
+    case "ai":
+      return breaks.afterAi;
+    case "distribution":
+      return breaks.afterDistribution;
+    case "visibility":
+      return breaks.afterVisibility;
+    default:
+      return undefined;
+  }
+}
+
+/**
  * KI / AI page — About / homepage visual system.
  * Hero matches About/Services grid rules; showreel reuses AboutSection.
  */
 export function AiPage({ content }: AiPageProps) {
-  const { visuals } = content;
+  const { visuals, landscapeBreaks } = content;
   const hasVillaPair = Boolean(
     visuals.clayVilla?.src || visuals.photoVilla?.src,
   );
@@ -276,23 +322,34 @@ export function AiPage({ content }: AiPageProps) {
           </Reveal>
 
           <ol className={styles.processFlow}>
-            {content.process.steps.map((step, index) => (
-              <li key={step.id} className={styles.processItem}>
-                <Reveal
-                  as="article"
-                  className={styles.processStep}
-                  delayMs={index * 40}
-                >
-                  <h3 className={styles.processTitle}>{step.title}</h3>
-                  <p className={styles.processText}>{step.description}</p>
-                </Reveal>
-                {index < content.process.steps.length - 1 ? (
-                  <span className={styles.processArrow} aria-hidden="true">
-                    ↓
-                  </span>
-                ) : null}
-              </li>
-            ))}
+            {content.process.steps.map((step, index) => {
+              const breakMedia = processBreakAfterStep(
+                step.id,
+                landscapeBreaks,
+              );
+              return (
+                <li key={step.id} className={styles.processItem}>
+                  <Reveal
+                    as="article"
+                    className={styles.processStep}
+                    delayMs={index * 40}
+                  >
+                    <h3 className={styles.processTitle}>{step.title}</h3>
+                    <p className={styles.processText}>{step.description}</p>
+                  </Reveal>
+                  {index < content.process.steps.length - 1 ? (
+                    <span className={styles.processArrow} aria-hidden="true">
+                      ↓
+                    </span>
+                  ) : null}
+                  {breakMedia?.src ? (
+                    <Reveal className={styles.processLandscape} delayMs={60}>
+                      <LandscapeBreak media={breakMedia} />
+                    </Reveal>
+                  ) : null}
+                </li>
+              );
+            })}
           </ol>
         </Container>
       </section>
@@ -334,6 +391,20 @@ export function AiPage({ content }: AiPageProps) {
           ) : null}
         </Container>
       </section>
+
+      {landscapeBreaks.afterApplications?.src ? (
+        <section
+          className={styles.landscapeSection}
+          data-header-theme="light"
+          aria-label={landscapeBreaks.afterApplications.alt || "Landscape"}
+        >
+          <Container>
+            <Reveal>
+              <LandscapeBreak media={landscapeBreaks.afterApplications} />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
 
       {hasVillaPair ? (
         <section
@@ -392,6 +463,20 @@ export function AiPage({ content }: AiPageProps) {
         id="ai-experience-title"
         content={content.experience}
       />
+
+      {landscapeBreaks.afterExperience?.src ? (
+        <section
+          className={styles.landscapeSection}
+          data-header-theme="light"
+          aria-label={landscapeBreaks.afterExperience.alt || "Landscape"}
+        >
+          <Container>
+            <Reveal>
+              <LandscapeBreak media={landscapeBreaks.afterExperience} />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
 
       {/* Bild 5 — Social distribution with Approach text */}
       <TextWithMedia

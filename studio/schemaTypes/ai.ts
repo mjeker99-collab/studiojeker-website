@@ -28,8 +28,36 @@ const aiSectionMediaFields = [
  * heroSection → hero · introSection → intro · processSection → process
  * showreelSection → showreel · applicationsSection → applications
  * modelsSection → models · experienceSection → experience · approachSection → approach
- * visualMedia → optional showreel stills · closingSection → closing · seoSection → seo
+ * visualMedia → optional showreel stills · landscapeBreaks → 16:9 editorial breaks
+ * closingSection → closing · seoSection → seo
  */
+
+/** Optional 16:9 landscape still — image + alt (+ optional caption). Empty = hidden. */
+const landscapeBreakImageFields = [
+  defineField({
+    name: "image",
+    title: "Landscape Image",
+    type: "image",
+    options: { hotspot: true },
+    description:
+      "Querformat (~16:9), full content width. Leave empty to hide — no placeholder.",
+    fields: [
+      defineField({
+        name: "alt",
+        title: "Alt Text",
+        type: "string",
+        description: "Accessible description of the image.",
+      }),
+    ],
+  }),
+  defineField({
+    name: "caption",
+    title: "Caption (optional)",
+    type: "localizedString",
+    description: "Optional short caption under the image.",
+  }),
+];
+
 export const ai = defineType({
   name: "ai",
   title: "KI / AI",
@@ -42,6 +70,7 @@ export const ai = defineType({
     { name: "process", title: "Process flow" },
     { name: "showreel", title: "Showreel" },
     { name: "visuals", title: "Content images" },
+    { name: "landscapeBreaks", title: "Landscape breaks" },
     { name: "applications", title: "Applications" },
     { name: "models", title: "Models" },
     { name: "experience", title: "Experience" },
@@ -294,6 +323,62 @@ export const ai = defineType({
               type: "string",
             }),
           ],
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "landscapeBreaks",
+      title: "Landscape image breaks (16:9)",
+      type: "object",
+      group: "landscapeBreaks",
+      options: { collapsible: true, collapsed: false },
+      description:
+        "Large landscape (~16:9) stills between process steps and lower text blocks. Empty slots are hidden (no grey placeholders). DE and EN share the same images.",
+      fields: [
+        defineField({
+          name: "afterAi",
+          title: "After AI (Produktion / KI)",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "Between AI and DISTRIBUTION in “Vom Konzept zur Sichtbarkeit”.",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterDistribution",
+          title: "After DISTRIBUTION",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description: "Between DISTRIBUTION and VISIBILITY.",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterVisibility",
+          title: "After VISIBILITY",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "After VISIBILITY, before “Wo wir KI einsetzen”.",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterApplications",
+          title: "After Applications",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "Between “Wo wir KI einsetzen” and “Die besten Modelle…”.",
+          fields: landscapeBreakImageFields,
+        }),
+        defineField({
+          name: "afterExperience",
+          title: "After Experience",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          description:
+            "Between “KI + Erfahrung” and “Gezielt. Verantwortungsbewusst…”.",
+          fields: landscapeBreakImageFields,
         }),
       ],
     }),

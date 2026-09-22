@@ -75,6 +75,17 @@ export type AiPageContent = {
     contentFormats?: HomepageMedia;
     distributionChannels?: HomepageMedia;
   };
+  /**
+   * Optional 16:9 landscape breaks between process steps / text blocks.
+   * Empty slots collapse — no grey placeholders.
+   */
+  landscapeBreaks: {
+    afterAi?: HomepageMedia;
+    afterDistribution?: HomepageMedia;
+    afterVisibility?: HomepageMedia;
+    afterApplications?: HomepageMedia;
+    afterExperience?: HomepageMedia;
+  };
   clients: {
     label: string;
     logos: HomepageClientLogo[];
@@ -265,6 +276,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
         ],
       },
       visuals: {},
+      landscapeBreaks: {},
       clients: {
         label: "Selected clients",
         logos,
@@ -416,6 +428,7 @@ export function getAiPageContent(locale: Locale): AiPageContent {
       ],
     },
     visuals: {},
+    landscapeBreaks: {},
     clients: {
       label: "Ausgewählte Kunden",
       logos,

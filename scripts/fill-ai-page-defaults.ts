@@ -167,8 +167,8 @@ function fillEmpty(
     }
     const next: UnknownRecord = { ...existing };
     for (const [key, defValue] of Object.entries(defaults)) {
-      // Never invent visualMedia uploads.
-      if (path === "" && key === "visualMedia") {
+      // Never invent visualMedia or landscapeBreaks uploads.
+      if (path === "" && (key === "visualMedia" || key === "landscapeBreaks")) {
         continue;
       }
       const childPath = path ? `${path}.${key}` : key;

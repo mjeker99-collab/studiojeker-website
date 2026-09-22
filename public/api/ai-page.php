@@ -124,6 +124,28 @@ $query = <<<GROQ
     contentFormats{$imageProjection},
     distributionChannels{$imageProjection}
   },
+  landscapeBreaks{
+    afterAi{
+      image{$imageProjection},
+      caption{$localized}
+    },
+    afterDistribution{
+      image{$imageProjection},
+      caption{$localized}
+    },
+    afterVisibility{
+      image{$imageProjection},
+      caption{$localized}
+    },
+    afterApplications{
+      image{$imageProjection},
+      caption{$localized}
+    },
+    afterExperience{
+      image{$imageProjection},
+      caption{$localized}
+    }
+  },
   closingSection{
     headline{$localized},
     text{$localized},

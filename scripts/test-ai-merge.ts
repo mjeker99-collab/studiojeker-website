@@ -321,6 +321,91 @@ async function main() {
     "existing intro headline unchanged by visual merge",
   );
 
+  const landscapeStub: SanityAi = {
+    ...stub,
+    landscapeBreaks: {
+      afterAi: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-ai.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Produktion / KI Break",
+          asset: { _ref: "image-ai-break-ai", _type: "reference" },
+        },
+      },
+      afterDistribution: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-dist.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Distribution Break",
+          asset: { _ref: "image-ai-break-dist", _type: "reference" },
+        },
+      },
+      afterVisibility: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-vis.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Visibility Break",
+          asset: { _ref: "image-ai-break-vis", _type: "reference" },
+        },
+      },
+      afterApplications: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-apps.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Applications Break",
+          asset: { _ref: "image-ai-break-apps", _type: "reference" },
+        },
+      },
+      afterExperience: {
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-exp.jpg",
+          dimensions: { width: 1920, height: 1080 },
+          alt: "Experience Break",
+          asset: { _ref: "image-ai-break-exp", _type: "reference" },
+        },
+      },
+    },
+  };
+  const withLandscape = mergeSanityAi(baseDe, landscapeStub, "de");
+  assert(
+    withLandscape.landscapeBreaks.afterAi?.src?.includes("ai-break-ai"),
+    "landscape afterAi merges",
+  );
+  assert(
+    withLandscape.landscapeBreaks.afterAi?.alt === "Produktion / KI Break",
+    "landscape afterAi alt editable",
+  );
+  assert(
+    withLandscape.landscapeBreaks.afterDistribution?.src?.includes(
+      "ai-break-dist",
+    ),
+    "landscape afterDistribution merges",
+  );
+  assert(
+    withLandscape.landscapeBreaks.afterVisibility?.src?.includes("ai-break-vis"),
+    "landscape afterVisibility merges",
+  );
+  assert(
+    withLandscape.landscapeBreaks.afterApplications?.src?.includes(
+      "ai-break-apps",
+    ),
+    "landscape afterApplications merges",
+  );
+  assert(
+    withLandscape.landscapeBreaks.afterExperience?.src?.includes("ai-break-exp"),
+    "landscape afterExperience merges",
+  );
+  assert(
+    !withLandscape.landscapeBreaks.afterAi ||
+      Boolean(withLandscape.landscapeBreaks.afterAi.src),
+    "landscape empty slots stay collapsed when missing",
+  );
+  const emptyLandscape = mergeSanityAi(baseDe, stub, "de");
+  assert(
+    !emptyLandscape.landscapeBreaks.afterAi?.src,
+    "empty landscape afterAi collapses",
+  );
+
   const captionStub: SanityAi = {
     ...stub,
     experienceSection: {
