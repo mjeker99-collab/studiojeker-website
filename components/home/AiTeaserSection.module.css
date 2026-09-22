@@ -1,4 +1,4 @@
-/* Mirrors ShowreelSection: black editorial teaser, cyan accent, two-column desktop. */
+/* KI teaser: black editorial block. Desktop media-left / copy-right; mobile copy→media. */
 
 .section {
   position: relative;
@@ -95,11 +95,27 @@
 }
 
 @media (min-width: 64rem) {
+  /*
+   * Desktop with media: image left, copy right.
+   * Mobile keeps DOM order (copy → media). Cyan bar sits between columns.
+   */
   .gridWithMedia {
-    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+    grid-template-columns: minmax(0, 0.64fr) minmax(0, 0.36fr);
   }
 
-  .copy {
+  .gridWithMedia .mediaWrap {
+    order: 1;
+    flex-direction: row-reverse;
+  }
+
+  .gridWithMedia .copy {
+    order: 2;
+    padding-block: 4.5rem;
+    padding-left: var(--space-5);
+    padding-right: max(var(--container-padding-x), 3.5%);
+  }
+
+  .grid:not(.gridWithMedia) .copy {
     padding-block: 4.5rem;
     padding-right: var(--space-5);
     padding-left: max(var(--container-padding-x), 3.5%);
