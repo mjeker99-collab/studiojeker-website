@@ -98,6 +98,20 @@ export type HomepageContent = {
     media: HomepageMedia;
     videoId?: string;
   };
+  /**
+   * Editorial teaser to the KI / AI page.
+   * Media is optional — omit image/video rather than show a broken frame.
+   */
+  aiTeaser: {
+    enabled: boolean;
+    label: string;
+    headline: string;
+    body: string;
+    cta: { label: string; href: string };
+    media?: HomepageMedia;
+    /** Short muted Vimeo loop (not the full KI showreel). */
+    videoId?: string;
+  };
   clients: {
     label: string;
     logos: HomepageClientLogo[];

@@ -8,6 +8,7 @@ import { getHomepageContent } from "@/lib/content/homepage";
 import { mergeSanityHomepage } from "@/lib/content/merge-sanity-homepage";
 import { AboutSection } from "@/components/home/AboutSection";
 import { AboSection } from "@/components/home/AboSection";
+import { AiTeaserSection } from "@/components/home/AiTeaserSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { FinalCtaSection } from "@/components/home/FinalCtaSection";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -111,6 +112,10 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
       <AboutSection
         key={`about-${resolved.about.headline}-${resolved.about.media.src}-${resolved.about.videoId ?? "image"}`}
         content={resolved.about}
+      />
+      <AiTeaserSection
+        key={`ai-teaser-${resolved.aiTeaser.headline}-${resolved.aiTeaser.media?.src ?? "none"}-${resolved.aiTeaser.videoId ?? "image"}-${resolved.aiTeaser.enabled}`}
+        content={resolved.aiTeaser}
       />
       <ClientsSection content={resolved.clients} />
       <FinalCtaSection content={resolved.finalCta} />

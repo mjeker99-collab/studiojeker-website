@@ -1,6 +1,6 @@
 import type { Locale } from "@/types/i18n";
 import type { HomepageContent } from "@/types/homepage";
-import { getAboPath, localizePathname } from "@/lib/i18n/config";
+import { getAboPath, getAiPath, localizePathname } from "@/lib/i18n/config";
 import { getClientLogos } from "@/lib/content/clients";
 
 /**
@@ -13,6 +13,7 @@ export function getHomepageContent(locale: Locale): HomepageContent {
   const work = localizePathname("/work", locale);
   const about = localizePathname("/about", locale);
   const abo = getAboPath(locale);
+  const ai = getAiPath(locale);
 
   const architectureHref = localizePathname(
     "/services/architecture",
@@ -201,6 +202,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
           width: 1600,
           height: 1066,
         },
+      },
+      aiTeaser: {
+        enabled: true,
+        label: "ARTIFICIAL INTELLIGENCE",
+        headline: "AI. Where experience meets new possibilities.",
+        body: "Studiojeker combines more than 30 years of experience in photography, film and 3D with the possibilities of artificial intelligence – from concept and production to distribution.",
+        cta: { label: "AI AT STUDIOJEKER", href: ai },
       },
       clients: {
         label: "Brands that trust us",
@@ -391,6 +399,13 @@ export function getHomepageContent(locale: Locale): HomepageContent {
         width: 1600,
         height: 1066,
       },
+    },
+    aiTeaser: {
+      enabled: true,
+      label: "KÜNSTLICHE INTELLIGENZ",
+      headline: "KI. Wenn Erfahrung auf neue Möglichkeiten trifft.",
+      body: "Studiojeker verbindet über 30 Jahre Erfahrung in Fotografie, Film und 3D mit den Möglichkeiten künstlicher Intelligenz – vom Konzept über die Produktion bis zur Distribution.",
+      cta: { label: "KI BEI STUDIOJEKER", href: ai },
     },
     clients: {
       label: "Brands, die uns vertrauen",

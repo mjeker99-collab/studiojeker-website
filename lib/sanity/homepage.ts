@@ -153,6 +153,14 @@ export const homepageQuery = groq`*[_id == $id && _type == "homepage"][0]{
     cta${ctaProjection},
     media${sanityMediaProjection}
   },
+  aiTeaserSection{
+    enabled,
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    cta${ctaProjection},
+    media${sanityMediaProjection}
+  },
   clientsSection{
     label${localizedStringProjection},
     "logos": ${allEnabledClientLogosProjection}
@@ -231,6 +239,14 @@ export type SanityHomepage = {
     label?: SanityLocalizedString;
     headline?: SanityLocalizedString;
     subheadline?: SanityLocalizedString;
+    text?: SanityLocalizedText;
+    cta?: SanityCta;
+    media?: SanityMediaField;
+  } | null;
+  aiTeaserSection?: {
+    enabled?: boolean | null;
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
     text?: SanityLocalizedText;
     cta?: SanityCta;
     media?: SanityMediaField;
