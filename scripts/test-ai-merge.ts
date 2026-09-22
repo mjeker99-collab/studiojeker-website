@@ -181,6 +181,35 @@ async function main() {
   const withVideo = mergeSanityAi(baseDe, videoStub, "de");
   assert(withVideo.hero.videoId === "1216347773", "hero Vimeo id resolved");
 
+  const videoWithoutUrl: SanityAi = {
+    ...stub,
+    heroSection: {
+      ...stub.heroSection,
+      media: {
+        mediaType: "video",
+        vimeoUrl: "",
+        image: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-hero-still.jpg",
+          dimensions: { width: 1600, height: 1200 },
+          alt: "Hero still fallback",
+          asset: { _ref: "image-ai-hero-still", _type: "reference" },
+        },
+        poster: {
+          url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-poster-portrait.jpg",
+          dimensions: { width: 752, height: 1344 },
+          alt: "Poster",
+          asset: { _ref: "image-ai-poster-portrait", _type: "reference" },
+        },
+      },
+    },
+  };
+  const videoMissingUrl = mergeSanityAi(baseDe, videoWithoutUrl, "de");
+  assert(!videoMissingUrl.hero.videoId, "missing Vimeo URL → no videoId");
+  assert(
+    videoMissingUrl.hero.media.src?.includes("ai-hero-still"),
+    "missing Vimeo URL falls back to hero Image asset",
+  );
+
   const clearedVideo: SanityAi = {
     ...stub,
     heroSection: {

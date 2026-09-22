@@ -297,6 +297,22 @@ export function mergeSanityAi(
     merged.hero.media = heroMedia.media;
     // Always assign (incl. "") — same stale-ID guard as Abo showreel merge.
     merged.hero.videoId = heroMedia.videoId ?? "";
+
+    // Video selected but Vimeo URL missing: keep the still Image asset as
+    // visible fallback (prefer image over portrait poster), matching homepage
+    // “image when no videoId” behaviour.
+    if (!merged.hero.videoId && doc.heroSection.media.mediaType === "video") {
+      const still = resolveSanityMedia(
+        {
+          mediaType: "image",
+          image: doc.heroSection.media.image ?? doc.heroSection.media.poster,
+        },
+        merged.hero.media,
+      );
+      if (still.media.src) {
+        merged.hero.media = still.media;
+      }
+    }
   }
 
   merged.intro = mergeTextSection(merged.intro, doc.introSection, locale);

@@ -370,13 +370,30 @@ export function AiPage({ content }: AiPageProps) {
         inverted
       />
 
+      {/* Bild 4 — Content Formats / DISTRIBUTION (full-width when uploaded) */}
+      {visuals.contentFormats?.src ? (
+        <section
+          className={styles.stillSection}
+          data-header-theme="light"
+          aria-label={visuals.contentFormats.alt || "Content formats"}
+        >
+          <Container>
+            <Reveal>
+              <StillFigure
+                media={visuals.contentFormats}
+                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+              />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
+
       <TextWithMedia
         id="ai-experience-title"
         content={content.experience}
-        fallbackStill={visuals.contentFormats}
-        mediaFirst
       />
 
+      {/* Bild 5 — Social distribution with Approach text */}
       <TextWithMedia
         id="ai-approach-title"
         content={content.approach}
