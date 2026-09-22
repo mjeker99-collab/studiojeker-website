@@ -129,6 +129,14 @@ $query = <<<GROQ
     cta{$cta},
     media{$mediaProjection}
   },
+  aiTeaserSection{
+    enabled,
+    label{$localized},
+    headline{$localized},
+    text{$localized},
+    cta{$cta},
+    media{$mediaProjection}
+  },
   clientsSection{
     label{$localized},
     "logos": *[_type == "client" && active != false && defined(logo.asset)] | order(coalesce(sortOrder, 999999) asc) {

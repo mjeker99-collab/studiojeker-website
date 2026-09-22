@@ -7,7 +7,7 @@ import styles from "./HeroVimeoLoop.module.css";
 type HeroVimeoLoopProps = {
   videoId: string;
   title: string;
-  poster: {
+  poster?: {
     src: string;
     alt: string;
     width: number;
@@ -79,15 +79,17 @@ export function HeroVimeoLoop({ videoId, title, poster }: HeroVimeoLoopProps) {
 
   return (
     <div ref={rootRef} className={styles.root}>
-      <Image
-        key={poster.src}
-        src={poster.src}
-        alt={poster.alt}
-        fill
-        priority
-        sizes="(max-width: 1024px) 100vw, 64vw"
-        className={styles.poster}
-      />
+      {poster?.src ? (
+        <Image
+          key={poster.src}
+          src={poster.src}
+          alt={poster.alt}
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 64vw"
+          className={styles.poster}
+        />
+      ) : null}
       <iframe
         ref={iframeRef}
         className={styles.iframe}

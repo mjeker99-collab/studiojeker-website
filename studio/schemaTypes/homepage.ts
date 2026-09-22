@@ -107,6 +107,7 @@ export const homepage = defineType({
     { name: "projects", title: "Work / Projects" },
     { name: "abo", title: "Sichtbarkeit im Abo" },
     { name: "about", title: "About teaser" },
+    { name: "aiTeaser", title: "KI / AI teaser" },
     { name: "clients", title: "Clients / Logos" },
     { name: "finalCta", title: "Final CTA" },
     { name: "seo", title: "SEO" },
@@ -396,6 +397,59 @@ export const homepage = defineType({
           title: "About Media",
           type: "mediaField",
           description: "Image or Vimeo video for the About teaser.",
+        }),
+      ],
+    }),
+
+    // -------------------------------------------------------------------------
+    // KI / AI teaser (homepage only — does not edit the /ki page)
+    // -------------------------------------------------------------------------
+    defineField({
+      name: "aiTeaserSection",
+      title: "KI / AI Teaser",
+      type: "object",
+      group: "aiTeaser",
+      options: { collapsible: true },
+      description:
+        "Homepage teaser to /ki (DE) and /en/ai (EN). Reuses the Showreel layout pattern. Prefer Designer/Motorrad key visual; optional short Vimeo loop (not the full KI showreel).",
+      fields: [
+        defineField({
+          name: "enabled",
+          title: "Show on Homepage",
+          type: "boolean",
+          initialValue: true,
+          description:
+            "When off, the teaser is hidden on the website without deleting the content.",
+        }),
+        defineField({
+          name: "label",
+          title: "Eyebrow",
+          type: "localizedString",
+          description: "Small label above the headline (e.g. KÜNSTLICHE INTELLIGENZ).",
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "text",
+          title: "Description",
+          type: "localizedText",
+        }),
+        defineField({
+          name: "cta",
+          title: "CTA",
+          type: "ctaField",
+          description:
+            "Button label + link. Use /ki (locale maps EN to /en/ai). Arrow is added by the website.",
+        }),
+        defineField({
+          name: "media",
+          title: "Teaser Media",
+          type: "mediaField",
+          description:
+            "Image (preferred: Designer/Motorrad vor Alpen) or short Vimeo loop. Video: muted autoplay loop, no controls. Do not use the full 30s KI showreel here.",
         }),
       ],
     }),

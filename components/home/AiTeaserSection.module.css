@@ -1,0 +1,125 @@
+/* Mirrors ShowreelSection: black editorial teaser, cyan accent, two-column desktop. */
+
+.section {
+  position: relative;
+  background: var(--color-black);
+  color: var(--color-white);
+  overflow: hidden;
+}
+
+.grid {
+  display: grid;
+  align-items: stretch;
+}
+
+.copy {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  max-width: 30rem;
+  padding: var(--section-padding-y-compact) var(--container-padding-x);
+}
+
+/* When CMS has no image/video yet, avoid a hollow right column. */
+.grid:not(.gridWithMedia) .copy {
+  max-width: min(40rem, 100%);
+}
+
+.headline {
+  margin: 0;
+  max-width: 12em;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--color-white);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.mediaWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  height: 100%;
+  min-height: 16rem;
+}
+
+.mediaFrame,
+.mediaLink {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
+  width: auto;
+  height: auto;
+  min-height: 16rem;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--color-dark);
+  color: inherit;
+  text-align: left;
+}
+
+.mediaLink {
+  cursor: pointer;
+}
+
+.image {
+  object-fit: cover;
+  transition:
+    transform 350ms var(--ease-standard),
+    filter 350ms var(--ease-standard);
+}
+
+.mediaLink:hover .image,
+.mediaLink:focus-visible .image {
+  transform: scale(1.04);
+  filter: brightness(0.78);
+}
+
+@media (min-width: 48rem) {
+  .mediaWrap,
+  .mediaFrame,
+  .mediaLink {
+    min-height: 22rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .gridWithMedia {
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr);
+  }
+
+  .copy {
+    padding-block: 4.5rem;
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
+  }
+
+  .mediaWrap,
+  .mediaFrame,
+  .mediaLink {
+    min-height: 24rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transition: none;
+  }
+
+  .mediaLink:hover .image,
+  .mediaLink:focus-visible .image {
+    transform: none;
+    filter: none;
+  }
+}

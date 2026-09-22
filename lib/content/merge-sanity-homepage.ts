@@ -6,7 +6,7 @@ import type {
   HomepageProject,
   HomepageService,
 } from "@/types/homepage";
-import { localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
+import { getAiPath, localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
 import {
   type SanityHomepage,
   type SanityHomepageBenefitItem,
@@ -140,6 +140,8 @@ const ABO_PATH_SLUGS = new Set([
   "/de/content-abo",
 ]);
 
+const AI_PATH_SLUGS = new Set(["/ki", "/ai", "/en/ki", "/en/ai"]);
+
 /**
  * Abo CTA destinations use translated slugs (DE `/content-abo`,
  * EN `/en/content-subscription`). Remap known abo paths to the
@@ -167,6 +169,37 @@ function resolveAboCtaHref(
   const stripped = stripLocalePrefix(value).replace(/\/$/, "") || "/";
   if (ABO_PATH_SLUGS.has(stripped)) {
     return fallback;
+  }
+
+  return localizePathname(value, locale);
+}
+
+/**
+ * KI / AI CTA destinations use translated slugs (DE `/ki`, EN `/en/ai`).
+ * Remap known AI paths to the locale-correct URL; keep other links as-is.
+ */
+function resolveAiCtaHref(
+  href: string | null | undefined,
+  locale: Locale,
+  fallback: string,
+): string {
+  const value = sanitizeHref(clean(href));
+  if (!value) {
+    return fallback;
+  }
+
+  if (
+    value.startsWith("#") ||
+    /^https:/i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
+  ) {
+    return value;
+  }
+
+  const stripped = stripLocalePrefix(value).replace(/\/$/, "") || "/";
+  if (AI_PATH_SLUGS.has(stripped) || AI_PATH_SLUGS.has(value.replace(/\/$/, ""))) {
+    return fallback || getAiPath(locale);
   }
 
   return localizePathname(value, locale);
@@ -430,6 +463,11 @@ export function mergeSanityHomepage(
       benefits: [...base.abo.benefits],
     },
     about: { ...base.about, media: { ...base.about.media }, cta: { ...base.about.cta } },
+    aiTeaser: {
+      ...base.aiTeaser,
+      cta: { ...base.aiTeaser.cta },
+      ...(base.aiTeaser.media ? { media: { ...base.aiTeaser.media } } : {}),
+    },
     clients: { ...base.clients, logos: [...base.clients.logos] },
     finalCta: { ...base.finalCta, cta: { ...base.finalCta.cta } },
   };
@@ -644,6 +682,51 @@ export function mergeSanityHomepage(
     const aboutMedia = applyMediaSection(base.about.media, doc.aboutSection.media);
     merged.about.media = aboutMedia.media;
     merged.about.videoId = aboutMedia.videoId;
+  }
+
+  // KI / AI homepage teaser — Showreel-pattern block; media optional.
+  if (doc.aiTeaserSection) {
+    merged.aiTeaser.enabled = doc.aiTeaserSection.enabled !== false;
+
+    const aiLabel = pickLocalized(doc.aiTeaserSection.label, locale);
+    if (aiLabel) merged.aiTeaser.label = aiLabel;
+
+    const aiHeadline = pickLocalized(doc.aiTeaserSection.headline, locale);
+    if (aiHeadline) merged.aiTeaser.headline = aiHeadline;
+
+    const aiText = pickLocalized(doc.aiTeaserSection.text, locale);
+    if (aiText) merged.aiTeaser.body = aiText;
+
+    const aiCtaLabel = pickLocalized(doc.aiTeaserSection.cta?.label, locale);
+    if (aiCtaLabel) {
+      // Website Button already renders → — strip a trailing arrow from CMS copy.
+      merged.aiTeaser.cta.label = aiCtaLabel.replace(/\s*→\s*$/u, "").trim();
+    }
+
+    merged.aiTeaser.cta.href = resolveAiCtaHref(
+      doc.aiTeaserSection.cta?.href,
+      locale,
+      base.aiTeaser.cta.href,
+    );
+
+    if (doc.aiTeaserSection.media) {
+      const emptyFallback: HomepageMedia = {
+        src: "",
+        alt: "",
+        width: 1600,
+        height: 900,
+      };
+      const aiMedia = applyMediaSection(
+        base.aiTeaser.media ?? emptyFallback,
+        doc.aiTeaserSection.media,
+      );
+      if (aiMedia.media.src) {
+        merged.aiTeaser.media = aiMedia.media;
+      } else {
+        delete merged.aiTeaser.media;
+      }
+      merged.aiTeaser.videoId = aiMedia.videoId;
+    }
   }
 
   const clientsLabel = pickLocalized(doc.clientsSection?.label, locale);
