@@ -40,6 +40,7 @@ export type SanityAiTextSection = {
   headline?: SanityLocalizedString;
   text?: SanityLocalizedText;
   media?: SanityMediaField;
+  caption?: SanityLocalizedString;
 } | null;
 
 export type SanityAi = {
@@ -68,6 +69,7 @@ export type SanityAi = {
     headline?: SanityLocalizedString;
     items?: SanityAiApplicationItem[] | null;
     media?: SanityMediaField;
+    caption?: SanityLocalizedString;
   } | null;
   modelsSection?: SanityAiTextSection;
   experienceSection?: SanityAiTextSection;
@@ -109,7 +111,8 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
   introSection{
     headline${localizedStringProjection},
     text${localizedTextProjection},
-    media${sanityMediaProjection}
+    media${sanityMediaProjection},
+    caption${localizedStringProjection}
   },
   processSection{
     label${localizedStringProjection},
@@ -138,22 +141,26 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
       title${localizedStringProjection},
       description${localizedTextProjection}
     },
-    media${sanityMediaProjection}
+    media${sanityMediaProjection},
+    caption${localizedStringProjection}
   },
   modelsSection{
     headline${localizedStringProjection},
     text${localizedTextProjection},
-    media${sanityMediaProjection}
+    media${sanityMediaProjection},
+    caption${localizedStringProjection}
   },
   experienceSection{
     headline${localizedStringProjection},
     text${localizedTextProjection},
-    media${sanityMediaProjection}
+    media${sanityMediaProjection},
+    caption${localizedStringProjection}
   },
   approachSection{
     headline${localizedStringProjection},
     text${localizedTextProjection},
-    media${sanityMediaProjection}
+    media${sanityMediaProjection},
+    caption${localizedStringProjection}
   },
   visualMedia{
     keyVisual${sanityImageProjection},

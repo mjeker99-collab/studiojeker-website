@@ -125,7 +125,11 @@ async function main() {
   const existing = await client.getDocument(AI_ID).catch(() => null);
   if (existing) {
     console.log(
-      `KI/AI singleton ${AI_ID} already exists (_updatedAt=${existing._updatedAt}). Skipping seed to preserve Studio edits.`,
+      `KI/AI singleton ${AI_ID} already exists (_updatedAt=${existing._updatedAt}).`,
+    );
+    console.log(
+      "Skipping create. To fill empty text fields without overwriting edits, run:\n" +
+        "  npx tsx scripts/fill-ai-page-defaults.ts",
     );
     return;
   }

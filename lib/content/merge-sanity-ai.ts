@@ -127,6 +127,7 @@ function mergeTextSection(
   const text = pickLocalized(section?.text, locale);
   const body = text ? splitParagraphs(text) : base.body;
   const mediaResult = mergeOptionalMedia(section?.media, base.media);
+  const caption = pickLocalized(section?.caption, locale) ?? base.caption;
   const next: AiTextBlock = {
     headline,
     body: body.length > 0 ? body : base.body,
@@ -139,6 +140,9 @@ function mergeTextSection(
     next.videoId = mediaResult.videoId;
   } else if (base.videoId) {
     next.videoId = base.videoId;
+  }
+  if (caption) {
+    next.caption = caption;
   }
   return next;
 }
@@ -352,6 +356,13 @@ export function mergeSanityAi(
       merged.applications.media = applicationsMedia.media;
     }
     merged.applications.videoId = applicationsMedia.videoId;
+  }
+  const applicationsCaption = pickLocalized(
+    doc.applicationsSection?.caption,
+    locale,
+  );
+  if (applicationsCaption) {
+    merged.applications.caption = applicationsCaption;
   }
 
   merged.models = mergeTextSection(merged.models, doc.modelsSection, locale);

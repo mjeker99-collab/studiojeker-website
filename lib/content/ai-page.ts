@@ -22,6 +22,8 @@ export type AiTextBlock = {
   body: string[];
   media?: HomepageMedia;
   videoId?: string;
+  /** Optional editor caption under the section media. */
+  caption?: string;
 };
 
 export type AiPageContent = {
@@ -57,6 +59,7 @@ export type AiPageContent = {
     items: AiApplicationItem[];
     media?: HomepageMedia;
     videoId?: string;
+    caption?: string;
   };
   models: AiTextBlock;
   experience: AiTextBlock;

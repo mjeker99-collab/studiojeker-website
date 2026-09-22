@@ -8,6 +8,7 @@ import { mediaPath } from "@/lib/media/paths";
 import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
+import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
@@ -20,52 +21,81 @@ type AiPageProps = {
 };
 
 /**
- * Showreel still — native aspect ratio (no aggressive cover crop).
- * Renders nothing when Sanity has not published a src (no grey placeholders).
+ * Optional section media — image (native aspect) or Vimeo.
+ * Renders nothing when no src / videoId (no grey placeholders).
  */
-function StillFigure({
+function SectionMediaSlot({
   media,
+  videoId,
+  caption,
   sizes,
-  className,
 }: {
-  media: HomepageMedia;
+  media?: HomepageMedia;
+  videoId?: string;
+  caption?: string;
   sizes: string;
-  className?: string;
 }) {
-  if (!media.src) return null;
+  const hasImage = Boolean(media?.src);
+  const hasVideo = Boolean(videoId);
+
+  if (!hasImage && !hasVideo) return null;
 
   return (
-    <figure className={[styles.still, className].filter(Boolean).join(" ")}>
-      <Image
-        src={mediaPath(media.src)}
-        alt={media.alt}
-        width={media.width}
-        height={media.height}
-        sizes={sizes}
-        className={styles.stillImage}
-      />
+    <figure className={styles.mediaSlot}>
+      {hasVideo && videoId ? (
+        <div className={styles.mediaVideoFrame}>
+          <VimeoShowreel
+            fill
+            videoId={videoId}
+            title={media?.alt || caption || "Video"}
+            poster={
+              hasImage && media
+                ? {
+                    src: mediaPath(media.src),
+                    alt: media.alt,
+                    width: media.width,
+                    height: media.height,
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : hasImage && media ? (
+        <Image
+          src={mediaPath(media.src)}
+          alt={media.alt}
+          width={media.width}
+          height={media.height}
+          sizes={sizes}
+          className={styles.stillImage}
+        />
+      ) : null}
+      {caption ? <figcaption className={styles.mediaCaption}>{caption}</figcaption> : null}
     </figure>
   );
 }
 
 /**
- * Text + optional still in the existing two-column Studiojeker rhythm.
- * When still is missing, layout collapses to text-only (no empty media slot).
+ * Text + optional Sanity media (image or video) in the Studiojeker two-column rhythm.
+ * When media is missing, layout collapses to text-only.
  */
-function TextWithStill({
+function TextWithMedia({
   id,
   content,
-  still,
+  fallbackStill,
   inverted = false,
-  stillFirst = false,
+  mediaFirst = false,
 }: {
   id: string;
   content: AiTextBlock;
-  still?: HomepageMedia;
+  /** Optional still from visualMedia when section media is empty. */
+  fallbackStill?: HomepageMedia;
   inverted?: boolean;
-  stillFirst?: boolean;
+  mediaFirst?: boolean;
 }) {
-  const hasStill = Boolean(still?.src);
+  const media = content.media?.src ? content.media : fallbackStill;
+  const videoId = content.videoId;
+  const hasMedia = Boolean(media?.src || videoId);
 
   return (
     <section
@@ -79,8 +109,8 @@ function TextWithStill({
         <div
           className={[
             styles.textSectionGrid,
-            hasStill ? styles.textSectionWithMedia : "",
-            hasStill && stillFirst ? styles.textSectionStillFirst : "",
+            hasMedia ? styles.textSectionWithMedia : "",
+            hasMedia && mediaFirst ? styles.textSectionStillFirst : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -95,10 +125,12 @@ function TextWithStill({
               ))}
             </div>
           </Reveal>
-          {hasStill && still ? (
+          {hasMedia ? (
             <Reveal className={styles.textSectionMedia} delayMs={80}>
-              <StillFigure
-                media={still}
+              <SectionMediaSlot
+                media={media}
+                videoId={videoId}
+                caption={content.caption}
                 sizes="(max-width: 1024px) 100vw, 48vw"
               />
             </Reveal>
@@ -106,6 +138,29 @@ function TextWithStill({
         </div>
       </Container>
     </section>
+  );
+}
+
+function StillFigure({
+  media,
+  sizes,
+}: {
+  media: HomepageMedia;
+  sizes: string;
+}) {
+  if (!media.src) return null;
+
+  return (
+    <figure className={styles.still}>
+      <Image
+        src={mediaPath(media.src)}
+        alt={media.alt}
+        width={media.width}
+        height={media.height}
+        sizes={sizes}
+        className={styles.stillImage}
+      />
+    </figure>
   );
 }
 
@@ -129,10 +184,6 @@ export function AiPage({ content }: AiPageProps) {
         aria-labelledby="ai-hero-title"
       >
         <div className={heroStyles.grid}>
-          {/*
-            min-width: 0 + break-word on page-local heroCopy — same fix as
-            ServiceHero — so the long DE headline cannot overflow into media.
-          */}
           <Reveal className={[heroStyles.copy, styles.heroCopy].join(" ")}>
             <SectionLabel>{content.hero.label}</SectionLabel>
             <h1
@@ -189,17 +240,12 @@ export function AiPage({ content }: AiPageProps) {
         </div>
       </section>
 
-      {/* Bild 1 — keyvisual with intro text */}
-      <TextWithStill
+      <TextWithMedia
         id="ai-intro-title"
         content={content.intro}
-        still={visuals.keyVisual}
+        fallbackStill={visuals.keyVisual}
       />
 
-      {/*
-        Showreel — identical About video block (AboutSection + VimeoShowreel).
-        About page itself is not modified; we only reuse the component.
-      */}
       <AboutSection
         key={`ai-showreel-${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
         compact
@@ -276,10 +322,19 @@ export function AiPage({ content }: AiPageProps) {
               </Reveal>
             ))}
           </div>
+          {content.applications.media?.src || content.applications.videoId ? (
+            <Reveal className={styles.applicationsMedia} delayMs={80}>
+              <SectionMediaSlot
+                media={content.applications.media}
+                videoId={content.applications.videoId}
+                caption={content.applications.caption}
+                sizes="100vw"
+              />
+            </Reveal>
+          ) : null}
         </Container>
       </section>
 
-      {/* Bild 2 + 3 — Clay / photoreal pair (Production ↔ 3D) */}
       {hasVillaPair ? (
         <section
           className={styles.stillSection}
@@ -309,21 +364,23 @@ export function AiPage({ content }: AiPageProps) {
         </section>
       ) : null}
 
-      <TextWithStill id="ai-models-title" content={content.models} inverted />
-
-      {/* Bild 4 — content formats / Distribution */}
-      <TextWithStill
-        id="ai-experience-title"
-        content={content.experience}
-        still={visuals.contentFormats}
-        stillFirst
+      <TextWithMedia
+        id="ai-models-title"
+        content={content.models}
+        inverted
       />
 
-      {/* Bild 5 — channels / Visibility */}
-      <TextWithStill
+      <TextWithMedia
+        id="ai-experience-title"
+        content={content.experience}
+        fallbackStill={visuals.contentFormats}
+        mediaFirst
+      />
+
+      <TextWithMedia
         id="ai-approach-title"
         content={content.approach}
-        still={visuals.distributionChannels}
+        fallbackStill={visuals.distributionChannels}
         inverted
       />
 
