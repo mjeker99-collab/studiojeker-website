@@ -90,7 +90,9 @@ export type SanityAi = {
     afterAi?: SanityAiLandscapeBreak;
     afterDistribution?: SanityAiLandscapeBreak;
     afterVisibility?: SanityAiLandscapeBreak;
+    midApplications?: SanityAiLandscapeBreak;
     afterApplications?: SanityAiLandscapeBreak;
+    afterModels?: SanityAiLandscapeBreak;
     afterExperience?: SanityAiLandscapeBreak;
   } | null;
   closingSection?: {
@@ -194,7 +196,15 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
+    midApplications{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
     afterApplications{
+      image${sanityImageProjection},
+      caption${localizedStringProjection}
+    },
+    afterModels{
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },

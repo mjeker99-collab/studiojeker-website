@@ -327,6 +327,10 @@ export function AiPage({ content }: AiPageProps) {
                 step.id,
                 landscapeBreaks,
               );
+              const isLast = index >= content.process.steps.length - 1;
+              const hasBreak = Boolean(breakMedia?.src);
+              // Arrow toward the next step, or toward a landscape break on the last step.
+              const showArrow = !isLast || hasBreak;
               return (
                 <li key={step.id} className={styles.processItem}>
                   <Reveal
@@ -337,12 +341,12 @@ export function AiPage({ content }: AiPageProps) {
                     <h3 className={styles.processTitle}>{step.title}</h3>
                     <p className={styles.processText}>{step.description}</p>
                   </Reveal>
-                  {index < content.process.steps.length - 1 ? (
+                  {showArrow ? (
                     <span className={styles.processArrow} aria-hidden="true">
                       ↓
                     </span>
                   ) : null}
-                  {breakMedia?.src ? (
+                  {hasBreak ? (
                     <Reveal className={styles.processLandscape} delayMs={60}>
                       <LandscapeBreak media={breakMedia} />
                     </Reveal>
@@ -365,20 +369,61 @@ export function AiPage({ content }: AiPageProps) {
               {content.applications.headline}
             </h2>
           </Reveal>
-          <div className={styles.applicationsGrid}>
-            {content.applications.items.map((item, index) => (
-              <Reveal
-                key={item.id}
-                as="article"
-                className={styles.application}
-                delayMs={index * 40}
-              >
-                <p className={styles.applicationNumber}>{item.number}</p>
-                <h3 className={styles.applicationTitle}>{item.title}</h3>
-                <p className={styles.applicationText}>{item.description}</p>
-              </Reveal>
-            ))}
-          </div>
+          {(() => {
+            const items = content.applications.items;
+            const firstBand = items.slice(0, 3);
+            const secondBand = items.slice(3);
+            return (
+              <>
+                <div className={styles.applicationsGrid}>
+                  {firstBand.map((item, index) => (
+                    <Reveal
+                      key={item.id}
+                      as="article"
+                      className={styles.application}
+                      delayMs={index * 40}
+                    >
+                      <p className={styles.applicationNumber}>{item.number}</p>
+                      <h3 className={styles.applicationTitle}>{item.title}</h3>
+                      <p className={styles.applicationText}>
+                        {item.description}
+                      </p>
+                    </Reveal>
+                  ))}
+                </div>
+                {landscapeBreaks.midApplications?.src ? (
+                  <Reveal className={styles.applicationsLandscape} delayMs={60}>
+                    <span className={styles.processArrow} aria-hidden="true">
+                      ↓
+                    </span>
+                    <LandscapeBreak media={landscapeBreaks.midApplications} />
+                  </Reveal>
+                ) : null}
+                {secondBand.length > 0 ? (
+                  <div className={styles.applicationsGrid}>
+                    {secondBand.map((item, index) => (
+                      <Reveal
+                        key={item.id}
+                        as="article"
+                        className={styles.application}
+                        delayMs={index * 40}
+                      >
+                        <p className={styles.applicationNumber}>
+                          {item.number}
+                        </p>
+                        <h3 className={styles.applicationTitle}>
+                          {item.title}
+                        </h3>
+                        <p className={styles.applicationText}>
+                          {item.description}
+                        </p>
+                      </Reveal>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            );
+          })()}
           {content.applications.media?.src || content.applications.videoId ? (
             <Reveal className={styles.applicationsMedia} delayMs={80}>
               <SectionMediaSlot
@@ -399,7 +444,10 @@ export function AiPage({ content }: AiPageProps) {
           aria-label={landscapeBreaks.afterApplications.alt || "Landscape"}
         >
           <Container>
-            <Reveal>
+            <Reveal className={styles.landscapeWithArrow}>
+              <span className={styles.processArrow} aria-hidden="true">
+                ↓
+              </span>
               <LandscapeBreak media={landscapeBreaks.afterApplications} />
             </Reveal>
           </Container>
@@ -441,6 +489,23 @@ export function AiPage({ content }: AiPageProps) {
         inverted
       />
 
+      {landscapeBreaks.afterModels?.src ? (
+        <section
+          className={styles.landscapeSection}
+          data-header-theme="light"
+          aria-label={landscapeBreaks.afterModels.alt || "Landscape"}
+        >
+          <Container>
+            <Reveal className={styles.landscapeWithArrow}>
+              <span className={styles.processArrow} aria-hidden="true">
+                ↓
+              </span>
+              <LandscapeBreak media={landscapeBreaks.afterModels} />
+            </Reveal>
+          </Container>
+        </section>
+      ) : null}
+
       {/* Bild 4 — Content Formats / DISTRIBUTION (full-width when uploaded) */}
       {visuals.contentFormats?.src ? (
         <section
@@ -471,7 +536,10 @@ export function AiPage({ content }: AiPageProps) {
           aria-label={landscapeBreaks.afterExperience.alt || "Landscape"}
         >
           <Container>
-            <Reveal>
+            <Reveal className={styles.landscapeWithArrow}>
+              <span className={styles.processArrow} aria-hidden="true">
+                ↓
+              </span>
               <LandscapeBreak media={landscapeBreaks.afterExperience} />
             </Reveal>
           </Container>

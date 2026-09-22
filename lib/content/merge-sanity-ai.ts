@@ -457,9 +457,19 @@ export function mergeSanityAi(
       merged.landscapeBreaks.afterVisibility = afterVisibility;
     }
 
+    const midApplications = mergeBreak(doc.landscapeBreaks.midApplications);
+    if (midApplications) {
+      merged.landscapeBreaks.midApplications = midApplications;
+    }
+
     const afterApplications = mergeBreak(doc.landscapeBreaks.afterApplications);
     if (afterApplications) {
       merged.landscapeBreaks.afterApplications = afterApplications;
+    }
+
+    const afterModels = mergeBreak(doc.landscapeBreaks.afterModels);
+    if (afterModels) {
+      merged.landscapeBreaks.afterModels = afterModels;
     }
 
     const afterExperience = mergeBreak(doc.landscapeBreaks.afterExperience);
