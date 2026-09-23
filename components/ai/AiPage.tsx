@@ -5,12 +5,12 @@ import type {
 } from "@/lib/content/ai-page";
 import type { HomepageMedia } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
-import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
 import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
+import { CyanBar } from "@/components/ui/CyanBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import heroStyles from "@/components/home/HeroSection.module.css";
@@ -20,180 +20,207 @@ type AiPageProps = {
   content: AiPageContent;
 };
 
+type EditorialTheme = "light" | "dark";
+
 /**
- * Optional section media — image (native aspect) or Vimeo.
- * Renders nothing when no src / videoId (no grey placeholders).
+ * Media frame with cyan bar — image / video / neutral placeholder.
+ * Aspect follows the asset (no forced landscape crop).
  */
-function SectionMediaSlot({
+function MediaWithCyanBar({
   media,
   videoId,
   caption,
   sizes,
+  fillFrame = false,
 }: {
   media?: HomepageMedia;
   videoId?: string;
   caption?: string;
   sizes: string;
+  /** Stretch media to fill editorial column height (cover). */
+  fillFrame?: boolean;
 }) {
   const hasImage = Boolean(media?.src);
   const hasVideo = Boolean(videoId);
 
-  if (!hasImage && !hasVideo) return null;
-
   return (
-    <figure className={styles.mediaSlot}>
-      {hasVideo && videoId ? (
-        <div className={styles.mediaVideoFrame}>
-          <VimeoShowreel
-            fill
-            videoId={videoId}
-            title={media?.alt || caption || "Video"}
-            poster={
-              hasImage && media
-                ? {
-                    src: mediaPath(media.src),
-                    alt: media.alt,
-                    width: media.width,
-                    height: media.height,
-                  }
-                : undefined
-            }
-          />
-        </div>
-      ) : hasImage && media ? (
-        <Image
-          src={mediaPath(media.src)}
-          alt={media.alt}
-          width={media.width}
-          height={media.height}
-          sizes={sizes}
-          className={styles.stillImage}
-        />
+    <figure className={styles.mediaFigure}>
+      <div
+        className={[
+          styles.mediaFrame,
+          fillFrame ? styles.mediaFrameFill : "",
+          !hasImage && !hasVideo ? styles.mediaFramePlaceholder : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <CyanBar boundToMedia />
+        {hasVideo && videoId ? (
+          <div className={styles.mediaVideo}>
+            <VimeoShowreel
+              fill
+              videoId={videoId}
+              title={media?.alt || caption || "Video"}
+              poster={
+                hasImage && media
+                  ? {
+                      src: mediaPath(media.src),
+                      alt: media.alt,
+                      width: media.width,
+                      height: media.height,
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        ) : hasImage && media ? (
+          fillFrame ? (
+            <Image
+              src={mediaPath(media.src)}
+              alt={media.alt}
+              fill
+              sizes={sizes}
+              className={styles.mediaCover}
+            />
+          ) : (
+            <Image
+              src={mediaPath(media.src)}
+              alt={media.alt}
+              width={media.width || 1600}
+              height={media.height || 1200}
+              sizes={sizes}
+              className={styles.mediaIntrinsic}
+            />
+          )
+        ) : (
+          <div className={styles.mediaPlaceholder} aria-hidden="true" />
+        )}
+      </div>
+      {caption ? (
+        <figcaption className={styles.mediaCaption}>{caption}</figcaption>
       ) : null}
-      {caption ? <figcaption className={styles.mediaCaption}>{caption}</figcaption> : null}
     </figure>
   );
 }
 
 /**
- * Text + optional Sanity media (image or video) in the Studiojeker two-column rhythm.
- * When media is missing, layout collapses to text-only.
+ * Large text + media block matching About / Showreel / AI-teaser rhythm.
+ * Light: text left, media right. Dark: media left, white text right.
+ * Missing Sanity media → neutral placeholder (never a repo image).
  */
-function TextWithMedia({
+function EditorialBlock({
   id,
   content,
   fallbackStill,
-  inverted = false,
-  mediaFirst = false,
+  theme = "light",
+  label,
+  cta,
+  singleBody,
+  accentPeriod = false,
 }: {
   id: string;
   content: AiTextBlock;
-  /** Optional still from visualMedia when section media is empty. */
   fallbackStill?: HomepageMedia;
-  inverted?: boolean;
-  mediaFirst?: boolean;
+  theme?: EditorialTheme;
+  label?: string;
+  cta?: { label: string; href: string };
+  /** Use first body paragraph only (showreel-style). */
+  singleBody?: boolean;
+  /** Cyan period after headline (showreel only). */
+  accentPeriod?: boolean;
 }) {
   const media = content.media?.src ? content.media : fallbackStill;
   const videoId = content.videoId;
-  const hasMedia = Boolean(media?.src || videoId);
+  const isDark = theme === "dark";
+  const paragraphs = singleBody
+    ? content.body.slice(0, 1)
+    : content.body;
 
   return (
     <section
-      className={[styles.textSection, inverted ? styles.textSectionAlt : ""]
-        .filter(Boolean)
-        .join(" ")}
-      data-header-theme="light"
+      className={[
+        styles.editorial,
+        isDark ? styles.editorialDark : styles.editorialLight,
+      ].join(" ")}
+      data-header-theme={isDark ? "dark" : "light"}
       aria-labelledby={id}
     >
-      <Container>
-        <div
-          className={[
-            styles.textSectionGrid,
-            hasMedia ? styles.textSectionWithMedia : "",
-            hasMedia && mediaFirst ? styles.textSectionStillFirst : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          <Reveal className={styles.textSectionCopy}>
-            <h2 id={id} className={styles.sectionHeadline}>
-              {content.headline}
-            </h2>
-            <div className={styles.sectionBody}>
-              {content.body.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          </Reveal>
-          {hasMedia ? (
-            <Reveal className={styles.textSectionMedia} delayMs={80}>
-              <SectionMediaSlot
-                media={media}
-                videoId={videoId}
-                caption={content.caption}
-                sizes="(max-width: 1024px) 100vw, 48vw"
-              />
-            </Reveal>
+      <div
+        className={[
+          styles.editorialGrid,
+          isDark ? styles.editorialGridMediaFirst : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <Reveal className={styles.editorialCopy}>
+          {label ? (
+            <SectionLabel inverse={isDark}>{label}</SectionLabel>
           ) : null}
-        </div>
+          <h2 id={id} className={styles.editorialHeadline}>
+            {content.headline}
+            {accentPeriod ? (
+              <span className={styles.headlineAccent}>.</span>
+            ) : null}
+          </h2>
+          <div className={styles.editorialBody}>
+            {paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+          {cta ? (
+            <div>
+              <Button
+                href={cta.href}
+                variant={isDark ? "cyan" : "outline"}
+              >
+                {cta.label}
+              </Button>
+            </div>
+          ) : null}
+        </Reveal>
+
+        <Reveal className={styles.editorialMedia} delayMs={80}>
+          <MediaWithCyanBar
+            media={media}
+            videoId={videoId}
+            caption={content.caption}
+            sizes="(max-width: 1024px) 100vw, 58vw"
+            fillFrame
+          />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/** Optional still — native aspect, cyan bar, placeholder when empty. */
+function StillBreak({
+  media,
+  sizes = "(max-width: 1024px) 100vw, min(100vw, 72rem)",
+  label,
+}: {
+  media?: HomepageMedia;
+  sizes?: string;
+  label?: string;
+}) {
+  if (!media?.src) return null;
+
+  return (
+    <section
+      className={styles.stillBreak}
+      data-header-theme="light"
+      aria-label={label || media.alt || "Image"}
+    >
+      <Container>
+        <Reveal>
+          <MediaWithCyanBar media={media} sizes={sizes} />
+        </Reveal>
       </Container>
     </section>
   );
 }
 
-function StillFigure({
-  media,
-  sizes,
-}: {
-  media: HomepageMedia;
-  sizes: string;
-}) {
-  if (!media.src) return null;
-
-  return (
-    <figure className={styles.still}>
-      <Image
-        src={mediaPath(media.src)}
-        alt={media.alt}
-        width={media.width}
-        height={media.height}
-        sizes={sizes}
-        className={styles.stillImage}
-      />
-    </figure>
-  );
-}
-
-/**
- * Full-width ~16:9 landscape break. Renders nothing when media is empty.
- * No borders, shadows, overlays, or animations.
- */
-function LandscapeBreak({
-  media,
-  sizes = "(max-width: 1024px) 100vw, min(100vw, 72rem)",
-}: {
-  media?: HomepageMedia;
-  sizes?: string;
-}) {
-  if (!media?.src) return null;
-
-  return (
-    <figure className={styles.landscapeBreak}>
-      <div className={styles.landscapeBreakFrame}>
-        <Image
-          src={mediaPath(media.src)}
-          alt={media.alt}
-          width={media.width || 1920}
-          height={media.height || 1080}
-          sizes={sizes}
-          className={styles.landscapeBreakImage}
-        />
-      </div>
-    </figure>
-  );
-}
-
-/** Map process step id → landscape break after that step. */
 function processBreakAfterStep(
   stepId: string,
   breaks: AiPageContent["landscapeBreaks"],
@@ -212,15 +239,21 @@ function processBreakAfterStep(
 
 /**
  * KI / AI page — About / homepage visual system.
- * Hero matches About/Services grid rules; showreel reuses AboutSection.
+ * Alternating light (text left / media right) and dark (media left / text right)
+ * editorial blocks with cyan bars. All media from Sanity only.
  */
 export function AiPage({ content }: AiPageProps) {
   const { visuals, landscapeBreaks } = content;
-  const hasVillaPair = Boolean(
-    visuals.clayVilla?.src || visuals.photoVilla?.src,
+  const heroHasMedia = Boolean(
+    content.hero.media.src || content.hero.videoId,
   );
 
-  const showreelHeadline = content.showreel.headline.replace(/\.$/, "");
+  const showreelAsBlock: AiTextBlock = {
+    headline: content.showreel.headline.replace(/\.$/, ""),
+    body: [content.showreel.body],
+    media: content.showreel.media,
+    videoId: content.showreel.videoId,
+  };
 
   return (
     <>
@@ -262,15 +295,19 @@ export function AiPage({ content }: AiPageProps) {
                 {content.hero.videoId ? (
                   <HeroVimeoLoop
                     videoId={content.hero.videoId}
-                    title={content.hero.media.alt}
-                    poster={{
-                      src: mediaPath(content.hero.media.src),
-                      alt: content.hero.media.alt,
-                      width: content.hero.media.width,
-                      height: content.hero.media.height,
-                    }}
+                    title={content.hero.media.alt || content.hero.headline}
+                    poster={
+                      content.hero.media.src
+                        ? {
+                            src: mediaPath(content.hero.media.src),
+                            alt: content.hero.media.alt,
+                            width: content.hero.media.width,
+                            height: content.hero.media.height,
+                          }
+                        : undefined
+                    }
                   />
-                ) : (
+                ) : heroHasMedia && content.hero.media.src ? (
                   <Image
                     src={mediaPath(content.hero.media.src)}
                     alt={content.hero.media.alt}
@@ -279,6 +316,8 @@ export function AiPage({ content }: AiPageProps) {
                     sizes="(max-width: 1024px) 100vw, 64vw"
                     className={heroStyles.image}
                   />
+                ) : (
+                  <div className={styles.heroPlaceholder} aria-hidden="true" />
                 )}
               </div>
             </div>
@@ -286,25 +325,23 @@ export function AiPage({ content }: AiPageProps) {
         </div>
       </section>
 
-      <TextWithMedia
+      {/* Intro — white, text left / media right */}
+      <EditorialBlock
         id="ai-intro-title"
         content={content.intro}
         fallbackStill={visuals.keyVisual}
+        theme="light"
       />
 
-      <AboutSection
-        key={`ai-showreel-${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
-        compact
-        content={{
-          label: content.showreel.label,
-          headline: showreelHeadline,
-          headlineAccent: ".",
-          subheadline: "",
-          body: [content.showreel.body],
-          cta: content.showreel.cta,
-          media: content.showreel.media,
-          videoId: content.showreel.videoId,
-        }}
+      {/* Showreel — black, media left / text right (homepage showreel rhythm) */}
+      <EditorialBlock
+        id="ai-showreel-title"
+        content={showreelAsBlock}
+        theme="dark"
+        label={content.showreel.label}
+        cta={content.showreel.cta}
+        singleBody
+        accentPeriod
       />
 
       <section
@@ -329,7 +366,6 @@ export function AiPage({ content }: AiPageProps) {
               );
               const isLast = index >= content.process.steps.length - 1;
               const hasBreak = Boolean(breakMedia?.src);
-              // Arrow toward the next step, or toward a landscape break on the last step.
               const showArrow = !isLast || hasBreak;
               return (
                 <li key={step.id} className={styles.processItem}>
@@ -348,7 +384,10 @@ export function AiPage({ content }: AiPageProps) {
                   ) : null}
                   {hasBreak ? (
                     <Reveal className={styles.processLandscape} delayMs={60}>
-                      <LandscapeBreak media={breakMedia} />
+                      <MediaWithCyanBar
+                        media={breakMedia}
+                        sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+                      />
                     </Reveal>
                   ) : null}
                 </li>
@@ -396,7 +435,10 @@ export function AiPage({ content }: AiPageProps) {
                     <span className={styles.processArrow} aria-hidden="true">
                       ↓
                     </span>
-                    <LandscapeBreak media={landscapeBreaks.midApplications} />
+                    <MediaWithCyanBar
+                      media={landscapeBreaks.midApplications}
+                      sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+                    />
                   </Reveal>
                 ) : null}
                 {secondBand.length > 0 ? (
@@ -424,134 +466,61 @@ export function AiPage({ content }: AiPageProps) {
               </>
             );
           })()}
-          {content.applications.media?.src || content.applications.videoId ? (
-            <Reveal className={styles.applicationsMedia} delayMs={80}>
-              <SectionMediaSlot
-                media={content.applications.media}
-                videoId={content.applications.videoId}
-                caption={content.applications.caption}
-                sizes="100vw"
-              />
-            </Reveal>
-          ) : null}
+          <Reveal className={styles.applicationsMedia} delayMs={80}>
+            <MediaWithCyanBar
+              media={content.applications.media}
+              videoId={content.applications.videoId}
+              caption={content.applications.caption}
+              sizes="100vw"
+              fillFrame
+            />
+          </Reveal>
         </Container>
       </section>
 
-      {landscapeBreaks.afterApplications?.src ? (
-        <section
-          className={styles.landscapeSection}
-          data-header-theme="light"
-          aria-label={landscapeBreaks.afterApplications.alt || "Landscape"}
-        >
-          <Container>
-            <Reveal className={styles.landscapeWithArrow}>
-              <span className={styles.processArrow} aria-hidden="true">
-                ↓
-              </span>
-              <LandscapeBreak media={landscapeBreaks.afterApplications} />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
+      <StillBreak
+        media={landscapeBreaks.afterApplications}
+        label={landscapeBreaks.afterApplications?.alt}
+      />
 
-      {hasVillaPair ? (
-        <section
-          className={styles.stillSection}
-          data-header-theme="light"
-          aria-label="3D visualisation and production"
-        >
-          <Container>
-            <div className={styles.villaPair}>
-              {visuals.clayVilla?.src ? (
-                <Reveal>
-                  <StillFigure
-                    media={visuals.clayVilla}
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                  />
-                </Reveal>
-              ) : null}
-              {visuals.photoVilla?.src ? (
-                <Reveal delayMs={80}>
-                  <StillFigure
-                    media={visuals.photoVilla}
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                  />
-                </Reveal>
-              ) : null}
-            </div>
-          </Container>
-        </section>
-      ) : null}
+      {/* Optional photo villa when published (clay pairs with Models) */}
+      <StillBreak
+        media={visuals.photoVilla}
+        label={visuals.photoVilla?.alt || "Photoreal production"}
+      />
 
-      <TextWithMedia
+      {/* Models — black, media left / text right; clay villa fallback */}
+      <EditorialBlock
         id="ai-models-title"
         content={content.models}
-        inverted
+        fallbackStill={visuals.clayVilla}
+        theme="dark"
       />
 
-      {landscapeBreaks.afterModels?.src ? (
-        <section
-          className={styles.landscapeSection}
-          data-header-theme="light"
-          aria-label={landscapeBreaks.afterModels.alt || "Landscape"}
-        >
-          <Container>
-            <Reveal className={styles.landscapeWithArrow}>
-              <span className={styles.processArrow} aria-hidden="true">
-                ↓
-              </span>
-              <LandscapeBreak media={landscapeBreaks.afterModels} />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
+      <StillBreak
+        media={landscapeBreaks.afterModels}
+        label={landscapeBreaks.afterModels?.alt}
+      />
 
-      {/* Bild 4 — Content Formats / DISTRIBUTION (full-width when uploaded) */}
-      {visuals.contentFormats?.src ? (
-        <section
-          className={styles.stillSection}
-          data-header-theme="light"
-          aria-label={visuals.contentFormats.alt || "Content formats"}
-        >
-          <Container>
-            <Reveal>
-              <StillFigure
-                media={visuals.contentFormats}
-                sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-              />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
-
-      <TextWithMedia
+      {/* Experience — white, text left / media right; content formats fallback */}
+      <EditorialBlock
         id="ai-experience-title"
         content={content.experience}
+        fallbackStill={visuals.contentFormats}
+        theme="light"
       />
 
-      {landscapeBreaks.afterExperience?.src ? (
-        <section
-          className={styles.landscapeSection}
-          data-header-theme="light"
-          aria-label={landscapeBreaks.afterExperience.alt || "Landscape"}
-        >
-          <Container>
-            <Reveal className={styles.landscapeWithArrow}>
-              <span className={styles.processArrow} aria-hidden="true">
-                ↓
-              </span>
-              <LandscapeBreak media={landscapeBreaks.afterExperience} />
-            </Reveal>
-          </Container>
-        </section>
-      ) : null}
+      <StillBreak
+        media={landscapeBreaks.afterExperience}
+        label={landscapeBreaks.afterExperience?.alt}
+      />
 
-      {/* Bild 5 — Social distribution with Approach text */}
-      <TextWithMedia
+      {/* Approach — black, media left / text right; distribution channels fallback */}
+      <EditorialBlock
         id="ai-approach-title"
         content={content.approach}
         fallbackStill={visuals.distributionChannels}
-        inverted
+        theme="dark"
       />
 
       <ClientsSection content={content.clients} />

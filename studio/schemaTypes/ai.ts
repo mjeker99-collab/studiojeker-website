@@ -5,10 +5,10 @@ import { aiPageInitialValues } from "./aiDefaults";
 const aiSectionMediaFields = [
   defineField({
     name: "media",
-    title: "Section Media (optional)",
+    title: "Section Media",
     type: "mediaField",
     description:
-      "Optional image or Vimeo video. Choose Media Type in the field. Leave empty for text-only — no placeholder is shown.",
+      "Image or Vimeo for this section. Choose Media Type. Empty → neutral placeholder on the website (no repo fallback).",
   }),
   defineField({
     name: "caption",
@@ -25,10 +25,16 @@ const aiSectionMediaFields = [
  * Singleton desk ID: `ai` (see `studio/structure.ts`).
  *
  * Field ↔ frontend map (see also `aiDefaults.ts`):
- * heroSection → hero · introSection → intro · processSection → process
- * showreelSection → showreel · applicationsSection → applications
- * modelsSection → models · experienceSection → experience · approachSection → approach
- * visualMedia → optional showreel stills · landscapeBreaks → 16:9 editorial breaks
+ * heroSection → hero
+ * introSection → intro (+ visualMedia.keyVisual fallback)
+ * showreelSection → showreel (dark editorial)
+ * processSection → process
+ * applicationsSection → applications (+ section media)
+ * modelsSection → models (+ visualMedia.clayVilla fallback)
+ * experienceSection → experience (+ visualMedia.contentFormats fallback)
+ * approachSection → approach (+ visualMedia.distributionChannels fallback)
+ * visualMedia.photoVilla → optional still between applications and models
+ * landscapeBreaks → optional editorial breaks
  * closingSection → closing · seoSection → seo
  */
 
@@ -250,7 +256,7 @@ export const ai = defineType({
       group: "visuals",
       options: { collapsible: true, collapsed: false },
       description:
-        "Five showreel stills for the KI page. Upload originals only. Empty slots are hidden on the website (no grey placeholders). Section Media fields override these when set.",
+        "Content stills paired with KI text sections. Section Media overrides these when set. Empty → placeholder (or hidden for optional photo villa / landscape breaks).",
       fields: [
         defineField({
           name: "keyVisual",
@@ -258,7 +264,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Bild 1 — Designer/Motorrad. Shown with “KI ist für uns ein Werkzeug…”.",
+            "Fallback for Intro (“KI ist für uns ein Werkzeug…”) when introSection.media is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -272,7 +278,8 @@ export const ai = defineType({
           title: "3D / Clay Villa",
           type: "image",
           options: { hotspot: true },
-          description: "Bild 2 — Clay villa. Paired with Photoreal Production.",
+          description:
+            "Fallback for Models (“Die besten Modelle…”) when modelsSection.media is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -287,7 +294,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Bild 3 — Photoreal villa. Visual counterpart to 3D / Clay.",
+            "Optional still between Applications and Models. Empty = hidden.",
           fields: [
             defineField({
               name: "alt",
@@ -301,7 +308,8 @@ export const ai = defineType({
           title: "Content Formats",
           type: "image",
           options: { hotspot: true },
-          description: "Bild 4 — Distribution / multiple formats.",
+          description:
+            "Fallback for Experience (“KI + Erfahrung”) when experienceSection.media is empty.",
           fields: [
             defineField({
               name: "alt",
@@ -315,7 +323,8 @@ export const ai = defineType({
           title: "Distribution / Social Channels",
           type: "image",
           options: { hotspot: true },
-          description: "Bild 5 — Formats + social channels → Visibility.",
+          description:
+            "Fallback for Approach (“Gezielt. Verantwortungsbewusst…”) when approachSection.media is empty.",
           fields: [
             defineField({
               name: "alt",
