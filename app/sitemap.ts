@@ -16,7 +16,6 @@ const PUBLIC_PATHS = [
   "/services/product-communication/",
   "/services/architecture/",
   "/impressum/",
-  "/datenschutz/",
 ] as const;
 
 function absolute(path: string): string {
@@ -135,6 +134,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       languages: {
         "de-CH": agbDe,
         "x-default": agbDe,
+      },
+    },
+  });
+
+  // German Datenschutz only — English `/en/datenschutz/` is a noindex placeholder.
+  const datenschutzDe = absolute("/datenschutz/");
+  entries.push({
+    url: datenschutzDe,
+    changeFrequency: "yearly",
+    priority: 0.3,
+    alternates: {
+      languages: {
+        "de-CH": datenschutzDe,
+        "x-default": datenschutzDe,
       },
     },
   });

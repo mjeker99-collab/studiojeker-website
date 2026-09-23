@@ -9,6 +9,8 @@ export const metadata: Metadata = buildPageMetadata({
   pathname: "/datenschutz",
   title: "Datenschutz | Studiojeker",
   description: "Datenschutzerklärung von Studiojeker.",
+  // English `/en/datenschutz/` is a noindex placeholder — omit en hreflang.
+  omitEnglishAlternate: true,
 });
 
 export default function GermanDatenschutzPage() {

@@ -18,6 +18,12 @@ type BuildMetadataOptions = {
    */
   languageAlternates?: { de: string; en: string };
   /**
+   * Omit the English hreflang alternate (e.g. when `/en/…` is only a
+   * noindex placeholder and must not be advertised as a language alternate).
+   * Still emits `de-CH` and `x-default`.
+   */
+  omitEnglishAlternate?: boolean;
+  /**
    * Placeholder / incomplete pages: `noindex, follow`.
    * Staging builds still force `noindex, nofollow` via `isStagingSite()`.
    */
@@ -40,6 +46,7 @@ export function buildPageMetadata({
   wordpressSeo,
   ogImagePath,
   languageAlternates,
+  omitEnglishAlternate = false,
   noindex = false,
 }: BuildMetadataOptions): Metadata {
   const localizedPath = languageAlternates
@@ -55,9 +62,11 @@ export function buildPageMetadata({
 
   const languages: Record<string, string> = {
     "de-CH": absoluteUrl(dePath),
-    en: absoluteUrl(enPath),
     "x-default": absoluteUrl(dePath),
   };
+  if (!omitEnglishAlternate) {
+    languages.en = absoluteUrl(enPath);
+  }
 
   const ogImage =
     wordpressSeo?.openGraphImageUrl ||
