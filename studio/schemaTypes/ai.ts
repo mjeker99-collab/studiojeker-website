@@ -309,7 +309,7 @@ export const ai = defineType({
           type: "image",
           options: { hotspot: true },
           description:
-            "Optional still (Sanity field retained). Not currently shown on the KI page frontend — assign via experienceSection.media if needed.",
+            "Fallback for Experience (“KI + Erfahrung”) when experienceSection.media is empty.",
           fields: [
             defineField({
               name: "alt",
