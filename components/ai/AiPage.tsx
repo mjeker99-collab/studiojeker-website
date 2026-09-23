@@ -553,7 +553,8 @@ export function AiPage({ content }: AiPageProps) {
       {/*
         Experience: text-only when no section media (sits between Models + Approach).
         If Sanity experienceSection.media is set, use the normal text+media block.
-        visualMedia.contentFormats still renders below when used as the unpaired still.
+        visualMedia.contentFormats is kept in Sanity but not rendered on the page
+        (removed by editorial request — field remains editable for later use).
       */}
       {experienceHasOwnMedia ? (
         <EditorialBlock
@@ -594,13 +595,6 @@ export function AiPage({ content }: AiPageProps) {
         fallbackStill={visuals.distributionChannels}
         theme="dark"
       />
-
-      {!experienceHasOwnMedia ? (
-        <StillBreak
-          media={visuals.contentFormats}
-          label={visuals.contentFormats?.alt || "Content formats"}
-        />
-      ) : null}
 
       <ClientsSection content={content.clients} />
 
