@@ -3,6 +3,23 @@
  * Editorial light/dark blocks with cyan bars; layout only — no global hero changes.
  */
 
+/*
+ * White gaps between independent blocks (homepage stack rhythm).
+ * Image/copy units inside each section stay intact.
+ */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem; /* 28px — mobile */
+  background: var(--color-white);
+}
+
+@media (min-width: 48rem) {
+  .stack {
+    gap: 3.5rem; /* 56px — tablet + desktop */
+  }
+}
+
 .hero {
   padding-top: var(--header-height);
   min-height: min(70svh, 38rem);
@@ -272,7 +289,7 @@
   display: grid;
   gap: var(--space-2);
   max-width: 40rem;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .processIntro {
@@ -282,9 +299,16 @@
   line-height: 1.55;
 }
 
+/*
+ * Process steps — compact track:
+ * mobile 1 col · tablet 2 cols · desktop one horizontal row.
+ * Cyan arrows connect steps (↓ stacked / → in a row).
+ */
 .processFlow {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -292,20 +316,23 @@
 
 .processItem {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
-  justify-items: start;
+  align-items: start;
+  min-width: 0;
 }
 
 .processStep {
   display: grid;
-  gap: 0.55rem;
-  max-width: 36rem;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: none;
 }
 
 .processTitle {
   margin: 0;
   color: var(--color-black);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -313,23 +340,39 @@
 
 .processText {
   margin: 0;
-  max-width: 32rem;
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  max-width: none;
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .processArrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   color: var(--color-cyan);
   font-size: 1.25rem;
   font-weight: var(--font-weight-bold);
   line-height: 1;
-  padding-block: 0.15rem;
+  padding-block: 0.1rem;
+}
+
+.processArrowAcross {
+  display: none;
+}
+
+.processArrowDown {
+  display: inline;
+}
+
+.processBreaks {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .processLandscape {
   width: 100%;
   min-width: 0;
-  margin-block: var(--space-3) var(--space-2);
 }
 
 .applications {
@@ -449,12 +492,28 @@
     min-height: 22rem;
   }
 
+  /* Tablet: two compact step columns; keep reading order L→R, T→B */
   .processFlow {
-    gap: var(--space-3);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+    row-gap: var(--space-3);
   }
 
-  .processLandscape {
-    margin-block: var(--space-4) var(--space-3);
+  .processItem {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Hide mid-row arrows (after 1st/3rd/…); keep ↓ after end-of-row
+   * (2nd/4th/…) so the next row stays clearly sequenced.
+   */
+  .processItem:nth-child(odd) .processArrow {
+    display: none;
+  }
+
+  .processItem:nth-child(even) .processArrow {
+    justify-content: center;
+    width: 100%;
   }
 
   .applicationsGrid {
@@ -472,7 +531,7 @@
 @media (min-width: 64rem) {
   /*
    * Light: copy | media (text left, image right)
-   * Dark / media-first: media | copy (image left, text right)
+   * media-first: media | copy (image left, text right)
    * Mobile keeps DOM order: copy → media
    */
   .editorialGrid {
@@ -508,6 +567,52 @@
   .mediaPlaceholder,
   .mediaVideo {
     min-height: 24rem;
+  }
+
+  /*
+   * Desktop: one horizontal row of equal steps with → between them.
+   * Column count comes from --process-step-count (Sanity step length).
+   */
+  .processFlow {
+    grid-template-columns: repeat(var(--process-step-count, 4), minmax(0, 1fr));
+    align-items: start;
+    column-gap: 0;
+    row-gap: 0;
+  }
+
+  .processItem {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: start;
+  }
+
+  /* Restore arrows between every step on desktop */
+  .processItem:nth-child(odd) .processArrow,
+  .processItem:nth-child(even) .processArrow {
+    display: flex;
+    width: auto;
+    justify-content: center;
+    align-self: center;
+    padding-block: 0;
+    padding-inline: 0.15rem;
+    font-size: 1.125rem;
+  }
+
+  .processStep {
+    padding-right: 0.25rem;
+  }
+
+  .processArrowDown {
+    display: none;
+  }
+
+  .processArrowAcross {
+    display: inline;
+  }
+
+  .processHeader {
+    margin-bottom: var(--space-3);
   }
 
   .applicationsGrid {
