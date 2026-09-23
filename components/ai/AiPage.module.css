@@ -87,7 +87,8 @@
 
 .editorial {
   position: relative;
-  overflow: hidden;
+  /* Avoid clipping long headlines/body at tablet mid-widths */
+  overflow: visible;
 }
 
 .editorialLight {
@@ -114,19 +115,23 @@
   min-width: 0;
   max-width: 36rem;
   padding: var(--section-padding-y-compact) var(--container-padding-x);
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .editorialHeadline {
   margin: 0;
+  max-width: 100%;
   font-size: clamp(1.5rem, 2.8vw, 2.5rem);
   font-weight: var(--font-weight-extrabold);
   letter-spacing: -0.02em;
   line-height: 1.12;
   overflow-wrap: break-word;
+  hyphens: manual;
 }
 
 .editorialDark .editorialHeadline {
-  max-width: 12em;
+  max-width: min(14em, 100%);
   font-size: clamp(1.75rem, 3.4vw, 3rem);
   line-height: 1.06;
 }
@@ -280,6 +285,31 @@
   min-height: 0;
 }
 
+/* Pure text section (no media column) — sits between text+media blocks */
+.textOnly {
+  background: var(--color-white);
+  padding-block: var(--section-padding-y-compact);
+}
+
+.textOnlyInner {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+  min-width: 0;
+}
+
+.textOnlyBody {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.textOnlyBody p {
+  margin: 0;
+  max-width: 40rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
 .process {
   background: var(--color-white);
   padding-block: var(--section-padding-y-compact);
@@ -302,7 +332,7 @@
 /*
  * Process steps — compact track:
  * mobile 1 col · tablet 2 cols · desktop one horizontal row.
- * Cyan arrows connect steps (↓ stacked / → in a row).
+ * Arrows live in a reserved gutter column — never inside body copy.
  */
 .processFlow {
   display: grid;
@@ -336,6 +366,7 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  line-height: 1.3;
 }
 
 .processText {
@@ -347,13 +378,20 @@
 
 .processArrow {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  padding: 0;
   color: var(--color-cyan);
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: var(--font-weight-bold);
   line-height: 1;
-  padding-block: 0.1rem;
+  /* Align with process title row, not mid-body */
+  align-self: start;
 }
 
 .processArrowAcross {
@@ -421,7 +459,6 @@
 
 .applicationsMedia {
   margin-top: var(--space-5);
-  min-height: 16rem;
 }
 
 .applicationsMedia .mediaFrameFill {
@@ -513,7 +550,8 @@
 
   .processItem:nth-child(even) .processArrow {
     justify-content: center;
-    width: 100%;
+    width: 1.25rem;
+    margin-inline: auto;
   }
 
   .applicationsGrid {
@@ -525,6 +563,29 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: var(--space-5);
+  }
+}
+
+/* Mid desktop / large tablet: keep editorial copy fully readable */
+@media (min-width: 64rem) and (max-width: 75rem) {
+  .editorialCopy {
+    padding-right: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .editorialGridMediaFirst .editorialCopy {
+    padding-left: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .editorialHeadline,
+  .editorialDark .editorialHeadline {
+    font-size: clamp(1.45rem, 2.4vw, 2.15rem);
+    max-width: 100%;
+  }
+
+  .editorialBody p,
+  .editorialDark .editorialBody p {
+    max-width: 100%;
+    font-size: 0.9375rem;
   }
 }
 
@@ -570,11 +631,11 @@
   }
 
   /*
-   * Desktop: one horizontal row of equal steps with → between them.
-   * Column count comes from --process-step-count (Sanity step length).
+   * Desktop: equal step columns; each item = copy | arrow gutter.
+   * Arrow aligns to the title row (align-self: start), same size/cyan.
    */
   .processFlow {
-    grid-template-columns: repeat(var(--process-step-count, 4), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--process-step-count, 5), minmax(0, 1fr));
     align-items: start;
     column-gap: 0;
     row-gap: 0;
@@ -582,25 +643,32 @@
 
   .processItem {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1fr) 1.5rem;
+    gap: 0;
     align-items: start;
   }
 
-  /* Restore arrows between every step on desktop */
+  .processItemLast {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .processItem:nth-child(odd) .processArrow,
   .processItem:nth-child(even) .processArrow {
     display: flex;
-    width: auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0.05rem auto 0;
     justify-content: center;
-    align-self: center;
-    padding-block: 0;
-    padding-inline: 0.15rem;
-    font-size: 1.125rem;
+    align-self: start;
   }
 
   .processStep {
-    padding-right: 0.25rem;
+    padding-right: 0.35rem;
+    min-width: 0;
+  }
+
+  .processText {
+    padding-right: 0.15rem;
   }
 
   .processArrowDown {

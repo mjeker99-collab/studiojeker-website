@@ -200,7 +200,7 @@ function EditorialBlock({
   );
 }
 
-/** Optional still — native aspect, cyan bar, placeholder when empty. */
+/** Optional still — native aspect, cyan bar. Hidden when empty. */
 function StillBreak({
   media,
   sizes = "(max-width: 1024px) 100vw, min(100vw, 72rem)",
@@ -245,8 +245,11 @@ function processBreakAfterStep(
 
 /**
  * KI / AI page — About / homepage visual system.
- * Alternating light (text left / media right) and dark (media left / text right)
- * editorial blocks with cyan bars. All media from Sanity only.
+ *
+ * Section rhythm (media vs text-only), keeping statement order:
+ * Hero(M) → Intro(M) → Process(T) → Showreel(M) → Applications(T)
+ * → Models(M) → Experience(M) → Approach(M) → Clients → Closing(T)
+ * Pure-text blocks sit between text+media blocks; white stack gaps remain.
  */
 export function AiPage({ content }: AiPageProps) {
   const { visuals, landscapeBreaks } = content;
@@ -265,6 +268,13 @@ export function AiPage({ content }: AiPageProps) {
   const processBreaks = processSteps
     .map((step) => processBreakAfterStep(step.id, landscapeBreaks))
     .filter((media): media is HomepageMedia => Boolean(media?.src));
+
+  const applicationsHasMedia = Boolean(
+    content.applications.media?.src || content.applications.videoId,
+  );
+  const experienceHasOwnMedia = Boolean(
+    content.experience.media?.src || content.experience.videoId,
+  );
 
   return (
     <div className={styles.stack}>
@@ -345,17 +355,7 @@ export function AiPage({ content }: AiPageProps) {
         mediaFirst
       />
 
-      {/* Showreel — black, media left / text right (homepage showreel rhythm) */}
-      <EditorialBlock
-        id="ai-showreel-title"
-        content={showreelAsBlock}
-        theme="dark"
-        label={content.showreel.label}
-        cta={content.showreel.cta}
-        singleBody
-        accentPeriod
-      />
-
+      {/* Process (text-only) between Intro and Showreel */}
       <section
         className={styles.process}
         data-header-theme="light"
@@ -371,9 +371,9 @@ export function AiPage({ content }: AiPageProps) {
           </Reveal>
 
           {/*
-            Compact step row: desktop = one horizontal track with cyan arrows;
-            tablet = 2 columns; mobile = 1 column. Landscape breaks (if any)
-            render below so they do not stretch the row.
+            Desktop: step | → | step | → | … as separate grid tracks so arrows
+            sit only in the gutters (never inside body copy).
+            Tablet: 2 columns of steps; Mobile: 1 column. Arrows adapt.
           */}
           <ol
             className={styles.processFlow}
@@ -386,7 +386,15 @@ export function AiPage({ content }: AiPageProps) {
             {processSteps.map((step, index) => {
               const isLast = index >= processSteps.length - 1;
               return (
-                <li key={step.id} className={styles.processItem}>
+                <li
+                  key={step.id}
+                  className={[
+                    styles.processItem,
+                    isLast ? styles.processItemLast : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
                   <Reveal
                     as="article"
                     className={styles.processStep}
@@ -425,6 +433,18 @@ export function AiPage({ content }: AiPageProps) {
         </Container>
       </section>
 
+      {/* Showreel — black, media left / text right */}
+      <EditorialBlock
+        id="ai-showreel-title"
+        content={showreelAsBlock}
+        theme="dark"
+        label={content.showreel.label}
+        cta={content.showreel.cta}
+        singleBody
+        accentPeriod
+      />
+
+      {/* Applications (text-only) between Showreel and Models */}
       <section
         className={styles.applications}
         data-header-theme="light"
@@ -460,9 +480,6 @@ export function AiPage({ content }: AiPageProps) {
                 </div>
                 {landscapeBreaks.midApplications?.src ? (
                   <Reveal className={styles.applicationsLandscape} delayMs={60}>
-                    <span className={styles.processArrow} aria-hidden="true">
-                      ↓
-                    </span>
                     <MediaWithCyanBar
                       media={landscapeBreaks.midApplications}
                       sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
@@ -494,15 +511,18 @@ export function AiPage({ content }: AiPageProps) {
               </>
             );
           })()}
-          <Reveal className={styles.applicationsMedia} delayMs={80}>
-            <MediaWithCyanBar
-              media={content.applications.media}
-              videoId={content.applications.videoId}
-              caption={content.applications.caption}
-              sizes="100vw"
-              fillFrame
-            />
-          </Reveal>
+          {/* Sanity media field kept — render only when image/video is set */}
+          {applicationsHasMedia ? (
+            <Reveal className={styles.applicationsMedia} delayMs={80}>
+              <MediaWithCyanBar
+                media={content.applications.media}
+                videoId={content.applications.videoId}
+                caption={content.applications.caption}
+                sizes="100vw"
+                fillFrame
+              />
+            </Reveal>
+          ) : null}
         </Container>
       </section>
 
@@ -530,13 +550,37 @@ export function AiPage({ content }: AiPageProps) {
         label={landscapeBreaks.afterModels?.alt}
       />
 
-      {/* Experience — white, text left / media right; content formats fallback */}
-      <EditorialBlock
-        id="ai-experience-title"
-        content={content.experience}
-        fallbackStill={visuals.contentFormats}
-        theme="light"
-      />
+      {/*
+        Experience: text-only when no section media (sits between Models + Approach).
+        If Sanity experienceSection.media is set, use the normal text+media block.
+        visualMedia.contentFormats still renders below when used as the unpaired still.
+      */}
+      {experienceHasOwnMedia ? (
+        <EditorialBlock
+          id="ai-experience-title"
+          content={content.experience}
+          theme="light"
+        />
+      ) : (
+        <section
+          className={styles.textOnly}
+          data-header-theme="light"
+          aria-labelledby="ai-experience-title"
+        >
+          <Container>
+            <Reveal className={styles.textOnlyInner}>
+              <h2 id="ai-experience-title" className={styles.sectionHeadline}>
+                {content.experience.headline}
+              </h2>
+              <div className={styles.textOnlyBody}>
+                {content.experience.body.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </Reveal>
+          </Container>
+        </section>
+      )}
 
       <StillBreak
         media={landscapeBreaks.afterExperience}
@@ -550,6 +594,13 @@ export function AiPage({ content }: AiPageProps) {
         fallbackStill={visuals.distributionChannels}
         theme="dark"
       />
+
+      {!experienceHasOwnMedia ? (
+        <StillBreak
+          media={visuals.contentFormats}
+          label={visuals.contentFormats?.alt || "Content formats"}
+        />
+      ) : null}
 
       <ClientsSection content={content.clients} />
 
