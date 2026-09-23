@@ -492,7 +492,7 @@
     min-height: 22rem;
   }
 
-  /* Tablet: two compact step columns; arrows stay downward between rows */
+  /* Tablet: two compact step columns; keep reading order L→R, T→B */
   .processFlow {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--space-4);
@@ -500,8 +500,20 @@
   }
 
   .processItem {
-    /* Arrow sits under the step within its cell when wrapping */
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Hide mid-row arrows (after 1st/3rd/…); keep ↓ after end-of-row
+   * (2nd/4th/…) so the next row stays clearly sequenced.
+   */
+  .processItem:nth-child(odd) .processArrow {
+    display: none;
+  }
+
+  .processItem:nth-child(even) .processArrow {
+    justify-content: center;
+    width: 100%;
   }
 
   .applicationsGrid {
@@ -575,16 +587,20 @@
     align-items: start;
   }
 
-  .processStep {
-    padding-right: 0.25rem;
-  }
-
-  .processArrow {
+  /* Restore arrows between every step on desktop */
+  .processItem:nth-child(odd) .processArrow,
+  .processItem:nth-child(even) .processArrow {
+    display: flex;
+    width: auto;
     justify-content: center;
     align-self: center;
     padding-block: 0;
     padding-inline: 0.15rem;
     font-size: 1.125rem;
+  }
+
+  .processStep {
+    padding-right: 0.25rem;
   }
 
   .processArrowDown {
