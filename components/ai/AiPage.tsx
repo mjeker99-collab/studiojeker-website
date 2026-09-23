@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import type {
   AiPageContent,
   AiTextBlock,
@@ -105,7 +106,8 @@ function MediaWithCyanBar({
 
 /**
  * Large text + media block matching About / Showreel / AI-teaser rhythm.
- * Light: text left, media right. Dark: media left, white text right.
+ * Light default: text left, media right.
+ * Dark / mediaFirst: media left, copy right (white on black when dark).
  * Missing Sanity media → neutral placeholder (never a repo image).
  */
 function EditorialBlock({
@@ -113,6 +115,7 @@ function EditorialBlock({
   content,
   fallbackStill,
   theme = "light",
+  mediaFirst,
   label,
   cta,
   singleBody,
@@ -122,6 +125,8 @@ function EditorialBlock({
   content: AiTextBlock;
   fallbackStill?: HomepageMedia;
   theme?: EditorialTheme;
+  /** Desktop: media column first (left). Defaults to true when theme is dark. */
+  mediaFirst?: boolean;
   label?: string;
   cta?: { label: string; href: string };
   /** Use first body paragraph only (showreel-style). */
@@ -132,6 +137,7 @@ function EditorialBlock({
   const media = content.media?.src ? content.media : fallbackStill;
   const videoId = content.videoId;
   const isDark = theme === "dark";
+  const placeMediaFirst = mediaFirst ?? isDark;
   const paragraphs = singleBody
     ? content.body.slice(0, 1)
     : content.body;
@@ -148,7 +154,7 @@ function EditorialBlock({
       <div
         className={[
           styles.editorialGrid,
-          isDark ? styles.editorialGridMediaFirst : "",
+          placeMediaFirst ? styles.editorialGridMediaFirst : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -255,8 +261,13 @@ export function AiPage({ content }: AiPageProps) {
     videoId: content.showreel.videoId,
   };
 
+  const processSteps = content.process.steps;
+  const processBreaks = processSteps
+    .map((step) => processBreakAfterStep(step.id, landscapeBreaks))
+    .filter((media): media is HomepageMedia => Boolean(media?.src));
+
   return (
-    <>
+    <div className={styles.stack}>
       <section
         className={[heroStyles.section, styles.hero].join(" ")}
         data-header-theme="light"
@@ -325,12 +336,13 @@ export function AiPage({ content }: AiPageProps) {
         </div>
       </section>
 
-      {/* Intro — white, text left / media right */}
+      {/* Intro / Scribble — media left, black text right */}
       <EditorialBlock
         id="ai-intro-title"
         content={content.intro}
         fallbackStill={visuals.keyVisual}
-        theme="light"
+        theme="dark"
+        mediaFirst
       />
 
       {/* Showreel — black, media left / text right (homepage showreel rhythm) */}
@@ -358,15 +370,21 @@ export function AiPage({ content }: AiPageProps) {
             <p className={styles.processIntro}>{content.process.introduction}</p>
           </Reveal>
 
-          <ol className={styles.processFlow}>
-            {content.process.steps.map((step, index) => {
-              const breakMedia = processBreakAfterStep(
-                step.id,
-                landscapeBreaks,
-              );
-              const isLast = index >= content.process.steps.length - 1;
-              const hasBreak = Boolean(breakMedia?.src);
-              const showArrow = !isLast || hasBreak;
+          {/*
+            Compact step row: desktop = one horizontal track with cyan arrows;
+            tablet = 2 columns; mobile = 1 column. Landscape breaks (if any)
+            render below so they do not stretch the row.
+          */}
+          <ol
+            className={styles.processFlow}
+            style={
+              {
+                "--process-step-count": String(processSteps.length),
+              } as CSSProperties
+            }
+          >
+            {processSteps.map((step, index) => {
+              const isLast = index >= processSteps.length - 1;
               return (
                 <li key={step.id} className={styles.processItem}>
                   <Reveal
@@ -377,23 +395,33 @@ export function AiPage({ content }: AiPageProps) {
                     <h3 className={styles.processTitle}>{step.title}</h3>
                     <p className={styles.processText}>{step.description}</p>
                   </Reveal>
-                  {showArrow ? (
+                  {!isLast ? (
                     <span className={styles.processArrow} aria-hidden="true">
-                      ↓
+                      <span className={styles.processArrowDown}>↓</span>
+                      <span className={styles.processArrowAcross}>→</span>
                     </span>
-                  ) : null}
-                  {hasBreak ? (
-                    <Reveal className={styles.processLandscape} delayMs={60}>
-                      <MediaWithCyanBar
-                        media={breakMedia}
-                        sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
-                      />
-                    </Reveal>
                   ) : null}
                 </li>
               );
             })}
           </ol>
+
+          {processBreaks.length > 0 ? (
+            <div className={styles.processBreaks}>
+              {processBreaks.map((breakMedia) => (
+                <Reveal
+                  key={breakMedia.src}
+                  className={styles.processLandscape}
+                  delayMs={60}
+                >
+                  <MediaWithCyanBar
+                    media={breakMedia}
+                    sizes="(max-width: 1024px) 100vw, min(100vw, 72rem)"
+                  />
+                </Reveal>
+              ))}
+            </div>
+          ) : null}
         </Container>
       </section>
 
@@ -544,6 +572,6 @@ export function AiPage({ content }: AiPageProps) {
           </div>
         </Reveal>
       </section>
-    </>
+    </div>
   );
 }
