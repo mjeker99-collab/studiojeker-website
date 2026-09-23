@@ -1,6 +1,6 @@
 /**
  * KI / AI page — About / homepage visual system.
- * Layout overrides for this page only — do not change global hero CSS.
+ * Editorial light/dark blocks with cyan bars; layout only — no global hero changes.
  */
 
 .hero {
@@ -9,11 +9,6 @@
   z-index: 0;
 }
 
-/*
- * ServiceHero / About pattern: shrinkable text column, copy above media.
- * H1 type (size + line-height) comes only from HeroSection.module.css —
- * same as About. Do not override font-size or line-height here.
- */
 .hero .heroCopy {
   position: relative;
   z-index: 1;
@@ -24,10 +19,6 @@
   padding-bottom: var(--space-5);
 }
 
-/*
- * Keep About measure (7.2em) when the column allows it; never exceed the
- * text track (avoids headline-under-image). No mid-word breaks.
- */
 .hero .heroCopy .heroHeadline {
   position: relative;
   z-index: 1;
@@ -45,10 +36,12 @@
   min-width: 0;
 }
 
-/*
- * Tablet / mid-desktop while 2-col hero is active: slightly smaller type and
- * extra gap before the cyan bar so the headline never crowds the media.
- */
+.heroPlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral);
+}
+
 @media (min-width: 64rem) and (max-width: 75rem) {
   .hero .heroCopy {
     padding-right: clamp(1.5rem, 3vw, 2.5rem);
@@ -73,6 +66,181 @@
   }
 }
 
+/* —— Editorial text + media (About / Showreel / AI-teaser rhythm) —— */
+
+.editorial {
+  position: relative;
+  overflow: hidden;
+}
+
+.editorialLight {
+  background: var(--color-white);
+  color: var(--color-black);
+}
+
+.editorialDark {
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+.editorialGrid {
+  display: grid;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.editorialCopy {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 36rem;
+  padding: var(--section-padding-y-compact) var(--container-padding-x);
+}
+
+.editorialHeadline {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 2.5rem);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  overflow-wrap: break-word;
+}
+
+.editorialDark .editorialHeadline {
+  max-width: 12em;
+  font-size: clamp(1.75rem, 3.4vw, 3rem);
+  line-height: 1.06;
+}
+
+.headlineAccent {
+  color: var(--color-cyan);
+}
+
+.editorialBody {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.editorialBody p {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.editorialDark .editorialBody p {
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 28rem;
+  font-size: 1.0625rem;
+}
+
+.editorialMedia {
+  min-width: 0;
+  display: flex;
+  align-self: stretch;
+  height: 100%;
+  min-height: 16rem;
+}
+
+.editorialMedia .mediaFigure {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: inherit;
+}
+
+.editorialMedia .mediaFrameFill {
+  flex: 1 1 auto;
+}
+
+.mediaFigure {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  align-content: stretch;
+  height: 100%;
+}
+
+.mediaFrame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-neutral);
+  --media-bar-width: var(--cyan-bar-width);
+}
+
+.mediaFrameFill {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 16rem;
+  align-self: stretch;
+}
+
+.mediaFramePlaceholder,
+.mediaPlaceholder {
+  min-height: 16rem;
+}
+
+.mediaPlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral);
+}
+
+.editorialDark .mediaFrame {
+  background: var(--color-dark);
+}
+
+.editorialDark .mediaPlaceholder {
+  background: var(--color-dark);
+}
+
+.mediaVideo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 16rem;
+  aspect-ratio: 16 / 9;
+}
+
+.mediaFrameFill .mediaVideo {
+  aspect-ratio: auto;
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}
+
+.mediaIntrinsic {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mediaCover {
+  object-fit: cover;
+  object-position: center;
+}
+
+.mediaCaption {
+  margin: 0;
+  max-width: 36rem;
+  padding-inline: var(--container-padding-x);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.62);
+}
+
+.editorialDark .mediaCaption {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .sectionHeadline {
   margin: 0;
   font-size: clamp(1.5rem, 2.8vw, 2.25rem);
@@ -82,114 +250,17 @@
   overflow-wrap: break-word;
 }
 
-.sectionBody {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.sectionBody p {
-  margin: 0;
-  max-width: 40rem;
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.textSection {
-  background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
-}
-
-.textSectionAlt {
-  background: var(--color-white);
-}
-
-.textSectionGrid {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.textSectionWithMedia {
-  align-items: center;
-}
-
-.textSectionCopy {
-  display: grid;
-  gap: var(--space-3);
-  max-width: 42rem;
-  min-width: 0;
-}
-
-.textSectionMedia {
-  min-width: 0;
-}
-
-.mediaSlot {
-  margin: 0;
-  min-width: 0;
-  width: 100%;
-  display: grid;
-  gap: var(--space-2);
-}
-
-.mediaVideoFrame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  background: var(--color-dark);
-}
-
-.mediaCaption {
-  margin: 0;
-  max-width: 36rem;
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: rgba(0, 0, 0, 0.62);
-}
-
-.applicationsMedia {
-  margin-top: var(--space-5);
-}
-
-.applicationsLandscape {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
-  width: 100%;
-  min-width: 0;
-  margin-block: var(--space-4);
-}
-
-.landscapeWithArrow {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
-  width: 100%;
-  min-width: 0;
-}
-
-/* Showreel stills — native aspect ratio, no cover crop */
-.stillSection {
+.stillBreak {
   background: var(--color-white);
   padding-block: var(--space-4);
 }
 
-.still {
-  margin: 0;
-  min-width: 0;
-  width: 100%;
-}
-
-.stillImage {
-  display: block;
-  width: 100%;
+.stillBreak .mediaFigure {
   height: auto;
 }
 
-.villaPair {
-  display: grid;
-  gap: var(--space-3);
-  min-width: 0;
+.stillBreak .mediaFrame {
+  min-height: 0;
 }
 
 .process {
@@ -255,36 +326,6 @@
   padding-block: 0.15rem;
 }
 
-/*
- * Large ~16:9 landscape breaks — full content width, cover crop,
- * no radius / shadow / border / overlay.
- */
-.landscapeSection {
-  background: var(--color-white);
-  padding-block: var(--space-4);
-}
-
-.landscapeBreak {
-  margin: 0;
-  width: 100%;
-  min-width: 0;
-}
-
-.landscapeBreakFrame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-}
-
-.landscapeBreakImage {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
 .processLandscape {
   width: 100%;
   min-width: 0;
@@ -335,6 +376,24 @@
   line-height: 1.5;
 }
 
+.applicationsMedia {
+  margin-top: var(--space-5);
+  min-height: 16rem;
+}
+
+.applicationsMedia .mediaFrameFill {
+  min-height: 18rem;
+}
+
+.applicationsLandscape {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  width: 100%;
+  min-width: 0;
+  margin-block: var(--space-4);
+}
+
 .closing {
   background: var(--color-black);
   color: var(--color-white);
@@ -375,36 +434,23 @@
   color: rgba(255, 255, 255, 0.86);
 }
 
-@media (min-width: 768px) {
-  .villaPair {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
+@media (max-width: 47.9375rem) {
+  .mediaFrame {
+    --media-bar-width: clamp(0.625rem, 2.4vw, 0.875rem);
+  }
+}
+
+@media (min-width: 48rem) {
+  .editorialMedia,
+  .mediaFrameFill,
+  .mediaFramePlaceholder,
+  .mediaPlaceholder,
+  .mediaVideo {
+    min-height: 22rem;
   }
 
-  /*
-   * Process stays vertical (text → landscape → text) on all breakpoints
-   * so Sanity landscape breaks can interrupt the flow at full content width.
-   * Step copy and ↓ arrows are unchanged.
-   */
   .processFlow {
-    display: grid;
     gap: var(--space-3);
-  }
-
-  .processItem {
-    display: grid;
-    gap: var(--space-2);
-    justify-items: start;
-  }
-
-  .processStep {
-    max-width: 36rem;
-  }
-
-  .processArrow {
-    transform: none;
-    font-size: 1.25rem;
-    padding-top: 0;
   }
 
   .processLandscape {
@@ -423,23 +469,45 @@
   }
 }
 
-@media (min-width: 1024px) {
-  .textSectionWithMedia {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: var(--space-5);
+@media (min-width: 64rem) {
+  /*
+   * Light: copy | media (text left, image right)
+   * Dark / media-first: media | copy (image left, text right)
+   * Mobile keeps DOM order: copy → media
+   */
+  .editorialGrid {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
   }
 
-  /* BILD + TEXT rhythm (still in first column on desktop) */
-  .textSectionStillFirst {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  .editorialGridMediaFirst {
+    grid-template-columns: minmax(0, 0.58fr) minmax(0, 0.42fr);
   }
 
-  .textSectionStillFirst .textSectionCopy {
+  .editorialGridMediaFirst .editorialMedia {
+    order: 1;
+  }
+
+  .editorialGridMediaFirst .editorialCopy {
     order: 2;
   }
 
-  .textSectionStillFirst .textSectionMedia {
-    order: 1;
+  .editorialCopy {
+    padding-block: 3.5rem;
+    padding-right: var(--space-5);
+    padding-left: max(var(--container-padding-x), 3.5%);
+  }
+
+  .editorialGridMediaFirst .editorialCopy {
+    padding-left: var(--space-5);
+    padding-right: max(var(--container-padding-x), 3.5%);
+  }
+
+  .editorialMedia,
+  .mediaFrameFill,
+  .mediaFramePlaceholder,
+  .mediaPlaceholder,
+  .mediaVideo {
+    min-height: 24rem;
   }
 
   .applicationsGrid {

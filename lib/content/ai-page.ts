@@ -65,19 +65,25 @@ export type AiPageContent = {
   experience: AiTextBlock;
   approach: AiTextBlock;
   /**
-   * Optional stills from the KI showreel (Sanity uploads).
-   * Omitted/empty until published — page never invents placeholder art.
+   * Optional stills from Sanity `visualMedia`.
+   * Used as section fallbacks when the matching section media is empty.
+   * Never filled from repository images.
    */
   visuals: {
+    /** Intro fallback */
     keyVisual?: HomepageMedia;
+    /** Models fallback */
     clayVilla?: HomepageMedia;
+    /** Optional still between Applications and Models */
     photoVilla?: HomepageMedia;
+    /** Experience fallback */
     contentFormats?: HomepageMedia;
+    /** Approach fallback */
     distributionChannels?: HomepageMedia;
   };
   /**
-   * Optional 16:9 landscape breaks between process steps / text blocks.
-   * Empty slots collapse — no grey placeholders. Images come from Sanity only.
+   * Optional image breaks between process steps / text blocks (Sanity only).
+   * Empty slots collapse. Native aspect — no forced 16:9 crop.
    */
   landscapeBreaks: {
     afterAi?: HomepageMedia;
@@ -108,31 +114,35 @@ export const aiLanguageAlternates = {
   en: getAiPath("en"),
 } as const;
 
-const FALLBACK_MEDIA: HomepageMedia = {
-  src: "/images/Social marketing/Social marketing/PHOTO-2023-05-11-15-00-27.jpg",
-  alt: "Studiojeker visuelle Produktion",
-  width: 1200,
-  height: 900,
+/**
+ * Empty media slot — never a repository image.
+ * Missing Sanity uploads show a neutral UI placeholder on the page.
+ */
+const EMPTY_MEDIA: HomepageMedia = {
+  src: "",
+  alt: "",
+  width: 1600,
+  height: 1200,
 };
 
 /**
- * Local fallback for the KI / AI page.
+ * Local text fallback for the KI / AI page (copy only).
  * DE path: `/ki` · EN path: `/en/ai`.
- * Positioning: strategy + production + AI + distribution → visibility.
- * Sanity overrides when published. Showreel: Vimeo 1228871502.
+ * Images/videos come from Sanity only — no hardcoded repo media.
+ * Showreel Vimeo id is a local default until Sanity media is published.
  */
 export function getAiPageContent(locale: Locale): AiPageContent {
   const contact = localizePathname("/contact", locale);
   const logos = getClientLogos();
   const media: HomepageMedia = {
-    ...FALLBACK_MEDIA,
+    ...EMPTY_MEDIA,
     alt:
       locale === "en"
         ? "Studiojeker visual production"
         : "Studiojeker visuelle Produktion",
   };
   const showreelMedia: HomepageMedia = {
-    ...media,
+    ...EMPTY_MEDIA,
     alt:
       locale === "en"
         ? "Studiojeker AI and visibility showreel"
