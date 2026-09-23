@@ -1,9 +1,9 @@
 /**
- * Default KI / AI singleton values — matches live /ki and /en/ai copy in
- * `lib/content/ai-page.ts`. Used as Sanity `initialValue` so the first open
- * of the desk singleton is prefilled (no invented / shortened copy).
+ * Default KI / AI singleton values — approved DE/EN copy for Studio `initialValue`
+ * and one-time text migration (`scripts/migrate-ai-page-texts.ts`).
  *
- * Images stay empty: editors upload in Studio. Showreel Vimeo is prefilled.
+ * Images / landscapeBreaks stay empty: editors upload in Studio.
+ * Showreel Vimeo URL is prefilled; existing CMS media is never overwritten by migration.
  */
 
 function locString(de: string, en: string) {
@@ -164,7 +164,7 @@ export const aiPageInitialValues = {
     media: {
       _type: "mediaField" as const,
       mediaType: "image",
-      // Image asset left empty — editors upload in Studio; frontend keeps local fallback until then.
+      // Image asset left empty — editors upload in Studio.
     },
   },
   introSection: {

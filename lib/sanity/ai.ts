@@ -44,6 +44,8 @@ export type SanityAiTextSection = {
 } | null;
 
 export type SanityAiLandscapeBreak = {
+  media?: SanityMediaField;
+  /** @deprecated Prefer media — kept for older image-only slots. */
   image?: SanityImageProjection;
   caption?: SanityLocalizedString;
 } | null;
@@ -185,30 +187,37 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
   },
   landscapeBreaks{
     afterAi{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     afterDistribution{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     afterVisibility{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     midApplications{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     afterApplications{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     afterModels{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     },
     afterExperience{
+      media${sanityMediaProjection},
       image${sanityImageProjection},
       caption${localizedStringProjection}
     }
@@ -228,8 +237,7 @@ export const aiQuery = groq`*[_id == $id && _type == "ai"][0]{
 
 /**
  * Fetch the published KI/AI singleton at build time.
- * Returns null when Sanity is unreachable or the document is missing
- * so callers can fall back to local content (same pattern as Content-Abo).
+ * Returns null when Sanity is unreachable or the document is missing.
  */
 export async function fetchSanityAi(): Promise<SanityAi | null> {
   try {
@@ -240,7 +248,7 @@ export async function fetchSanityAi(): Promise<SanityAi | null> {
     return doc?._id ? doc : null;
   } catch (error) {
     console.warn(
-      "[sanity] KI/AI fetch failed — falling back to local content.",
+      "[sanity] KI/AI fetch failed — page will render Sanity-empty shell.",
       error instanceof Error ? error.message : error,
     );
     return null;

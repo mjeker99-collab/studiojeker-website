@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Locale } from "@/types/i18n";
 import type { SanityAi } from "@/lib/sanity/ai";
-import { getAiPageContent } from "@/lib/content/ai-page";
+import { getEmptyAiPageContent } from "@/lib/content/ai-page";
 import {
   mergeSanityAi,
   type ResolvedAiPageContent,
@@ -52,7 +52,7 @@ export function AiPageLive({ locale, content }: AiPageLiveProps) {
         // Preserve build-time client logos (fetched server-side). The PHP proxy
         // returns only the AI singleton — same limitation as About Live.
         const merged = mergeSanityAi(
-          getAiPageContent(locale),
+          getEmptyAiPageContent(locale),
           payload.document,
           locale,
         );
@@ -107,13 +107,14 @@ export function AiPageLive({ locale, content }: AiPageLiveProps) {
     resolved.visuals.photoVilla?.src ?? "",
     resolved.visuals.contentFormats?.src ?? "",
     resolved.visuals.distributionChannels?.src ?? "",
-    resolved.landscapeBreaks.afterAi?.src ?? "",
-    resolved.landscapeBreaks.afterDistribution?.src ?? "",
-    resolved.landscapeBreaks.afterVisibility?.src ?? "",
-    resolved.landscapeBreaks.midApplications?.src ?? "",
-    resolved.landscapeBreaks.afterApplications?.src ?? "",
-    resolved.landscapeBreaks.afterModels?.src ?? "",
-    resolved.landscapeBreaks.afterExperience?.src ?? "",
+    resolved.landscapeBreaks.afterAi?.media?.src ?? "",
+    resolved.landscapeBreaks.afterAi?.videoId ?? "",
+    resolved.landscapeBreaks.afterDistribution?.media?.src ?? "",
+    resolved.landscapeBreaks.afterVisibility?.media?.src ?? "",
+    resolved.landscapeBreaks.midApplications?.media?.src ?? "",
+    resolved.landscapeBreaks.afterApplications?.media?.src ?? "",
+    resolved.landscapeBreaks.afterModels?.media?.src ?? "",
+    resolved.landscapeBreaks.afterExperience?.media?.src ?? "",
     resolved.process.steps.map((step) => step.title).join(","),
     resolved.showreel.videoId ?? "",
     resolved.showreel.media.src,

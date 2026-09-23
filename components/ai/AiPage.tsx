@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type {
+  AiLandscapeBreak,
   AiPageContent,
   AiTextBlock,
 } from "@/lib/content/ai-page";
@@ -19,6 +20,10 @@ import styles from "./AiPage.module.css";
 type AiPageProps = {
   content: AiPageContent;
 };
+
+function hasLandscapeMedia(breakSlot?: AiLandscapeBreak): boolean {
+  return Boolean(breakSlot?.media?.src || breakSlot?.videoId);
+}
 
 /**
  * Optional section media — image (native aspect) or Vimeo.
@@ -166,29 +171,55 @@ function StillFigure({
 
 /**
  * Full-width ~16:9 landscape break. Renders nothing when media is empty.
- * No borders, shadows, overlays, or animations.
+ * No borders, shadows, overlays, or animations. Sanity-only — no fallbacks.
  */
 function LandscapeBreak({
-  media,
+  breakSlot,
   sizes = "(max-width: 1024px) 100vw, min(100vw, 72rem)",
 }: {
-  media?: HomepageMedia;
+  breakSlot?: AiLandscapeBreak;
   sizes?: string;
 }) {
-  if (!media?.src) return null;
+  if (!hasLandscapeMedia(breakSlot) || !breakSlot) return null;
+
+  const media = breakSlot.media;
+  const videoId = breakSlot.videoId;
+  const hasImage = Boolean(media?.src);
+  const hasVideo = Boolean(videoId);
 
   return (
     <figure className={styles.landscapeBreak}>
       <div className={styles.landscapeBreakFrame}>
-        <Image
-          src={mediaPath(media.src)}
-          alt={media.alt}
-          width={media.width || 1920}
-          height={media.height || 1080}
-          sizes={sizes}
-          className={styles.landscapeBreakImage}
-        />
+        {hasVideo && videoId ? (
+          <VimeoShowreel
+            fill
+            videoId={videoId}
+            title={media?.alt || breakSlot.caption || "Landscape"}
+            poster={
+              hasImage && media
+                ? {
+                    src: mediaPath(media.src),
+                    alt: media.alt,
+                    width: media.width || 1920,
+                    height: media.height || 1080,
+                  }
+                : undefined
+            }
+          />
+        ) : hasImage && media ? (
+          <Image
+            src={mediaPath(media.src)}
+            alt={media.alt}
+            width={media.width || 1920}
+            height={media.height || 1080}
+            sizes={sizes}
+            className={styles.landscapeBreakImage}
+          />
+        ) : null}
       </div>
+      {breakSlot.caption ? (
+        <figcaption className={styles.mediaCaption}>{breakSlot.caption}</figcaption>
+      ) : null}
     </figure>
   );
 }
@@ -197,7 +228,7 @@ function LandscapeBreak({
 function processBreakAfterStep(
   stepId: string,
   breaks: AiPageContent["landscapeBreaks"],
-): HomepageMedia | undefined {
+): AiLandscapeBreak | undefined {
   switch (stepId) {
     case "ai":
       return breaks.afterAi;
@@ -218,6 +249,17 @@ export function AiPage({ content }: AiPageProps) {
   const { visuals, landscapeBreaks } = content;
   const hasVillaPair = Boolean(
     visuals.clayVilla?.src || visuals.photoVilla?.src,
+  );
+  const hasHeroMedia = Boolean(
+    content.hero.videoId || content.hero.media.src,
+  );
+  const hasShowreelMedia = Boolean(
+    content.showreel.videoId || content.showreel.media.src,
+  );
+  const hasShowreelCopy = Boolean(
+    content.showreel.label ||
+      content.showreel.headline ||
+      content.showreel.body,
   );
 
   const showreelHeadline = content.showreel.headline.replace(/\.$/, "");
@@ -252,37 +294,43 @@ export function AiPage({ content }: AiPageProps) {
             <p className={heroStyles.subheadline}>{content.hero.body}</p>
           </Reveal>
 
-          <Reveal
-            className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
-            delayMs={120}
-          >
-            <div className={heroStyles.media}>
-              <div className={heroStyles.cyanBar} aria-hidden="true" />
-              <div className={heroStyles.photo}>
-                {content.hero.videoId ? (
-                  <HeroVimeoLoop
-                    videoId={content.hero.videoId}
-                    title={content.hero.media.alt}
-                    poster={{
-                      src: mediaPath(content.hero.media.src),
-                      alt: content.hero.media.alt,
-                      width: content.hero.media.width,
-                      height: content.hero.media.height,
-                    }}
-                  />
-                ) : (
-                  <Image
-                    src={mediaPath(content.hero.media.src)}
-                    alt={content.hero.media.alt}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 64vw"
-                    className={heroStyles.image}
-                  />
-                )}
+          {hasHeroMedia ? (
+            <Reveal
+              className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
+              delayMs={120}
+            >
+              <div className={heroStyles.media}>
+                <div className={heroStyles.cyanBar} aria-hidden="true" />
+                <div className={heroStyles.photo}>
+                  {content.hero.videoId ? (
+                    <HeroVimeoLoop
+                      videoId={content.hero.videoId}
+                      title={content.hero.media.alt || content.hero.headline}
+                      poster={
+                        content.hero.media.src
+                          ? {
+                              src: mediaPath(content.hero.media.src),
+                              alt: content.hero.media.alt,
+                              width: content.hero.media.width,
+                              height: content.hero.media.height,
+                            }
+                          : undefined
+                      }
+                    />
+                  ) : (
+                    <Image
+                      src={mediaPath(content.hero.media.src)}
+                      alt={content.hero.media.alt}
+                      fill
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 64vw"
+                      className={heroStyles.image}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          ) : null}
         </div>
       </section>
 
@@ -292,20 +340,22 @@ export function AiPage({ content }: AiPageProps) {
         fallbackStill={visuals.keyVisual}
       />
 
-      <AboutSection
-        key={`ai-showreel-${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
-        compact
-        content={{
-          label: content.showreel.label,
-          headline: showreelHeadline,
-          headlineAccent: ".",
-          subheadline: "",
-          body: [content.showreel.body],
-          cta: content.showreel.cta,
-          media: content.showreel.media,
-          videoId: content.showreel.videoId,
-        }}
-      />
+      {hasShowreelCopy || hasShowreelMedia ? (
+        <AboutSection
+          key={`ai-showreel-${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}
+          compact
+          content={{
+            label: content.showreel.label,
+            headline: showreelHeadline,
+            headlineAccent: ".",
+            subheadline: "",
+            body: content.showreel.body ? [content.showreel.body] : [],
+            cta: content.showreel.cta,
+            media: content.showreel.media,
+            videoId: content.showreel.videoId,
+          }}
+        />
+      ) : null}
 
       <section
         className={styles.process}
@@ -323,12 +373,12 @@ export function AiPage({ content }: AiPageProps) {
 
           <ol className={styles.processFlow}>
             {content.process.steps.map((step, index) => {
-              const breakMedia = processBreakAfterStep(
+              const breakSlot = processBreakAfterStep(
                 step.id,
                 landscapeBreaks,
               );
               const isLast = index >= content.process.steps.length - 1;
-              const hasBreak = Boolean(breakMedia?.src);
+              const hasBreak = hasLandscapeMedia(breakSlot);
               // Arrow toward the next step, or toward a landscape break on the last step.
               const showArrow = !isLast || hasBreak;
               return (
@@ -348,7 +398,7 @@ export function AiPage({ content }: AiPageProps) {
                   ) : null}
                   {hasBreak ? (
                     <Reveal className={styles.processLandscape} delayMs={60}>
-                      <LandscapeBreak media={breakMedia} />
+                      <LandscapeBreak breakSlot={breakSlot} />
                     </Reveal>
                   ) : null}
                 </li>
@@ -391,12 +441,14 @@ export function AiPage({ content }: AiPageProps) {
                     </Reveal>
                   ))}
                 </div>
-                {landscapeBreaks.midApplications?.src ? (
+                {hasLandscapeMedia(landscapeBreaks.midApplications) ? (
                   <Reveal className={styles.applicationsLandscape} delayMs={60}>
                     <span className={styles.processArrow} aria-hidden="true">
                       ↓
                     </span>
-                    <LandscapeBreak media={landscapeBreaks.midApplications} />
+                    <LandscapeBreak
+                      breakSlot={landscapeBreaks.midApplications}
+                    />
                   </Reveal>
                 ) : null}
                 {secondBand.length > 0 ? (
@@ -437,18 +489,22 @@ export function AiPage({ content }: AiPageProps) {
         </Container>
       </section>
 
-      {landscapeBreaks.afterApplications?.src ? (
+      {hasLandscapeMedia(landscapeBreaks.afterApplications) ? (
         <section
           className={styles.landscapeSection}
           data-header-theme="light"
-          aria-label={landscapeBreaks.afterApplications.alt || "Landscape"}
+          aria-label={
+            landscapeBreaks.afterApplications?.media?.alt ||
+            landscapeBreaks.afterApplications?.caption ||
+            "Landscape"
+          }
         >
           <Container>
             <Reveal className={styles.landscapeWithArrow}>
               <span className={styles.processArrow} aria-hidden="true">
                 ↓
               </span>
-              <LandscapeBreak media={landscapeBreaks.afterApplications} />
+              <LandscapeBreak breakSlot={landscapeBreaks.afterApplications} />
             </Reveal>
           </Container>
         </section>
@@ -489,18 +545,22 @@ export function AiPage({ content }: AiPageProps) {
         inverted
       />
 
-      {landscapeBreaks.afterModels?.src ? (
+      {hasLandscapeMedia(landscapeBreaks.afterModels) ? (
         <section
           className={styles.landscapeSection}
           data-header-theme="light"
-          aria-label={landscapeBreaks.afterModels.alt || "Landscape"}
+          aria-label={
+            landscapeBreaks.afterModels?.media?.alt ||
+            landscapeBreaks.afterModels?.caption ||
+            "Landscape"
+          }
         >
           <Container>
             <Reveal className={styles.landscapeWithArrow}>
               <span className={styles.processArrow} aria-hidden="true">
                 ↓
               </span>
-              <LandscapeBreak media={landscapeBreaks.afterModels} />
+              <LandscapeBreak breakSlot={landscapeBreaks.afterModels} />
             </Reveal>
           </Container>
         </section>
@@ -529,18 +589,22 @@ export function AiPage({ content }: AiPageProps) {
         content={content.experience}
       />
 
-      {landscapeBreaks.afterExperience?.src ? (
+      {hasLandscapeMedia(landscapeBreaks.afterExperience) ? (
         <section
           className={styles.landscapeSection}
           data-header-theme="light"
-          aria-label={landscapeBreaks.afterExperience.alt || "Landscape"}
+          aria-label={
+            landscapeBreaks.afterExperience?.media?.alt ||
+            landscapeBreaks.afterExperience?.caption ||
+            "Landscape"
+          }
         >
           <Container>
             <Reveal className={styles.landscapeWithArrow}>
               <span className={styles.processArrow} aria-hidden="true">
                 ↓
               </span>
-              <LandscapeBreak media={landscapeBreaks.afterExperience} />
+              <LandscapeBreak breakSlot={landscapeBreaks.afterExperience} />
             </Reveal>
           </Container>
         </section>

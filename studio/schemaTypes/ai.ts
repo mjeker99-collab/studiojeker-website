@@ -32,29 +32,20 @@ const aiSectionMediaFields = [
  * closingSection → closing · seoSection → seo
  */
 
-/** Optional 16:9 landscape still — image + alt (+ optional caption). Empty = hidden. */
-const landscapeBreakImageFields = [
+/** Optional 16:9 landscape break — image or Vimeo via mediaField. Empty = hidden. */
+const landscapeBreakFields = [
   defineField({
-    name: "image",
-    title: "Landscape Image",
-    type: "image",
-    options: { hotspot: true },
+    name: "media",
+    title: "Landscape Media (optional)",
+    type: "mediaField",
     description:
-      "Querformat (~16:9), full content width. Leave empty to hide — no placeholder.",
-    fields: [
-      defineField({
-        name: "alt",
-        title: "Alt Text",
-        type: "string",
-        description: "Accessible description of the image.",
-      }),
-    ],
+      "Querformat (~16:9), full content width. Image or Vimeo. Leave empty to hide — no placeholder image.",
   }),
   defineField({
     name: "caption",
     title: "Caption (optional)",
     type: "localizedString",
-    description: "Optional short caption under the image.",
+    description: "Optional short caption under the image/video.",
   }),
 ];
 
@@ -329,12 +320,12 @@ export const ai = defineType({
 
     defineField({
       name: "landscapeBreaks",
-      title: "Landscape image breaks (16:9)",
+      title: "Landscape media breaks (16:9)",
       type: "object",
       group: "landscapeBreaks",
       options: { collapsible: true, collapsed: false },
       description:
-        "Optional large landscape (~16:9) stills between process steps and lower text blocks. Empty slots collapse on the website — no placeholders.",
+        "Optional large landscape (~16:9) image or Vimeo between process steps and text blocks. Empty slots collapse — no static placeholder images.",
       fields: [
         defineField({
           name: "afterAi",
@@ -343,7 +334,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "Between AI and DISTRIBUTION in “Vom Konzept zur Sichtbarkeit”.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "afterDistribution",
@@ -351,7 +342,7 @@ export const ai = defineType({
           type: "object",
           options: { collapsible: true, collapsed: false },
           description: "Between DISTRIBUTION and VISIBILITY.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "afterVisibility",
@@ -360,7 +351,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "After VISIBILITY, before “Wo wir KI einsetzen”.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "midApplications",
@@ -369,7 +360,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "Between application items 01–03 and 04–06 (“Wo wir KI einsetzen”).",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "afterApplications",
@@ -378,7 +369,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "After “Wo wir KI einsetzen”, before “Die besten Modelle…”.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "afterModels",
@@ -387,7 +378,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "Between “Die besten Modelle…” and “KI + Erfahrung”.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
         defineField({
           name: "afterExperience",
@@ -396,7 +387,7 @@ export const ai = defineType({
           options: { collapsible: true, collapsed: false },
           description:
             "Between “KI + Erfahrung” and “Gezielt. Verantwortungsbewusst…”.",
-          fields: landscapeBreakImageFields,
+          fields: landscapeBreakFields,
         }),
       ],
     }),

@@ -1,8 +1,12 @@
 /**
- * KI/AI merge regression checks.
+ * KI/AI merge regression checks (Sanity SSOT — empty local shell).
  * Run: npx tsx scripts/test-ai-merge.ts
  */
-import { getAiPageContent, aiLanguageAlternates } from "../lib/content/ai-page";
+import {
+  getEmptyAiPageContent,
+  aiLanguageAlternates,
+} from "../lib/content/ai-page";
+import { getAiPageSeedContent } from "../lib/content/ai-page-seed";
 import { mergeSanityAi } from "../lib/content/merge-sanity-ai";
 import { fetchSanityAi } from "../lib/sanity/ai";
 import type { SanityAi } from "../lib/sanity/ai";
@@ -16,28 +20,46 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 async function main() {
-  const baseDe = getAiPageContent("de");
-  const baseEn = getAiPageContent("en");
+  const emptyDe = getEmptyAiPageContent("de");
+  const emptyEn = getEmptyAiPageContent("en");
+  const seedDe = getAiPageSeedContent("de");
+  const seedEn = getAiPageSeedContent("en");
+
+  assert(!emptyDe.hero.headline, "runtime DE shell has no editorial headline");
+  assert(!emptyEn.hero.headline, "runtime EN shell has no editorial headline");
+  assert(emptyDe.process.steps.length === 0, "runtime shell has no process steps");
+  assert(
+    emptyDe.applications.items.length === 0,
+    "runtime shell has no applications",
+  );
+  assert(!emptyDe.hero.media.src, "runtime shell has no hero image path");
+  assert(!emptyDe.showreel.videoId, "runtime shell has no showreel Vimeo");
+  assert(
+    Object.keys(emptyDe.landscapeBreaks).length === 0,
+    "runtime shell has no landscape defaults",
+  );
+  assert(
+    Object.keys(emptyDe.visuals).length === 0,
+    "runtime visuals empty until Sanity uploads",
+  );
 
   assert(
-    baseDe.hero.headline.includes("Erfahrung"),
-    "fallback DE headline present",
+    seedDe.hero.headline.includes("Erfahrung"),
+    "seed DE headline present",
   );
   assert(
-    baseEn.hero.headline.includes("experience"),
-    "fallback EN headline present",
+    seedEn.hero.headline.includes("experience"),
+    "seed EN headline present",
   );
-  assert(baseDe.applications.items.length === 6, "six DE application areas");
-  assert(baseEn.applications.items.length === 6, "six EN application areas");
-  assert(baseDe.process.steps.length === 5, "five DE process steps");
-  assert(baseEn.process.steps.length === 5, "five EN process steps");
+  assert(seedDe.applications.items.length === 6, "six DE application areas");
+  assert(seedEn.applications.items.length === 6, "six EN application areas");
+  assert(seedDe.process.steps.length === 5, "five DE process steps");
+  assert(seedEn.process.steps.length === 5, "five EN process steps");
   assert(
-    baseDe.process.steps.map((s) => s.id).join(">") ===
+    seedDe.process.steps.map((s) => s.id).join(">") ===
       "concept>production>ai>distribution>visibility",
     "DE process order",
   );
-  assert(baseDe.showreel.videoId === "1228871502", "DE showreel Vimeo id");
-  assert(baseEn.showreel.videoId === "1228871502", "EN showreel Vimeo id");
   assert(aiLanguageAlternates.de === "/ki", "DE path is /ki");
   assert(aiLanguageAlternates.en === "/en/ai", "EN path is /en/ai");
   assert(getAiPath("de") === "/ki", "getAiPath de");
@@ -54,15 +76,15 @@ async function main() {
   const metaDe = buildPageMetadata({
     locale: "de",
     pathname: "/ki",
-    title: baseDe.seo.title,
-    description: baseDe.seo.description,
+    title: seedDe.seo.title,
+    description: seedDe.seo.description,
     languageAlternates: aiLanguageAlternates,
   });
   const metaEn = buildPageMetadata({
     locale: "en",
     pathname: "/ai",
-    title: baseEn.seo.title,
-    description: baseEn.seo.description,
+    title: seedEn.seo.title,
+    description: seedEn.seo.description,
     languageAlternates: aiLanguageAlternates,
   });
 
@@ -145,7 +167,7 @@ async function main() {
     },
   };
 
-  const mergedDe = mergeSanityAi(baseDe, stub, "de");
+  const mergedDe = mergeSanityAi(emptyDe, stub, "de");
   assert(mergedDe.hero.headline === "KI. Sanity Headline.", "DE merge headline");
   assert(mergedDe.hero.body === "DE Intro aus Sanity.", "DE merge intro");
   assert(mergedDe.closing.cta.href === "/contact", "DE CTA href");
@@ -153,8 +175,12 @@ async function main() {
     mergedDe.seo.title === "KI für Bild, Video & 3D | Studiojeker",
     "DE SEO title",
   );
+  assert(
+    !mergedDe.intro.headline,
+    "empty Sanity intro stays empty (no local text fallback)",
+  );
 
-  const mergedEn = mergeSanityAi(baseEn, stub, "en");
+  const mergedEn = mergeSanityAi(emptyEn, stub, "en");
   assert(mergedEn.hero.headline === "AI. Sanity Headline.", "EN merge headline");
   assert(mergedEn.closing.cta.href === "/en/contact", "EN CTA href localized");
   assert(
@@ -178,7 +204,7 @@ async function main() {
       },
     },
   };
-  const withVideo = mergeSanityAi(baseDe, videoStub, "de");
+  const withVideo = mergeSanityAi(emptyDe, videoStub, "de");
   assert(withVideo.hero.videoId === "1216347773", "hero Vimeo id resolved");
 
   const videoWithoutUrl: SanityAi = {
@@ -203,7 +229,7 @@ async function main() {
       },
     },
   };
-  const videoMissingUrl = mergeSanityAi(baseDe, videoWithoutUrl, "de");
+  const videoMissingUrl = mergeSanityAi(emptyDe, videoWithoutUrl, "de");
   assert(!videoMissingUrl.hero.videoId, "missing Vimeo URL → no videoId");
   assert(
     videoMissingUrl.hero.media.src?.includes("ai-hero-still"),
@@ -233,11 +259,6 @@ async function main() {
   assert(
     !afterClear.hero.videoId,
     "cleared CMS video removes stale hero videoId",
-  );
-
-  assert(
-    Object.keys(baseDe.visuals).length === 0,
-    "fallback visuals empty until Sanity uploads",
   );
 
   const visualsStub: SanityAi = {
@@ -287,7 +308,7 @@ async function main() {
       },
     },
   };
-  const withVisuals = mergeSanityAi(baseDe, visualsStub, "de");
+  const withVisuals = mergeSanityAi(emptyDe, visualsStub, "de");
   assert(
     withVisuals.showreel.videoId === "1228871502",
     "showreel Vimeo URL editable via Sanity",
@@ -317,8 +338,8 @@ async function main() {
     "Bild 5 distributionChannels merges",
   );
   assert(
-    withVisuals.intro.headline === baseDe.intro.headline,
-    "existing intro headline unchanged by visual merge",
+    !withVisuals.intro.headline,
+    "empty intro stays empty when only visuals merge",
   );
 
   const landscapeStub: SanityAi = {
@@ -382,55 +403,87 @@ async function main() {
       },
     },
   };
-  const withLandscape = mergeSanityAi(baseDe, landscapeStub, "de");
+  const withLandscape = mergeSanityAi(emptyDe, landscapeStub, "de");
   assert(
-    withLandscape.landscapeBreaks.afterAi?.src?.includes("ai-break-ai"),
+    withLandscape.landscapeBreaks.afterAi?.media?.src?.includes("ai-break-ai"),
     "landscape afterAi merges",
   );
   assert(
-    withLandscape.landscapeBreaks.afterAi?.alt === "Produktion / KI Break",
+    withLandscape.landscapeBreaks.afterAi?.media?.alt ===
+      "Produktion / KI Break",
     "landscape afterAi alt editable",
   );
   assert(
-    withLandscape.landscapeBreaks.afterDistribution?.src?.includes(
+    withLandscape.landscapeBreaks.afterDistribution?.media?.src?.includes(
       "ai-break-dist",
     ),
     "landscape afterDistribution merges",
   );
   assert(
-    withLandscape.landscapeBreaks.afterVisibility?.src?.includes("ai-break-vis"),
+    withLandscape.landscapeBreaks.afterVisibility?.media?.src?.includes(
+      "ai-break-vis",
+    ),
     "landscape afterVisibility merges",
   );
   assert(
-    withLandscape.landscapeBreaks.midApplications?.src?.includes("ai-break-mid"),
+    withLandscape.landscapeBreaks.midApplications?.media?.src?.includes(
+      "ai-break-mid",
+    ),
     "landscape midApplications merges",
   );
   assert(
-    withLandscape.landscapeBreaks.afterApplications?.src?.includes(
+    withLandscape.landscapeBreaks.afterApplications?.media?.src?.includes(
       "ai-break-apps",
     ),
     "landscape afterApplications merges",
   );
   assert(
-    withLandscape.landscapeBreaks.afterModels?.src?.includes("ai-break-models"),
+    withLandscape.landscapeBreaks.afterModels?.media?.src?.includes(
+      "ai-break-models",
+    ),
     "landscape afterModels merges",
   );
   assert(
-    withLandscape.landscapeBreaks.afterExperience?.src?.includes("ai-break-exp"),
+    withLandscape.landscapeBreaks.afterExperience?.media?.src?.includes(
+      "ai-break-exp",
+    ),
     "landscape afterExperience merges",
   );
-  const emptyLandscape = mergeSanityAi(baseDe, stub, "de");
+  const emptyLandscape = mergeSanityAi(emptyDe, stub, "de");
   assert(
-    !emptyLandscape.landscapeBreaks.afterAi?.src,
+    !emptyLandscape.landscapeBreaks.afterAi?.media?.src,
     "empty Sanity landscape collapses afterAi (no local defaults)",
   );
   assert(
-    !emptyLandscape.landscapeBreaks.midApplications?.src,
+    !emptyLandscape.landscapeBreaks.midApplications?.media?.src,
     "empty Sanity landscape collapses midApplications (no local defaults)",
   );
   assert(
-    !emptyLandscape.landscapeBreaks.afterModels?.src,
+    !emptyLandscape.landscapeBreaks.afterModels?.media?.src,
     "empty Sanity landscape collapses afterModels (no local defaults)",
+  );
+
+  const mediaFieldLandscape: SanityAi = {
+    ...stub,
+    landscapeBreaks: {
+      afterAi: {
+        media: {
+          mediaType: "video",
+          vimeoUrl: "https://vimeo.com/1111111111",
+          poster: {
+            url: "https://cdn.sanity.io/images/tgx6e6jg/production/ai-break-poster.jpg",
+            dimensions: { width: 1920, height: 1080 },
+            alt: "Break poster",
+            asset: { _ref: "image-ai-break-poster", _type: "reference" },
+          },
+        },
+      },
+    },
+  };
+  const withMediaFieldBreak = mergeSanityAi(emptyDe, mediaFieldLandscape, "de");
+  assert(
+    withMediaFieldBreak.landscapeBreaks.afterAi?.videoId === "1111111111",
+    "landscape mediaField Vimeo resolves",
   );
 
   const captionStub: SanityAi = {
@@ -459,7 +512,7 @@ async function main() {
       },
     },
   };
-  const withCaption = mergeSanityAi(baseDe, captionStub, "de");
+  const withCaption = mergeSanityAi(emptyDe, captionStub, "de");
   assert(
     withCaption.experience.caption === "Bildunterschrift DE",
     "experience caption merges",
@@ -475,12 +528,26 @@ async function main() {
 
   const live = await fetchSanityAi();
   if (live?._id === "ai") {
-    const fromCms = mergeSanityAi(baseDe, live, "de");
-    assert(fromCms.hero.headline.length > 0, "live Sanity headline present");
+    const fromCms = mergeSanityAi(emptyDe, live, "de");
+    assert(
+      Boolean(fromCms.hero.videoId || fromCms.hero.media.src),
+      "live Sanity hero media present",
+    );
+    assert(
+      fromCms.showreel.videoId === "1228871502" ||
+        Boolean(fromCms.showreel.media.src),
+      "live showreel media preserved",
+    );
     console.log("Live Sanity document present and merges cleanly.");
+    console.log(
+      `  hero.videoId=${fromCms.hero.videoId || "(none)"} showreel.videoId=${fromCms.showreel.videoId || "(none)"}`,
+    );
+    console.log(
+      `  hero.headline empty=${!fromCms.hero.headline} (texts migrate separately)`,
+    );
   } else {
     console.log(
-      "No live Sanity AI document yet — stub merge checks passed. Seed with a writable token: node scripts/migrate-ai-page.mjs",
+      "No live Sanity AI document yet — stub merge checks passed.",
     );
   }
 

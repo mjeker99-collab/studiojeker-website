@@ -1,9 +1,8 @@
 import type { Locale } from "@/types/i18n";
-import type { HomepageMedia } from "@/types/homepage";
 import {
-  getAiPageContent,
-  type AiApplicationItem,
+  getEmptyAiPageContent,
   type AiPageContent,
+  type AiApplicationItem,
   type AiProcessStep,
   type AiTextBlock,
 } from "@/lib/content/ai-page";
@@ -27,6 +26,7 @@ import {
 } from "@/lib/sanity/media";
 import { fetchEnabledClientLogos } from "@/lib/sanity/clients";
 import { sanitizeHref } from "@/lib/security/safe-href";
+import type { HomepageMedia } from "@/types/homepage";
 
 type Localized = SanityLocalizedString | SanityLocalizedText | null | undefined;
 
@@ -437,11 +437,39 @@ export function mergeSanityAi(
       height: 1080,
     };
     const mergeBreak = (
-      slot: { image?: Parameters<typeof resolveSanityImage>[0] } | null | undefined,
-    ): HomepageMedia | undefined => {
-      if (!slot?.image) return undefined;
-      const resolved = resolveSanityImage(slot.image, stillFallback);
-      return resolved.src ? resolved : undefined;
+      slot:
+        | {
+            media?: SanityMediaField;
+            image?: Parameters<typeof resolveSanityImage>[0];
+            caption?: SanityLocalizedString;
+          }
+        | null
+        | undefined,
+    ): import("@/lib/content/ai-page").AiLandscapeBreak | undefined => {
+      if (!slot) return undefined;
+
+      let media: HomepageMedia | undefined;
+      let videoId = "";
+
+      if (slot.media) {
+        const resolved = resolveSanityMedia(slot.media, stillFallback);
+        if (resolved.media.src || resolved.videoId) {
+          media = resolved.media.src ? resolved.media : undefined;
+          videoId = resolved.videoId ?? "";
+        }
+      } else if (slot.image) {
+        const resolved = resolveSanityImage(slot.image, stillFallback);
+        if (resolved.src) media = resolved;
+      }
+
+      if (!media?.src && !videoId) return undefined;
+
+      const caption = pickLocalized(slot.caption, locale);
+      const next: import("@/lib/content/ai-page").AiLandscapeBreak = {};
+      if (media?.src) next.media = media;
+      if (videoId) next.videoId = videoId;
+      if (caption) next.caption = caption;
+      return next;
     };
 
     const afterAi = mergeBreak(doc.landscapeBreaks.afterAi);
@@ -498,11 +526,11 @@ export function mergeSanityAi(
   return merged;
 }
 
-/** Local-only resolution (no Sanity fetch). Used as Live fallback base. */
+/** Empty shell for Live fallback when Sanity is unreachable. */
 export function getLocalResolvedAiContent(
   locale: Locale,
 ): ResolvedAiPageContent {
-  return getAiPageContent(locale);
+  return getEmptyAiPageContent(locale);
 }
 
 /** Attach live Client logos when available (same source as About/Contact). */

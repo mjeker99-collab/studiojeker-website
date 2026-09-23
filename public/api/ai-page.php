@@ -126,30 +126,37 @@ $query = <<<GROQ
   },
   landscapeBreaks{
     afterAi{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     afterDistribution{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     afterVisibility{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     midApplications{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     afterApplications{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     afterModels{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     },
     afterExperience{
+      media{$mediaProjection},
       image{$imageProjection},
       caption{$localized}
     }
