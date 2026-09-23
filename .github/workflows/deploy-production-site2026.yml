@@ -1,9 +1,15 @@
 # Production PRE-LIVE upload → studiojeker.ch/site2026 (Metanet/Plesk FTPS).
 #
+# Confirmed remote layout:
+#   FTP login root/
+#   └── studiojeker.ch/
+#       ├── wordpress/   ← live Document Root (never touch)
+#       └── site2026/    ← upload target only
+#
 # SAFETY:
 #   - Does NOT change Document Root / DNS / WordPress.
-#   - Uploads ONLY into site2026 (parallel to wordpress).
-#   - Refuses to touch studiojeker.ch/wordpress.
+#   - Uploads ONLY into studiojeker.ch/site2026.
+#   - Fail-closed unless studiojeker.ch/wordpress/ is present.
 #   - Manual workflow_dispatch only — never on push, never automatic go-live.
 #
 # Required secrets:
@@ -166,7 +172,11 @@ jobs:
           LFTPSETTINGS
           }
 
-          # List FTP login root (names only) to resolve base path.
+          # Confirmed Plesk layout (fail-closed):
+          #   FTP login root/
+          #   └── studiojeker.ch/
+          #       ├── wordpress/   ← live (never touch)
+          #       └── site2026/    ← upload target only
           {
             lftp_common
             echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
@@ -179,20 +189,18 @@ jobs:
           } | lftp | tee /tmp/ftp-top-raw.txt
 
           echo "===== TOP NAMES ====="
-          sed 's/\r$//' /tmp/ftp-top-names.txt | tee /tmp/ftp-top-names.clean.txt
+          # Normalize names: trim CR and trailing slashes from directory listings.
+          sed 's/\r$//; s#/$##' /tmp/ftp-top-names.txt | tee /tmp/ftp-top-names.clean.txt
 
-          BASE=""
-          if grep -qx 'wordpress' /tmp/ftp-top-names.clean.txt; then
-            BASE="."
-          elif grep -qx 'studiojeker.ch' /tmp/ftp-top-names.clean.txt; then
-            BASE="studiojeker.ch"
-          else
-            echo "::error::Could not locate wordpress sibling at FTP login root. Refusing upload."
+          if ! grep -qx 'studiojeker.ch' /tmp/ftp-top-names.clean.txt; then
+            echo "::error::FTP login root must contain studiojeker.ch/. Refusing upload (fail closed)."
             exit 1
           fi
+
+          BASE="studiojeker.ch"
           echo "Resolved FTP base: ${BASE}"
 
-          # List base and confirm wordpress exists as sibling of site2026.
+          # Inside studiojeker.ch/: require wordpress/ before any write.
           {
             lftp_common
             echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
@@ -205,17 +213,17 @@ jobs:
             echo "bye"
           } | lftp | tee /tmp/ftp-base-raw.txt
 
-          sed 's/\r$//' /tmp/ftp-base-names.txt > /tmp/ftp-base-names.clean.txt
+          sed 's/\r$//; s#/$##' /tmp/ftp-base-names.txt > /tmp/ftp-base-names.clean.txt
           echo "===== BASE NAMES ====="
           cat /tmp/ftp-base-names.clean.txt
 
           if ! grep -qx 'wordpress' /tmp/ftp-base-names.clean.txt; then
-            echo "::error::wordpress directory not found at base — aborting (fail closed)."
+            echo "::error::studiojeker.ch/wordpress/ not found — aborting (fail closed). WordPress must remain as sibling of site2026."
             exit 1
           fi
 
           if ! grep -qx 'site2026' /tmp/ftp-base-names.clean.txt; then
-            echo "Creating site2026 (WordPress untouched)..."
+            echo "Creating studiojeker.ch/site2026 (WordPress untouched)..."
             {
               lftp_common
               echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
@@ -224,10 +232,14 @@ jobs:
               echo "bye"
             } | lftp
           else
-            echo "site2026 already exists — uploading into it (no --delete)."
+            echo "studiojeker.ch/site2026 already exists — uploading into it (no --delete)."
           fi
 
           TARGET_REL="${BASE}/site2026"
+          if [ "${TARGET_REL}" != "studiojeker.ch/site2026" ]; then
+            echo "::error::Refusing unexpected upload target: ${TARGET_REL}"
+            exit 1
+          fi
           case "${TARGET_REL}" in
             *wordpress*)
               echo "::error::Target path unexpectedly contains wordpress: ${TARGET_REL}"
@@ -236,12 +248,12 @@ jobs:
           esac
           echo "Upload target (relative): ${TARGET_REL}"
 
-          # Mirror out/ → site2026 only. Never cd into wordpress. No --delete.
+          # Mirror out/ → studiojeker.ch/site2026 only. Never cd into wordpress. No --delete.
           {
             lftp_common
             echo "set mirror:parallel-transfer-count 1"
             echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
-            echo "cd ${BASE}/site2026"
+            echo "cd studiojeker.ch/site2026"
             echo "echo ===== SITE2026 PWD BEFORE UPLOAD ====="
             echo "pwd"
             echo "lcd out"
@@ -262,7 +274,7 @@ jobs:
             echo "bye"
           } | lftp | tee /tmp/ftp-upload-log.txt
 
-          echo "Upload to site2026 completed. WordPress was not targeted."
+          echo "Upload to studiojeker.ch/site2026 completed. WordPress was not targeted."
 
       - name: FTPS post-upload verification listing
         env:
@@ -284,32 +296,10 @@ jobs:
           set net:max-retries 3
           LFTPSETTINGS
             echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
-            echo "cls -1"
-            echo "bye"
-          } | lftp | tee /tmp/ftp-top2.txt
-
-          if grep -qE '(^|[[:space:]])wordpress($|[[:space:]]|/)' /tmp/ftp-top2.txt; then
-            BASE="."
-          else
-            BASE="studiojeker.ch"
-          fi
-
-          {
-            cat <<'LFTPSETTINGS'
-          set cmd:fail-exit true
-          set ssl:verify-certificate true
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ftp:ssl-protect-list true
-          set ftp:passive-mode true
-          set ftp:prefer-epsv false
-          set net:timeout 60
-          set net:max-retries 3
-          LFTPSETTINGS
-            echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
-            echo "cd ${BASE}"
+            echo "cd studiojeker.ch"
             echo "echo ===== SIBLINGS (wordpress must still exist) ====="
             echo "cls -la"
+            echo "cls -1 > /tmp/ftp-siblings.txt"
             echo "cd site2026"
             echo "echo ===== site2026 TOP ====="
             echo "cls -la"
@@ -320,8 +310,9 @@ jobs:
             echo "bye"
           } | lftp | tee /tmp/ftp-verify.txt
 
-          if ! grep -q 'wordpress' /tmp/ftp-verify.txt; then
-            echo "::error::Post-check: wordpress sibling no longer visible — investigate before any switch."
+          sed 's/\r$//; s#/$##' /tmp/ftp-siblings.txt > /tmp/ftp-siblings.clean.txt
+          if ! grep -qx 'wordpress' /tmp/ftp-siblings.clean.txt; then
+            echo "::error::Post-check: studiojeker.ch/wordpress/ no longer visible — investigate before any switch."
             exit 1
           fi
           if ! grep -q 'index.html' /tmp/ftp-verify.txt; then
