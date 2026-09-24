@@ -2,7 +2,9 @@ import groq from "groq";
 import { getSanityClient } from "@/lib/sanity/client";
 import {
   sanityImageProjection,
+  sanityMediaProjection,
   type SanityImageProjection,
+  type SanityMediaField,
 } from "@/lib/sanity/media";
 
 /** Deterministic About singleton ID (matches Studio desk structure). */
@@ -46,6 +48,8 @@ export type SanityAbout = {
   heroIntroText?: string | null;
   heroCtaLabel?: string | null;
   heroImage?: SanityImageProjection;
+  /** Preferred hero media (image or Vimeo). Falls back to heroImage when empty. */
+  heroMedia?: SanityMediaField;
   valuesLabel?: string | null;
   valuesItems?: SanityAboutValueItem[] | null;
   teamLabel?: string | null;
@@ -83,6 +87,7 @@ export const aboutQuery = groq`*[_id == $id && _type == "about"][0]{
   heroIntroText,
   heroCtaLabel,
   heroImage${sanityImageProjection},
+  heroMedia${sanityMediaProjection},
   valuesLabel,
   valuesItems[]{
     _key,

@@ -96,6 +96,8 @@ export function AboutPageLive({ locale, content }: AboutPageLiveProps) {
         `${member.id}:${member.isPlaceholder ? "slot" : member.image?.src ?? ""}`,
     ),
     resolved.hero.media.src,
+    resolved.hero.videoId ?? "image",
+    resolved.hero.mobilePoster?.src ?? "",
   ].join("|");
 
   return <AboutPage key={contentKey} content={resolved} />;

@@ -77,6 +77,13 @@ $query = <<<GROQ
   heroCtaHref,
   heroImage{$imageProjection},
   heroVideoUrl,
+  heroMedia{
+    mediaType,
+    vimeoUrl,
+    image{$imageProjection},
+    poster{$imageProjection},
+    mobilePoster{$imageProjection}
+  },
   solutionsLabel,
   solutionsHeadline,
   solutions[]{

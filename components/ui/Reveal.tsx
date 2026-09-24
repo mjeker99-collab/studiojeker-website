@@ -9,6 +9,12 @@ type RevealProps = {
   className?: string;
   as?: ElementType;
   delayMs?: number;
+  /**
+   * Keep content visible from first paint (no opacity:0 pending phase).
+   * Use for LCP hero media so posters are never briefly blanked.
+   * Does not change other Reveal call sites.
+   */
+  immediate?: boolean;
 };
 
 /**
@@ -21,18 +27,26 @@ export function Reveal({
   className,
   as,
   delayMs = 0,
+  immediate = false,
 }: RevealProps) {
   const { ref, pending, visible } = useReveal<HTMLElement>();
   const Tag = as ?? "div";
+  const showPending = !immediate && pending && !visible;
 
   return (
     <Tag
       ref={ref}
-      className={[styles.reveal, visible ? styles.visible : "", className]
+      className={[
+        styles.reveal,
+        immediate || visible ? styles.visible : "",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
-      data-pending={pending && !visible ? "true" : "false"}
-      style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
+      data-pending={showPending ? "true" : "false"}
+      style={{
+        transitionDelay: !immediate && visible ? `${delayMs}ms` : "0ms",
+      }}
     >
       {children}
     </Tag>

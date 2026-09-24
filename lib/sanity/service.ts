@@ -6,7 +6,9 @@ import {
 } from "@/lib/sanity/clients";
 import {
   sanityImageProjection,
+  sanityMediaProjection,
   type SanityImageProjection,
+  type SanityMediaField,
 } from "@/lib/sanity/media";
 import type { ServicePageSlug } from "@/types/service-page";
 
@@ -56,7 +58,10 @@ export type SanityService = {
   heroCtaLabel?: string | null;
   heroCtaHref?: string | null;
   heroImage?: SanityImageProjection;
+  /** Legacy Vimeo URL/ID — used when heroMedia is empty. */
   heroVideoUrl?: string | null;
+  /** Preferred hero media (image | video). Falls back to heroImage + heroVideoUrl. */
+  heroMedia?: SanityMediaField;
   solutionsLabel?: string | null;
   solutionsHeadline?: string | null;
   solutions?: SanityServiceSolutionItem[] | null;
@@ -112,6 +117,7 @@ export const serviceBySlugQuery = groq`*[_type == "service" && slug.current == $
   heroCtaHref,
   heroImage${sanityImageProjection},
   heroVideoUrl,
+  heroMedia${sanityMediaProjection},
   solutionsLabel,
   solutionsHeadline,
   solutions[]{
