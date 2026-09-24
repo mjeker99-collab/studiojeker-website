@@ -50,7 +50,7 @@ export function sanityImageSource(
 export function resolveSanityImage(
   image: SanityImageProjection | undefined,
   fallback: HomepageMedia,
-  width = HERO_MEDIA_MAX_WIDTH,
+  width = 1920,
 ): HomepageMedia {
   if (!image) {
     return fallback;

@@ -114,6 +114,8 @@ export function HeroVimeoLoop({
   }, [videoId]);
 
   // Poster-first: reveal iframe only after real playback, not iframe.onload.
+  // If Vimeo never reports play/playing/timeupdate (error, blocked autoplay,
+  // network failure), `playing` stays false — poster remains fully visible.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;

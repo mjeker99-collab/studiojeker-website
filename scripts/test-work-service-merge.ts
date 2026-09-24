@@ -89,11 +89,46 @@ async function main() {
   );
   assert(
     withHeroVideo.hero.videoId === "1226148277",
-    "service heroVideoUrl resolves to videoId",
+    "legacy service heroVideoUrl resolves to videoId",
   );
   assert(
     withHeroVideo.hero.media.src.includes("cdn.sanity.io"),
-    "service hero image remains poster when video set",
+    "service hero image remains poster when legacy video set",
+  );
+
+  const withHeroMediaField = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: null,
+      heroMedia: {
+        mediaType: "video",
+        vimeoUrl: "https://vimeo.com/1226148277",
+        poster: serviceDoc!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    withHeroMediaField.hero.videoId === "1226148277",
+    "service heroMedia mediaField resolves Vimeo id",
+  );
+
+  const imageOnlyHeroMedia = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "",
+      heroMedia: {
+        mediaType: "image",
+        image: serviceDoc!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    !imageOnlyHeroMedia.hero.videoId,
+    "service heroMedia image type clears video",
   );
 
   const clearedHeroVideo = mergeSanityService(
@@ -101,12 +136,17 @@ async function main() {
     {
       ...serviceDoc!,
       heroVideoUrl: "",
+      heroMedia: undefined,
     },
     "de",
   );
   assert(
     !clearedHeroVideo.hero.videoId,
-    "clearing heroVideoUrl removes service hero video",
+    "clearing legacy heroVideoUrl removes service hero video",
+  );
+  assert(
+    clearedHeroVideo.hero.media.src.includes("cdn.sanity.io"),
+    "published heroImage still wins after video clear",
   );
 
   console.log(

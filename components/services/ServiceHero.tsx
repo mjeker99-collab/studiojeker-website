@@ -63,6 +63,16 @@ export function ServiceHero({ content, titleId }: ServiceHeroProps) {
                     width: content.media.width,
                     height: content.media.height,
                   }}
+                  mobilePoster={
+                    content.mobilePoster?.src
+                      ? {
+                          src: mediaPath(content.mobilePoster.src),
+                          alt: content.mobilePoster.alt || content.media.alt,
+                          width: content.mobilePoster.width,
+                          height: content.mobilePoster.height,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <Image

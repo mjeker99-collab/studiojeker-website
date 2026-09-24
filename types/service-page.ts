@@ -54,6 +54,7 @@ export type ServicePageContent = {
     body: string[];
     primaryCta: { label: string; href: string };
     media: HomepageMedia;
+    mobilePoster?: HomepageMedia;
     /** When set, ServiceHero renders a muted Vimeo loop with media as poster. */
     videoId?: string;
   };

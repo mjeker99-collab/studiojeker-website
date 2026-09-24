@@ -11,7 +11,11 @@ import type {
 } from "@/lib/sanity/service";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 import { getAlternateLocalePath } from "@/lib/i18n/config";
-import { resolveSanityImage } from "@/lib/sanity/media";
+import {
+  HERO_MEDIA_MAX_WIDTH,
+  resolveSanityImage,
+  resolveSanityMedia,
+} from "@/lib/sanity/media";
 import { extractVimeoId } from "@/lib/sanity/vimeo";
 import { sanitizeHref } from "@/lib/security/safe-href";
 
@@ -252,18 +256,61 @@ export function mergeSanityService(
   };
 
   // Media always — language-agnostic CMS assets.
+  // Prefer structured heroMedia (same mediaField as Homepage / KI / About).
+  // Keep legacy heroImage + heroVideoUrl so published stills stay intact.
   const hasHeroImage = Boolean(
     doc.heroImage?.asset?._ref || doc.heroImage?.url,
   );
   if (hasHeroImage) {
-    merged.hero.media = resolveSanityImage(doc.heroImage, base.hero.media);
+    merged.hero.media = resolveSanityImage(
+      doc.heroImage,
+      base.hero.media,
+      HERO_MEDIA_MAX_WIDTH,
+    );
   }
 
-  // Always assign when Studio provides a value (including clear → empty),
-  // so editors can switch hero video ↔ image without a code change.
-  if (doc.heroVideoUrl != null) {
+  const hasHeroMediaField = Boolean(
+    doc.heroMedia?.mediaType ||
+      doc.heroMedia?.vimeoUrl ||
+      doc.heroMedia?.image?.asset?._ref ||
+      doc.heroMedia?.image?.url ||
+      doc.heroMedia?.poster?.asset?._ref ||
+      doc.heroMedia?.poster?.url,
+  );
+
+  if (hasHeroMediaField && doc.heroMedia) {
+    const resolved = resolveSanityMedia(doc.heroMedia, merged.hero.media, {
+      width: HERO_MEDIA_MAX_WIDTH,
+    });
+    merged.hero.media = resolved.media;
+    merged.hero.videoId = resolved.videoId ?? "";
+    if (resolved.mobileMedia?.src) {
+      merged.hero.mobilePoster = resolved.mobileMedia;
+    } else {
+      delete merged.hero.mobilePoster;
+    }
+
+    if (!merged.hero.videoId && doc.heroMedia.mediaType === "video") {
+      const still = resolveSanityMedia(
+        {
+          mediaType: "image",
+          image: doc.heroMedia.image ?? doc.heroMedia.poster ?? doc.heroImage,
+        },
+        merged.hero.media,
+        { width: HERO_MEDIA_MAX_WIDTH },
+      );
+      if (still.media.src) {
+        merged.hero.media = still.media;
+      }
+    }
+  } else if (doc.heroVideoUrl != null) {
+    // Legacy flat video field when heroMedia is unset.
     merged.hero.videoId =
       extractVimeoId(doc.heroVideoUrl) ?? clean(doc.heroVideoUrl) ?? "";
+    delete merged.hero.mobilePoster;
+  } else {
+    delete merged.hero.videoId;
+    delete merged.hero.mobilePoster;
   }
 
   const hasShowreelImage = Boolean(
