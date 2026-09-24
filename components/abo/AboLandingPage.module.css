@@ -29,8 +29,8 @@
 .hero .heroHeadline {
   max-width: 100%;
   /* Slightly smaller than homepage hero so copy stays in its column */
-  font-size: clamp(1.75rem, 3.6vw, 3rem);
-  line-height: 1.05;
+  font-size: clamp(1.7rem, 3.2vw, 2.75rem);
+  line-height: 1.06;
   letter-spacing: -0.03em;
   overflow-wrap: break-word;
   hyphens: manual;
@@ -344,9 +344,20 @@
 }
 
 @media (min-width: 48rem) {
+  .problemGrid {
+    grid-template-columns: minmax(0, 0.46fr) minmax(0, 0.54fr);
+  }
+
   .problemMediaWrap,
   .problemMedia {
-    min-height: 22rem;
+    min-height: 20rem;
+  }
+
+  .problemCopy {
+    padding-block: 3rem;
+    padding-right: var(--container-padding-x);
+    padding-left: var(--space-4);
+    max-width: none;
   }
 
   .scopeGrid {
@@ -365,13 +376,13 @@
   }
 
   .hero .heroCopy {
-    padding-right: var(--space-5);
+    padding-right: var(--space-6);
     padding-left: max(var(--container-padding-x), 3.25%);
     max-width: none;
   }
 
   .hero .heroHeadline {
-    max-width: 11.5em;
+    max-width: 100%;
   }
 
   .hero .heroMediaWrap {
