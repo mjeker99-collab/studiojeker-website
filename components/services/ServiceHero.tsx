@@ -4,6 +4,7 @@ import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
 import styles from "./ServiceHero.module.css";
 
 type ServiceHeroProps = {
@@ -13,7 +14,7 @@ type ServiceHeroProps = {
 
 /**
  * Service hero — same cyan+photo grid coupling as the homepage HeroSection
- * (approved media chrome). Typography/copy structure stays service-specific.
+ * (approved media chrome). Supports Sanity image or muted Vimeo loop.
  */
 export function ServiceHero({ content, titleId }: ServiceHeroProps) {
   return (
@@ -44,7 +45,7 @@ export function ServiceHero({ content, titleId }: ServiceHeroProps) {
           </div>
         </Reveal>
 
-        <Reveal className={styles.mediaWrap} delayMs={120}>
+        <Reveal className={styles.mediaWrap} immediate>
           {/*
             Cyan + photo are GRID SIBLINGS of the same media wrapper.
             Matches homepage HeroSection — bar height equals image height.
@@ -52,14 +53,27 @@ export function ServiceHero({ content, titleId }: ServiceHeroProps) {
           <div className={styles.media}>
             <div className={styles.cyanBar} aria-hidden="true" />
             <div className={styles.photo}>
-              <Image
-                src={mediaPath(content.media.src)}
-                alt={content.media.alt}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 64vw"
-                className={styles.image}
-              />
+              {content.videoId ? (
+                <HeroVimeoLoop
+                  videoId={content.videoId}
+                  title={content.media.alt}
+                  poster={{
+                    src: mediaPath(content.media.src),
+                    alt: content.media.alt,
+                    width: content.media.width,
+                    height: content.media.height,
+                  }}
+                />
+              ) : (
+                <Image
+                  src={mediaPath(content.media.src)}
+                  alt={content.media.alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={styles.image}
+                />
+              )}
             </div>
           </div>
         </Reveal>

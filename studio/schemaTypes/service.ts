@@ -171,17 +171,18 @@ export const service = defineType({
       type: "image",
       group: "hero",
       options: { hotspot: true },
+      description:
+        "Hero still image. Also used as the video poster/fallback when a Hero Video URL is set.",
       fields: [imageAltField],
     }),
     defineField({
       name: "heroVideoUrl",
-      title: "Hero Video URL (optional)",
-      type: "url",
+      title: "Hero Video (Vimeo)",
+      type: "string",
       group: "hero",
       description:
-        "Optional Vimeo URL. Kept for future use — the current Service hero shows an image.",
-      validation: (Rule) =>
-        Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+        "Optional. Paste a Vimeo URL (https://vimeo.com/…) or numeric ID. When set, the hero plays a muted autoplay loop and uses Hero Image as poster. Clear this field to show the image only.",
+      validation: (Rule) => Rule.max(200),
     }),
 
     defineField({

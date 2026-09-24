@@ -79,6 +79,36 @@ async function main() {
     "EN still gets Sanity hero image",
   );
 
+  const withHeroVideo = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "https://vimeo.com/1226148277",
+    },
+    "de",
+  );
+  assert(
+    withHeroVideo.hero.videoId === "1226148277",
+    "service heroVideoUrl resolves to videoId",
+  );
+  assert(
+    withHeroVideo.hero.media.src.includes("cdn.sanity.io"),
+    "service hero image remains poster when video set",
+  );
+
+  const clearedHeroVideo = mergeSanityService(
+    withHeroVideo,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "",
+    },
+    "de",
+  );
+  assert(
+    !clearedHeroVideo.hero.videoId,
+    "clearing heroVideoUrl removes service hero video",
+  );
+
   console.log(
     JSON.stringify(
       {
@@ -87,6 +117,7 @@ async function main() {
         workCategoryIds: catIds,
         architectureHeadline: service.hero.headline,
         architectureEnHeadline: serviceEn.hero.headline,
+        heroVideoId: withHeroVideo.hero.videoId,
       },
       null,
       2,

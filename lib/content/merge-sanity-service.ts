@@ -259,6 +259,13 @@ export function mergeSanityService(
     merged.hero.media = resolveSanityImage(doc.heroImage, base.hero.media);
   }
 
+  // Always assign when Studio provides a value (including clear → empty),
+  // so editors can switch hero video ↔ image without a code change.
+  if (doc.heroVideoUrl != null) {
+    merged.hero.videoId =
+      extractVimeoId(doc.heroVideoUrl) ?? clean(doc.heroVideoUrl) ?? "";
+  }
+
   const hasShowreelImage = Boolean(
     doc.showreelImage?.asset?._ref || doc.showreelImage?.url,
   );

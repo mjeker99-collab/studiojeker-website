@@ -57,6 +57,8 @@ export type HomepageContent = {
     primaryCta: { label: string; href: string };
     secondaryCta?: { label: string; href: string };
     media: HomepageMedia;
+    /** Optional Sanity mobilePoster for hero video handoff. */
+    mobilePoster?: HomepageMedia;
     /** When set, the hero renders a Vimeo showreel in the existing media slot. */
     videoId?: string;
   };

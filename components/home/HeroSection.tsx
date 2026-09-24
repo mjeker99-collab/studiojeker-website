@@ -62,7 +62,7 @@ export function HeroSection({ content }: HeroSectionProps) {
           </div>
         </Reveal>
 
-        <Reveal className={styles.mediaWrap} delayMs={120}>
+        <Reveal className={styles.mediaWrap} immediate>
           {/*
             Cyan + photo are GRID SIBLINGS of the same media wrapper.
             No absolute top/bottom — height comes only from this grid.
@@ -80,6 +80,16 @@ export function HeroSection({ content }: HeroSectionProps) {
                     width: content.media.width,
                     height: content.media.height,
                   }}
+                  mobilePoster={
+                    content.mobilePoster?.src
+                      ? {
+                          src: mediaPath(content.mobilePoster.src),
+                          alt: content.mobilePoster.alt || content.media.alt,
+                          width: content.mobilePoster.width,
+                          height: content.mobilePoster.height,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <Image

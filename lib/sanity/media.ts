@@ -26,8 +26,13 @@ export type SanityMediaField = {
 
 export type ResolvedMedia = {
   media: HomepageMedia;
+  /** Optional Sanity mobilePoster when mediaType is video. */
+  mobileMedia?: HomepageMedia;
   videoId?: string;
 };
+
+/** Default max edge for hero / section media — avoids CDN upscaling. */
+export const HERO_MEDIA_MAX_WIDTH = 1400;
 
 function clean(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -45,7 +50,7 @@ export function sanityImageSource(
 export function resolveSanityImage(
   image: SanityImageProjection | undefined,
   fallback: HomepageMedia,
-  width = 1920,
+  width = HERO_MEDIA_MAX_WIDTH,
 ): HomepageMedia {
   if (!image) {
     return fallback;
@@ -55,7 +60,17 @@ export function resolveSanityImage(
   const source = sanityImageSource(image);
   if (source) {
     try {
-      src = urlForImage(source).width(width).auto("format").url();
+      // Never upscale beyond the native asset width (e.g. 752px KI posters).
+      const nativeWidth = image.dimensions?.width;
+      const targetWidth =
+        typeof nativeWidth === "number" && nativeWidth > 0
+          ? Math.min(width, nativeWidth)
+          : width;
+      src = urlForImage(source)
+        .width(targetWidth)
+        .quality(75)
+        .auto("format")
+        .url();
     } catch {
       // Keep raw asset URL when the builder fails.
     }
@@ -101,6 +116,8 @@ export function resolveSanityMedia(
     return { media: fallback };
   }
 
+  const width = options?.width ?? HERO_MEDIA_MAX_WIDTH;
+
   if (mediaType === "video") {
     const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
     const posterSource =
@@ -108,17 +125,21 @@ export function resolveSanityMedia(
         ? field.mobilePoster
         : field.poster ?? field.image;
 
-    const media = resolveSanityImage(posterSource, fallback, options?.width);
+    const media = resolveSanityImage(posterSource, fallback, width);
+    const mobileMedia =
+      field.mobilePoster && !options?.preferMobilePoster
+        ? resolveSanityImage(field.mobilePoster, media, width)
+        : undefined;
 
     if (!videoId) {
-      return { media };
+      return { media, mobileMedia };
     }
 
-    return { media, videoId };
+    return { media, mobileMedia, videoId };
   }
 
   return {
-    media: resolveSanityImage(field.image, fallback, options?.width),
+    media: resolveSanityImage(field.image, fallback, width),
   };
 }
 

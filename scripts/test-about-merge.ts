@@ -198,8 +198,48 @@ async function main() {
     "merge applies portraits from provided document payload",
   );
 
+  // Hero mediaField: video with poster; legacy heroImage preserved as fallback.
+  const withHeroVideo = mergeSanityAbout(
+    base,
+    {
+      _id: "about",
+      heroImage: live!.heroImage,
+      heroMedia: {
+        mediaType: "video",
+        vimeoUrl: "https://vimeo.com/1226148277",
+        poster: live!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    withHeroVideo.hero.videoId === "1226148277",
+    "About heroMedia video resolves Vimeo id",
+  );
+  assert(
+    withHeroVideo.hero.media.src.includes("cdn.sanity.io"),
+    "About hero video keeps Sanity poster/image",
+  );
+
+  const imageOnlyHero = mergeSanityAbout(
+    base,
+    {
+      _id: "about",
+      heroImage: live!.heroImage,
+      heroMedia: {
+        mediaType: "image",
+        image: live!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    !imageOnlyHero.hero.videoId,
+    "About image mediaType clears hero video",
+  );
+
   console.log(
-    "OK: About Team — Sanity portraits win (incl. leftover Empty-slot flags), 6-slot grid.",
+    "OK: About Team — Sanity portraits win (incl. leftover Empty-slot flags), 6-slot grid; hero image/video merge.",
   );
 }
 

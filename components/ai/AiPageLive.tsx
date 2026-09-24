@@ -100,6 +100,7 @@ export function AiPageLive({ locale, content }: AiPageLiveProps) {
     resolved.hero.headline,
     resolved.hero.media.src,
     resolved.hero.videoId ?? "",
+    resolved.hero.mobilePoster?.src ?? "",
     resolved.intro.media?.src ?? "",
     resolved.intro.videoId ?? "",
     resolved.visuals.keyVisual?.src ?? "",
