@@ -1,0 +1,443 @@
+# Production CLEAN DEPLOY (pre-live) → studiojeker.ch/site2026-new
+# Server: jovinus.metanet.ch (Metanet/Plesk FTPS)
+#
+# Confirmed remote layout:
+#   FTP login root/
+#   └── studiojeker.ch/
+#       ├── wordpress/     ← live Document Root (NEVER touch)
+#       ├── site2026/      ← existing pre-live folder (NEVER touch)
+#       └── site2026-new/  ← THIS upload target only (clean deploy)
+#
+# SAFETY:
+#   - Does NOT change Document Root / DNS / WordPress / site2026.
+#   - Uploads ONLY into studiojeker.ch/site2026-new/.
+#   - Fail-closed unless studiojeker.ch/wordpress/ is present.
+#   - Manual workflow_dispatch only — never on push, never automatic go-live.
+#   - Clean deploy: target folder emptied of prior site files before mirror.
+#
+# Required secrets (reuse existing production secrets — do not rotate/change):
+#   METANET_PROD_FTP_SERVER
+#   METANET_PROD_FTP_USERNAME
+#   METANET_PROD_FTP_PASSWORD
+
+name: Deploy production site2026-new (clean pre-live)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_target:
+        description: "Type site2026-new to confirm CLEAN upload ONLY to studiojeker.ch/site2026-new (never wordpress, never site2026)"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production-site2026-new
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-site2026-new:
+    name: Build and clean-upload to site2026-new only
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Confirm site2026-new-only target
+        env:
+          CONFIRM_TARGET: ${{ inputs.confirm_target }}
+        run: |
+          set -euo pipefail
+          if [ "${CONFIRM_TARGET}" != "site2026-new" ]; then
+            echo "::error::Refusing deploy. Type exactly 'site2026-new' in confirm_target."
+            exit 1
+          fi
+          echo "Confirmed: CLEAN upload target is site2026-new only (WordPress + site2026 untouched)."
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Refuse stale main tip
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          TIP="$(git rev-parse origin/main)"
+          HEAD="$(git rev-parse HEAD)"
+          echo "origin/main tip: ${TIP}"
+          echo "Checked-out HEAD: ${HEAD}"
+          if [ "${HEAD}" != "${TIP}" ]; then
+            echo "::error::Refusing deploy. Checkout ${HEAD} is behind origin/main ${TIP}."
+            exit 1
+          fi
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production static site
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://www.studiojeker.ch
+          NEXT_PUBLIC_SANITY_PROJECT_ID: tgx6e6jg
+          NEXT_PUBLIC_SANITY_DATASET: production
+          NEXT_PUBLIC_SANITY_API_VERSION: 2025-01-01
+
+      - name: Verify out/ and production SEO guards
+        run: |
+          set -euo pipefail
+          test -f out/index.html
+          test -f out/.htaccess
+          test -f out/robots.txt
+          test -f out/sitemap.xml
+          test -d out/_next/static
+          test -f out/about/index.html
+          test -f out/services/index.html
+          test -f out/work/index.html
+          test -f out/api/contact.php
+          test -f out/api/homepage.php
+          test -f out/api/contact-page.php
+          test -f out/api/abo-page.php
+          test -f out/api/work-page.php
+          test -f out/api/service-page.php
+          test -f out/api/about-page.php
+
+          INDEX_SIZE="$(wc -c < out/index.html | tr -d ' ')"
+          echo "Local out/index.html size: ${INDEX_SIZE} bytes"
+          HEAD_SNIP="$(head -c 64 out/index.html | tr '\n' ' ')"
+          echo "Local out/index.html starts with: ${HEAD_SNIP}"
+          case "$(head -c 32 out/index.html | tr '[:upper:]' '[:lower:]')" in
+            *"<!doctype html"*|*"<html"*) ;;
+            *)
+              echo "::error::out/index.html does not start with HTML / <!DOCTYPE / <html"
+              exit 1
+              ;;
+          esac
+
+          if grep -R --exclude='*.map' -l 'staging2026.studiojeker.ch' out \
+            | grep -v 'out/api/homepage.php' ; then
+            echo "::error::staging2026 URL found outside allowed comment context"
+            exit 1
+          fi
+
+          if grep -R -n 'staging2026.studiojeker.ch' out --include='*.html' --include='*.xml' --include='*.txt' ; then
+            echo "::error::staging2026 found in SEO-facing export files"
+            exit 1
+          fi
+
+          grep -q 'Host: www.studiojeker.ch' out/robots.txt
+          grep -q 'Allow: /' out/robots.txt
+          grep -q 'https://www.studiojeker.ch' out/sitemap.xml
+          if grep -q '/en/datenschutz' out/sitemap.xml; then
+            echo "::error::sitemap must not include /en/datenschutz"
+            exit 1
+          fi
+          echo "out/ verified ($(du -sh out | cut -f1))"
+
+      - name: Install lftp
+        run: |
+          set -euo pipefail
+          sudo rm -f \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.list.save \
+            /etc/apt/sources.list.d/google-chrome*.list \
+            /etc/apt/sources.list.d/google.list \
+            /etc/apt/sources.list.d/google-chrome.sources \
+            /etc/apt/sources.list.d/google-chrome*.sources || true
+          sudo rm -f /usr/share/keyrings/google-chrome*.gpg /etc/apt/keyrings/google-chrome*.gpg || true
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y --no-install-recommends lftp
+          lftp --version | head -n 1
+
+      - name: FTPS fail-closed checks, create site2026-new, clean upload out/
+        env:
+          METANET_PROD_FTP_SERVER: ${{ secrets.METANET_PROD_FTP_SERVER }}
+          METANET_PROD_FTP_USERNAME: ${{ secrets.METANET_PROD_FTP_USERNAME }}
+          METANET_PROD_FTP_PASSWORD: ${{ secrets.METANET_PROD_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${METANET_PROD_FTP_SERVER}" ] || [ -z "${METANET_PROD_FTP_USERNAME}" ] || [ -z "${METANET_PROD_FTP_PASSWORD}" ]; then
+            echo "::error::Missing METANET_PROD_FTP_* secrets."
+            exit 1
+          fi
+
+          echo "FTP server configured: yes"
+          echo "FTP username length: ${#METANET_PROD_FTP_USERNAME}"
+          echo "FTP password length: ${#METANET_PROD_FTP_PASSWORD}"
+          # Never echo secret values.
+
+          lftp_common() {
+            cat <<'LFTPSETTINGS'
+          set cmd:fail-exit true
+          set ssl:verify-certificate true
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ftp:ssl-protect-list true
+          set ftp:passive-mode true
+          set ftp:prefer-epsv false
+          set net:timeout 120
+          set net:max-retries 3
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-multiplier 1
+          LFTPSETTINGS
+          }
+
+          # Confirmed Plesk layout (fail-closed):
+          #   FTP login root/
+          #   └── studiojeker.ch/
+          #       ├── wordpress/     ← live (never touch)
+          #       ├── site2026/      ← existing (never touch)
+          #       └── site2026-new/  ← upload target only
+          {
+            lftp_common
+            echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
+            echo "echo ===== LOGIN PWD ====="
+            echo "pwd"
+            echo "echo ===== TOP LISTING ====="
+            echo "cls -la"
+            echo "cls -1 > /tmp/ftp-top-names.txt"
+            echo "bye"
+          } | lftp | tee /tmp/ftp-top-raw.txt
+
+          echo "===== TOP NAMES ====="
+          sed 's/\r$//; s#/$##' /tmp/ftp-top-names.txt | tee /tmp/ftp-top-names.clean.txt
+
+          if ! grep -qx 'studiojeker.ch' /tmp/ftp-top-names.clean.txt; then
+            echo "::error::FTP login root must contain studiojeker.ch/. Refusing upload (fail closed)."
+            exit 1
+          fi
+
+          BASE="studiojeker.ch"
+          TARGET_NAME="site2026-new"
+          TARGET_REL="${BASE}/${TARGET_NAME}"
+          echo "Resolved FTP base: ${BASE}"
+          echo "Resolved upload target: ${TARGET_REL}"
+
+          if [ "${TARGET_REL}" != "studiojeker.ch/site2026-new" ]; then
+            echo "::error::Refusing unexpected upload target: ${TARGET_REL}"
+            exit 1
+          fi
+          # Exact allow-list only — never wordpress, never bare site2026.
+          if [ "${TARGET_NAME}" != "site2026-new" ]; then
+            echo "::error::Target folder name must be exactly site2026-new, got: ${TARGET_NAME}"
+            exit 1
+          fi
+          case "${TARGET_REL}" in
+            *wordpress*)
+              echo "::error::Target path unexpectedly contains wordpress: ${TARGET_REL}"
+              exit 1
+              ;;
+          esac
+
+          # Inside studiojeker.ch/: require wordpress/ before any write.
+          {
+            lftp_common
+            echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
+            echo "cd ${BASE}"
+            echo "echo ===== BASE PWD ====="
+            echo "pwd"
+            echo "echo ===== BASE LISTING ====="
+            echo "cls -la"
+            echo "cls -1 > /tmp/ftp-base-names.txt"
+            echo "bye"
+          } | lftp | tee /tmp/ftp-base-raw.txt
+
+          sed 's/\r$//; s#/$##' /tmp/ftp-base-names.txt > /tmp/ftp-base-names.clean.txt
+          echo "===== BASE NAMES ====="
+          cat /tmp/ftp-base-names.clean.txt
+
+          if ! grep -qx 'wordpress' /tmp/ftp-base-names.clean.txt; then
+            echo "::error::studiojeker.ch/wordpress/ not found — aborting (fail closed). Live WordPress must remain untouched."
+            exit 1
+          fi
+          echo "Pre-upload guard OK: studiojeker.ch/wordpress exists."
+
+          if grep -qx 'site2026' /tmp/ftp-base-names.clean.txt; then
+            echo "Noted: studiojeker.ch/site2026 exists and will NOT be modified."
+          else
+            echo "Note: studiojeker.ch/site2026 not listed (OK — this workflow never targets it)."
+          fi
+
+          if ! grep -qx "${TARGET_NAME}" /tmp/ftp-base-names.clean.txt; then
+            echo "Creating ${TARGET_REL} (WordPress + site2026 untouched)..."
+            {
+              lftp_common
+              echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
+              echo "cd ${BASE}"
+              echo "mkdir ${TARGET_NAME}"
+              echo "bye"
+            } | lftp
+          else
+            echo "${TARGET_REL} already exists — CLEAN DEPLOY will remove prior files inside this folder only (mirror --delete)."
+          fi
+
+          # Mirror out/ → studiojeker.ch/site2026-new only.
+          # --delete applies ONLY after cd into site2026-new (never wordpress, never site2026).
+          # Exclude contact.config.php so server-side secrets are not overwritten if present.
+          {
+            lftp_common
+            echo "set mirror:parallel-transfer-count 1"
+            echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
+            echo "cd studiojeker.ch/site2026-new"
+            echo "echo ===== SITE2026-NEW PWD BEFORE CLEAN UPLOAD ====="
+            echo "pwd"
+            echo "lcd out"
+            echo "mirror -R --delete --verbose --parallel=1 --exclude-glob api/contact.config.php ."
+            echo "echo ===== VERIFY KEY FILES ====="
+            echo "ls index.html"
+            echo "ls .htaccess"
+            echo "ls robots.txt"
+            echo "ls sitemap.xml"
+            echo "ls about/index.html"
+            echo "ls services/index.html"
+            echo "ls work/index.html"
+            echo "ls api/contact.php"
+            echo "ls api/homepage.php"
+            echo "ls api/contact-page.php"
+            echo "ls api/abo-page.php"
+            echo "ls api/work-page.php"
+            echo "ls api/service-page.php"
+            echo "ls api/about-page.php"
+            echo "ls _next"
+            echo "cls -1 _next/static > /tmp/ftp-next-static.txt"
+            echo "bye"
+          } | lftp | tee /tmp/ftp-upload-log.txt
+
+          if [ ! -s /tmp/ftp-next-static.txt ]; then
+            echo "::error::_next/static/ missing or empty after upload"
+            exit 1
+          fi
+
+          echo "CLEAN upload to studiojeker.ch/site2026-new completed."
+          echo "WordPress and site2026 were not targeted."
+
+      - name: FTPS post-upload verification (site2026-new only)
+        env:
+          METANET_PROD_FTP_SERVER: ${{ secrets.METANET_PROD_FTP_SERVER }}
+          METANET_PROD_FTP_USERNAME: ${{ secrets.METANET_PROD_FTP_USERNAME }}
+          METANET_PROD_FTP_PASSWORD: ${{ secrets.METANET_PROD_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          {
+            cat <<'LFTPSETTINGS'
+          set cmd:fail-exit true
+          set ssl:verify-certificate true
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ftp:ssl-protect-list true
+          set ftp:passive-mode true
+          set ftp:prefer-epsv false
+          set net:timeout 60
+          set net:max-retries 3
+          LFTPSETTINGS
+            echo "open -u \"$METANET_PROD_FTP_USERNAME\",\"$METANET_PROD_FTP_PASSWORD\" \"ftp://$METANET_PROD_FTP_SERVER:21\""
+            echo "cd studiojeker.ch"
+            echo "echo ===== SIBLINGS (wordpress + site2026 must remain) ====="
+            echo "cls -la"
+            echo "cls -1 > /tmp/ftp-siblings.txt"
+            echo "cd site2026-new"
+            echo "echo ===== site2026-new TOP ====="
+            echo "cls -la"
+            echo "echo ===== site2026-new api ====="
+            echo "cls -la api"
+            echo "echo ===== spot SEO + key pages ====="
+            echo "cat robots.txt"
+            echo "echo ===== INDEX.HTML HEAD (first 200 bytes) ====="
+            echo "get -c index.html -o /tmp/remote-index.html"
+            echo "ls .htaccess"
+            echo "ls about/index.html"
+            echo "ls services/index.html"
+            echo "ls work/index.html"
+            echo "cls -1 _next/static > /tmp/ftp-verify-next-static.txt"
+            echo "bye"
+          } | lftp | tee /tmp/ftp-verify.txt
+
+          sed 's/\r$//; s#/$##' /tmp/ftp-siblings.txt > /tmp/ftp-siblings.clean.txt
+          if ! grep -qx 'wordpress' /tmp/ftp-siblings.clean.txt; then
+            echo "::error::Post-check: studiojeker.ch/wordpress/ no longer visible — investigate before any switch."
+            exit 1
+          fi
+          if ! grep -qx 'site2026-new' /tmp/ftp-siblings.clean.txt; then
+            echo "::error::Post-check: studiojeker.ch/site2026-new/ missing after upload"
+            exit 1
+          fi
+          if grep -qx 'site2026' /tmp/ftp-siblings.clean.txt; then
+            echo "Post-check: studiojeker.ch/site2026 still present (untouched by this workflow)."
+          fi
+
+          if [ ! -f /tmp/remote-index.html ]; then
+            echo "::error::Post-check: failed to download site2026-new/index.html"
+            exit 1
+          fi
+
+          INDEX_SIZE="$(wc -c < /tmp/remote-index.html | tr -d ' ')"
+          echo "Remote site2026-new/index.html size: ${INDEX_SIZE} bytes"
+          if [ "${INDEX_SIZE}" -lt 100 ]; then
+            echo "::error::Post-check: index.html suspiciously small (${INDEX_SIZE} bytes)"
+            exit 1
+          fi
+
+          HEAD_SNIP="$(head -c 64 /tmp/remote-index.html | tr '\n' ' ')"
+          echo "Remote index.html starts with: ${HEAD_SNIP}"
+          case "$(head -c 32 /tmp/remote-index.html | tr '[:upper:]' '[:lower:]')" in
+            *"<!doctype html"*|*"<html"*) ;;
+            *)
+              echo "::error::Post-check: index.html does not start with HTML / <!DOCTYPE / <html"
+              exit 1
+              ;;
+          esac
+
+          if ! grep -q 'index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: index.html missing in site2026-new"
+            exit 1
+          fi
+          if ! grep -q '\.htaccess' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: .htaccess missing in site2026-new"
+            exit 1
+          fi
+          if ! grep -q 'about/index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: about/index.html missing"
+            exit 1
+          fi
+          if ! grep -q 'services/index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: services/index.html missing"
+            exit 1
+          fi
+          if ! grep -q 'work/index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: work/index.html missing"
+            exit 1
+          fi
+          if [ ! -s /tmp/ftp-verify-next-static.txt ]; then
+            echo "::error::Post-check: _next/static/ missing or empty"
+            exit 1
+          fi
+          if ! grep -q 'Host: www.studiojeker.ch' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: robots.txt does not show production host"
+            exit 1
+          fi
+          if grep -q 'staging2026.studiojeker.ch' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: staging host found in robots output"
+            exit 1
+          fi
+
+          echo "========================================"
+          echo "DEPLOYMENT RESULT (pre-live, no go-live)"
+          echo "========================================"
+          echo "Target:           studiojeker.ch/site2026-new/"
+          echo "Mode:             CLEAN DEPLOY (mirror --delete inside target only)"
+          echo "index.html size:  ${INDEX_SIZE} bytes"
+          echo "WordPress:        present (unchanged)"
+          echo "site2026:         not targeted"
+          echo "Document Root:    NOT changed"
+          echo "DNS / Plesk:      NOT changed"
+          echo "Go-live:          NOT performed"
+          echo "========================================"
+          echo "Verification OK."
