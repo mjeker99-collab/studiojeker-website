@@ -99,8 +99,14 @@ jobs:
           test -f out/sitemap.xml
           test -d out/_next/static
           test -f out/about/index.html
-          test -f out/services/index.html
           test -f out/work/index.html
+          # /services has no listing index — only static slug pages in this export
+          test -f out/services/business-communication/index.html
+          test -f out/services/product-communication/index.html
+          test -f out/services/architecture/index.html
+          test -f out/services/digital-marketing/index.html
+          test -f out/contact/index.html
+          test -f out/content-abo/index.html
           test -f out/api/contact.php
           test -f out/api/homepage.php
           test -f out/api/contact-page.php
@@ -297,8 +303,13 @@ jobs:
             echo "ls robots.txt"
             echo "ls sitemap.xml"
             echo "ls about/index.html"
-            echo "ls services/index.html"
             echo "ls work/index.html"
+            echo "ls services/business-communication/index.html"
+            echo "ls services/product-communication/index.html"
+            echo "ls services/architecture/index.html"
+            echo "ls services/digital-marketing/index.html"
+            echo "ls contact/index.html"
+            echo "ls content-abo/index.html"
             echo "ls api/contact.php"
             echo "ls api/homepage.php"
             echo "ls api/contact-page.php"
@@ -354,8 +365,10 @@ jobs:
             echo "get -c index.html -o /tmp/remote-index.html"
             echo "ls .htaccess"
             echo "ls about/index.html"
-            echo "ls services/index.html"
             echo "ls work/index.html"
+            echo "ls services/business-communication/index.html"
+            echo "ls contact/index.html"
+            echo "ls content-abo/index.html"
             echo "cls -1 _next/static > /tmp/ftp-verify-next-static.txt"
             echo "bye"
           } | lftp | tee /tmp/ftp-verify.txt
@@ -407,12 +420,16 @@ jobs:
             echo "::error::Post-check: about/index.html missing"
             exit 1
           fi
-          if ! grep -q 'services/index.html' /tmp/ftp-verify.txt; then
-            echo "::error::Post-check: services/index.html missing"
-            exit 1
-          fi
           if ! grep -q 'work/index.html' /tmp/ftp-verify.txt; then
             echo "::error::Post-check: work/index.html missing"
+            exit 1
+          fi
+          if ! grep -q 'services/business-communication/index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: services slug page missing"
+            exit 1
+          fi
+          if ! grep -q 'contact/index.html' /tmp/ftp-verify.txt; then
+            echo "::error::Post-check: contact/index.html missing"
             exit 1
           fi
           if [ ! -s /tmp/ftp-verify-next-static.txt ]; then
