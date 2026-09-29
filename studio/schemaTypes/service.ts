@@ -167,21 +167,30 @@ export const service = defineType({
     }),
     defineField({
       name: "heroImage",
-      title: "Hero Image",
+      title: "Hero Image (fallback)",
       type: "image",
       group: "hero",
       options: { hotspot: true },
+      description:
+        "Legacy / fallback still. Used when Hero Media is empty, and as poster when Hero Media is Video without its own Poster. Existing uploads stay valid — do not delete.",
       fields: [imageAltField],
     }),
     defineField({
       name: "heroVideoUrl",
-      title: "Hero Video URL (optional)",
-      type: "url",
+      title: "Hero Video URL (legacy)",
+      type: "string",
       group: "hero",
       description:
-        "Optional Vimeo URL. Kept for future use — the current Service hero shows an image.",
-      validation: (Rule) =>
-        Rule.uri({ scheme: ["http", "https"], allowRelative: false }),
+        "Legacy Vimeo URL/ID. Prefer Hero Media → Video below. Kept so existing documents keep working without migration.",
+      validation: (Rule) => Rule.max(200),
+    }),
+    defineField({
+      name: "heroMedia",
+      title: "Hero Media",
+      type: "mediaField",
+      group: "hero",
+      description:
+        "Preferred. Choose Image or Video (Vimeo): mediaType, image, vimeoUrl, poster, mobilePoster — same as Homepage / KI / About. When empty, Hero Image (+ legacy Hero Video URL) is used.",
     }),
 
     defineField({

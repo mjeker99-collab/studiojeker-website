@@ -50,6 +50,13 @@ $query = <<<GROQ
   heroIntroText,
   heroCtaLabel,
   heroImage{$imageProjection},
+  heroMedia{
+    mediaType,
+    vimeoUrl,
+    image{$imageProjection},
+    poster{$imageProjection},
+    mobilePoster{$imageProjection}
+  },
   valuesLabel,
   valuesItems[]{
     _key,

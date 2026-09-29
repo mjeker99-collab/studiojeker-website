@@ -308,7 +308,7 @@ export function AiPage({ content }: AiPageProps) {
 
           <Reveal
             className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
-            delayMs={120}
+            immediate
           >
             <div className={heroStyles.media}>
               <div className={heroStyles.cyanBar} aria-hidden="true" />
@@ -324,6 +324,19 @@ export function AiPage({ content }: AiPageProps) {
                             alt: content.hero.media.alt,
                             width: content.hero.media.width,
                             height: content.hero.media.height,
+                          }
+                        : undefined
+                    }
+                    mobilePoster={
+                      content.hero.mobilePoster?.src
+                        ? {
+                            src: mediaPath(content.hero.mobilePoster.src),
+                            alt:
+                              content.hero.mobilePoster.alt ||
+                              content.hero.media.alt ||
+                              content.hero.headline,
+                            width: content.hero.mobilePoster.width,
+                            height: content.hero.mobilePoster.height,
                           }
                         : undefined
                     }

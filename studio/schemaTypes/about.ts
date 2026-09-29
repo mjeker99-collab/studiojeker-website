@@ -68,11 +68,21 @@ export const about = defineType({
     }),
     defineField({
       name: "heroImage",
-      title: "Hero Image",
+      title: "Hero Image (fallback)",
       type: "image",
       group: "hero",
       options: { hotspot: true },
+      description:
+        "Still image when Hero Media is empty, or poster fallback when Hero Media is Video without its own Poster. Existing uploads stay valid.",
       fields: [imageAltField],
+    }),
+    defineField({
+      name: "heroMedia",
+      title: "Hero Media",
+      type: "mediaField",
+      group: "hero",
+      description:
+        "Choose Image or Video (Vimeo). Image: upload under Image. Video: paste Vimeo URL/ID and optional Poster (falls back to Hero Image above). Publish to update the website.",
     }),
 
     defineField({

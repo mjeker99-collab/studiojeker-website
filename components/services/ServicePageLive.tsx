@@ -98,6 +98,8 @@ export function ServicePageLive({
     slug,
     resolved.hero.headline,
     resolved.hero.media.src,
+    resolved.hero.videoId ?? "image",
+    resolved.hero.mobilePoster?.src ?? "",
     resolved.showreel.videoId ?? "",
     resolved.showreel.media.src,
     resolved.about.media.src,

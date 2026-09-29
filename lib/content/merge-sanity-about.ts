@@ -8,7 +8,11 @@ import {
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 import { fetchEnabledClientLogos } from "@/lib/sanity/clients";
 import type { SanityAbout } from "@/lib/sanity/about";
-import { resolveSanityImage } from "@/lib/sanity/media";
+import {
+  HERO_MEDIA_MAX_WIDTH,
+  resolveSanityImage,
+  resolveSanityMedia,
+} from "@/lib/sanity/media";
 
 function clean(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -133,8 +137,55 @@ export function mergeSanityAbout(
   const heroCta = clean(doc.heroCtaLabel);
   if (heroCta) merged.hero.primaryCta.label = heroCta;
 
+  // Prefer structured heroMedia (image | video). Keep legacy heroImage as
+  // still/poster fallback so existing uploads are never dropped.
+  const hasHeroMediaField = Boolean(
+    doc.heroMedia?.mediaType ||
+      doc.heroMedia?.vimeoUrl ||
+      doc.heroMedia?.image?.asset?._ref ||
+      doc.heroMedia?.image?.url ||
+      doc.heroMedia?.poster?.asset?._ref ||
+      doc.heroMedia?.poster?.url,
+  );
+
   if (doc.heroImage?.asset?._ref || doc.heroImage?.url) {
-    merged.hero.media = resolveSanityImage(doc.heroImage, merged.hero.media);
+    merged.hero.media = resolveSanityImage(
+      doc.heroImage,
+      merged.hero.media,
+      HERO_MEDIA_MAX_WIDTH,
+    );
+  }
+
+  if (hasHeroMediaField && doc.heroMedia) {
+    const resolved = resolveSanityMedia(doc.heroMedia, merged.hero.media, {
+      width: HERO_MEDIA_MAX_WIDTH,
+    });
+    merged.hero.media = resolved.media;
+    merged.hero.videoId = resolved.videoId ?? "";
+    if (resolved.mobileMedia?.src) {
+      merged.hero.mobilePoster = resolved.mobileMedia;
+    } else {
+      delete merged.hero.mobilePoster;
+    }
+
+    // Video selected but Vimeo URL missing: keep still image/poster visible.
+    if (!merged.hero.videoId && doc.heroMedia.mediaType === "video") {
+      const still = resolveSanityMedia(
+        {
+          mediaType: "image",
+          image: doc.heroMedia.image ?? doc.heroMedia.poster ?? doc.heroImage,
+        },
+        merged.hero.media,
+        { width: HERO_MEDIA_MAX_WIDTH },
+      );
+      if (still.media.src) {
+        merged.hero.media = still.media;
+      }
+    }
+  } else {
+    // No heroMedia row — image-only from legacy heroImage.
+    delete merged.hero.videoId;
+    delete merged.hero.mobilePoster;
   }
 
   const valuesLabel = clean(doc.valuesLabel);

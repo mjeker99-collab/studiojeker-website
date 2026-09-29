@@ -79,6 +79,76 @@ async function main() {
     "EN still gets Sanity hero image",
   );
 
+  const withHeroVideo = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "https://vimeo.com/1226148277",
+    },
+    "de",
+  );
+  assert(
+    withHeroVideo.hero.videoId === "1226148277",
+    "legacy service heroVideoUrl resolves to videoId",
+  );
+  assert(
+    withHeroVideo.hero.media.src.includes("cdn.sanity.io"),
+    "service hero image remains poster when legacy video set",
+  );
+
+  const withHeroMediaField = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: null,
+      heroMedia: {
+        mediaType: "video",
+        vimeoUrl: "https://vimeo.com/1226148277",
+        poster: serviceDoc!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    withHeroMediaField.hero.videoId === "1226148277",
+    "service heroMedia mediaField resolves Vimeo id",
+  );
+
+  const imageOnlyHeroMedia = mergeSanityService(
+    serviceBase,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "",
+      heroMedia: {
+        mediaType: "image",
+        image: serviceDoc!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    !imageOnlyHeroMedia.hero.videoId,
+    "service heroMedia image type clears video",
+  );
+
+  const clearedHeroVideo = mergeSanityService(
+    withHeroVideo,
+    {
+      ...serviceDoc!,
+      heroVideoUrl: "",
+      heroMedia: undefined,
+    },
+    "de",
+  );
+  assert(
+    !clearedHeroVideo.hero.videoId,
+    "clearing legacy heroVideoUrl removes service hero video",
+  );
+  assert(
+    clearedHeroVideo.hero.media.src.includes("cdn.sanity.io"),
+    "published heroImage still wins after video clear",
+  );
+
   console.log(
     JSON.stringify(
       {
@@ -87,6 +157,7 @@ async function main() {
         workCategoryIds: catIds,
         architectureHeadline: service.hero.headline,
         architectureEnHeadline: serviceEn.hero.headline,
+        heroVideoId: withHeroVideo.hero.videoId,
       },
       null,
       2,

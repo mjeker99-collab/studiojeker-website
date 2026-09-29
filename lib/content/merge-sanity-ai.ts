@@ -21,6 +21,7 @@ import type {
   SanityLocalizedText,
 } from "@/lib/sanity/homepage";
 import {
+  HERO_MEDIA_MAX_WIDTH,
   resolveSanityImage,
   resolveSanityMedia,
   type SanityMediaField,
@@ -294,10 +295,16 @@ export function mergeSanityAi(
     const heroMedia = resolveSanityMedia(
       doc.heroSection.media,
       merged.hero.media,
+      { width: HERO_MEDIA_MAX_WIDTH },
     );
     merged.hero.media = heroMedia.media;
     // Always assign (incl. "") — same stale-ID guard as Abo showreel merge.
     merged.hero.videoId = heroMedia.videoId ?? "";
+    if (heroMedia.mobileMedia?.src) {
+      merged.hero.mobilePoster = heroMedia.mobileMedia;
+    } else {
+      delete merged.hero.mobilePoster;
+    }
 
     // Video selected but Vimeo URL missing: keep the still Image asset as
     // visible fallback (prefer image over portrait poster), matching homepage
@@ -309,6 +316,7 @@ export function mergeSanityAi(
           image: doc.heroSection.media.image ?? doc.heroSection.media.poster,
         },
         merged.hero.media,
+        { width: HERO_MEDIA_MAX_WIDTH },
       );
       if (still.media.src) {
         merged.hero.media = still.media;

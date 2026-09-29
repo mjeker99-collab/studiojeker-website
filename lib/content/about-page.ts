@@ -30,6 +30,9 @@ export type AboutPageContent = {
     body: string[];
     primaryCta: { label: string; href: string };
     media: { src: string; alt: string; width: number; height: number };
+    mobilePoster?: { src: string; alt: string; width: number; height: number };
+    /** When set, About hero renders HeroVimeoLoop in the media slot. */
+    videoId?: string;
   };
   values: {
     label: string;

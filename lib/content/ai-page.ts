@@ -37,6 +37,7 @@ export type AiPageContent = {
     headline: string;
     body: string;
     media: HomepageMedia;
+    mobilePoster?: HomepageMedia;
     videoId?: string;
   };
   intro: AiTextBlock;

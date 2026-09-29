@@ -432,7 +432,7 @@ function applyMediaSection(
   fallback: HomepageMedia,
   field: SanityMediaField | undefined,
   width?: number,
-): { media: HomepageMedia; videoId?: string } {
+) {
   return resolveSanityMedia(field, fallback, { width });
 }
 
@@ -572,6 +572,15 @@ export function mergeSanityHomepage(
 
   merged.hero.media = resolvedHeroMedia.media;
   merged.hero.videoId = resolvedHeroMedia.videoId;
+  const mobilePoster: HomepageMedia | undefined =
+    "mobileMedia" in resolvedHeroMedia
+      ? (resolvedHeroMedia.mobileMedia as HomepageMedia | undefined)
+      : undefined;
+  if (mobilePoster?.src) {
+    merged.hero.mobilePoster = mobilePoster;
+  } else {
+    delete merged.hero.mobilePoster;
+  }
 
   merged.services = mergeServices(
     base.services,
