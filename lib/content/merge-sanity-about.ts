@@ -8,6 +8,7 @@ import {
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
 import { fetchEnabledClientLogos } from "@/lib/sanity/clients";
 import type { SanityAbout } from "@/lib/sanity/about";
+import { getVimeoFirstFramePoster } from "@/lib/media/vimeo-first-frames";
 import {
   HERO_MEDIA_MAX_WIDTH,
   resolveSanityImage,
@@ -180,6 +181,31 @@ export function mergeSanityAbout(
       );
       if (still.media.src) {
         merged.hero.media = still.media;
+      }
+    }
+
+    /*
+     * Sanity About hero is often video without poster/image. resolveSanityMedia
+     * then keeps the local fallback — historically Filmproduktionimg1.jpg —
+     * which flashes before the Vimeo loop. Prefer the known first-frame still.
+     */
+    const hasCmsStill = Boolean(
+      doc.heroMedia.poster?.asset?._ref ||
+        doc.heroMedia.poster?.url ||
+        doc.heroMedia.image?.asset?._ref ||
+        doc.heroMedia.image?.url ||
+        doc.heroImage?.asset?._ref ||
+        doc.heroImage?.url,
+    );
+    if (merged.hero.videoId && !hasCmsStill) {
+      const frame = getVimeoFirstFramePoster(merged.hero.videoId);
+      if (frame) {
+        merged.hero.media = {
+          src: frame.src,
+          alt: merged.hero.media.alt || "",
+          width: frame.width,
+          height: frame.height,
+        };
       }
     }
   } else {

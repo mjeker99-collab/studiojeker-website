@@ -123,12 +123,18 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
           "Since 1992, we have helped businesses strengthen their brands through photography, film, 3D visualisation, design and digital marketing.",
         ],
         primaryCta: { label: "Explore our work", href: work },
+        /*
+         * Must match the About hero Vimeo first frame (1231449206).
+         * Do not use Filmproduktionimg1.jpg — Sanity video has no poster, so
+         * this fallback would flash before the loop starts.
+         */
         media: {
-          src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
-          alt: "Film production at Studiojeker",
-          width: 1600,
-          height: 1066,
+          src: "/images/vimeo-posters/1231449206.jpg",
+          alt: "Studiojeker visual production",
+          width: 1920,
+          height: 1080,
         },
+        videoId: "1231449206",
       },
       values: {
         label: "Our approach",
@@ -314,12 +320,18 @@ export function getAboutPageContent(locale: Locale): AboutPageContent {
         "Seit 1992 begleiten wir Unternehmen mit Fotografie, Film, 3D-Visualisierung, Design und Digital Marketing.",
       ],
       primaryCta: { label: "Unsere Arbeiten entdecken", href: work },
+      /*
+       * Must match the About hero Vimeo first frame (1231449206).
+       * Do not use Filmproduktionimg1.jpg — Sanity video has no poster, so
+       * this fallback would flash before the loop starts.
+       */
       media: {
-        src: "/images/Social marketing/Social marketing/Filmproduktionimg1.jpg",
-        alt: "Filmproduktion bei Studiojeker",
-        width: 1600,
-        height: 1066,
+        src: "/images/vimeo-posters/1231449206.jpg",
+        alt: "Studiojeker visuelle Produktion",
+        width: 1920,
+        height: 1080,
       },
+      videoId: "1231449206",
     },
     values: {
       label: "Unser Anspruch",
