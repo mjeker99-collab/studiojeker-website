@@ -25,10 +25,15 @@ const VIDEO_ASPECT = 16 / 9;
 const VIMEO_ORIGIN = "https://player.vimeo.com";
 /** Shared cover overscale — applied to the frame so poster and video stay locked. */
 const COVER_SCALE = 1.02;
-/** Crossfade only after playback has advanced past this (not metadata / play alone). */
-const FIRST_FRAME_SECONDS = 0.04;
-/** Settle after first timeupdate so the decoded frame is painted before fade. */
-const REVEAL_SETTLE_MS = 90;
+/** Prefer reveal after playback has advanced past this (not metadata alone). */
+const FIRST_FRAME_SECONDS = 0.02;
+/** Settle after first paintable signal so the decoded frame is on screen. */
+const REVEAL_SETTLE_MS = 80;
+/**
+ * If Vimeo reports play/playing but never sends a usable timeupdate (some
+ * background embeds), still reveal after this settle — never leave a stuck poster.
+ */
+const PLAY_FALLBACK_MS = 420;
 
 type VimeoMessage = {
   event?: string;
@@ -36,41 +41,8 @@ type VimeoMessage = {
   data?: { seconds?: number; percent?: number };
 };
 
-/**
- * Hero Vimeo background loop — poster-first handoff without layout jump.
- *
- * Poster and iframe share one cover-sized 16:9 frame (identical footprint,
- * object-fit: cover, object-position: center). The poster stays fully visible
- * until Vimeo reports a real timeupdate (first displayable frame), then the
- * iframe crossfades in. Never reveals on loadedmetadata / iframe load alone.
- */
-export function HeroVimeoLoop({
-  videoId,
-  title,
-  poster,
-  mobilePoster,
-}: HeroVimeoLoopProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
-  const playing = playingVideoId === videoId;
-  const [activePoster, setActivePoster] = useState<PosterImage | undefined>(
-    poster,
-  );
-
-  const firstFrame = getVimeoFirstFramePoster(videoId);
-  const handoffPoster: PosterImage | undefined = firstFrame
-    ? {
-        src: firstFrame.src,
-        alt: activePoster?.alt || poster?.alt || title,
-        width: firstFrame.width,
-        height: firstFrame.height,
-      }
-    : activePoster;
-
-  const embedUrl =
+function buildEmbedUrl(videoId: string): string {
+  return (
     `https://player.vimeo.com/video/${videoId}` +
     "?background=1" +
     "&autoplay=1" +
@@ -85,7 +57,46 @@ export function HeroVimeoLoop({
     "&badge=0" +
     "&dnt=1" +
     "&transparent=0" +
-    "&api=1";
+    "&api=1"
+  );
+}
+
+/**
+ * Hero Vimeo background loop — poster-first handoff without layout jump.
+ *
+ * Poster and iframe share one cover-sized 16:9 frame (identical footprint,
+ * object-fit: cover, object-position: center). The poster stays fully visible
+ * until a displayable first frame is confirmed (timeupdate, with play-armed
+ * fallback) — never on loadedmetadata / iframe load alone.
+ */
+export function HeroVimeoLoop({
+  videoId,
+  title,
+  poster,
+  mobilePoster,
+}: HeroVimeoLoopProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const playing = playingVideoId === videoId;
+  const [activePoster, setActivePoster] = useState<PosterImage | undefined>(
+    poster,
+  );
+  // Attach message listeners before loading the iframe so `ready` is never missed.
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+
+  const firstFrame = getVimeoFirstFramePoster(videoId);
+  const handoffPoster: PosterImage | undefined = firstFrame
+    ? {
+        src: firstFrame.src,
+        alt: activePoster?.alt || poster?.alt || title,
+        width: firstFrame.width,
+        height: firstFrame.height,
+      }
+    : activePoster;
 
   // Pick mobile vs desktop CMS poster without layout shift.
   // Known first-frame stills (above) still win for the handoff plane.
@@ -137,35 +148,46 @@ export function HeroVimeoLoop({
     return () => observer.disconnect();
   }, [videoId]);
 
-  // Poster-first: reveal only after a real playback timeupdate (first frame),
-  // then wait for paint. Never on loadedmetadata / iframe.onload / play alone.
+  // Poster-first reveal: arm on play/playing, confirm with timeupdate (first
+  // frame). Never reveal on loadedmetadata / iframe.onload alone.
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
     let cancelled = false;
     let revealScheduled = false;
+    let playbackArmed = false;
 
-    const clearRevealTimer = () => {
+    const clearTimers = () => {
       if (revealTimerRef.current != null) {
         clearTimeout(revealTimerRef.current);
         revealTimerRef.current = null;
       }
+      if (playFallbackRef.current != null) {
+        clearTimeout(playFallbackRef.current);
+        playFallbackRef.current = null;
+      }
     };
 
     const post = (payload: Record<string, unknown>) => {
-      iframe.contentWindow?.postMessage(JSON.stringify(payload), VIMEO_ORIGIN);
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify(payload),
+        VIMEO_ORIGIN,
+      );
     };
 
     const scheduleReveal = () => {
       if (cancelled || revealScheduled) return;
       revealScheduled = true;
+      if (playFallbackRef.current != null) {
+        clearTimeout(playFallbackRef.current);
+        playFallbackRef.current = null;
+      }
 
       // Double rAF: ensure the browser has composited the decoded frame.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (cancelled) return;
-          clearRevealTimer();
+          if (revealTimerRef.current != null) {
+            clearTimeout(revealTimerRef.current);
+          }
           revealTimerRef.current = setTimeout(() => {
             if (!cancelled) {
               setPlayingVideoId(videoId);
@@ -173,6 +195,15 @@ export function HeroVimeoLoop({
           }, REVEAL_SETTLE_MS);
         });
       });
+    };
+
+    const armPlayback = () => {
+      if (cancelled || playbackArmed) return;
+      playbackArmed = true;
+      // Fallback if timeupdate never arrives on certain background embeds.
+      playFallbackRef.current = setTimeout(() => {
+        scheduleReveal();
+      }, PLAY_FALLBACK_MS);
     };
 
     const onMessage = (event: MessageEvent) => {
@@ -191,33 +222,44 @@ export function HeroVimeoLoop({
       if (!data) return;
 
       if (data.event === "ready") {
+        post({ method: "addEventListener", value: "play" });
+        post({ method: "addEventListener", value: "playing" });
         post({ method: "addEventListener", value: "timeupdate" });
         post({ method: "addEventListener", value: "bufferend" });
         post({ method: "setVolume", value: 0 });
-        // Lock to the true start so motion begins where the still left off.
-        post({ method: "setCurrentTime", value: 0 });
         post({ method: "play" });
         return;
       }
 
-      // Ignore play / playing / loaded — those fire before a paintable frame.
+      if (data.event === "play" || data.event === "playing") {
+        armPlayback();
+        return;
+      }
+
+      // First displayable frame: playback clock has advanced.
       if (
         data.event === "timeupdate" &&
         typeof data.data?.seconds === "number" &&
         data.data.seconds >= FIRST_FRAME_SECONDS
       ) {
+        armPlayback();
         scheduleReveal();
       }
     };
 
-    // New video id → keep poster until this clip paints.
-    setPlayingVideoId((current) => (current === videoId ? current : null));
-
+    // Load iframe only after the listener is attached (avoids missing `ready`).
     window.addEventListener("message", onMessage);
+    const loadTimer = window.setTimeout(() => {
+      if (!cancelled) setIframeSrc(buildEmbedUrl(videoId));
+    }, 0);
+
     return () => {
       cancelled = true;
-      clearRevealTimer();
+      clearTimers();
+      window.clearTimeout(loadTimer);
       window.removeEventListener("message", onMessage);
+      // Drop src on teardown so the next videoId remounts cleanly.
+      setIframeSrc(null);
     };
   }, [videoId]);
 
@@ -241,20 +283,22 @@ export function HeroVimeoLoop({
               .join(" ")}
           />
         ) : null}
-        <iframe
-          ref={iframeRef}
-          className={[styles.iframe, playing ? styles.iframePlaying : ""]
-            .filter(Boolean)
-            .join(" ")}
-          src={embedUrl}
-          title={title}
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          allowFullScreen={false}
-          referrerPolicy="strict-origin-when-cross-origin"
-          loading="eager"
-          tabIndex={-1}
-          aria-hidden="true"
-        />
+        {iframeSrc ? (
+          <iframe
+            ref={iframeRef}
+            className={[styles.iframe, playing ? styles.iframePlaying : ""]
+              .filter(Boolean)
+              .join(" ")}
+            src={iframeSrc}
+            title={title}
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            allowFullScreen={false}
+            referrerPolicy="strict-origin-when-cross-origin"
+            loading="eager"
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+        ) : null}
       </div>
     </div>
   );
