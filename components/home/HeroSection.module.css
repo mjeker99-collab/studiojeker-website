@@ -3,15 +3,15 @@
   background: var(--color-white);
   /* Clear the solid fixed header — hero/media begin below it */
   padding-top: var(--header-height);
-  /* Hero may approach viewport height intentionally */
-  min-height: min(100svh, 52rem);
+  /* Height follows copy + shared media aspect — do not force a taller crop */
+  min-height: 0;
   overflow: hidden;
 }
 
 .grid {
   display: grid;
-  min-height: inherit;
   align-items: stretch;
+  min-height: 0;
 }
 
 .copy {
@@ -68,24 +68,36 @@
   margin-top: var(--space-1);
 }
 
-/* Outer column shell — only stretches in the page grid */
+/*
+ * Outer column shell.
+ * align-self: start so aspect-ratio on .media is not overridden by grid stretch
+ * when copy is taller (Services). Row may grow with copy; media size does not.
+ */
 .mediaWrap {
-  align-self: stretch;
-  height: 100%;
-  min-height: 18rem;
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 /*
- * Single media wrapper: cyan column + photo column.
- * Grid stretch couples heights — no absolute/top/bottom/transform on the bar.
+ * Shared hero media frame (KI template):
+ * cyan column + photo column. Width fills the media grid track;
+ * height comes only from --hero-media-aspect — never from vh / min-height / copy.
  */
 .media {
   display: grid;
   grid-template-columns: var(--cyan-bar-width) minmax(0, 1fr);
   align-items: stretch;
+  box-sizing: border-box;
   width: 100%;
-  height: 100%;
-  min-height: 18rem;
+  height: auto;
+  max-height: none;
+  aspect-ratio: var(--hero-media-aspect);
+  min-height: 0;
 }
 
 .cyanBar {
@@ -94,7 +106,6 @@
   min-height: 0;
   align-self: stretch;
   background: var(--color-cyan);
-  /* Explicitly no positioning hacks */
   position: static;
   top: auto;
   bottom: auto;
@@ -114,7 +125,7 @@
 
 .image {
   object-fit: cover;
-  object-position: center center;
+  object-position: var(--hero-media-object-position, center center);
 }
 
 @media (max-width: 47.9375rem) {
@@ -124,12 +135,8 @@
 }
 
 @media (min-width: 64rem) {
-  .section {
-    min-height: min(100svh, 52rem);
-  }
-
   .grid {
-    grid-template-columns: minmax(0, 0.41fr) minmax(0, 0.59fr);
+    grid-template-columns: var(--hero-grid-copy) var(--hero-grid-media);
   }
 
   .copy {
@@ -137,22 +144,9 @@
     padding-left: max(var(--container-padding-x), 3.25%);
     max-width: 38rem;
   }
-
-  .mediaWrap,
-  .media {
-    min-height: 100%;
-  }
 }
 
 @media (max-width: 63.9375rem) {
-  .section {
-    min-height: auto;
-  }
-
-  .grid {
-    min-height: auto;
-  }
-
   .copy {
     padding-bottom: var(--space-4);
   }

@@ -33,7 +33,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  /* Same crop token as static hero images — never distort on handoff */
+  object-position: var(--hero-media-object-position, center center);
 }
 
 .poster {

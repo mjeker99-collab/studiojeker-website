@@ -9,6 +9,7 @@ import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { HeroMediaFrame } from "@/components/home/HeroMediaFrame";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
 import heroStyles from "@/components/home/HeroSection.module.css";
 import styles from "./AboutPage.module.css";
@@ -68,49 +69,41 @@ export function AboutPage({ content }: AboutPageProps) {
           </Reveal>
 
           <Reveal className={heroStyles.mediaWrap} immediate>
-            {/*
-              Match the fixed homepage hero media pattern:
-              cyan bar + photo as grid siblings inside one media wrapper.
-              Heights couple via grid stretch — no absolute offsets.
-            */}
-            <div className={heroStyles.media}>
-              <div className={heroStyles.cyanBar} aria-hidden="true" />
-              <div className={heroStyles.photo}>
-                {content.hero.videoId ? (
-                  <HeroVimeoLoop
-                    videoId={content.hero.videoId}
-                    title={content.hero.media.alt}
-                    poster={{
-                      src: mediaPath(content.hero.media.src),
-                      alt: content.hero.media.alt,
-                      width: content.hero.media.width,
-                      height: content.hero.media.height,
-                    }}
-                    mobilePoster={
-                      content.hero.mobilePoster?.src
-                        ? {
-                            src: mediaPath(content.hero.mobilePoster.src),
-                            alt:
-                              content.hero.mobilePoster.alt ||
-                              content.hero.media.alt,
-                            width: content.hero.mobilePoster.width,
-                            height: content.hero.mobilePoster.height,
-                          }
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <Image
-                    src={mediaPath(content.hero.media.src)}
-                    alt={content.hero.media.alt}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 64vw"
-                    className={heroStyles.image}
-                  />
-                )}
-              </div>
-            </div>
+            <HeroMediaFrame>
+              {content.hero.videoId ? (
+                <HeroVimeoLoop
+                  videoId={content.hero.videoId}
+                  title={content.hero.media.alt}
+                  poster={{
+                    src: mediaPath(content.hero.media.src),
+                    alt: content.hero.media.alt,
+                    width: content.hero.media.width,
+                    height: content.hero.media.height,
+                  }}
+                  mobilePoster={
+                    content.hero.mobilePoster?.src
+                      ? {
+                          src: mediaPath(content.hero.mobilePoster.src),
+                          alt:
+                            content.hero.mobilePoster.alt ||
+                            content.hero.media.alt,
+                          width: content.hero.mobilePoster.width,
+                          height: content.hero.mobilePoster.height,
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <Image
+                  src={mediaPath(content.hero.media.src)}
+                  alt={content.hero.media.alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={heroStyles.image}
+                />
+              )}
+            </HeroMediaFrame>
           </Reveal>
         </div>
       </section>

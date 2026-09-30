@@ -7,6 +7,7 @@ import type {
 import type { HomepageMedia } from "@/types/homepage";
 import { mediaPath } from "@/lib/media/paths";
 import { ClientsSection } from "@/components/home/ClientsSection";
+import { HeroMediaFrame } from "@/components/home/HeroMediaFrame";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
 import { VimeoShowreel } from "@/components/media/VimeoShowreel";
 import { Container } from "@/components/layout/Container";
@@ -310,51 +311,48 @@ export function AiPage({ content }: AiPageProps) {
             className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
             immediate
           >
-            <div className={heroStyles.media}>
-              <div className={heroStyles.cyanBar} aria-hidden="true" />
-              <div className={heroStyles.photo}>
-                {content.hero.videoId ? (
-                  <HeroVimeoLoop
-                    videoId={content.hero.videoId}
-                    title={content.hero.media.alt || content.hero.headline}
-                    poster={
-                      content.hero.media.src
-                        ? {
-                            src: mediaPath(content.hero.media.src),
-                            alt: content.hero.media.alt,
-                            width: content.hero.media.width,
-                            height: content.hero.media.height,
-                          }
-                        : undefined
-                    }
-                    mobilePoster={
-                      content.hero.mobilePoster?.src
-                        ? {
-                            src: mediaPath(content.hero.mobilePoster.src),
-                            alt:
-                              content.hero.mobilePoster.alt ||
-                              content.hero.media.alt ||
-                              content.hero.headline,
-                            width: content.hero.mobilePoster.width,
-                            height: content.hero.mobilePoster.height,
-                          }
-                        : undefined
-                    }
-                  />
-                ) : heroHasMedia && content.hero.media.src ? (
-                  <Image
-                    src={mediaPath(content.hero.media.src)}
-                    alt={content.hero.media.alt}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 64vw"
-                    className={heroStyles.image}
-                  />
-                ) : (
-                  <div className={styles.heroPlaceholder} aria-hidden="true" />
-                )}
-              </div>
-            </div>
+            <HeroMediaFrame>
+              {content.hero.videoId ? (
+                <HeroVimeoLoop
+                  videoId={content.hero.videoId}
+                  title={content.hero.media.alt || content.hero.headline}
+                  poster={
+                    content.hero.media.src
+                      ? {
+                          src: mediaPath(content.hero.media.src),
+                          alt: content.hero.media.alt,
+                          width: content.hero.media.width,
+                          height: content.hero.media.height,
+                        }
+                      : undefined
+                  }
+                  mobilePoster={
+                    content.hero.mobilePoster?.src
+                      ? {
+                          src: mediaPath(content.hero.mobilePoster.src),
+                          alt:
+                            content.hero.mobilePoster.alt ||
+                            content.hero.media.alt ||
+                            content.hero.headline,
+                          width: content.hero.mobilePoster.width,
+                          height: content.hero.mobilePoster.height,
+                        }
+                      : undefined
+                  }
+                />
+              ) : heroHasMedia && content.hero.media.src ? (
+                <Image
+                  src={mediaPath(content.hero.media.src)}
+                  alt={content.hero.media.alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 64vw"
+                  className={heroStyles.image}
+                />
+              ) : (
+                <div className={styles.heroPlaceholder} aria-hidden="true" />
+              )}
+            </HeroMediaFrame>
           </Reveal>
         </div>
       </section>
