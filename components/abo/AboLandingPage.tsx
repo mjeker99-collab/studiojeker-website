@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { AboPageContent } from "@/lib/content/abo-page";
 import { mediaPath } from "@/lib/media/paths";
 import { aboBenefitIcons } from "@/components/home/aboBenefitIcons";
+import { HeroMediaFrame } from "@/components/home/HeroMediaFrame";
 import { ShowreelSection } from "@/components/home/ShowreelSection";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
@@ -55,20 +56,17 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
             className={[heroStyles.mediaWrap, styles.heroMediaWrap].join(" ")}
             delayMs={120}
           >
-            <div className={heroStyles.media}>
-              <div className={heroStyles.cyanBar} aria-hidden="true" />
-              <div className={heroStyles.photo}>
-                <Image
-                  key={content.hero.media.src}
-                  src={mediaPath(content.hero.media.src)}
-                  alt={content.hero.media.alt}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 58vw"
-                  className={heroStyles.image}
-                />
-              </div>
-            </div>
+            <HeroMediaFrame>
+              <Image
+                key={content.hero.media.src}
+                src={mediaPath(content.hero.media.src)}
+                alt={content.hero.media.alt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className={heroStyles.image}
+              />
+            </HeroMediaFrame>
           </Reveal>
         </div>
       </section>

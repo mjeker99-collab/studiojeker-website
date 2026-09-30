@@ -4,7 +4,9 @@ import { mediaPath } from "@/lib/media/paths";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { HeroMediaFrame } from "@/components/home/HeroMediaFrame";
 import { HeroVimeoLoop } from "@/components/home/HeroVimeoLoop";
+import heroStyles from "@/components/home/HeroSection.module.css";
 import styles from "./ServiceHero.module.css";
 
 type ServiceHeroProps = {
@@ -45,47 +47,40 @@ export function ServiceHero({ content, titleId }: ServiceHeroProps) {
           </div>
         </Reveal>
 
-        <Reveal className={styles.mediaWrap} immediate>
-          {/*
-            Cyan + photo are GRID SIBLINGS of the same media wrapper.
-            Matches homepage HeroSection — bar height equals image height.
-          */}
-          <div className={styles.media}>
-            <div className={styles.cyanBar} aria-hidden="true" />
-            <div className={styles.photo}>
-              {content.videoId ? (
-                <HeroVimeoLoop
-                  videoId={content.videoId}
-                  title={content.media.alt}
-                  poster={{
-                    src: mediaPath(content.media.src),
-                    alt: content.media.alt,
-                    width: content.media.width,
-                    height: content.media.height,
-                  }}
-                  mobilePoster={
-                    content.mobilePoster?.src
-                      ? {
-                          src: mediaPath(content.mobilePoster.src),
-                          alt: content.mobilePoster.alt || content.media.alt,
-                          width: content.mobilePoster.width,
-                          height: content.mobilePoster.height,
-                        }
-                      : undefined
-                  }
-                />
-              ) : (
-                <Image
-                  src={mediaPath(content.media.src)}
-                  alt={content.media.alt}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 64vw"
-                  className={styles.image}
-                />
-              )}
-            </div>
-          </div>
+        <Reveal className={[heroStyles.mediaWrap, styles.mediaWrap].join(" ")} immediate>
+          <HeroMediaFrame>
+            {content.videoId ? (
+              <HeroVimeoLoop
+                videoId={content.videoId}
+                title={content.media.alt}
+                poster={{
+                  src: mediaPath(content.media.src),
+                  alt: content.media.alt,
+                  width: content.media.width,
+                  height: content.media.height,
+                }}
+                mobilePoster={
+                  content.mobilePoster?.src
+                    ? {
+                        src: mediaPath(content.mobilePoster.src),
+                        alt: content.mobilePoster.alt || content.media.alt,
+                        width: content.mobilePoster.width,
+                        height: content.mobilePoster.height,
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <Image
+                src={mediaPath(content.media.src)}
+                alt={content.media.alt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 64vw"
+                className={heroStyles.image}
+              />
+            )}
+          </HeroMediaFrame>
         </Reveal>
       </div>
     </section>
