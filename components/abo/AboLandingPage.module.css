@@ -359,8 +359,8 @@
 
 @media (min-width: 64rem) {
   .hero .heroGrid {
-    /* Shared hero split — same 41/59 as HeroSection */
-    grid-template-columns: minmax(0, 0.41fr) minmax(0, 0.59fr);
+    /* Shared hero split tokens — identical to HeroSection / ServiceHero */
+    grid-template-columns: var(--hero-grid-copy) var(--hero-grid-media);
     align-items: stretch;
   }
 

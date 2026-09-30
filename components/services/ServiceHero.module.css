@@ -93,7 +93,7 @@
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.41fr) minmax(0, 0.59fr);
+    grid-template-columns: var(--hero-grid-copy) var(--hero-grid-media);
   }
 
   .copy {

@@ -72,11 +72,19 @@
   --cyan-bar-width: clamp(0.75rem, 2.2vw, 2.125rem);
 
   /*
-   * Shared hero media frame (KI page = binding template).
-   * Split layout (tablet landscape + desktop): 5 / 4.
-   * Narrow stacked layout: 4 / 3 (see max-width query below).
-   * Per-motif crop: override --hero-media-object-position on the photo slot.
+   * Shared split-hero media frame (KI page = binding visual template).
+   * Single source for every page with cyan+media hero chrome:
+   * Home, About, KI, Service pages, Content-Abo.
+   *
+   * Size is locked by column fraction × aspect — never by copy length,
+   * section min-height, or vh. Changing these tokens updates all heroes.
+   *
+   * Split (≥64rem): 5 / 4 on the 0.59 media column.
+   * Stacked (<64rem): 4 / 3 full-bleed.
+   * Crop: override --hero-media-object-position on the photo slot.
    */
+  --hero-grid-copy: minmax(0, 0.41fr);
+  --hero-grid-media: minmax(0, 0.59fr);
   --hero-media-aspect: 5 / 4;
   --hero-media-object-position: center center;
 

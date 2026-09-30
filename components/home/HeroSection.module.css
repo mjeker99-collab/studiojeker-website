@@ -71,25 +71,31 @@
 /*
  * Outer column shell.
  * align-self: start so aspect-ratio on .media is not overridden by grid stretch
- * when copy is taller (Services). Row height still grows with the taller column.
+ * when copy is taller (Services). Row may grow with copy; media size does not.
  */
 .mediaWrap {
   align-self: start;
+  justify-self: stretch;
   width: 100%;
   min-width: 0;
   height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 /*
  * Shared hero media frame (KI template):
- * cyan column + photo column, locked aspect via --hero-media-aspect.
+ * cyan column + photo column. Width fills the media grid track;
+ * height comes only from --hero-media-aspect — never from vh / min-height / copy.
  */
 .media {
   display: grid;
   grid-template-columns: var(--cyan-bar-width) minmax(0, 1fr);
   align-items: stretch;
+  box-sizing: border-box;
   width: 100%;
   height: auto;
+  max-height: none;
   aspect-ratio: var(--hero-media-aspect);
   min-height: 0;
 }
@@ -130,7 +136,7 @@
 
 @media (min-width: 64rem) {
   .grid {
-    grid-template-columns: minmax(0, 0.41fr) minmax(0, 0.59fr);
+    grid-template-columns: var(--hero-grid-copy) var(--hero-grid-media);
   }
 
   .copy {

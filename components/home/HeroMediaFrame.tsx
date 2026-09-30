@@ -31,9 +31,12 @@ export function HeroMediaFrame({
     : undefined;
 
   return (
-    <div className={[styles.media, className].filter(Boolean).join(" ")}>
+    <div
+      className={[styles.media, className].filter(Boolean).join(" ")}
+      data-hero-media="frame"
+    >
       <div className={styles.cyanBar} aria-hidden="true" />
-      <div className={styles.photo} style={photoStyle}>
+      <div className={styles.photo} style={photoStyle} data-hero-media="photo">
         {children}
       </div>
     </div>
