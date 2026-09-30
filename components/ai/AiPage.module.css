@@ -5,8 +5,10 @@
  */
 
 /*
- * White gaps between independent blocks (homepage stack rhythm).
- * Image/copy units inside each section stay intact.
+ * White ribbons between independent blocks — homepage stack rhythm.
+ * Tablet/desktop 3.5rem (56px) matches the editorial hero→intro band
+ * on staging reference (≈112px at 2×). Text-only sections must NOT add
+ * extra padding-block on top of this gap, or ribbons become uneven.
  */
 .stack {
   display: flex;
@@ -272,7 +274,8 @@
 
 .stillBreak {
   background: var(--color-white);
-  padding-block: var(--space-4);
+  /* Stack gap alone forms the white ribbon; no extra outer padding */
+  padding-block: 0;
 }
 
 .stillBreak .mediaFigure {
@@ -286,7 +289,8 @@
 /* Pure text section (no media column) — sits between text+media blocks */
 .textOnly {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  /* Ribbon = .stack gap only (same as hero→intro in reference photo) */
+  padding-block: 0;
 }
 
 .textOnlyInner {
@@ -310,7 +314,7 @@
 
 .process {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  padding-block: 0;
 }
 
 .processHeader {
@@ -413,7 +417,7 @@
 
 .applications {
   background: var(--color-white);
-  padding-block: var(--section-padding-y-compact);
+  padding-block: 0;
 }
 
 .applicationsHeader {
