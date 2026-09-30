@@ -115,7 +115,7 @@ async function runPage(browser, { name, url }) {
     nearlyEqual(after.poster.w, after.iframe.w) &&
     nearlyEqual(after.poster.h, after.iframe.h) &&
     before.poster.objectFit === "cover" &&
-    (before.poster.objectPosition || "").includes("50%");
+    /center|50%/.test(before.poster.objectPosition || "");
 
   const usedFirstFrame =
     Boolean(before?.posterSrc?.includes("vimeo-posters/")) ||
