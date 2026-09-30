@@ -94,8 +94,11 @@ export function Header({ locale, dictionary }: HeaderProps) {
             <Image
               src={logoSrc}
               alt={dictionary.brand.name}
-              width={280}
-              height={56}
+              /* Intrinsic ratio must match the SVG viewBox (489.7×226.8).
+                 The previous 280×56 attrs were ~5:1 and confused Safari’s
+                 width:auto sizing for the header logo. */
+              width={490}
+              height={227}
               className={styles.logo}
               priority
             />
