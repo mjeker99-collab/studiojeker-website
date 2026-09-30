@@ -44,9 +44,21 @@ export const VIMEO_FIRST_FRAME_POSTERS: Record<string, VimeoFirstFramePoster> = 
     width: 1920,
     height: 1080,
   },
-  // KI / AI
+  // KI / AI (legacy showreel id)
   "1228871502": {
     src: "/images/vimeo-posters/1228871502.jpg",
+    width: 1920,
+    height: 1080,
+  },
+  // About hero (Sanity)
+  "1231449206": {
+    src: "/images/vimeo-posters/1231449206.jpg",
+    width: 1920,
+    height: 1080,
+  },
+  // KI / AI hero (Sanity)
+  "1229269041": {
+    src: "/images/vimeo-posters/1229269041.jpg",
     width: 1920,
     height: 1080,
   },
