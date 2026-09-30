@@ -1,7 +1,8 @@
 /*
- * Absolute fill of the hero .photo slot — same footprint as Next/Image fill.
- * Iframe size is set by ResizeObserver in HeroVimeoLoop.tsx (object-fit: cover).
- * Poster stays visible (z-index) until Vimeo reports play — then crossfade.
+ * Absolute fill of the hero .photo slot.
+ * One shared .frame is cover-sized (16:9) by HeroVimeoLoop.tsx — poster and
+ * iframe both fill that frame with identical object-fit / object-position so
+ * the handoff never jumps. Poster stays visible until a real first frame paints.
  */
 .root {
   position: absolute;
@@ -13,11 +14,32 @@
   background: var(--color-neutral);
 }
 
-.poster {
+/* Shared cover plane — width/height set by ResizeObserver; centered in .root */
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  /* Intrinsic size before JS measures — avoids zero-size flash */
+  width: 100%;
+  height: 100%;
+}
+
+.poster,
+.iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  object-position: center center;
+}
+
+.poster {
   z-index: 2;
   opacity: 1;
-  transition: opacity 320ms var(--ease-standard, ease);
+  transition: opacity 280ms var(--ease-standard, ease);
 }
 
 .posterFaded {
@@ -25,16 +47,10 @@
 }
 
 .iframe {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   z-index: 1;
-  width: 100%;
-  height: 100%;
   border: 0;
   opacity: 0;
-  transform: translate(-50%, -50%);
-  transition: opacity 320ms var(--ease-standard, ease);
+  transition: opacity 280ms var(--ease-standard, ease);
   /* No interaction — background loop only */
   pointer-events: none;
 }
