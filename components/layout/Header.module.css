@@ -48,6 +48,7 @@
 
 .brand {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   text-decoration: none;
   color: inherit;
@@ -57,9 +58,17 @@
   color: inherit;
 }
 
+/*
+ * Safari (iOS) collapses width:auto images inside shrink-wrapped flex
+ * parents when the global img { max-width: 100% } rule applies — the
+ * percentage resolves circularly and the logo paints at 0×height.
+ * Override max-width and pin the SVG aspect ratio explicitly.
+ */
 .logo {
   width: auto;
   height: 2.85rem; /* ~55% larger; clear brand presence */
+  max-width: none;
+  aspect-ratio: 489.7 / 226.8; /* matches public/logos SVG viewBox */
 }
 
 .desktopNav {
