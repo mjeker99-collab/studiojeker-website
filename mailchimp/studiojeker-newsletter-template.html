@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="de" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light only" />
+  <title>Studiojeker Newsletter</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:AllowPNG/>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <style type="text/css">
+    table, td, div, h1, h2, h3, p, a, span { font-family: Arial, Helvetica, sans-serif !important; }
+    table { border-collapse: collapse; }
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    /* Brand tokens from styles/tokens.css
+       --color-black: #000000
+       --color-white: #ffffff
+       --color-cyan:  #00c8ff
+       --color-silver:#c8ccd0
+       --color-neutral:#f5f5f5
+       Grey meta/eyebrows: #6b6f74 (near logo grey #494C50, lighter for meta)
+       Fonts: Arial / Helvetica (web: Inter / Manrope)
+       Layout authority: final newsletter mockup (text and images never overlap)
+    */
+    :root {
+      color-scheme: light only;
+      supported-color-schemes: light only;
+    }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; display: block; }
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      background-color: #ffffff;
+      color: #000000;
+    }
+    a { color: #000000; text-decoration: none; }
+    a:hover { color: #00c8ff !important; }
+    .sj-link:hover { color: #00c8ff !important; }
+    .sj-cta:hover { color: #00c8ff !important; }
+    u + #body a { color: inherit; }
+    #MessageViewBody a { color: inherit; text-decoration: none; }
+
+    [data-ogsc] body,
+    [data-ogsc] .sj-shell,
+    [data-ogsc] .sj-footer {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    @media only screen and (max-width: 620px) {
+      .sj-outer { width: 100% !important; }
+      .sj-container { width: 100% !important; max-width: 100% !important; }
+      .sj-pad { padding-left: 24px !important; padding-right: 24px !important; }
+      .sj-pad-lg { padding-left: 24px !important; padding-right: 24px !important; }
+      .sj-stack { display: block !important; width: 100% !important; max-width: 100% !important; }
+      .sj-stack-pad { padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 0 !important; }
+      .sj-stack-pad-right { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+      .sj-img-fluid { width: 100% !important; height: auto !important; max-width: 100% !important; }
+      .sj-hero-headline { font-size: 28px !important; line-height: 1.08 !important; }
+      .sj-section-headline { font-size: 26px !important; line-height: 1.12 !important; }
+      .sj-body { font-size: 16px !important; line-height: 1.55 !important; }
+      .sj-meta-left,
+      .sj-meta-right { display: block !important; width: 100% !important; text-align: left !important; padding-bottom: 4px !important; }
+      .sj-header-logo,
+      .sj-header-claim { display: block !important; width: 100% !important; text-align: left !important; }
+      .sj-claim { text-align: left !important; padding-top: 12px !important; padding-left: 0 !important; }
+      .sj-pos-left,
+      .sj-pos-right { display: block !important; width: 100% !important; max-width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; }
+      .sj-pos-divider { display: none !important; width: 0 !important; max-width: 0 !important; font-size: 0 !important; line-height: 0 !important; overflow: hidden !important; }
+      .sj-pos-right { padding-top: 28px !important; }
+      .sj-comp-pair { display: block !important; width: 100% !important; max-width: 100% !important; }
+      .sj-comp-title { font-size: 10px !important; }
+      .sj-cyan-bar { width: 6px !important; max-width: 6px !important; }
+      .sj-footer-nav,
+      .sj-footer-social { display: block !important; width: 100% !important; text-align: left !important; padding-top: 16px !important; }
+      .sj-footer-bottom-left,
+      .sj-footer-bottom-right { display: block !important; width: 100% !important; text-align: left !important; }
+      .sj-footer-bottom-right { padding-top: 12px !important; }
+      .sj-text-col-pad { padding: 28px 24px 32px 20px !important; }
+    }
+  </style>
+</head>
+<body id="body" style="margin:0;padding:0;background-color:#ffffff;color:#000000;">
+  <!-- Preview / Preheader (inbox snippet) -->
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    <div mc:edit="preheader">
+      We Create Visibility. Neuigkeiten von Studiojeker — Content, Marketing und KI.
+    </div>
+    &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+  </div>
+
+  <center role="article" aria-roledescription="email" lang="de" style="width:100%;background-color:#ffffff;">
+    <!--[if mso | IE]>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="700" align="center" style="width:700px;">
+    <tr><td>
+    <![endif]-->
+    <table role="presentation" class="sj-outer" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background-color:#ffffff;">
+      <tr>
+        <td align="center" valign="top" style="background-color:#ffffff;">
+          <table role="presentation" class="sj-container sj-shell" cellpadding="0" cellspacing="0" border="0" width="700" style="width:100%;max-width:700px;background-color:#ffffff;">
+
+            <!-- ============================================================
+                 META + HEADER
+                 ============================================================ -->
+            <tr>
+              <td class="sj-pad" style="padding:18px 32px 0 32px;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-meta-left" valign="middle" align="left" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.4;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;">
+                      <div mc:edit="meta_left">STUDIOJEKER NEWSLETTER</div>
+                    </td>
+                    <td class="sj-meta-right" valign="middle" align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.4;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:#6b6f74;text-align:right;">
+                      <div mc:edit="meta_right">
+                        RELAUNCH 2026&nbsp;&nbsp;|&nbsp;&nbsp;<a href="*|ARCHIVE|*" target="_blank" style="color:#6b6f74;text-decoration:underline;">Im Browser anzeigen</a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="sj-pad" style="padding:28px 32px 32px 32px;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-header-logo" valign="middle" align="left" style="vertical-align:middle;">
+                      <!-- Original logo PNG (from public/logos/RZ_Studiojeker_Logo_RGB.svg) — no claim -->
+                      <a href="https://www.studiojeker.ch/" target="_blank" style="text-decoration:none;border:0;">
+                        <img
+                          mc:edit="header_logo"
+                          src="placeholders/logo.png"
+                          width="150"
+                          height="69"
+                          alt="Studiojeker"
+                          style="display:block;width:150px;height:auto;border:0;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;"
+                        />
+                      </a>
+                    </td>
+                    <td class="sj-header-claim sj-claim" valign="middle" align="right" style="vertical-align:middle;text-align:right;padding-left:16px;">
+                      <div mc:edit="header_claim" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#000000;">
+                        WE CREATE VISIBILITY.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ============================================================
+                 HERO — Desktop: text left + image right (never overlapping)
+                 ============================================================ -->
+            <tr>
+              <td style="padding:0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <!-- Text column + cyan edge bar -->
+                    <td class="sj-stack" width="350" valign="middle" bgcolor="#ffffff" style="width:350px;vertical-align:middle;background-color:#ffffff;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td class="sj-text-col-pad" bgcolor="#ffffff" style="background-color:#ffffff;padding:36px 28px 36px 24px;">
+                            <div mc:edit="hero_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 18px 0;">
+                              STUDIOJEKER 2026
+                            </div>
+                            <h1 class="sj-hero-headline" mc:edit="hero_headline" style="margin:0 0 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;color:#000000;">
+                              1992 haben wir angefangen,<br />
+                              Bilder zu produzieren.<br /><br />
+                              Heute produzieren<br />
+                              wir Sichtbarkeit.
+                            </h1>
+                            <div mc:edit="hero_play_cta">
+                              <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                                <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border:1.5px solid #000000;border-radius:50%;font-size:11px;vertical-align:middle;margin-right:10px;">&#9654;</span><span style="vertical-align:middle;">VIDEO ABSPIELEN</span>
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <!-- Image column — flush to text, no overlays -->
+                    <td class="sj-stack" width="350" valign="top" bgcolor="#f5f5f5" style="width:350px;vertical-align:top;background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <a href="https://www.studiojeker.ch/" target="_blank" style="text-decoration:none;border:0;">
+                        <img
+                          mc:edit="hero_image"
+                          class="sj-img-fluid"
+                          src="placeholders/hero.jpg"
+                          width="350"
+                          height="280"
+                          alt="Studiojeker Hero"
+                          style="display:block;width:100%;max-width:350px;height:auto;border:0;"
+                        />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr>
+              <td style="height:56px;font-size:0;line-height:0;background-color:#ffffff;">&nbsp;</td>
+            </tr>
+
+            <!-- ============================================================
+                 POSITIONIERUNG — two columns + fine vertical divider
+                 ============================================================ -->
+            <tr>
+              <td class="sj-pad" style="padding:0 32px 8px 32px;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-pos-left sj-stack" width="280" valign="top" style="width:280px;vertical-align:top;padding:0 28px 0 0;">
+                      <div mc:edit="intro_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 16px 0;">
+                        WE CREATE VISIBILITY.
+                      </div>
+                      <h2 class="sj-section-headline" mc:edit="intro_headline" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                        Content. Strategie.<br />
+                        Distribution.
+                      </h2>
+                    </td>
+                    <td class="sj-pos-divider" width="1" valign="top" bgcolor="#c8ccd0" style="width:1px;max-width:1px;background-color:#c8ccd0;font-size:0;line-height:0;">&nbsp;</td>
+                    <td class="sj-pos-right sj-stack" width="355" valign="top" style="width:355px;vertical-align:top;padding:0 0 0 28px;">
+                      <div class="sj-body" mc:edit="intro_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;">
+                        <p style="margin:0 0 14px 0;">Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen.</p>
+                        <p style="margin:0 0 14px 0;">Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt.</p>
+                        <p style="margin:0 0 22px 0;">Denn guter Content allein reicht nicht. Er muss gesehen werden.</p>
+                      </div>
+                      <div mc:edit="intro_cta">
+                        <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                          →&nbsp;&nbsp;DAS NEUE STUDIOJEKER ENTDECKEN
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr>
+              <td style="height:56px;font-size:0;line-height:0;background-color:#ffffff;">&nbsp;</td>
+            </tr>
+
+            <!-- ============================================================
+                 CONTENT CREATION × AI — image left / text right
+                 ============================================================ -->
+            <tr>
+              <td style="padding:0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-stack sj-stack-pad" width="320" valign="top" style="width:320px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
+                            <a href="https://www.studiojeker.ch/ki/" target="_blank" style="text-decoration:none;border:0;">
+                              <img
+                                mc:edit="ai_image"
+                                class="sj-img-fluid"
+                                src="placeholders/ai.jpg"
+                                width="314"
+                                height="275"
+                                alt="Content Creation × AI"
+                                style="display:block;width:100%;max-width:314px;height:auto;border:0;"
+                              />
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right sj-text-col-pad" width="380" valign="middle" bgcolor="#ffffff" style="width:380px;vertical-align:middle;background-color:#ffffff;padding:32px 32px 32px 28px;">
+                      <div mc:edit="ai_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 16px 0;">
+                        CONTENT CREATION × AI
+                      </div>
+                      <h2 class="sj-section-headline" mc:edit="ai_headline" style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                        Neue Möglichkeiten.<br />
+                        Gleicher Anspruch<br />
+                        an Qualität.
+                      </h2>
+                      <div class="sj-body" mc:edit="ai_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;margin:0 0 22px 0;">
+                        Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir setzen KI gezielt ein – von Konzeption und Storyboarding über Bild- und Videoproduktion bis zu 3D-Visualisierung und Animation.
+                      </div>
+                      <div mc:edit="ai_cta">
+                        <a class="sj-cta" href="https://www.studiojeker.ch/ki/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                          →&nbsp;&nbsp;KI BEI STUDIOJEKER ENTDECKEN
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr>
+              <td style="height:64px;font-size:0;line-height:0;background-color:#ffffff;">&nbsp;</td>
+            </tr>
+
+            <!-- ============================================================
+                 KOMPETENZBEREICHE — 4 equal columns desktop / 2×2 mobile
+                 ============================================================ -->
+            <tr>
+              <td class="sj-pad" style="padding:0 32px 28px 32px;background-color:#ffffff;">
+                <div mc:edit="services_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
+                  UNSERE KOMPETENZBEREICHE
+                </div>
+                <h2 class="sj-section-headline" mc:edit="services_headline" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                  Ein Partner. Alle Möglichkeiten.
+                </h2>
+              </td>
+            </tr>
+            <tr>
+              <td class="sj-pad" style="padding:0 32px 8px 32px;background-color:#ffffff;">
+                <!-- Desktop: 4 columns via nested pairs | Mobile: pairs stack → 2×2 -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-comp-pair sj-stack" width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 4px 0 0;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 6px 24px 0;">
+                            <a href="https://www.studiojeker.ch/digital-marketing/" target="_blank" style="text-decoration:none;border:0;color:#000000;">
+                              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                                    <img
+                                      mc:edit="service_digital_image"
+                                      class="sj-img-fluid"
+                                      src="placeholders/digital.jpg"
+                                      width="154"
+                                      height="106"
+                                      alt="Digital &amp; Social Media Marketing"
+                                      style="display:block;width:100%;max-width:154px;height:auto;border:0;"
+                                    />
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td mc:edit="service_digital_title" class="sj-comp-title" style="padding:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.35;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#000000;">
+                                    Digital &amp; Social Media Marketing&nbsp;→
+                                  </td>
+                                </tr>
+                              </table>
+                            </a>
+                          </td>
+                          <td width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 0 24px 6px;">
+                            <a href="https://www.studiojeker.ch/business-communication/" target="_blank" style="text-decoration:none;border:0;color:#000000;">
+                              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                                    <img
+                                      mc:edit="service_business_image"
+                                      class="sj-img-fluid"
+                                      src="placeholders/business.jpg"
+                                      width="154"
+                                      height="106"
+                                      alt="Business Communication"
+                                      style="display:block;width:100%;max-width:154px;height:auto;border:0;"
+                                    />
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td mc:edit="service_business_title" class="sj-comp-title" style="padding:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.35;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#000000;">
+                                    Business Communication&nbsp;→
+                                  </td>
+                                </tr>
+                              </table>
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td class="sj-comp-pair sj-stack" width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 0 0 4px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 6px 24px 0;">
+                            <a href="https://www.studiojeker.ch/product-communication/" target="_blank" style="text-decoration:none;border:0;color:#000000;">
+                              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                                    <img
+                                      mc:edit="service_product_image"
+                                      class="sj-img-fluid"
+                                      src="placeholders/product.jpg"
+                                      width="154"
+                                      height="106"
+                                      alt="Product Communication"
+                                      style="display:block;width:100%;max-width:154px;height:auto;border:0;"
+                                    />
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td mc:edit="service_product_title" class="sj-comp-title" style="padding:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.35;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#000000;">
+                                    Product Communication&nbsp;→
+                                  </td>
+                                </tr>
+                              </table>
+                            </a>
+                          </td>
+                          <td width="50%" valign="top" style="width:50%;vertical-align:top;padding:0 0 24px 6px;">
+                            <a href="https://www.studiojeker.ch/architecture/" target="_blank" style="text-decoration:none;border:0;color:#000000;">
+                              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                                    <img
+                                      mc:edit="service_architecture_image"
+                                      class="sj-img-fluid"
+                                      src="placeholders/architecture.jpg"
+                                      width="154"
+                                      height="106"
+                                      alt="Architecture &amp; Real Estate"
+                                      style="display:block;width:100%;max-width:154px;height:auto;border:0;"
+                                    />
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td mc:edit="service_architecture_title" class="sj-comp-title" style="padding:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.35;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#000000;">
+                                    Architecture &amp; Real Estate&nbsp;→
+                                  </td>
+                                </tr>
+                              </table>
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr>
+              <td style="height:40px;font-size:0;line-height:0;background-color:#ffffff;">&nbsp;</td>
+            </tr>
+
+            <!-- ============================================================
+                 FLEXIBLE CONTENT (repeatable + variants) — keep for Mailchimp
+                 ============================================================ -->
+            <!-- Variant A: Image left / Text right -->
+            <tr mc:repeatable="flexible_content" mc:variant="image_left_text_right">
+              <td style="padding:40px 0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-stack sj-stack-pad" width="320" valign="top" style="width:320px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
+                            <img
+                              mc:edit="flex_a_image"
+                              class="sj-img-fluid"
+                              src="placeholders/flex_left.jpg"
+                              width="314"
+                              height="236"
+                              alt="Content image"
+                              style="display:block;width:100%;max-width:314px;height:auto;border:0;"
+                            />
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right sj-text-col-pad" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:28px 32px 28px 28px;">
+                      <div mc:edit="flex_a_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
+                        THEMA
+                      </div>
+                      <h2 class="sj-section-headline" mc:edit="flex_a_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                        Headline für diesen Inhalt.
+                      </h2>
+                      <div class="sj-body" mc:edit="flex_a_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;margin:0 0 20px 0;">
+                        Kurzer Fliesstext. Bearbeiten Sie Bild, Texte und Link direkt in Mailchimp. Duplizieren Sie dieses Modul für weitere Abschnitte.
+                      </div>
+                      <div mc:edit="flex_a_cta">
+                        <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                          →&nbsp;&nbsp;MEHR ERFAHREN
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Variant B: Text left / Image right -->
+            <tr mc:repeatable="flexible_content" mc:variant="text_left_image_right">
+              <td style="padding:40px 0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-stack sj-stack-pad sj-text-col-pad" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:28px 28px 28px 32px;">
+                      <div mc:edit="flex_b_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
+                        THEMA
+                      </div>
+                      <h2 class="sj-section-headline" mc:edit="flex_b_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                        Headline für diesen Inhalt.
+                      </h2>
+                      <div class="sj-body" mc:edit="flex_b_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;margin:0 0 20px 0;">
+                        Text links, Bild rechts auf Desktop. Auf Mobile erscheint der Text zuerst, danach das Bild. Kein Text über dem Bild.
+                      </div>
+                      <div mc:edit="flex_b_cta">
+                        <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                          →&nbsp;&nbsp;MEHR ERFAHREN
+                        </a>
+                      </div>
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right" width="320" valign="top" style="width:320px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
+                            <img
+                              mc:edit="flex_b_image"
+                              class="sj-img-fluid"
+                              src="placeholders/flex_right.jpg"
+                              width="314"
+                              height="236"
+                              alt="Content image"
+                              style="display:block;width:100%;max-width:314px;height:auto;border:0;"
+                            />
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Variant C: Full-width image -->
+            <tr mc:repeatable="flexible_content" mc:variant="full_width_image">
+              <td style="padding:24px 0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                    <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <a href="https://www.studiojeker.ch/" target="_blank" style="text-decoration:none;border:0;">
+                        <img
+                          mc:edit="flex_c_image"
+                          class="sj-img-fluid"
+                          src="placeholders/flex_full.jpg"
+                          width="694"
+                          height="390"
+                          alt="Full width image"
+                          style="display:block;width:100%;max-width:694px;height:auto;border:0;"
+                        />
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" class="sj-pad" style="padding:16px 32px 0 32px;">
+                      <div mc:edit="flex_c_caption" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#6b6f74;">
+                        Optionaler Bildtext / Caption.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Variant D: Text only -->
+            <tr mc:repeatable="flexible_content" mc:variant="text_only">
+              <td class="sj-pad" style="padding:40px 32px;background-color:#ffffff;">
+                <div mc:edit="flex_d_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 12px 0;">
+                  HINWEIS
+                </div>
+                <div class="sj-body" mc:edit="flex_d_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;">
+                  Reiner Textabschnitt ohne Bild. Ideal für kurze Updates, Hinweise oder redaktionelle Zwischenstücke.
+                </div>
+              </td>
+            </tr>
+
+            <!-- Variant E: Headline + Text + CTA -->
+            <tr mc:repeatable="flexible_content" mc:variant="headline_text_cta">
+              <td class="sj-pad" style="padding:40px 32px;background-color:#ffffff;">
+                <h2 class="sj-section-headline" mc:edit="flex_e_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                  Headline mit Call-to-Action.
+                </h2>
+                <div class="sj-body" mc:edit="flex_e_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;margin:0 0 20px 0;">
+                  Beschreiben Sie das Angebot oder die nächste Aktion. Der CTA-Link ist in Mailchimp editierbar.
+                </div>
+                <div mc:edit="flex_e_cta">
+                  <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                    →&nbsp;&nbsp;JETZT ENTDECKEN
+                  </a>
+                </div>
+              </td>
+            </tr>
+
+            <!-- ============================================================
+                 KONTAKT-CTA — text left + image right
+                 ============================================================ -->
+            <tr>
+              <td style="padding:0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-stack" width="350" valign="middle" bgcolor="#ffffff" style="width:350px;vertical-align:middle;background-color:#ffffff;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-cyan-bar" width="6" bgcolor="#00c8ff" style="width:6px;max-width:6px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td class="sj-text-col-pad" bgcolor="#ffffff" style="background-color:#ffffff;padding:36px 28px 36px 24px;">
+                            <h2 class="sj-section-headline" mc:edit="contact_headline" style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                              Lassen Sie uns gemeinsam<br />
+                              Sichtbarkeit schaffen.
+                            </h2>
+                            <div class="sj-body" mc:edit="contact_body" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;font-weight:300;color:#000000;margin:0 0 22px 0;">
+                              Ob einzelne Produktion, umfassende Kampagne oder laufende Content-Betreuung im Abo – wir freuen uns darauf, Ihre Projekte kennenzulernen.
+                            </div>
+                            <div mc:edit="contact_cta">
+                              <a class="sj-cta" href="https://www.studiojeker.ch/kontakt/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:44px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:44px;">
+                                →&nbsp;&nbsp;KONTAKT AUFNEHMEN
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td class="sj-stack" width="350" valign="top" bgcolor="#f5f5f5" style="width:350px;vertical-align:top;background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <a href="https://www.studiojeker.ch/kontakt/" target="_blank" style="text-decoration:none;border:0;">
+                        <img
+                          mc:edit="contact_image"
+                          class="sj-img-fluid"
+                          src="placeholders/contact.jpg"
+                          width="350"
+                          height="210"
+                          alt="Studiojeker Studio"
+                          style="display:block;width:100%;max-width:350px;height:auto;border:0;"
+                        />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ============================================================
+                 FOOTER
+                 ============================================================ -->
+            <tr>
+              <td class="sj-footer" style="padding:0;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td class="sj-pad" style="padding:48px 32px 20px 32px;background-color:#ffffff;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td valign="middle" align="left" style="vertical-align:middle;">
+                            <a href="https://www.studiojeker.ch/" target="_blank" style="text-decoration:none;border:0;">
+                              <img
+                                mc:edit="footer_logo"
+                                src="placeholders/footer_logo.png"
+                                width="130"
+                                height="60"
+                                alt="Studiojeker"
+                                style="display:block;width:130px;height:auto;border:0;"
+                              />
+                            </a>
+                          </td>
+                          <td class="sj-footer-nav" valign="middle" align="right" style="vertical-align:middle;text-align:right;padding-left:16px;">
+                            <div mc:edit="footer_nav" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.6;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#6b6f74;">
+                              <a class="sj-link" href="https://www.studiojeker.ch/" target="_blank" style="color:#6b6f74;text-decoration:none;">Website</a>
+                              &nbsp;&nbsp;
+                              <a class="sj-link" href="https://www.studiojeker.ch/kontakt/" target="_blank" style="color:#6b6f74;text-decoration:none;">Kontakt</a>
+                              &nbsp;&nbsp;
+                              <a class="sj-link" href="https://www.studiojeker.ch/impressum/" target="_blank" style="color:#6b6f74;text-decoration:none;">Impressum</a>
+                              &nbsp;&nbsp;
+                              <a class="sj-link" href="https://www.studiojeker.ch/datenschutz/" target="_blank" style="color:#6b6f74;text-decoration:none;">Datenschutz</a>
+                              &nbsp;&nbsp;
+                              <a class="sj-link" href="https://www.studiojeker.ch/agb/" target="_blank" style="color:#6b6f74;text-decoration:none;">AGB</a>
+                            </div>
+                          </td>
+                          <td class="sj-footer-social" valign="middle" align="right" width="110" style="vertical-align:middle;text-align:right;width:110px;padding-left:12px;">
+                            <div mc:edit="social_links">
+                              <a href="https://www.linkedin.com/company/studiojeker/" target="_blank" style="display:inline-block;text-decoration:none;border:0;margin-left:6px;">
+                                <img src="placeholders/icon_linkedin.png" width="22" height="22" alt="LinkedIn" style="display:block;width:22px;height:22px;border:0;" />
+                              </a>
+                              <a href="https://www.instagram.com/studiojeker/" target="_blank" style="display:inline-block;text-decoration:none;border:0;margin-left:6px;">
+                                <img src="placeholders/icon_instagram.png" width="22" height="22" alt="Instagram" style="display:block;width:22px;height:22px;border:0;" />
+                              </a>
+                              <a href="https://www.facebook.com/studiojeker/" target="_blank" style="display:inline-block;text-decoration:none;border:0;margin-left:6px;">
+                                <img src="placeholders/icon_facebook.png" width="22" height="22" alt="Facebook" style="display:block;width:22px;height:22px;border:0;" />
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="sj-pad" style="padding:0 32px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="border-top:1px solid #c8ccd0;font-size:0;line-height:0;height:1px;">&nbsp;</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="sj-pad" style="padding:18px 32px 40px 32px;background-color:#ffffff;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td class="sj-footer-bottom-left" valign="top" align="left" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#6b6f74;">
+                            <div mc:edit="footer_company">
+                              Studiojeker GmbH&nbsp;|&nbsp;Hauptstrasse 73&nbsp;|&nbsp;CH-4528 Zuchwil
+                            </div>
+                            <div style="margin-top:6px;font-size:11px;color:#6b6f74;">
+                              *|HTML:LIST_ADDRESS_HTML|*
+                            </div>
+                          </td>
+                          <td class="sj-footer-bottom-right" valign="top" align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#6b6f74;text-align:right;">
+                            <a href="*|UPDATE_PROFILE|*" target="_blank" style="color:#6b6f74;text-decoration:underline;">E-Mail-Einstellungen anpassen</a>
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <a href="*|UNSUB|*" target="_blank" style="color:#6b6f74;text-decoration:underline;">Abmelden</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+    <!--[if mso | IE]>
+    </td></tr></table>
+    <![endif]-->
+  </center>
+</body>
+</html>
