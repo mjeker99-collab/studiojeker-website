@@ -76,12 +76,12 @@ Export **PNG or JPEG** (not SVG — Outlook and many clients ignore SVG). Prefer
 
 | Asset | Display size | Export (@2x) |
 | --- | --- | --- |
-| Header logo | ~150 × 69 | 320 × 148 |
-| Footer logo | ~130 × 60 | 280 × 130 |
-| Hero image | ~350 × auto (½ width) | ≥ 700 wide |
-| AI module | ~314 × auto | ≥ 640 wide |
-| Contact image | ~350 × auto | ≥ 700 wide |
-| Service tiles | equal aspect (e.g. 320 × 220) | same ratio for all four |
+| Header logo | ~160 × 74 (mobile ~130) | 320 × 148 |
+| Footer logo | ~150 × 69 | 300 × 139 |
+| Hero image | ~390 × auto (~56% width) | ≥ 780 wide |
+| AI module | ~322 × auto | ≥ 640 wide |
+| Contact image | ~380 × auto | ≥ 760 wide |
+| Service tiles | equal aspect (e.g. 4:3) | same ratio for all four |
 | Flex split image | ~314 × auto | ≥ 624 wide |
 | Flex full-width | ~694 × auto | ≥ 1384 wide |
 
