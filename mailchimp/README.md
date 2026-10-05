@@ -25,7 +25,7 @@ Standalone HTML e-mail template. Visual layout follows the **final newsletter mo
 3. Paste the contents of `studiojeker-newsletter-template.html`, or upload the file.
 4. Save as a **Saved Template** (e.g. `Studiojeker Newsletter Master`).
 5. Upload final logo and images into the Mailchimp **Content Studio**, then replace every placeholder via the visual editor (`mc:edit` regions).
-6. Local placeholders live under `mailchimp/placeholders/` (preview only). Relative paths will not resolve inside Mailchimp until each image is replaced with a hosted Content Studio asset.
+6. Local placeholders live under `mailchimp/placeholders/` (preview only). Relative paths will not resolve inside Mailchimp until each image is replaced with a hosted Content Studio asset. Content photos are cropped from Studiojeker brand originals in `public/images/` (hero/showreel still, service & team photos) — not from the low-res mockup composite.
 7. Send a **test e-mail** to Apple Mail, Gmail (web + app), Outlook desktop and Outlook web before the first live send.
 
 > Classic Mailchimp templates use `mc:edit` / `mc:repeatable` / `mc:variant`. Import as a **coded template** so these tags remain editable.
