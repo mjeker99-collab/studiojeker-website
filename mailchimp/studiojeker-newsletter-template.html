@@ -48,6 +48,18 @@
       background-color: #ffffff;
       color: #000000;
     }
+
+    /* Mailchimp / client typography reset — keep compact line-heights */
+    h1, h2, h3, h4, p {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .sj-hero-headline { line-height: 32px !important; }
+    .sj-hero-emphasis { line-height: 34px !important; }
+    .sj-section-headline { line-height: 30px !important; }
+    .sj-pos-headline { line-height: 31px !important; }
+    .sj-body, .sj-body p { line-height: 22px !important; }
+
     a { color: #000000; text-decoration: none; }
     a:hover { color: #00c8ff !important; }
     .sj-link:hover { color: #00c8ff !important; }
@@ -71,10 +83,12 @@
       .sj-stack-pad { padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 0 !important; }
       .sj-stack-pad-right { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
       .sj-img-fluid { width: 100% !important; height: auto !important; max-width: 100% !important; }
-      .sj-hero-headline { font-size: 30px !important; line-height: 1.12 !important; }
-      .sj-hero-emphasis { font-size: 32px !important; line-height: 1.1 !important; }
-      .sj-section-headline { font-size: 26px !important; line-height: 1.15 !important; }
-      .sj-body { font-size: 16px !important; line-height: 1.6 !important; }
+      .sj-hero-headline { font-size: 30px !important; line-height: 30px !important; }
+      .sj-hero-emphasis { font-size: 32px !important; line-height: 31px !important; }
+      .sj-section-headline { font-size: 26px !important; line-height: 27px !important; }
+      .sj-pos-headline { font-size: 26px !important; line-height: 26px !important; }
+      .sj-body { font-size: 16px !important; line-height: 22px !important; }
+      .sj-body p { margin: 0 0 14px 0 !important; line-height: 22px !important; }
       .sj-eyebrow { font-size: 11px !important; line-height: 1.35 !important; }
       .sj-cta { font-size: 13px !important; line-height: 48px !important; min-height: 48px !important; }
       .sj-meta-left,
@@ -112,9 +126,10 @@
     /* Narrow phones: single-column competency tiles for readability */
     @media only screen and (max-width: 359px) {
       .sj-comp-item { display: block !important; width: 100% !important; max-width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; }
-      .sj-hero-headline { font-size: 28px !important; }
-      .sj-hero-emphasis { font-size: 30px !important; }
-      .sj-section-headline { font-size: 24px !important; }
+      .sj-hero-headline { font-size: 28px !important; line-height: 28px !important; }
+      .sj-hero-emphasis { font-size: 30px !important; line-height: 29px !important; }
+      .sj-section-headline { font-size: 24px !important; line-height: 25px !important; }
+      .sj-pos-headline { font-size: 24px !important; line-height: 24px !important; }
     }
   </style>
 </head>
@@ -194,15 +209,15 @@
                     <td class="sj-stack" width="310" valign="middle" bgcolor="#ffffff" style="width:310px;vertical-align:middle;background-color:#ffffff;">
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td class="sj-cyan-bar" width="10" bgcolor="#00c8ff" style="width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
                           <td class="sj-text-col-pad" bgcolor="#ffffff" style="background-color:#ffffff;padding:40px 24px 40px 22px;">
                             <div mc:edit="hero_eyebrow" class="sj-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 20px 0;">
                               STUDIOJEKER 2026
                             </div>
-                            <h1 class="sj-hero-headline" mc:edit="hero_headline" style="margin:0 0 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;color:#000000;">
+                            <h1 class="sj-hero-headline" mc:edit="hero_headline" style="margin:0 0 28px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:34px;line-height:32px;font-weight:800;letter-spacing:-0.03em;color:#000000;">
                               1992 haben wir angefangen,<br />
-                              Bilder zu produzieren.<br /><br />
-                              <span class="sj-hero-emphasis" style="font-size:36px;line-height:1.08;font-weight:800;">Heute produzieren<br />wir Sichtbarkeit.</span>
+                              Bilder zu produzieren.
+                              <span class="sj-hero-emphasis" style="display:block;margin:12px 0 0 0;padding:0;font-size:36px;line-height:34px;font-weight:800;">Heute produzieren<br />wir Sichtbarkeit.</span>
                             </h1>
                             <div mc:edit="hero_play_cta">
                               <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
@@ -247,17 +262,18 @@
                       <div mc:edit="intro_eyebrow" class="sj-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 18px 0;">
                         WE CREATE VISIBILITY.
                       </div>
-                      <h2 class="sj-section-headline" mc:edit="intro_headline" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
-                        Content. Strategie.<br />
+                      <h2 class="sj-section-headline sj-pos-headline" mc:edit="intro_headline" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:31px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                        Content.<br />
+                        Strategie.<br />
                         Distribution.
                       </h2>
                     </td>
                     <td class="sj-pos-divider" width="1" valign="top" bgcolor="#c8ccd0" style="width:1px;max-width:1px;background-color:#c8ccd0;font-size:0;line-height:0;">&nbsp;</td>
                     <td class="sj-pos-right sj-stack" width="363" valign="top" style="width:363px;vertical-align:top;padding:0 0 0 28px;">
-                      <div class="sj-body" mc:edit="intro_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;">
-                        <p style="margin:0 0 16px 0;">Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen.</p>
-                        <p style="margin:0 0 16px 0;">Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt.</p>
-                        <p style="margin:0 0 24px 0;">Denn guter Content allein reicht nicht. Er muss gesehen werden.</p>
+                      <div class="sj-body" mc:edit="intro_body" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
+                        <p style="margin:0 0 14px 0;padding:0;font-size:15px;line-height:22px;">Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen.</p>
+                        <p style="margin:0 0 14px 0;padding:0;font-size:15px;line-height:22px;">Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt.</p>
+                        <p style="margin:0 0 20px 0;padding:0;font-size:15px;line-height:22px;">Denn guter Content allein reicht nicht. Er muss gesehen werden.</p>
                       </div>
                       <div mc:edit="intro_cta">
                         <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
@@ -276,49 +292,50 @@
             </tr>
 
             <!-- ============================================================
-                 CONTENT CREATION × AI — image left / text right
+                 CONTENT CREATION × AI — image left / text right + cyan on text
+                 Aufbau: BILD | TEXT | CYAN
                  ============================================================ -->
             <tr>
               <td style="padding:0;background-color:#ffffff;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td class="sj-stack sj-stack-pad" width="330" valign="top" style="width:330px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                    <td class="sj-stack sj-stack-pad" width="330" valign="top" bgcolor="#f5f5f5" style="width:330px;vertical-align:top;background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <a href="https://www.studiojeker.ch/ki/" target="_blank" style="text-decoration:none;border:0;">
+                        <img
+                          mc:edit="ai_image"
+                          class="sj-img-fluid"
+                          src="placeholders/ai.jpg"
+                          width="330"
+                          height="360"
+                          alt="Content Creation × AI"
+                          style="display:block;width:100%;max-width:330px;height:auto;border:0;"
+                        />
+                      </a>
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right" width="370" valign="middle" bgcolor="#ffffff" style="width:370px;vertical-align:middle;background-color:#ffffff;padding:0;">
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
-                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
-                            <a href="https://www.studiojeker.ch/ki/" target="_blank" style="text-decoration:none;border:0;">
-                              <img
-                                mc:edit="ai_image"
-                                class="sj-img-fluid"
-                                src="placeholders/ai.jpg"
-                                width="322"
-                                height="360"
-                                alt="Content Creation × AI"
-                                style="display:block;width:100%;max-width:322px;height:auto;border:0;"
-                              />
-                            </a>
+                          <td class="sj-text-col-pad" bgcolor="#ffffff" style="background-color:#ffffff;padding:36px 24px 36px 28px;">
+                            <div mc:edit="ai_eyebrow" class="sj-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 18px 0;">
+                              CONTENT CREATION × AI
+                            </div>
+                            <h2 class="sj-section-headline" mc:edit="ai_headline" style="margin:0 0 16px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:30px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                              Neue Möglichkeiten.<br />
+                              Gleicher Anspruch<br />
+                              an Qualität.
+                            </h2>
+                            <div class="sj-body" mc:edit="ai_body" style="margin:0 0 20px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
+                              Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir setzen KI gezielt ein – von Konzeption und Storyboarding über Bild- und Videoproduktion bis zu 3D-Visualisierung und Animation.
+                            </div>
+                            <div mc:edit="ai_cta">
+                              <a class="sj-cta" href="https://www.studiojeker.ch/ki/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
+                                →&nbsp;&nbsp;KI BEI STUDIOJEKER ENTDECKEN
+                              </a>
+                            </div>
                           </td>
+                          <td class="sj-cyan-bar" width="10" bgcolor="#00c8ff" style="width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
                         </tr>
                       </table>
-                    </td>
-                    <td class="sj-stack sj-stack-pad-right sj-text-col-pad" width="370" valign="middle" bgcolor="#ffffff" style="width:370px;vertical-align:middle;background-color:#ffffff;padding:36px 28px 36px 28px;">
-                      <div mc:edit="ai_eyebrow" class="sj-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 18px 0;">
-                        CONTENT CREATION × AI
-                      </div>
-                      <h2 class="sj-section-headline" mc:edit="ai_headline" style="margin:0 0 18px 0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
-                        Neue Möglichkeiten.<br />
-                        Gleicher Anspruch<br />
-                        an Qualität.
-                      </h2>
-                      <div class="sj-body" mc:edit="ai_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;margin:0 0 24px 0;">
-                        Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir setzen KI gezielt ein – von Konzeption und Storyboarding über Bild- und Videoproduktion bis zu 3D-Visualisierung und Animation.
-                      </div>
-                      <div mc:edit="ai_cta">
-                        <a class="sj-cta" href="https://www.studiojeker.ch/ki/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
-                          →&nbsp;&nbsp;KI BEI STUDIOJEKER ENTDECKEN
-                        </a>
-                      </div>
                     </td>
                   </tr>
                 </table>
@@ -338,7 +355,7 @@
                 <div mc:edit="services_eyebrow" class="sj-eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 16px 0;">
                   UNSERE KOMPETENZBEREICHE
                 </div>
-                <h2 class="sj-section-headline" mc:edit="services_headline" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                <h2 class="sj-section-headline" mc:edit="services_headline" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:32px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
                   Ein Partner. Alle Möglichkeiten.
                 </h2>
               </td>
@@ -469,116 +486,115 @@
             <!-- ============================================================
                  FLEXIBLE CONTENT (repeatable + variants) — keep for Mailchimp
                  ============================================================ -->
-            <!-- Variant A: Image left / Text right -->
+            <!-- Variant A: Image left / Text right — BILD | TEXT | CYAN -->
             <tr mc:repeatable="flexible_content" mc:variant="image_left_text_right">
               <td style="padding:40px 0;background-color:#ffffff;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td class="sj-stack sj-stack-pad" width="320" valign="top" style="width:320px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                    <td class="sj-stack sj-stack-pad" width="320" valign="top" bgcolor="#f5f5f5" style="width:320px;vertical-align:top;background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <img
+                        mc:edit="flex_a_image"
+                        class="sj-img-fluid"
+                        src="placeholders/flex_left.jpg"
+                        width="320"
+                        height="236"
+                        alt="Content image"
+                        style="display:block;width:100%;max-width:320px;height:auto;border:0;"
+                      />
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:0;">
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
-                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
-                            <img
-                              mc:edit="flex_a_image"
-                              class="sj-img-fluid"
-                              src="placeholders/flex_left.jpg"
-                              width="314"
-                              height="236"
-                              alt="Content image"
-                              style="display:block;width:100%;max-width:314px;height:auto;border:0;"
-                            />
+                          <td class="sj-text-col-pad" style="padding:28px 24px 28px 28px;">
+                            <div class="sj-eyebrow" mc:edit="flex_a_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
+                              THEMA
+                            </div>
+                            <h2 class="sj-section-headline" mc:edit="flex_a_headline" style="margin:0 0 12px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:30px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                              Headline für diesen Inhalt.
+                            </h2>
+                            <div class="sj-body" mc:edit="flex_a_body" style="margin:0 0 20px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
+                              Kurzer Fliesstext. Bearbeiten Sie Bild, Texte und Link direkt in Mailchimp. Duplizieren Sie dieses Modul für weitere Abschnitte.
+                            </div>
+                            <div mc:edit="flex_a_cta">
+                              <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
+                                →&nbsp;&nbsp;MEHR ERFAHREN
+                              </a>
+                            </div>
                           </td>
+                          <td class="sj-cyan-bar" width="10" bgcolor="#00c8ff" style="width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
                         </tr>
                       </table>
-                    </td>
-                    <td class="sj-stack sj-stack-pad-right sj-text-col-pad" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:28px 32px 28px 28px;">
-                      <div class="sj-eyebrow" mc:edit="flex_a_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
-                        THEMA
-                      </div>
-                      <h2 class="sj-section-headline" mc:edit="flex_a_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
-                        Headline für diesen Inhalt.
-                      </h2>
-                      <div class="sj-body" mc:edit="flex_a_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;margin:0 0 20px 0;">
-                        Kurzer Fliesstext. Bearbeiten Sie Bild, Texte und Link direkt in Mailchimp. Duplizieren Sie dieses Modul für weitere Abschnitte.
-                      </div>
-                      <div mc:edit="flex_a_cta">
-                        <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
-                          →&nbsp;&nbsp;MEHR ERFAHREN
-                        </a>
-                      </div>
                     </td>
                   </tr>
                 </table>
               </td>
             </tr>
 
-            <!-- Variant B: Text left / Image right -->
+            <!-- Variant B: Text left / Image right — CYAN | TEXT | BILD -->
             <tr mc:repeatable="flexible_content" mc:variant="text_left_image_right">
               <td style="padding:40px 0;background-color:#ffffff;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td class="sj-stack sj-stack-pad sj-text-col-pad" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:28px 28px 28px 32px;">
-                      <div class="sj-eyebrow" mc:edit="flex_b_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
-                        THEMA
-                      </div>
-                      <h2 class="sj-section-headline" mc:edit="flex_b_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
-                        Headline für diesen Inhalt.
-                      </h2>
-                      <div class="sj-body" mc:edit="flex_b_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;margin:0 0 20px 0;">
-                        Text links, Bild rechts auf Desktop. Auf Mobile erscheint der Text zuerst, danach das Bild. Kein Text über dem Bild.
-                      </div>
-                      <div mc:edit="flex_b_cta">
-                        <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
-                          →&nbsp;&nbsp;MEHR ERFAHREN
-                        </a>
-                      </div>
-                    </td>
-                    <td class="sj-stack sj-stack-pad-right" width="320" valign="top" style="width:320px;vertical-align:top;padding:0;font-size:0;line-height:0;">
+                    <td class="sj-stack sj-stack-pad" width="380" valign="middle" style="width:380px;vertical-align:middle;padding:0;">
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
-                          <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;">
-                            <img
-                              mc:edit="flex_b_image"
-                              class="sj-img-fluid"
-                              src="placeholders/flex_right.jpg"
-                              width="314"
-                              height="236"
-                              alt="Content image"
-                              style="display:block;width:100%;max-width:314px;height:auto;border:0;"
-                            />
+                          <td class="sj-cyan-bar" width="10" bgcolor="#00c8ff" style="width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td class="sj-text-col-pad" style="padding:28px 28px 28px 24px;">
+                            <div class="sj-eyebrow" mc:edit="flex_b_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 14px 0;">
+                              THEMA
+                            </div>
+                            <h2 class="sj-section-headline" mc:edit="flex_b_headline" style="margin:0 0 12px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:30px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                              Headline für diesen Inhalt.
+                            </h2>
+                            <div class="sj-body" mc:edit="flex_b_body" style="margin:0 0 20px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
+                              Text links, Bild rechts auf Desktop. Auf Mobile erscheint der Text zuerst, danach das Bild. Kein Text über dem Bild.
+                            </div>
+                            <div mc:edit="flex_b_cta">
+                              <a class="sj-cta" href="https://www.studiojeker.ch/" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:48px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#000000;text-decoration:none;display:inline-block;min-height:48px;padding:0 4px;">
+                                →&nbsp;&nbsp;MEHR ERFAHREN
+                              </a>
+                            </div>
                           </td>
                         </tr>
                       </table>
+                    </td>
+                    <td class="sj-stack sj-stack-pad-right" width="320" valign="top" bgcolor="#f5f5f5" style="width:320px;vertical-align:top;background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
+                      <img
+                        mc:edit="flex_b_image"
+                        class="sj-img-fluid"
+                        src="placeholders/flex_right.jpg"
+                        width="320"
+                        height="236"
+                        alt="Content image"
+                        style="display:block;width:100%;max-width:320px;height:auto;border:0;"
+                      />
                     </td>
                   </tr>
                 </table>
               </td>
             </tr>
 
-            <!-- Variant C: Full-width image -->
+            <!-- Variant C: Full-width image — no cyan on image (cyan belongs to text blocks only) -->
             <tr mc:repeatable="flexible_content" mc:variant="full_width_image">
               <td style="padding:24px 0;background-color:#ffffff;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
                     <td bgcolor="#f5f5f5" style="background-color:#f5f5f5;padding:0;font-size:0;line-height:0;">
                       <a href="https://www.studiojeker.ch/" target="_blank" style="text-decoration:none;border:0;">
                         <img
                           mc:edit="flex_c_image"
                           class="sj-img-fluid"
                           src="placeholders/flex_full.jpg"
-                          width="694"
+                          width="700"
                           height="390"
                           alt="Full width image"
-                          style="display:block;width:100%;max-width:694px;height:auto;border:0;"
+                          style="display:block;width:100%;max-width:700px;height:auto;border:0;"
                         />
                       </a>
                     </td>
                   </tr>
                   <tr>
-                    <td colspan="2" class="sj-pad" style="padding:16px 28px 0 28px;">
+                    <td class="sj-pad" style="padding:16px 28px 0 28px;">
                       <div mc:edit="flex_c_caption" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#6b6f74;">
                         Optionaler Bildtext / Caption.
                       </div>
@@ -594,7 +610,7 @@
                 <div class="sj-eyebrow" mc:edit="flex_d_eyebrow" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.3;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#6b6f74;margin:0 0 12px 0;">
                   HINWEIS
                 </div>
-                <div class="sj-body" mc:edit="flex_d_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;">
+                <div class="sj-body" mc:edit="flex_d_body" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
                   Reiner Textabschnitt ohne Bild. Ideal für kurze Updates, Hinweise oder redaktionelle Zwischenstücke.
                 </div>
               </td>
@@ -603,10 +619,10 @@
             <!-- Variant E: Headline + Text + CTA -->
             <tr mc:repeatable="flexible_content" mc:variant="headline_text_cta">
               <td class="sj-pad" style="padding:44px 28px;background-color:#ffffff;">
-                <h2 class="sj-section-headline" mc:edit="flex_e_headline" style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                <h2 class="sj-section-headline" mc:edit="flex_e_headline" style="margin:0 0 12px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:30px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
                   Headline mit Call-to-Action.
                 </h2>
-                <div class="sj-body" mc:edit="flex_e_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;margin:0 0 20px 0;">
+                <div class="sj-body" mc:edit="flex_e_body" style="margin:0 0 20px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
                   Beschreiben Sie das Angebot oder die nächste Aktion. Der CTA-Link ist in Mailchimp editierbar.
                 </div>
                 <div mc:edit="flex_e_cta">
@@ -627,13 +643,13 @@
                     <td class="sj-stack" width="320" valign="middle" bgcolor="#ffffff" style="width:320px;vertical-align:middle;background-color:#ffffff;">
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
-                          <td class="sj-cyan-bar" width="8" bgcolor="#00c8ff" style="width:8px;max-width:8px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
+                          <td class="sj-cyan-bar" width="10" bgcolor="#00c8ff" style="width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;">&nbsp;</td>
                           <td class="sj-text-col-pad" bgcolor="#ffffff" style="background-color:#ffffff;padding:40px 26px 40px 22px;">
-                            <h2 class="sj-section-headline" mc:edit="contact_headline" style="margin:0 0 18px 0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:#000000;">
+                            <h2 class="sj-section-headline" mc:edit="contact_headline" style="margin:0 0 16px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:30px;font-weight:800;letter-spacing:-0.02em;color:#000000;">
                               Lassen Sie uns gemeinsam<br />
                               Sichtbarkeit schaffen.
                             </h2>
-                            <div class="sj-body" mc:edit="contact_body" style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;font-weight:300;color:#000000;margin:0 0 24px 0;">
+                            <div class="sj-body" mc:edit="contact_body" style="margin:0 0 20px 0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:300;color:#000000;">
                               Ob einzelne Produktion, umfassende Kampagne oder laufende Content-Betreuung im Abo – wir freuen uns darauf, Ihre Projekte kennenzulernen.
                             </div>
                             <div mc:edit="contact_cta">
