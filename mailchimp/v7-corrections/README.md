@@ -25,3 +25,5 @@ Die PNG-Dateien zeigen tatsächliche Chromium-Renderings bei 700, 390 und 320 px
 3. Keine verfügbare Mailchimp/Litmus/Email-on-Acid-Rendering-Umgebung. Vor Versand Testsendung in Apple Mail, Gmail und Outlook prüfen. Kein Versand und kein Merge durchgeführt.
 
 Der Pull Request bleibt bis zum Fotoaustausch ein **Entwurf**. Die produktive Website wird nicht verändert.
+
+Öffentliche GitHub-Pages-Vorschauen live im Browser geprüft: HTTP 200, 700/390 px, alle Bilder geladen, kein Überlauf und entferntes Footer-Zusatzwort. Browser-Wrapperhöhe auf die echte Newsletter-Höhe begrenzt.
