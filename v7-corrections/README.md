@@ -6,8 +6,8 @@ Neue Version auf Basis der unveränderten V6. Kein Redesign; ausschliesslich die
 
 - Erste Kompetenzkarte `Digital & Social Media Marketing`: geliefertes Originalfoto der Fotografin bei einer Konzertproduktion. Linksorientierter 4:3-Zuschnitt erhält Fotografin, Kamera und Bühnenszene. Original 1280×872 px, JPEG-Export 600×450 px, Qualität 86, keine Verzerrung und keine Generierung. Das Original wurde nicht überschrieben. Beschriftung, Layout und Link unverändert.
 - Öffentliches HTTPS-Bildhosting auf dem bestehenden `gh-pages`-Branch: https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg
-- Zusätzliches kleines `STUDIOJEKER` oberhalb des Footer-Logos entfernt. Claim-freies Original-Logo mit separatem Claim einmal darunter. Rechter Desktop-Linkblock 16 px tiefer, Navigation und Social-Icons sauber gruppiert. Mobile kompakt gestapelt.
-- Mobiler KI-Block: doppelte horizontale Einrückung entfernt. Bild und Text beginnen jetzt bei 24 px; Cyan-Balken begleitet die vollständige Höhe des Blocks. Desktop KI bleibt unverändert.
+- Zusätzliches kleines `STUDIOJEKER` oberhalb des Footer-Logos entfernt. Claim-freies Original-Logo mit separatem Claim einmal darunter. Rechter Desktop-Linkblock nach der gelieferten Markierung unten im Footer ausgerichtet. Dafür Tabellenzelle mit rowspan=3 und valign=bottom; keine feste Höhe und keine zusätzliche Leerzelle. Navigation und Social-Icons sauber gruppiert. Mobile-Footer behält seine bisherige Reihenfolge. Mobile kompakt gestapelt.
+- Mobiler KI-Block: doppelte horizontale Einrückung entfernt. Bild und Text beginnen jetzt bei 24 px; der mobile 22-px-Innenabstand oberhalb des KI-Bildes entfällt nach der Markierung. Cyan-Balken beginnt bündig mit der Bildoberkante und begleitet die vollständige Höhe des Blocks. Desktop KI bleibt unverändert.
 - Hero, Schriftfamilie/-grössen, alle Originalabsätze, Headlines, CTA- und Pflichtlinks sowie Mailchimp-Merge-Tags unverändert gegenüber dem zuletzt geprüften Stand.
 
 ## Dateien
@@ -26,8 +26,18 @@ Mobile: https://mjeker99-collab.github.io/studiojeker-website/v7-corrections/mob
 
 ## Qualitätskontrolle und Grenzen
 
-Desktop 700 px und Mobile 390 px visuell geprüft; zusätzlich 320 px geprüft. Alle Karten sind gleich gross, 4:3, mit vollständigen Beschriftungen; Desktop vier Spalten, Mobile 2×2. Kein horizontaler Überlauf und keine Bildverzerrungen. Hero-Geometrie und Desktop-KI gegenüber V6 identisch. Cyan-Balken 10 px breit, Höhe exakt der tatsächlichen Blockzeile. Sämtliche Absatztexte, Headlines und Links automatisiert unverändert bestätigt. Die öffentlichen Vorschauseiten und die neue Bildadresse werden nach dem Push live im Browser geprüft.
+Desktop 700 px und Mobile 390 px visuell geprüft; zusätzlich 320 px geprüft. Alle Karten sind gleich gross, 4:3, mit vollständigen Beschriftungen; Desktop vier Spalten, Mobile 2×2. Kein horizontaler Überlauf und keine Bildverzerrungen. Hero-Geometrie und Desktop-KI gegenüber V6 identisch. Cyan-Balken 10 px breit, Höhe exakt der tatsächlichen Blockzeile. Sämtliche Absatztexte, Headlines und Links automatisiert unverändert bestätigt. Die öffentlichen Vorschauseiten werden nach dem Push erneut im Browser geprüft. Alle 12 Bildadressen sind im Live-Linktest HTTP 200 und liefern die richtigen Bild-MIME-Typen.
 
-Die zwei angekündigten markierten Vorschauen liegen weiterhin nicht als Anhänge vor. Die beschriebenen Korrekturen wurden deshalb anhand des schriftlichen Auftrags umgesetzt; ein pixelgenauer Vergleich mit den roten Markierungen ist nicht möglich.
+Die zwei markierten Vorschauen wurden als Foto 1.jpg und Foto 2.jpg bereitgestellt, gelesen und mit den tatsächlichen Renderings verglichen. Ausschliesslich der markierte Desktop-Footer-Linkblock und der markierte mobile Balkenüberstand oberhalb des KI-Bildes wurden korrigiert; kein Redesign.
 
 Keine verbundene Mailchimp-/Litmus-/Email-on-Acid-Rendering-Umgebung. Kein Versand durchgeführt. Vor dem Liveversand Testsendung in Apple Mail, Gmail und Outlook prüfen. V1–V6 und produktive Website bleiben unverändert. PR #130 wird aktualisiert und nicht gemergt.
+
+## Live-Linkprüfung · 12. Oktober 2026
+
+25 unterschiedliche HTTPS-Adressen aus allen `href`- und `src`-Attributen tatsächlich abgerufen, mit TLS-Prüfung und Redirect-Auflösung. 24× HTTP 200: alle Bilder, alle drei CTAs (zwei verschiedene Zielseiten), alle vier Kompetenzlinks, Kontakt, Impressum, Datenschutz, AGB, Facebook und LinkedIn. Die vollständigen Ergebnisse stehen in `qa-links.json`.
+
+Instagram `https://www.instagram.com/studiojeker/` wurde per HTTP und in einem echten Browser geprüft. Instagram antwortet mit HTTP 429; im Browser erfolgt ein Redirect auf `accounts/login/?next=...studiojeker...`. Das ist eine Plattform-/Anmeldebeschränkung, kein bestätigter 404. URL aus dem Repository unverändert lassen und vor Merge einmal manuell mit normalem bzw. angemeldetem Browser bestätigen. Kein funktionierender Ersatzlink erfunden.
+
+Mailchimp-Merge-Links sind syntaktisch erhalten: `*|ARCHIVE|*`, `*|UPDATE_PROFILE|*`, `*|UNSUB|*`; Listenadresse `*|HTML:LIST_ADDRESS_HTML|*` ebenfalls. Diese account-/empfängerabhängigen Ziele können erst in einer echten Testsendung nach Auflösung durch Mailchimp vollständig geprüft werden. Der Browser-Preview ersetzt sie weiterhin nur durch den Seitenanfang.
+
+PR #130 bleibt bis zur abschliessenden Link-/Testsendungsprüfung ein Entwurf. Kein Merge durchgeführt.
