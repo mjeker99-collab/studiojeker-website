@@ -1,0 +1,188 @@
+{
+  "checked_at": "2026-10-12T20:44:08.286618+00:00",
+  "results": [
+    {
+      "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png",
+      "status": 200,
+      "final_url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png",
+      "content_type": "image/png",
+      "bytes": 300
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png",
+      "status": 200,
+      "final_url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png",
+      "content_type": "image/png",
+      "bytes": 417
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png",
+      "status": 200,
+      "final_url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png",
+      "content_type": "image/png",
+      "bytes": 316
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png",
+      "status": 200,
+      "final_url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png",
+      "content_type": "image/png",
+      "bytes": 5712
+    },
+    {
+      "url": "https://cdn.sanity.io/images/tgx6e6jg/production/64a906ed2ca0239a6f72f34846a8c16d3178fc6a-1344x752.png",
+      "status": 200,
+      "final_url": "https://cdn.sanity.io/images/tgx6e6jg/production/64a906ed2ca0239a6f72f34846a8c16d3178fc6a-1344x752.png",
+      "content_type": "image/png",
+      "bytes": 1383415
+    },
+    {
+      "url": "https://cdn.sanity.io/images/tgx6e6jg/production/deda31179cf7b34940743be1023a719709128520-1667x979.jpg",
+      "status": 200,
+      "final_url": "https://cdn.sanity.io/images/tgx6e6jg/production/deda31179cf7b34940743be1023a719709128520-1667x979.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 84306
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 73900
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/baseballer-desktop.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/baseballer-desktop.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 170660
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/baseballer-mobile.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/baseballer-mobile.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 108213
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/business.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/business.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 63292
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/product.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/product.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 19221
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 41535
+    },
+    {
+      "url": "https://www.facebook.com/studiojeker/",
+      "status": 200,
+      "final_url": "https://www.facebook.com/studiojeker/",
+      "content_type": "text/html",
+      "bytes": 508676
+    },
+    {
+      "url": "https://www.instagram.com/studiojeker/",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "url": "https://www.linkedin.com/company/studiojeker/",
+      "status": 200,
+      "final_url": "https://www.linkedin.com/company/studiojeker/",
+      "content_type": "text/html",
+      "bytes": 172979
+    },
+    {
+      "url": "https://www.studiojeker.ch/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/",
+      "content_type": "text/html",
+      "bytes": 76885
+    },
+    {
+      "url": "https://www.studiojeker.ch/agb/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/agb/",
+      "content_type": "text/html",
+      "bytes": 59465
+    },
+    {
+      "url": "https://www.studiojeker.ch/contact/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/contact/",
+      "content_type": "text/html",
+      "bytes": 56869
+    },
+    {
+      "url": "https://www.studiojeker.ch/datenschutz/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/datenschutz/",
+      "content_type": "text/html",
+      "bytes": 49181
+    },
+    {
+      "url": "https://www.studiojeker.ch/impressum/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/impressum/",
+      "content_type": "text/html",
+      "bytes": 33577
+    },
+    {
+      "url": "https://www.studiojeker.ch/ki/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/ki/",
+      "content_type": "text/html",
+      "bytes": 75048
+    },
+    {
+      "url": "https://www.studiojeker.ch/services/architecture/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/services/architecture/",
+      "content_type": "text/html",
+      "bytes": 70527
+    },
+    {
+      "url": "https://www.studiojeker.ch/services/business-communication/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/services/business-communication/",
+      "content_type": "text/html",
+      "bytes": 71124
+    },
+    {
+      "url": "https://www.studiojeker.ch/services/digital-marketing/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/services/digital-marketing/",
+      "content_type": "text/html",
+      "bytes": 70208
+    },
+    {
+      "url": "https://www.studiojeker.ch/services/product-communication/",
+      "status": 200,
+      "final_url": "https://www.studiojeker.ch/services/product-communication/",
+      "content_type": "text/html",
+      "bytes": 70684
+    }
+  ],
+  "instagram_browser_check": {
+    "exit_code": 0,
+    "stdout": "{\"status\":429,\"url\":\"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fstudiojeker%2F&is_from_rle\",\"title\":\"\",\"retryAfter\":null}\n",
+    "stderr": ""
+  },
+  "mailchimp_merge_links": {
+    "archive": "preserved; requires Mailchimp campaign/test send",
+    "update_profile": "preserved; requires audience recipient context",
+    "unsubscribe": "preserved; requires audience recipient context",
+    "list_address": "preserved; audience setting"
+  }
+}
