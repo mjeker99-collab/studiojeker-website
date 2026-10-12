@@ -143,3 +143,16 @@ Company address defaults match `lib/content/contact.ts` (Studiojeker GmbH, Haupt
 - [x] `mc:repeatable` + `mc:variant` for flexible modules
 - [x] Unsubscribe + update-preferences merge tags
 - [x] Website / Sanity / deployment files untouched
+
+
+---
+
+## Versandfertige Relaunch-Version (2026)
+
+Für den direkten Mailchimp-Import der bebilderten Relaunch-Kampagne:
+
+- `studiojeker-newsletter-final.html` — **Option A** (KI fotorealistisch)
+- `studiojeker-newsletter-final-ki-alt.html` — **Option B** (KI Skizze)
+- `NEWSLETTER_FINAL_ASSETS.md` — Bild-URLs, geprüfte Links, offene Punkte
+
+Alle Bildquellen sind absolute HTTPS-URLs (Sanity CDN, studiojeker.ch, jsDelivr).
