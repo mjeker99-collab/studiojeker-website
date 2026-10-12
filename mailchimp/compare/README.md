@@ -17,18 +17,37 @@ python3 -m http.server 8767 --directory mailchimp/compare
 # → http://127.0.0.1:8767/
 ```
 
-## GitHub Pages
+## Sofort nutzbar (ohne Pages)
 
-Die Compare-Site wird zusätzlich auf Branch `gh-pages` veröffentlicht (nur dieser Ordner, Root der Pages-Site).
+HTML-Preview über GitHub (iPad-Safari):
 
-Erwartete URL nach Aktivierung:
+| Seite | Link |
+| --- | --- |
+| Übersicht | https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/index.html |
+| V1 Vor PR #124 | https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/v1-before-pr124/index.html |
+| V2 PR #124 | https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/v2-pr124/index.html |
+| V3 Aktuell | https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/v3-current/index.html |
+
+Branch `gh-pages` ist bereits gepusht (nur Compare-Site, kein Next.js).
+
+## GitHub Pages (empfohlen für iPad)
+
+Erwartete URL nach einmaliger Aktivierung:
 
 `https://mjeker99-collab.github.io/studiojeker-website/`
 
-Falls Pages noch nicht aktiv ist (Repo-Settings → Pages → Branch `gh-pages` / `/`):
+Aktivierung (Repo-Admin, einmalig):
 
-1. Settings → Pages → Source: Deploy from branch
-2. Branch: `gh-pages`, folder: `/ (root)`
-3. Speichern
+1. GitHub → Repository → **Settings → Pages**
+2. Source: **Deploy from a branch**
+3. Branch: **`gh-pages`**, folder: **`/ (root)`**
+4. Save
 
-Die produktive Website (`studiojeker.ch` / Next.js) wird dadurch nicht verändert.
+Danach:
+
+- Übersicht: `https://mjeker99-collab.github.io/studiojeker-website/`
+- V1: `…/v1-before-pr124/`
+- V2: `…/v2-pr124/`
+- V3: `…/v3-current/`
+
+Die produktive Website (`studiojeker.ch` / Next.js) wird dadurch **nicht** verändert.
