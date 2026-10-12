@@ -1,29 +1,33 @@
-# V7 – Schlusskorrekturen · Entwurf
+# V7 – Schlusskorrekturen mit Konzertfoto
 
-V6 bleibt unverändert. V7 korrigiert ausschliesslich Footer und den mobilen KI-Block; kein Redesign. Der neue Bildwechsel ist noch **nicht** durchgeführt: Das genannte Originalfoto und die zwei markierten Vorschauen wurden in dieser Sitzung nicht als tatsächliche Anhänge bereitgestellt. Keine Ersatzbilder erfunden. Die erste Kompetenzkarte zeigt daher vorläufig weiterhin ihr bisheriges Originalmotiv.
+Neue Version auf Basis der unveränderten V6. Kein Redesign; ausschliesslich die angeforderten Schlusskorrekturen.
 
-## Umgesetzt und visuell geprüft
+## Änderungen
 
-- Kleines zusätzliches `STUDIOJEKER` oberhalb des Footer-Logos vollständig entfernt, Desktop und Mobile.
-- Claim-freies Original-Logo, darunter der separate Claim einmal. Navigation und Social-Icons rechts unverändert gruppiert; Desktop-Linkblock durch 16 px Top-Padding tiefer ausgerichtet. Mobile kompakt gestapelt.
-- Mobile KI: doppelte Seitenränder entfernt (24 px äusserer Abstand plus zuvor 22 px zusätzlicher Innenabstand). Bild und Text beginnen jetzt bei 24 px. Der Cyan-Balken begleitet weiterhin die gesamte Blockhöhe, ohne zusätzliche Leerzellen.
-- Desktop KI-Bildposition und -breite unverändert. Hero-Markup und gemessene Hero-Geometrie auf 700, 390 und 320 px unverändert. Alle Absatztexte, Überschriften, Schriftgrössen und Links unverändert.
-- Kompetenzkarten weiterhin identische 4:3-Bilder; vier Spalten auf Desktop und zwei Reihen mit je zwei Karten auf Mobile. Keine abgeschnittenen Beschriftungen.
+- Erste Kompetenzkarte `Digital & Social Media Marketing`: geliefertes Originalfoto der Fotografin bei einer Konzertproduktion. Linksorientierter 4:3-Zuschnitt erhält Fotografin, Kamera und Bühnenszene. Original 1280×872 px, JPEG-Export 600×450 px, Qualität 86, keine Verzerrung und keine Generierung. Das Original wurde nicht überschrieben. Beschriftung, Layout und Link unverändert.
+- Öffentliches HTTPS-Bildhosting auf dem bestehenden `gh-pages`-Branch: https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg
+- Zusätzliches kleines `STUDIOJEKER` oberhalb des Footer-Logos entfernt. Claim-freies Original-Logo mit separatem Claim einmal darunter. Rechter Desktop-Linkblock 16 px tiefer, Navigation und Social-Icons sauber gruppiert. Mobile kompakt gestapelt.
+- Mobiler KI-Block: doppelte horizontale Einrückung entfernt. Bild und Text beginnen jetzt bei 24 px; Cyan-Balken begleitet die vollständige Höhe des Blocks. Desktop KI bleibt unverändert.
+- Hero, Schriftfamilie/-grössen, alle Originalabsätze, Headlines, CTA- und Pflichtlinks sowie Mailchimp-Merge-Tags unverändert gegenüber dem zuletzt geprüften Stand.
 
-## Vorschauen
+## Dateien
 
-- Desktop: https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/v7-corrections/desktop.html
-- Mobile: https://htmlpreview.github.io/?https://github.com/mjeker99-collab/studiojeker-website/blob/gh-pages/v7-corrections/mobile.html
-- Falls GitHub Pages aktiviert ist: https://mjeker99-collab.github.io/studiojeker-website/v7-corrections/desktop.html bzw. `mobile.html`.
+- `studiojeker-newsletter-v7.html`: vollständige Mailchimp-Importdatei mit ausschliesslich öffentlichen HTTPS-Bildadressen; keine technischen Vorschauhinweise.
+- `index.html`: responsive Browser-Vorschau; Mailchimp-Accountlinks führen nur zum Seitenanfang.
+- `desktop.html` / `mobile.html`: echte HTML-Vorschau in 700-/390-px-Browser-Viewport. Die Wrapperhöhe entspricht der Newsletter-Höhe.
+- `preview-700.png`, `preview-390.png`, `preview-320.png`: tatsächliche Renderings.
+- `qa-layout.json`: gemessene Geometrie und Vergleich mit V6.
 
-Die PNG-Dateien zeigen tatsächliche Chromium-Renderings bei 700, 390 und 320 px. Die Desktop- und Mobile-Aufnahmen wurden vom Agenten visuell geprüft. `qa-layout.json` enthält den Vergleich mit V6. Die Versanddatei `studiojeker-newsletter-v7.html` enthält keine technischen Vorschauhinweise und ausschliesslich öffentliche HTTPS-Bildadressen; alle Mailchimp-Merge-Tags bleiben erhalten.
+## Direkte Vorschauen
 
-## Noch offen
+Desktop: https://mjeker99-collab.github.io/studiojeker-website/v7-corrections/desktop.html
 
-1. Originalfoto der Fotografin bei der Konzertproduktion als tatsächlichen Dateianhang nachreichen. Danach Bildzuschnitt 4:3, Person/Bühne prüfen, JPEG optimieren, öffentlich hosten und ausschliesslich die erste Karte ersetzen.
-2. Beide markierten Vorschauen nachreichen, um die korrigierten Positionen exakt gegen die roten Markierungen zu vergleichen.
-3. Keine verfügbare Mailchimp/Litmus/Email-on-Acid-Rendering-Umgebung. Vor Versand Testsendung in Apple Mail, Gmail und Outlook prüfen. Kein Versand und kein Merge durchgeführt.
+Mobile: https://mjeker99-collab.github.io/studiojeker-website/v7-corrections/mobile.html
 
-Der Pull Request bleibt bis zum Fotoaustausch ein **Entwurf**. Die produktive Website wird nicht verändert.
+## Qualitätskontrolle und Grenzen
 
-Öffentliche GitHub-Pages-Vorschauen live im Browser geprüft: HTTP 200, 700/390 px, alle Bilder geladen, kein Überlauf und entferntes Footer-Zusatzwort. Browser-Wrapperhöhe auf die echte Newsletter-Höhe begrenzt.
+Desktop 700 px und Mobile 390 px visuell geprüft; zusätzlich 320 px geprüft. Alle Karten sind gleich gross, 4:3, mit vollständigen Beschriftungen; Desktop vier Spalten, Mobile 2×2. Kein horizontaler Überlauf und keine Bildverzerrungen. Hero-Geometrie und Desktop-KI gegenüber V6 identisch. Cyan-Balken 10 px breit, Höhe exakt der tatsächlichen Blockzeile. Sämtliche Absatztexte, Headlines und Links automatisiert unverändert bestätigt. Die öffentlichen Vorschauseiten und die neue Bildadresse werden nach dem Push live im Browser geprüft.
+
+Die zwei angekündigten markierten Vorschauen liegen weiterhin nicht als Anhänge vor. Die beschriebenen Korrekturen wurden deshalb anhand des schriftlichen Auftrags umgesetzt; ein pixelgenauer Vergleich mit den roten Markierungen ist nicht möglich.
+
+Keine verbundene Mailchimp-/Litmus-/Email-on-Acid-Rendering-Umgebung. Kein Versand durchgeführt. Vor dem Liveversand Testsendung in Apple Mail, Gmail und Outlook prüfen. V1–V6 und produktive Website bleiben unverändert. PR #130 wird aktualisiert und nicht gemergt.
