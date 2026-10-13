@@ -19,7 +19,7 @@ class ProtectedHTML(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
-        allowed = {'href'} if tag == 'a' else set()
+        allowed = {'href', 'aria-label'} if tag == 'a' else set()
         if tag == 'img' and attributes.get('mc:edit') not in {'header_logo', 'footer_logo'}:
             allowed = {'src', 'alt'}
         self.events.append(('start', tag, [(k, v) for k, v in attrs if k not in allowed]))

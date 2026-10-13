@@ -66,15 +66,81 @@
     "sha256": "063ce2d457b9e4009ced558a31d12de3266c3caa88aae533d37398f86197a98d"
   },
   {
-    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/9584d5e/public/images/team/Nora.jpg",
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3fbe99d5f3aa7a6bb4b37b09f942df9fb7ef0d6f/mailchimp/assets/nora-jeker-visibility.jpg",
     "status": 200,
-    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/9584d5e/public/images/team/Nora.jpg",
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3fbe99d5f3aa7a6bb4b37b09f942df9fb7ef0d6f/mailchimp/assets/nora-jeker-visibility.jpg",
     "content_type": "image/jpeg",
     "pixels": [
-      1920,
-      1080
+      1280,
+      720
     ],
-    "sha256": "11ba708615d33116f3bcbdd276aa38b99a80f9dec6cc93f0aa783a372aef3cce"
+    "sha256": "720a97b58efc10d420fbd70c9a9bfae6975f25600aa037e81e6aa38e6e262f84"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/contact-business-portrait.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/contact-business-portrait.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      760,
+      446
+    ],
+    "sha256": "ee09085aad943574aa5907d973a883e9d2f103121136d4be51835503ec92e3c3"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-desktop-play.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-desktop-play.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      1040,
+      780
+    ],
+    "sha256": "3d18e1528ad716b6f01f6f2816c443a390912a6fa9809360df7d842dcd1fe8ae"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-mobile-play.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-mobile-play.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      800,
+      600
+    ],
+    "sha256": "525e4e1d8015d139760f2267dcc893d2f9add4c68993043d4527bfe08fd8008a"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-architecture.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-architecture.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      600,
+      450
+    ],
+    "sha256": "e52c5b501249af95deb917a7da9bbc8f4c01abff0a7c379ebe55449256012201"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-business.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-business.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      600,
+      450
+    ],
+    "sha256": "8b28ab5ebcae44d78ef7bdb851cfa0233b11d6276b859adc0371fce558f296b9"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+    "content_type": "image/jpeg",
+    "pixels": [
+      600,
+      450
+    ],
+    "sha256": "924e2420a0e8a1341815b95f2c20c25c4456aee736892e68140bf6383637aa9d"
   },
   {
     "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg",
@@ -143,12 +209,6 @@
     "sha256": "0e36c683bfd69faccaa2b757ac8171067c2bfc71b62a1191f5cab0040a9e5e97"
   },
   {
-    "url": "https://vimeo.com/1216347773",
-    "status": 200,
-    "final_url": "https://vimeo.com/1216347773",
-    "content_type": "text/html; charset=utf-8"
-  },
-  {
     "url": "https://www.facebook.com/studiojeker/",
     "status": 200,
     "final_url": "https://www.facebook.com/studiojeker/",
@@ -170,6 +230,12 @@
     "url": "https://www.studiojeker.ch/",
     "status": 200,
     "final_url": "https://www.studiojeker.ch/",
+    "content_type": "text/html; charset=UTF-8"
+  },
+  {
+    "url": "https://www.studiojeker.ch/#home-showreel-title",
+    "status": 200,
+    "final_url": "https://www.studiojeker.ch/#home-showreel-title",
     "content_type": "text/html; charset=UTF-8"
   },
   {
