@@ -41,3 +41,15 @@ Instagram `https://www.instagram.com/studiojeker/` wurde per HTTP und in einem e
 Mailchimp-Merge-Links sind syntaktisch erhalten: `*|ARCHIVE|*`, `*|UPDATE_PROFILE|*`, `*|UNSUB|*`; Listenadresse `*|HTML:LIST_ADDRESS_HTML|*` ebenfalls. Diese account-/empfängerabhängigen Ziele können erst in einer echten Testsendung nach Auflösung durch Mailchimp vollständig geprüft werden. Der Browser-Preview ersetzt sie weiterhin nur durch den Seitenanfang.
 
 PR #130 bleibt bis zur abschliessenden Link-/Testsendungsprüfung ein Entwurf. Kein Merge durchgeführt.
+
+## Showreel-Playbutton · 13. Oktober 2026
+
+Ausschliesslich die gewünschte Ergänzung: zwei neue Kopien der vorhandenen Hero-Zuschnitte, weiss gezeichneter Play-Pfeil in einem dezenten halbtransparenten dunklen Kreis, exakt mittig ins Bild integriert. Originaldateien, Motiv, Ausschnitt und Bildabmessungen bleiben erhalten: Desktop 1040×780 px, Mobile 800×600 px. Kein generativer Eingriff. Buttondurchmesser im gerenderten 700-px-Desktop ca. 52 px, im 390-px-Mobile ca. 46 px; bei 320 px skaliert der im Bild eingebrannte Button mit dem Bild auf ca. 36 px.
+
+Der komplette Hero-Bildbereich ist mit einem normalen HTML-Anchor verlinkt: **https://vimeo.com/1216347773** (`target=_blank`). Keine zusätzlichen sichtbaren Texte oder Abstände; kein CSS-Overlay, JavaScript, iframe oder Video in der Mailchimp-Versanddatei. Die vorhandenen separaten Browser-Preview-Wrapper sind weiterhin reine Vorschau-Dateien, keine Versanddateien.
+
+Neue öffentliche Bildadressen:
+- https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-desktop-play.jpg
+- https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg
+
+Qualitätssicherung: tatsächliche Renderings bei 700, 390 und 320 px vor/nach der Ergänzung verglichen. Alle gemessenen Tabellenzellen, Text-/Bildpositionen und Abmessungen sowie die gesamte Newsletter-Höhe sind identisch. Ein Klick am Bildrand öffnet die exakte Vimeo-URL. Sämtliche übrigen Links, Absätze und Überschriften unverändert. `qa-showreel.json` dokumentiert Geometrievergleich und Button-Grössen. Desktop und Mobile tatsächlich visuell geprüft. E-Mail-Client-Testsendung und die bereits dokumentierte Instagram-Prüfgrenze bleiben offen. Kein Merge.
