@@ -1,0 +1,278 @@
+[
+  {
+    "edition": "reference",
+    "width": 700,
+    "scroll": 700,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 20,
+        "y": 1356.984375,
+        "width": 153
+      },
+      {
+        "x": 189,
+        "y": 1356.984375,
+        "width": 153
+      },
+      {
+        "x": 358,
+        "y": 1356.984375,
+        "width": 153
+      },
+      {
+        "x": 527,
+        "y": 1356.984375,
+        "width": 153
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 690,
+        "right": 700,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "0px"
+  },
+  {
+    "edition": "newsletter03",
+    "width": 700,
+    "scroll": 700,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 20,
+        "y": 1422.234375,
+        "width": 153
+      },
+      {
+        "x": 189,
+        "y": 1422.234375,
+        "width": 153
+      },
+      {
+        "x": 358,
+        "y": 1422.234375,
+        "width": 153
+      },
+      {
+        "x": 527,
+        "y": 1422.234375,
+        "width": 153
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 690,
+        "right": 700,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "0px"
+  },
+  {
+    "edition": "reference",
+    "width": 390,
+    "scroll": 390,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 16,
+        "y": 1851.875,
+        "width": 171
+      },
+      {
+        "x": 203,
+        "y": 1851.875,
+        "width": 171
+      },
+      {
+        "x": 16,
+        "y": 2022.078125,
+        "width": 171
+      },
+      {
+        "x": 203,
+        "y": 2022.078125,
+        "width": 171
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 380,
+        "right": 390,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "16px"
+  },
+  {
+    "edition": "newsletter03",
+    "width": 390,
+    "scroll": 390,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 16,
+        "y": 2025.265625,
+        "width": 171
+      },
+      {
+        "x": 203,
+        "y": 2025.265625,
+        "width": 171
+      },
+      {
+        "x": 16,
+        "y": 2195.46875,
+        "width": 171
+      },
+      {
+        "x": 203,
+        "y": 2195.46875,
+        "width": 171
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 380,
+        "right": 390,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "16px"
+  },
+  {
+    "edition": "reference",
+    "width": 320,
+    "scroll": 320,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 16,
+        "y": 1962.234375,
+        "width": 136
+      },
+      {
+        "x": 168,
+        "y": 1962.234375,
+        "width": 136
+      },
+      {
+        "x": 16,
+        "y": 2122.140625,
+        "width": 136
+      },
+      {
+        "x": 168,
+        "y": 2122.140625,
+        "width": 136
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 310,
+        "right": 320,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "16px"
+  },
+  {
+    "edition": "newsletter03",
+    "width": 320,
+    "scroll": 320,
+    "imagesLoaded": true,
+    "cards": [
+      {
+        "x": 16,
+        "y": 2129.140625,
+        "width": 136
+      },
+      {
+        "x": 168,
+        "y": 2129.140625,
+        "width": 136
+      },
+      {
+        "x": 16,
+        "y": 2289.046875,
+        "width": 136
+      },
+      {
+        "x": 168,
+        "y": 2289.046875,
+        "width": 136
+      }
+    ],
+    "bars": [
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      },
+      {
+        "x": 310,
+        "right": 320,
+        "width": 10
+      },
+      {
+        "x": 0,
+        "right": 10,
+        "width": 10
+      }
+    ],
+    "teamPadding": "16px"
+  }
+]
