@@ -1,0 +1,608 @@
+[
+  {
+    "edition": "v7",
+    "viewport": "desktop",
+    "width": 1000,
+    "scrollWidth": 1000,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": true,
+        "width": 386.40625,
+        "height": 289.796875
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 286.15625,
+        "height": 160.109375
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 379.5,
+        "height": 222.859375
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "block",
+    "heroMobile": "none"
+  },
+  {
+    "edition": "visibility",
+    "viewport": "desktop",
+    "width": 1000,
+    "scrollWidth": 1000,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": true,
+        "width": 386.40625,
+        "height": 289.796875
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 286.15625,
+        "height": 160.953125
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 151,
+        "height": 113.25
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 379.5,
+        "height": 222.703125
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "block",
+    "heroMobile": "none"
+  },
+  {
+    "edition": "v7",
+    "viewport": "mobile",
+    "width": 390,
+    "scrollWidth": 390,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 249
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 185.75
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 194.96875
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "none",
+    "heroMobile": "block"
+  },
+  {
+    "edition": "visibility",
+    "viewport": "mobile",
+    "width": 390,
+    "scrollWidth": 390,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 249
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 186.75
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 163,
+        "height": 122.25
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 332,
+        "height": 194.828125
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "none",
+    "heroMobile": "block"
+  },
+  {
+    "edition": "v7",
+    "viewport": "narrow",
+    "width": 320,
+    "scrollWidth": 320,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 196.5
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 146.59375
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 153.859375
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "none",
+    "heroMobile": "block"
+  },
+  {
+    "edition": "visibility",
+    "viewport": "narrow",
+    "width": 320,
+    "scrollWidth": 320,
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 160,
+        "height": 74
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "visible": false,
+        "width": 0,
+        "height": 0
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 196.5
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 147.375
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "visible": true,
+        "width": 128,
+        "height": 96
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "visible": true,
+        "width": 262,
+        "height": 153.75
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "visible": true,
+        "width": 140,
+        "height": 64.75
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "visible": true,
+        "width": 24,
+        "height": 24
+      }
+    ],
+    "heroDesktop": "none",
+    "heroMobile": "block"
+  }
+]
