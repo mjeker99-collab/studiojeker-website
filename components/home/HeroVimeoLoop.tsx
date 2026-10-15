@@ -18,10 +18,17 @@ type HeroVimeoLoopProps = {
   poster?: PosterImage;
   /** Optional Sanity mobilePoster — falls back to poster when omitted. */
   mobilePoster?: PosterImage;
+  /**
+   * Intrinsic width/height of the Vimeo clip (not the photo slot).
+   * object-fit cannot crop iframe internals — the shared frame must match
+   * this ratio so square clips do not pillarbox inside a 16:9 player.
+   * Defaults to 16:9 for landscape service / teaser loops.
+   */
+  videoAspect?: number;
 };
 
-/** Match Vimeo background embeds (16:9). Shared by poster + iframe cover frame. */
-const VIDEO_ASPECT = 16 / 9;
+/** Default landscape hero / teaser loops. Square clips pass videoAspect={1}. */
+const DEFAULT_VIDEO_ASPECT = 16 / 9;
 const VIMEO_ORIGIN = "https://player.vimeo.com";
 /** Shared cover overscale — applied to the frame so poster and video stay locked. */
 const COVER_SCALE = 1.02;
@@ -64,16 +71,18 @@ function buildEmbedUrl(videoId: string): string {
 /**
  * Hero Vimeo background loop — poster-first handoff without layout jump.
  *
- * Poster and iframe share one cover-sized 16:9 frame (identical footprint,
- * object-fit: cover, object-position: center). The poster stays fully visible
- * until a displayable first frame is confirmed (timeupdate, with play-armed
- * fallback) — never on loadedmetadata / iframe load alone.
+ * Poster and iframe share one cover-sized frame matched to the clip’s
+ * intrinsic aspect (identical footprint, object-fit: cover on the poster).
+ * The poster stays fully visible until a displayable first frame is confirmed
+ * (timeupdate, with play-armed fallback) — never on loadedmetadata / iframe
+ * load alone.
  */
 export function HeroVimeoLoop({
   videoId,
   title,
   poster,
   mobilePoster,
+  videoAspect = DEFAULT_VIDEO_ASPECT,
 }: HeroVimeoLoopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -87,6 +96,10 @@ export function HeroVimeoLoop({
   );
   // Attach message listeners before loading the iframe so `ready` is never missed.
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+  const resolvedAspect =
+    Number.isFinite(videoAspect) && videoAspect > 0
+      ? videoAspect
+      : DEFAULT_VIDEO_ASPECT;
 
   const firstFrame = getVimeoFirstFramePoster(videoId);
   const handoffPoster: PosterImage | undefined = firstFrame
@@ -115,8 +128,9 @@ export function HeroVimeoLoop({
     return () => media.removeEventListener("change", pick);
   }, [poster, mobilePoster]);
 
-  // Size one shared 16:9 frame with object-fit: cover into the photo slot.
+  // Size one shared frame to the clip aspect, then cover the photo slot.
   // Poster and iframe both fill this frame — same crop, position, scale.
+  // (Vimeo video pixels ignore CSS object-fit; wrong frame aspect = bars.)
   useEffect(() => {
     const root = rootRef.current;
     const frame = frameRef.current;
@@ -130,12 +144,12 @@ export function HeroVimeoLoop({
       let frameWidth: number;
       let frameHeight: number;
 
-      if (containerRatio > VIDEO_ASPECT) {
+      if (containerRatio > resolvedAspect) {
         frameWidth = width;
-        frameHeight = width / VIDEO_ASPECT;
+        frameHeight = width / resolvedAspect;
       } else {
         frameHeight = height;
-        frameWidth = height * VIDEO_ASPECT;
+        frameWidth = height * resolvedAspect;
       }
 
       frame.style.width = `${frameWidth * COVER_SCALE}px`;
@@ -146,7 +160,7 @@ export function HeroVimeoLoop({
     const observer = new ResizeObserver(fitCover);
     observer.observe(root);
     return () => observer.disconnect();
-  }, [videoId]);
+  }, [videoId, resolvedAspect]);
 
   // Poster-first reveal: arm on play/playing, confirm with timeupdate (first
   // frame). Never reveal on loadedmetadata / iframe.onload alone.

@@ -28,7 +28,9 @@ export function AboutPage({ content }: AboutPageProps) {
   return (
     <>
       <section
-        className={[heroStyles.section, styles.hero].join(" ")}
+        className={[heroStyles.section, heroStyles.squareHeroMedia, styles.hero].join(
+          " ",
+        )}
         data-header-theme="light"
         aria-labelledby="about-hero-title"
       >
@@ -74,6 +76,7 @@ export function AboutPage({ content }: AboutPageProps) {
                 <HeroVimeoLoop
                   videoId={content.hero.videoId}
                   title={content.hero.media.alt}
+                  videoAspect={1}
                   poster={{
                     src: mediaPath(content.hero.media.src),
                     alt: content.hero.media.alt,

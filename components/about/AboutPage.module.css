@@ -6,6 +6,7 @@
 
 /*
  * About hero — shared HeroSection media frame (--hero-media-aspect).
+ * Stacked layouts use `.squareHeroMedia` (1 / 1); desktop keeps 5 / 4.
  * Keep media below the fixed header via section padding only.
  *
  * H1 typography: About uses HeroSection.module.css `.headline` only —
