@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Etziken · Layoutentwurf (2 Seiten)</title>
+    <link rel="stylesheet" href="styles/brochure.css" />
+  </head>
+  <body>
+    <div class="screen-chrome" data-export-hide="true">
+      <span class="badge">Layoutentwurf · Keine Druckfreigabe</span>
+      <h1>Etziken-Verkaufsdokumentation</h1>
+      <p>
+        A4-Hochformat · Titelseite und Innenseite · Vorschau im Browser.
+        PDF-Export: <code>npm run export</code>
+      </p>
+      <nav>
+        <a href="contact-sheet.html">Kontaktübersicht (alle Originalfotos)</a>
+        <a href="content/brochure.json">Inhaltsdaten (JSON)</a>
+        <a href="content/image-manifest.json">Bildliste / SHA-256</a>
+      </nav>
+    </div>
+
+    <div class="pages" id="brochure-root">
+      <!-- Pages rendered from content/brochure.json -->
+    </div>
+
+    <script>
+      async function loadBrochure() {
+        const res = await fetch("content/brochure.json");
+        const data = await res.json();
+        const root = document.getElementById("brochure-root");
+        const title = data.pages.title;
+        const wohnen = data.pages.wohnen;
+        const obj = data.object;
+
+        root.innerHTML = `
+          <article class="page page-title" aria-label="Titelseite">
+            <div class="page-inner">
+              <p class="location">${escapeHtml(obj.location_line)}</p>
+              <div>
+                <h1 class="headline">${escapeHtml(title.headline)}</h1>
+                <p class="subheadline">${escapeHtml(title.subheadline)}</p>
+              </div>
+              <figure class="photo-frame">
+                <img
+                  src="assets/approved/${encodeURIComponent(title.image)}"
+                  alt="${escapeHtml(title.image_role)}"
+                  width="1448"
+                  height="1086"
+                />
+              </figure>
+              <div class="stats" role="list">
+                ${title.stats
+                  .map(
+                    (s) =>
+                      `<div class="stat" role="listitem"><div class="stat-value">${escapeHtml(s)}</div></div>`
+                  )
+                  .join("")}
+              </div>
+              <div class="closing">
+                <span class="closing-address">${escapeHtml(obj.address)}</span>
+                <span class="closing-process">${escapeHtml(obj.sale_process)}</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="page page-wohnen" aria-label="Innenseite Wohnen">
+            <div class="page-inner">
+              <p class="rubric">${escapeHtml(wohnen.rubric)}</p>
+              <h1 class="headline">${escapeHtml(wohnen.headline)}</h1>
+              <p class="intro">${escapeHtml(wohnen.intro)}</p>
+              <figure class="photo-frame">
+                <img
+                  src="assets/approved/${encodeURIComponent(wohnen.image)}"
+                  alt="${escapeHtml(wohnen.image_role)}"
+                  width="1448"
+                  height="1086"
+                />
+              </figure>
+              <div class="columns">
+                ${wohnen.columns
+                  .map(
+                    (col) => `
+                  <div class="column">
+                    <h2 class="column-title">${escapeHtml(col.title)}</h2>
+                    <p class="column-text">${escapeHtml(col.text)}</p>
+                  </div>`
+                  )
+                  .join("")}
+              </div>
+              <footer class="page-footer">
+                <span class="object-label">${escapeHtml(data.meta.object_label)}</span>
+                <span class="page-num">${escapeHtml(wohnen.page_number)}</span>
+              </footer>
+            </div>
+          </article>
+        `;
+
+        await Promise.all(
+          [...root.querySelectorAll("img")].map(
+            (img) =>
+              new Promise((resolve, reject) => {
+                if (img.complete && img.naturalWidth) resolve();
+                else {
+                  img.onload = () => resolve();
+                  img.onerror = () =>
+                    reject(new Error("Bild konnte nicht geladen werden: " + img.src));
+                }
+              })
+          )
+        );
+
+        document.fonts && (await document.fonts.ready);
+        document.documentElement.dataset.ready = "true";
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      loadBrochure().catch((err) => {
+        document.getElementById("brochure-root").innerHTML =
+          "<p style='padding:2rem;color:#900'>" + err.message + "</p>";
+        console.error(err);
+      });
+    </script>
+  </body>
+</html>

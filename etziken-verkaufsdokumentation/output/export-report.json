@@ -1,0 +1,16 @@
+{
+  "label": "Layoutentwurf — keine PDF/X- oder Druckereifreigabe",
+  "pdf": "output/etziken-layoutentwurf.pdf",
+  "previews": [
+    "output/preview-page-1.png",
+    "output/preview-page-2.png"
+  ],
+  "page_elements_rendered": 2,
+  "page_count_note": "PDF /Type /Page count ≈ 2",
+  "image_assignment": {
+    "title_page": "01a10d34-fb96-7eaf-9908-ab5d40922ee5.jpg",
+    "interior_page": "01a10d34-fcfa-7716-9197-f9478e2cc1cf.jpg"
+  },
+  "sha256_verified": true,
+  "generated_at": "2026-10-05T17:59:24.916Z"
+}
