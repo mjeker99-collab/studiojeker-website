@@ -241,6 +241,23 @@ Minimum (homepage) — keep or create:
 }
 ```
 
+**Required Work webhook** (same URL/headers as homepage; missing as of 2026-10-15):
+
+Evidence: every `repository_dispatch` in Actions history is `sanity-homepage-published`.
+Zero `sanity-work-published` events exist. The staging workflow already listens for
+`sanity-work-published` — the gap is the Sanity Manage webhook, not the YAML.
+
+| Setting | Value |
+|---------|--------|
+| Name | `GitHub staging deploy (work)` |
+| Dataset | `production` |
+| URL | `https://api.github.com/repos/mjeker99-collab/studiojeker-website/dispatches` |
+| Filter (GROQ) | `!(_id in path("drafts.**")) && _type == "work"` |
+| Projection `event_type` | `sanity-work-published` |
+| Projection `documentType` | `work` |
+
+Verify with: `node scripts/verify-sanity-cms-webhooks.mjs`
+
 **Recommended additional webhooks** (same URL/headers, different filter + event_type):
 
 | Name | GROQ filter `_type == …` | `event_type` | `documentType` |
@@ -248,7 +265,6 @@ Minimum (homepage) — keep or create:
 | Content Abo | `abo` | `sanity-abo-published` | `abo` |
 | About | `about` | `sanity-about-published` | `about` |
 | Contact | `contact` | `sanity-contact-published` | `contact` |
-| Work | `work` | `sanity-work-published` | `work` |
 | Service | `service` | `sanity-service-published` | `service` |
 
 Optional single catch-all webhook:
@@ -309,6 +325,64 @@ The root `.htaccess` from `out/` is included in every deploy (dotfiles are mirro
 | Stale deploy protection | Workflow aborts if run SHA ≠ `origin/main` tip |
 | Security headers / redirects | `public/.htaccess` (copied into `out/`) — not `next.config` headers/redirects |
 | WordPress | Not required for the static marketing site build |
+
+---
+
+## Production Document Root (evidence-based)
+
+Do **not** redirect the staging FTP workflow at production. Staging uses
+`METANET_FTP_*` → `staging2026.studiojeker.ch`. Production uses
+`METANET_PROD_FTP_*` → `studiojeker.ch/site2026` only.
+
+### FTP layout (Actions run 36635984829, 2026-09-29)
+
+```text
+studiojeker.ch/
+  contao4.13/   ← never touch
+  wordpress/    ← sibling; never touch
+  site2026/     ← production upload target
+```
+
+### What actually serves www.studiojeker.ch
+
+Beleg (2026-10-15), ohne Pfad-Raten:
+
+| Check | Result |
+|-------|--------|
+| Last production upload | `Deploy production site2026` run #36635984829 → `studiojeker.ch/site2026` |
+| Remote `site2026/index.html` | 76885 bytes, Sep 29 21:52 |
+| Live `https://www.studiojeker.ch/index.html` | Content-Length **76885**, Last-Modified **Tue, 29 Sep 2026 21:52:07 GMT** |
+| Chunk hashes | Live `/_next/static/chunks/3794-e5ba39edb141d05c.js` present in that upload log |
+| URL `/site2026/` / `/wordpress/wp-login.php` | 404 (Document Root sits *inside* the serving folder) |
+
+Workflows **do not** change Plesk Document Root. The public match proves the live
+Document Root currently points at `studiojeker.ch/site2026` (set in Plesk/Metanet
+outside GitHub Actions). The production workflow refuse-uploads if the live
+`index.html` byte size/content no longer matches remote `site2026/index.html`.
+
+### Production update + rollback
+
+Workflow: **Deploy production (Live)**
+(`.github/workflows/deploy-production-site2026.yml`).
+
+| Trigger | When | Confirmation |
+|---------|------|--------------|
+| `push` to `main` | Code merged/pushed to main | Implicit (live `site2026` only) |
+| `workflow_dispatch` | Manual run from Actions UI | `confirm_target=site2026` and `acknowledge_public_site=www.studiojeker.ch` |
+
+Push runs do **not** require confirm inputs. Manual runs still do.
+
+1. Build + `out/` SEO / Work-hero guards (must pass before FTPS)
+2. Fail-closed live fingerprint (remote site2026 ≡ www)
+3. Remote rollback copy → `studiojeker.ch/site2026-rollback-<UTC>` before upload
+4. Mirror `out/` into `site2026` (no `--delete`; preserves `api/contact.config.php`)
+5. Public smoke: `/api/work-page.php` must expose `heroSection.image`
+
+Secrets: `METANET_PROD_FTP_*` only. Staging `METANET_FTP_*` and the staging
+workflow are never used. WordPress is never targeted.
+
+Rollback: in Plesk/FTP, re-mirror `site2026-rollback-<UTC>` → `site2026`, or point
+Document Root back at that rollback folder. WordPress remains untouched.
 
 ---
 
