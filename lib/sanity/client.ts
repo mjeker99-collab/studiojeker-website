@@ -18,6 +18,10 @@ import {
  * `useCdn: false` — staging rebuilds must read freshly published CMS data.
  * The API CDN can briefly serve stale documents after a Studio publish,
  * which previously caused the static export to bake outdated Homepage content.
+ *
+ * Do not set `fetch: { cache: "no-store" }` here: with `output: "export"` and
+ * `dynamic = "error"`, that forces dynamic rendering and the Sanity fetch
+ * fails at build time (fallback to local content).
  */
 export function getSanityClient(): SanityClient {
   return createClient({

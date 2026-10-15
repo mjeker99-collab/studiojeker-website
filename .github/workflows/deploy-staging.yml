@@ -70,6 +70,17 @@ jobs:
           echo "Event: ${EVENT_NAME}"
           echo "Ref: ${GITHUB_REF}"
           echo "SHA: ${GITHUB_SHA}"
+          {
+            echo "## Deploy staging (Metanet) — target"
+            echo ""
+            echo "**This workflow uploads ONLY to \`https://staging2026.studiojeker.ch\`.**"
+            echo ""
+            echo "It does **not** update \`studiojeker.ch\` / \`www.studiojeker.ch\` Document Root."
+            echo "A green run here is not proof that production shows new CMS/frontend changes."
+            echo ""
+            echo "- Event: \`${EVENT_NAME}\`"
+            echo "- SHA: \`${GITHUB_SHA}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
           case "${EVENT_NAME}" in
             workflow_dispatch)
