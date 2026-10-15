@@ -60,6 +60,8 @@ export type SanityWork = {
     label?: SanityLocalizedString;
     headline?: SanityLocalizedString;
     text?: SanityLocalizedText;
+    /** Optional hero still — hotspot/crop applied via image URL builder. */
+    image?: SanityImageProjection;
   } | null;
   categories?: SanityWorkCategory[] | null;
   finalCtaSection?: {
@@ -82,7 +84,8 @@ export const workPageQuery = groq`*[_id == $id && _type == "work"][0]{
   heroSection{
     label${localizedStringProjection},
     headline${localizedStringProjection},
-    text${localizedTextProjection}
+    text${localizedTextProjection},
+    image${sanityImageProjection}
   },
   categories[]{
     categoryId,

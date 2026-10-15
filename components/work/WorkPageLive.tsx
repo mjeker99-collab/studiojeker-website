@@ -89,6 +89,8 @@ export function WorkPageLive({ locale, content }: WorkPageLiveProps) {
   const contentKey = [
     resolved.hero.headline,
     resolved.hero.text,
+    resolved.hero.media?.src ?? "",
+    resolved.hero.media?.alt ?? "",
     ...resolved.categories.flatMap((category) => [
       category.id,
       category.title,

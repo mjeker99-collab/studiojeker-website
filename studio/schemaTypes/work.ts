@@ -22,22 +22,42 @@ export const work = defineType({
       type: "object",
       group: "hero",
       options: { collapsible: true, collapsed: false },
+      description:
+        "Work overview hero (split layout). Upload the hero image here — no stock fallback on the website.",
       fields: [
         defineField({
           name: "label",
           title: "Hero Label",
           type: "localizedString",
-          description: "Small label above the headline (e.g. Work).",
+          description: "Small label above the headline (e.g. Work). Displayed in uppercase.",
         }),
         defineField({
           name: "headline",
           title: "Hero Headline",
           type: "localizedString",
+          description: "Page H1 (e.g. Ausgewählte Arbeitsproben).",
         }),
         defineField({
           name: "text",
           title: "Hero Intro Text",
           type: "localizedText",
+          description: "Supporting intro under the headline.",
+        }),
+        defineField({
+          name: "image",
+          title: "Hero Image",
+          type: "image",
+          options: { hotspot: true },
+          description:
+            "Square-cropped cover image beside the headline (desktop: right column). Set crop and hotspot in Studio. Leave empty to show text only — no empty image frame.",
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Image Alt Text",
+              type: "string",
+              description: "Accessible description of the hero image.",
+            }),
+          ],
         }),
       ],
     }),
@@ -126,11 +146,13 @@ export const work = defineType({
     select: {
       title: "heroSection.headline.de",
       titleEn: "heroSection.headline.en",
+      media: "heroSection.image",
     },
-    prepare({ title, titleEn }) {
+    prepare({ title, titleEn, media }) {
       return {
         title: "Work",
         subtitle: title || titleEn || "Work page",
+        media,
       };
     },
   },

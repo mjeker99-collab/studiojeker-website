@@ -24,6 +24,33 @@ async function main() {
     work.hero.headline === workDoc!.heroSection?.headline?.de,
     "work hero headline from Sanity",
   );
+  // Hero image is optional — without a Sanity upload there must be no media src.
+  if (workDoc!.heroSection?.image?.asset?._ref || workDoc!.heroSection?.image?.url) {
+    assert(
+      Boolean(work.hero.media?.src?.includes("cdn.sanity.io")),
+      "work hero image from Sanity CDN when uploaded",
+    );
+  } else {
+    assert(
+      work.hero.media === undefined,
+      "work hero media omitted when Sanity image empty",
+    );
+  }
+  const withoutImage = mergeSanityWork(
+    workBase,
+    {
+      ...workDoc!,
+      heroSection: {
+        ...workDoc!.heroSection,
+        image: null,
+      },
+    },
+    "de",
+  );
+  assert(
+    withoutImage.hero.media === undefined,
+    "explicit null hero image stays omitted (no stock fallback)",
+  );
   const catIds = work.categories.map((c) => c.id);
   assert(new Set(catIds).size === catIds.length, "work category ids unique");
   assert(catIds.includes("digital"), "digital category id present");

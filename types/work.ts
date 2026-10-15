@@ -55,12 +55,24 @@ export type WorkCategory = {
   items: WorkProjectItem[];
 };
 
+export type WorkHeroMedia = {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+};
+
 export type WorkPageContent = {
   seo: { title: string; description: string };
   hero: {
     label: string;
     headline: string;
     text: string;
+    /**
+     * Optional Sanity hero still. Omit when empty — frontend shows copy only
+     * (no stock fallback, no empty media frame).
+     */
+    media?: WorkHeroMedia;
   };
   categories: WorkCategory[];
   finalCta: {
