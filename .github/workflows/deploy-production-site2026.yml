@@ -1,4 +1,4 @@
-# Production upload → studiojeker.ch/site2026 (Metanet/Plesk FTPS).
+# Production LIVE upload → studiojeker.ch/site2026 (Metanet/Plesk FTPS).
 #
 # Evidence (2026-10-15) that the public site serves this folder:
 #   - Actions run 36635984829 (2026-09-29) uploaded out/ → studiojeker.ch/site2026
@@ -17,6 +17,10 @@
 #       ├── wordpress/    ← sibling; never touch
 #       └── site2026/     ← upload target (public Document Root per fingerprint)
 #
+# Triggers:
+#   A) push to main          — automatic live publish to studiojeker.ch/site2026
+#   B) workflow_dispatch     — manual Actions run (confirm inputs required)
+#
 # SAFETY:
 #   - Does NOT change Document Root / DNS / WordPress / contao4.13.
 #   - Uploads ONLY into studiojeker.ch/site2026.
@@ -24,7 +28,7 @@
 #   - Fail-closed unless live www index.html size matches remote site2026
 #     (proves we are updating the folder that currently serves production).
 #   - Before upload: remote rollback copy → site2026-rollback-<UTC>.
-#   - Manual workflow_dispatch only — never on push, never automatic.
+#   - Build + out/ guards run before any FTPS write.
 #   - Staging workflow / METANET_FTP_* secrets are never used here.
 #
 # Required secrets:
@@ -32,51 +36,72 @@
 #   METANET_PROD_FTP_USERNAME
 #   METANET_PROD_FTP_PASSWORD
 
-name: Deploy production site2026 (pre-live)
+name: Deploy production (Live)
 
 on:
+  push:
+    branches:
+      - main
+
   workflow_dispatch:
     inputs:
       confirm_target:
-        description: "Type site2026 to confirm upload ONLY to studiojeker.ch/site2026 (never wordpress)"
+        description: "Manual only: type site2026 to confirm upload ONLY to studiojeker.ch/site2026 (never wordpress). Ignored on push to main."
         required: true
         type: string
       acknowledge_public_site:
-        description: "Type www.studiojeker.ch — required because site2026 currently fingerprints as the public Document Root"
+        description: "Manual only: type www.studiojeker.ch. Ignored on push to main."
         required: true
         type: string
 
 concurrency:
-  group: deploy-production-site2026
+  group: deploy-production-live
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  deploy-site2026:
-    name: Build and upload to site2026 only
+  deploy-live:
+    name: Build and publish to studiojeker.ch (site2026)
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
-      - name: Confirm site2026-only target and public-site acknowledgement
+      - name: Confirm trigger and live target
         env:
+          EVENT_NAME: ${{ github.event_name }}
           CONFIRM_TARGET: ${{ inputs.confirm_target }}
           ACK_PUBLIC: ${{ inputs.acknowledge_public_site }}
         run: |
           set -euo pipefail
-          if [ "${CONFIRM_TARGET}" != "site2026" ]; then
-            echo "::error::Refusing deploy. Type exactly 'site2026' in confirm_target."
-            exit 1
-          fi
-          if [ "${ACK_PUBLIC}" != "www.studiojeker.ch" ]; then
-            echo "::error::Refusing deploy. Type exactly 'www.studiojeker.ch' in acknowledge_public_site."
-            echo "Evidence shows studiojeker.ch/site2026 currently serves the public site."
-            exit 1
-          fi
-          echo "Confirmed: upload target is site2026 only (WordPress untouched)."
-          echo "Acknowledged: this updates the folder that fingerprints as www.studiojeker.ch."
+
+          echo "Event: ${EVENT_NAME}"
+          echo "Ref: ${GITHUB_REF}"
+          echo "SHA: ${GITHUB_SHA}"
+
+          case "${EVENT_NAME}" in
+            push)
+              echo "Push to main — deploying live studiojeker.ch/site2026"
+              echo "confirm_target / acknowledge_public_site not required for push."
+              ;;
+            workflow_dispatch)
+              if [ "${CONFIRM_TARGET}" != "site2026" ]; then
+                echo "::error::Refusing deploy. Type exactly 'site2026' in confirm_target."
+                exit 1
+              fi
+              if [ "${ACK_PUBLIC}" != "www.studiojeker.ch" ]; then
+                echo "::error::Refusing deploy. Type exactly 'www.studiojeker.ch' in acknowledge_public_site."
+                echo "Evidence shows studiojeker.ch/site2026 currently serves the public site."
+                exit 1
+              fi
+              echo "Confirmed manual live deploy: studiojeker.ch/site2026 (WordPress untouched)."
+              ;;
+            *)
+              echo "::error::Unsupported event: ${EVENT_NAME}"
+              exit 1
+              ;;
+          esac
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -464,11 +489,13 @@ jobs:
           fi
 
           {
-            echo "## Production site2026 deploy"
+            echo "## Deploy production (Live)"
             echo ""
+            echo "- Event: \`${{ github.event_name }}\`"
             echo "- Target: \`studiojeker.ch/site2026\` (live fingerprint matched www before upload)"
             echo "- Rollback: \`studiojeker.ch/${ROLLBACK_DIR:-unknown}\`"
             echo "- WordPress / Document Root setting: **not** changed by this workflow"
+            echo "- Staging / \`METANET_FTP_*\`: **not** used"
             echo "- Live proxy: heroSection.image present"
             echo "- Live /work/ Last-Modified: ${LM:-unknown}"
           } >> "${GITHUB_STEP_SUMMARY}"

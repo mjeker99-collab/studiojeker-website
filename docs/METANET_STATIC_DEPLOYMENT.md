@@ -362,14 +362,24 @@ outside GitHub Actions). The production workflow refuse-uploads if the live
 
 ### Production update + rollback
 
-Workflow: **Deploy production site2026 (pre-live)**
+Workflow: **Deploy production (Live)**
 (`.github/workflows/deploy-production-site2026.yml`).
 
-1. Inputs: `confirm_target=site2026` and `acknowledge_public_site=www.studiojeker.ch`
+| Trigger | When | Confirmation |
+|---------|------|--------------|
+| `push` to `main` | Code merged/pushed to main | Implicit (live `site2026` only) |
+| `workflow_dispatch` | Manual run from Actions UI | `confirm_target=site2026` and `acknowledge_public_site=www.studiojeker.ch` |
+
+Push runs do **not** require confirm inputs. Manual runs still do.
+
+1. Build + `out/` SEO / Work-hero guards (must pass before FTPS)
 2. Fail-closed live fingerprint (remote site2026 ≡ www)
 3. Remote rollback copy → `studiojeker.ch/site2026-rollback-<UTC>` before upload
 4. Mirror `out/` into `site2026` (no `--delete`; preserves `api/contact.config.php`)
 5. Public smoke: `/api/work-page.php` must expose `heroSection.image`
+
+Secrets: `METANET_PROD_FTP_*` only. Staging `METANET_FTP_*` and the staging
+workflow are never used. WordPress is never targeted.
 
 Rollback: in Plesk/FTP, re-mirror `site2026-rollback-<UTC>` → `site2026`, or point
 Document Root back at that rollback folder. WordPress remains untouched.
