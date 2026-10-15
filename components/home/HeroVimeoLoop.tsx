@@ -31,15 +31,12 @@ type HeroVimeoLoopProps = {
 const DEFAULT_VIDEO_ASPECT = 16 / 9;
 const VIMEO_ORIGIN = "https://player.vimeo.com";
 /**
- * When the photo slot is already within this ratio of the clip aspect,
- * fill 100% — no cover overscale / top-left centering math.
+ * Cover overscale for the shared iframe/poster frame.
+ * object-fit cannot crop Vimeo player internals — a small overscale clips
+ * embed letterboxing / player chrome while keeping the motif centered.
+ * Kept modest so square 1:1 heroes are not heavily cropped.
  */
-const ASPECT_MATCH_EPSILON = 0.04;
-/**
- * Slight cover overscale only when slot and clip aspects differ.
- * Kept small — never used to hide letterboxing from a wrong aspect.
- */
-const COVER_SCALE = 1.02;
+const COVER_SCALE = 1.06;
 /** Prefer reveal after playback has advanced past this (not metadata alone). */
 const FIRST_FRAME_SECONDS = 0.02;
 /** Settle after first paintable signal so the decoded frame is on screen. */
@@ -137,8 +134,10 @@ export function HeroVimeoLoop({
   }, [poster, mobilePoster]);
 
   // Size one shared frame to the clip aspect, then cover the photo slot.
-  // Position with top/left only — transform centering offsets iframe paint
-  // in WebKit (iPad), which reads as a black gap + right-shifted motif.
+  // Always overscale slightly so Vimeo embed letterboxing is clipped by
+  // overflow:hidden. Position with top/left only — transform centering
+  // offsets iframe paint in WebKit (iPad), which reads as a black gap +
+  // right-shifted motif.
   useEffect(() => {
     const root = rootRef.current;
     const frame = frameRef.current;
@@ -149,15 +148,6 @@ export function HeroVimeoLoop({
       if (width <= 0 || height <= 0) return;
 
       const containerRatio = width / height;
-
-      if (Math.abs(containerRatio - resolvedAspect) <= ASPECT_MATCH_EPSILON) {
-        frame.style.top = "0px";
-        frame.style.left = "0px";
-        frame.style.width = "100%";
-        frame.style.height = "100%";
-        frame.style.transform = "none";
-        return;
-      }
 
       let frameWidth: number;
       let frameHeight: number;

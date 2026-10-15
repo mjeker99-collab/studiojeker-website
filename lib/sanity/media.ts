@@ -91,6 +91,11 @@ export function resolveSanityImage(
 /**
  * Resolve a reusable mediaField to HomepageMedia and optional Vimeo video ID.
  * Falls back to the provided base media when CMS data is incomplete.
+ *
+ * A resolvable `vimeoUrl` always wins over `mediaType: "image"`. Studio can
+ * leave a stale type after editors paste a Vimeo URL (Home/About heroes today);
+ * ignoring the URL dropped the embed and showed only the still — while live
+ * embeds were the intended hero. Clear `vimeoUrl` in CMS to force image-only.
  */
 export function resolveSanityMedia(
   field: SanityMediaField | undefined,
@@ -101,25 +106,21 @@ export function resolveSanityMedia(
     return { media: fallback };
   }
 
+  const width = options?.width ?? HERO_MEDIA_MAX_WIDTH;
+  const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
+
   // Incomplete CMS rows may omit mediaType while still carrying an image/video.
-  // Prefer the explicit type; otherwise infer so we do not fall back to local
-  // architecture placeholders when Studio media is present.
-  const mediaType: "image" | "video" | null =
-    field.mediaType ??
-    (field.vimeoUrl
-      ? "video"
-      : field.image?.asset?._ref || field.image?.url
-        ? "image"
-        : null);
+  // Prefer a real Vimeo id; otherwise use the explicit type or infer image.
+  const mediaType: "image" | "video" | null = videoId
+    ? "video"
+    : (field.mediaType ??
+      (field.image?.asset?._ref || field.image?.url ? "image" : null));
 
   if (!mediaType) {
     return { media: fallback };
   }
 
-  const width = options?.width ?? HERO_MEDIA_MAX_WIDTH;
-
   if (mediaType === "video") {
-    const videoId = extractVimeoId(field.vimeoUrl ?? undefined);
     const posterSource =
       options?.preferMobilePoster && field.mobilePoster
         ? field.mobilePoster

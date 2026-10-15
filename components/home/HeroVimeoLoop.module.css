@@ -1,9 +1,9 @@
 /*
  * Absolute fill of the hero .photo slot.
- * One shared .frame is sized to the clip’s intrinsic aspect by
- * HeroVimeoLoop.tsx (top/left — never transform, which offsets iframe
- * paint in Safari). Poster uses object-fit: cover; iframe fills the frame
- * box (object-fit cannot crop Vimeo internals).
+ * One shared .frame is cover-sized to the clip’s intrinsic aspect by
+ * HeroVimeoLoop.tsx (top/left + slight overscale — never transform, which
+ * offsets iframe paint in Safari). Poster uses object-fit: cover; iframe
+ * fills the frame box (object-fit cannot crop Vimeo internals).
  */
 .root {
   position: absolute;
