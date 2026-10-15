@@ -69,7 +69,7 @@ function workStructure(S: StructureBuilder) {
         .title("Work")
         .items([
           S.listItem()
-            .title("Page (Hero, CTA, SEO)")
+            .title("Page (Hero + Image, CTA, SEO)")
             .child(workDocumentEditor(S)),
           S.divider(),
           ...WORK_AREAS.map((area) =>
