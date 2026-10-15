@@ -235,7 +235,28 @@ async function main() {
   );
   assert(
     !imageOnlyHero.hero.videoId,
-    "About image mediaType clears hero video",
+    "About image without vimeoUrl clears hero video",
+  );
+
+  // Studio sometimes leaves mediaType "image" while a Vimeo URL is still set
+  // (Home/About square heroes). A resolvable URL must still mount the embed.
+  const imageTypeWithVimeo = mergeSanityAbout(
+    base,
+    {
+      _id: "about",
+      heroImage: live!.heroImage,
+      heroMedia: {
+        mediaType: "image",
+        image: live!.heroImage,
+        vimeoUrl: "https://vimeo.com/1236231654",
+        poster: live!.heroImage,
+      },
+    },
+    "de",
+  );
+  assert(
+    imageTypeWithVimeo.hero.videoId === "1236231654",
+    "About vimeoUrl wins over stale mediaType image",
   );
 
   console.log(
