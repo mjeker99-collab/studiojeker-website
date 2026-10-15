@@ -1,8 +1,9 @@
 /*
  * Absolute fill of the hero .photo slot.
- * One shared .frame is cover-sized (16:9) by HeroVimeoLoop.tsx — poster and
- * iframe both fill that frame with identical object-fit / object-position so
- * the handoff never jumps. Poster stays visible until a real first frame paints.
+ * One shared .frame is cover-sized to the clip’s intrinsic aspect by
+ * HeroVimeoLoop.tsx — poster and iframe both fill that frame with identical
+ * footprint / object-position so the handoff never jumps. Poster stays
+ * visible until a real first frame paints.
  */
 .root {
   position: absolute;

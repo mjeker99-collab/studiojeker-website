@@ -30,7 +30,11 @@ export function HeroSection({ content }: HeroSectionProps) {
   const headlineColor = colorOnLightHero(content.headlineColor);
 
   return (
-    <section className={styles.section} data-header-theme="light" aria-labelledby="home-hero-title">
+    <section
+      className={[styles.section, styles.squareHeroMedia].join(" ")}
+      data-header-theme="light"
+      aria-labelledby="home-hero-title"
+    >
       <div className={styles.grid}>
         <Reveal className={styles.copy}>
           <h1 id="home-hero-title" className={styles.headline}>
@@ -69,6 +73,7 @@ export function HeroSection({ content }: HeroSectionProps) {
               <HeroVimeoLoop
                 videoId={content.videoId}
                 title={content.media.alt}
+                videoAspect={1}
                 poster={{
                   src: mediaPath(content.media.src),
                   alt: content.media.alt,
