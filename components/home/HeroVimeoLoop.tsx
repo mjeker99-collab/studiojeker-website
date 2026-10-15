@@ -30,7 +30,15 @@ type HeroVimeoLoopProps = {
 /** Default landscape hero / teaser loops. Square clips pass videoAspect={1}. */
 const DEFAULT_VIDEO_ASPECT = 16 / 9;
 const VIMEO_ORIGIN = "https://player.vimeo.com";
-/** Shared cover overscale — applied to the frame so poster and video stay locked. */
+/**
+ * When the photo slot is already within this ratio of the clip aspect,
+ * fill 100% — no cover overscale / top-left centering math.
+ */
+const ASPECT_MATCH_EPSILON = 0.04;
+/**
+ * Slight cover overscale only when slot and clip aspects differ.
+ * Kept small — never used to hide letterboxing from a wrong aspect.
+ */
 const COVER_SCALE = 1.02;
 /** Prefer reveal after playback has advanced past this (not metadata alone). */
 const FIRST_FRAME_SECONDS = 0.02;
@@ -129,8 +137,8 @@ export function HeroVimeoLoop({
   }, [poster, mobilePoster]);
 
   // Size one shared frame to the clip aspect, then cover the photo slot.
-  // Poster and iframe both fill this frame — same crop, position, scale.
-  // (Vimeo video pixels ignore CSS object-fit; wrong frame aspect = bars.)
+  // Position with top/left only — transform centering offsets iframe paint
+  // in WebKit (iPad), which reads as a black gap + right-shifted motif.
   useEffect(() => {
     const root = rootRef.current;
     const frame = frameRef.current;
@@ -141,6 +149,16 @@ export function HeroVimeoLoop({
       if (width <= 0 || height <= 0) return;
 
       const containerRatio = width / height;
+
+      if (Math.abs(containerRatio - resolvedAspect) <= ASPECT_MATCH_EPSILON) {
+        frame.style.top = "0px";
+        frame.style.left = "0px";
+        frame.style.width = "100%";
+        frame.style.height = "100%";
+        frame.style.transform = "none";
+        return;
+      }
+
       let frameWidth: number;
       let frameHeight: number;
 
@@ -152,8 +170,13 @@ export function HeroVimeoLoop({
         frameWidth = height * resolvedAspect;
       }
 
-      frame.style.width = `${frameWidth * COVER_SCALE}px`;
-      frame.style.height = `${frameHeight * COVER_SCALE}px`;
+      const scaledWidth = frameWidth * COVER_SCALE;
+      const scaledHeight = frameHeight * COVER_SCALE;
+      frame.style.width = `${scaledWidth}px`;
+      frame.style.height = `${scaledHeight}px`;
+      frame.style.left = `${(width - scaledWidth) / 2}px`;
+      frame.style.top = `${(height - scaledHeight) / 2}px`;
+      frame.style.transform = "none";
     };
 
     fitCover();
