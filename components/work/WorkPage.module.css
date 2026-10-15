@@ -47,14 +47,26 @@
   overflow: hidden;
 }
 
-/* No Sanity hero image yet — keep copy readable without an empty media column */
-.heroGridCopyOnly {
+/*
+ * No Sanity hero image yet — single column only.
+ * Must beat HeroSection.module.css desktop split
+ * (`.grid { grid-template-columns: copy media }` at ≥64rem).
+ */
+.hero .heroGridCopyOnly,
+.hero .heroGrid.heroGridCopyOnly {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.heroGridCopyOnly .heroCopy {
+.hero .heroGridCopyOnly .heroCopy {
   max-width: 40rem;
   padding-bottom: var(--space-5);
+}
+
+@media (min-width: 64rem) {
+  .hero .heroGridCopyOnly,
+  .hero .heroGrid.heroGridCopyOnly {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .projects {

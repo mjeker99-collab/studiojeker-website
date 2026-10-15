@@ -286,7 +286,7 @@ function resolveWorkHeroMedia(
   image: SanityImageProjection | undefined,
   fallback?: WorkHeroMedia,
 ): WorkHeroMedia | undefined {
-  const empty: WorkHeroMedia = {
+  const empty = {
     src: "",
     alt: fallback?.alt ?? "",
     width: fallback?.width ?? 1400,
