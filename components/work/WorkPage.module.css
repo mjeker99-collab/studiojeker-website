@@ -1,27 +1,60 @@
+/**
+ * Work overview — shared HeroSection chrome + portfolio grid.
+ * Hero aspect / columns / cyan bar live in HeroSection.module.css tokens.
+ */
+
 .hero {
-  background: var(--color-white);
-  padding-block: calc(var(--header-height) + var(--space-5)) var(--space-4);
+  padding-top: var(--header-height);
+  z-index: 0;
+  overflow: hidden;
 }
 
-.copy {
-  display: grid;
-  gap: var(--space-3);
-  max-width: 40rem;
+.hero .heroGrid {
+  width: 100%;
+  min-width: 0;
 }
 
-.headline {
+.hero .heroCopy {
+  position: relative;
+  z-index: 1;
+  align-content: start;
+  min-width: 0;
+  max-width: 100%;
+  padding-top: clamp(2.75rem, 6vw, 5rem);
+  padding-bottom: var(--space-5);
+  overflow-wrap: break-word;
+}
+
+.hero .heroHeadline {
+  max-width: min(11em, 100%);
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.heroText {
   margin: 0;
-  font-size: clamp(1.875rem, 3.4vw, 3.125rem);
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-}
-
-.text {
-  margin: 0;
-  max-width: 34rem;
-  font-size: 1.0625rem;
+  max-width: 26rem;
+  color: var(--color-black);
+  font-size: 1rem;
   line-height: 1.55;
+}
+
+.hero .heroMediaWrap {
+  position: relative;
+  z-index: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* No Sanity hero image yet — keep copy readable without an empty media column */
+.heroGridCopyOnly {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.heroGridCopyOnly .heroCopy {
+  max-width: 40rem;
+  padding-bottom: var(--space-5);
 }
 
 .projects {
@@ -98,6 +131,26 @@
   width: 100%;
 }
 
+@media (min-width: 64rem) and (max-width: 75rem) {
+  .hero .heroCopy {
+    padding-right: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .hero .heroHeadline {
+    font-size: clamp(2rem, 3.4vw, 3.25rem);
+    line-height: 1.05;
+    max-width: min(11em, 100%);
+  }
+}
+
+@media (max-width: 63.9375rem) {
+  .hero .heroHeadline {
+    font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+    line-height: 1.06;
+    max-width: 100%;
+  }
+}
+
 @media (min-width: 48rem) {
   .categoryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -106,10 +159,6 @@
 }
 
 @media (min-width: 64rem) {
-  .hero {
-    padding-block: calc(var(--header-height) + var(--space-6)) var(--space-5);
-  }
-
   .projects {
     padding-block: var(--space-4) var(--section-padding-y);
   }

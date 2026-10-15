@@ -244,7 +244,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
       },
       hero: {
         label: "Work",
-        headline: "Selected projects.",
+        headline: "Selected work samples",
         text: "Strategy, content and design — moved, staged and effective across every channel.",
       },
       categories: [
@@ -272,7 +272,7 @@ export function getWorkPageContent(locale: Locale): WorkPageContent {
     },
     hero: {
       label: "Work",
-      headline: "Ausgewählte Projekte.",
+      headline: "Ausgewählte Arbeitsproben",
       text: "Strategie, Content und Design – bewegt, inszeniert und wirksam über alle Kanäle.",
     },
     categories: [

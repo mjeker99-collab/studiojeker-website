@@ -2,6 +2,7 @@ import type { Locale } from "@/types/i18n";
 import type {
   ProjectMedia,
   WorkCategory,
+  WorkHeroMedia,
   WorkPageContent,
   WorkProjectItem,
 } from "@/types/work";
@@ -10,6 +11,7 @@ import {
   type SanityLocalizedText,
 } from "@/lib/sanity/homepage";
 import {
+  HERO_MEDIA_MAX_WIDTH,
   resolveSanityImage,
   type SanityImageProjection,
 } from "@/lib/sanity/media";
@@ -276,6 +278,32 @@ function mergeCategory(
   };
 }
 
+/**
+ * Resolve optional Work hero image from Sanity.
+ * No local stock fallback — empty CMS image means no media column.
+ */
+function resolveWorkHeroMedia(
+  image: SanityImageProjection | undefined,
+  fallback?: WorkHeroMedia,
+): WorkHeroMedia | undefined {
+  const empty: WorkHeroMedia = {
+    src: "",
+    alt: fallback?.alt ?? "",
+    width: fallback?.width ?? 1400,
+    height: fallback?.height ?? 1400,
+  };
+  const resolved = resolveSanityImage(image, empty, HERO_MEDIA_MAX_WIDTH);
+  if (!resolved.src) {
+    return fallback?.src ? fallback : undefined;
+  }
+  return {
+    src: resolved.src,
+    alt: resolved.alt || fallback?.alt || "",
+    width: resolved.width,
+    height: resolved.height,
+  };
+}
+
 /** Pure merge of Sanity Work document → frontend WorkPageContent. */
 export function mergeSanityWork(
   base: WorkPageContent,
@@ -313,6 +341,8 @@ export function mergeSanityWork(
       return merged;
     });
 
+  const heroMedia = resolveWorkHeroMedia(hero?.image, base.hero.media);
+
   return {
     seo: {
       title:
@@ -328,6 +358,7 @@ export function mergeSanityWork(
         pickLocalized(hero?.headline, locale, base.hero.headline) ??
         base.hero.headline,
       text: pickLocalized(hero?.text, locale, base.hero.text) ?? base.hero.text,
+      ...(heroMedia ? { media: heroMedia } : {}),
     },
     categories: categories.length > 0 ? categories : base.categories,
     finalCta: {

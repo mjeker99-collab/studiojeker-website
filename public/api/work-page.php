@@ -78,7 +78,8 @@ $query = <<<GROQ
   heroSection{
     label{$localized},
     headline{$localized},
-    text{$localized}
+    text{$localized},
+    image{$imageProjection}
   },
   categories[]{
     categoryId,
