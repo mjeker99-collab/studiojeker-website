@@ -1,0 +1,59 @@
+[
+  {
+    "viewport": 700,
+    "unchanged_geometry": true,
+    "height": 2127.578125,
+    "element_count": 75,
+    "hero": [
+      {
+        "src": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-desktop-play.jpg",
+        "w": 386,
+        "h": 290,
+        "nw": 1040,
+        "nh": 780,
+        "loaded": true,
+        "href": "https://vimeo.com/1216347773"
+      }
+    ],
+    "button_diameter_px": 51.96153846153846,
+    "corner_click_target": "https://vimeo.com/1216347773"
+  },
+  {
+    "viewport": 390,
+    "unchanged_geometry": true,
+    "height": 3196.3125,
+    "element_count": 75,
+    "hero": [
+      {
+        "src": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg",
+        "w": 332,
+        "h": 249,
+        "nw": 800,
+        "nh": 600,
+        "loaded": true,
+        "href": "https://vimeo.com/1216347773"
+      }
+    ],
+    "button_diameter_px": 46.065,
+    "corner_click_target": "https://vimeo.com/1216347773"
+  },
+  {
+    "viewport": 320,
+    "unchanged_geometry": true,
+    "height": 3349.765625,
+    "element_count": 75,
+    "hero": [
+      {
+        "src": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg",
+        "w": 262,
+        "h": 197,
+        "nw": 800,
+        "nh": 600,
+        "loaded": true,
+        "href": "https://vimeo.com/1216347773"
+      }
+    ],
+    "button_diameter_px": 36.3525,
+    "corner_click_target": "https://vimeo.com/1216347773"
+  }
+]
