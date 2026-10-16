@@ -12,6 +12,7 @@ import {
 import { generateDraft } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { randomUUID } from "node:crypto";
+import { allowedAccount } from "./config.mjs";
 export type Tx = Prisma.TransactionClient;
 export async function audit(
   tx: Tx,
@@ -23,7 +24,8 @@ export async function audit(
   await tx.audit.create({ data: { userId, action, entityId, detail } });
 }
 async function actor(tx: Tx, userId: string) {
-  if (!(await tx.user.findFirst({ where: { id: userId, active: true } })))
+  const user = await tx.user.findFirst({ where: { id: userId, active: true } });
+  if (!user || !allowedAccount(user))
     throw new PolicyError("Keine Berechtigung.", 403);
 }
 async function lock(tx: Tx, key: string) {
@@ -112,6 +114,8 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
         await tx.contact.create({
           data: {
             ...c,
+            publicAuthority:
+              c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
             verifiedAt: null,
             confidence: "UNCONFIRMED",
             status: "NEW",

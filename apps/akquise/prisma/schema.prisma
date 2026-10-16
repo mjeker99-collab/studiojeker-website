@@ -35,6 +35,9 @@ enum DeliveryStatus {
   SENT
   REPLIED
   FAILED
+  SENDING
+  UNKNOWN
+  TEST_SENT
 }
 
 model User {
@@ -53,6 +56,8 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 model LoginAttempt {
@@ -152,18 +157,24 @@ model Suppression {
 }
 
 model Delivery {
-  id             String         @id @default(cuid())
-  draftId        String
-  draft          Draft          @relation(fields: [draftId], references: [id])
-  version        Int
-  recipient      String
-  hash           String
-  status         DeliveryStatus
-  messageId      String         @unique
-  idempotencyKey String         @unique
-  attempts       Int            @default(1)
-  error          String?
-  createdAt      DateTime       @default(now())
+  id                 String         @id @default(cuid())
+  draftId            String
+  draft              Draft          @relation(fields: [draftId], references: [id])
+  version            Int
+  recipient          String
+  hash               String
+  status             DeliveryStatus
+  messageId          String         @unique
+  idempotencyKey     String         @unique
+  mode               String         @default("LOCAL")
+  envelopeRecipients String[]       @default([])
+  completedAt        DateTime?
+  attempts           Int            @default(1)
+  error              String?
+  createdAt          DateTime       @default(now())
+
+  @@index([mode, createdAt])
+  @@index([recipient, status])
 }
 
 model InboundMessage {

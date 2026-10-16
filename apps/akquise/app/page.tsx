@@ -27,6 +27,10 @@ type State = {
   suppressions: Suppression[];
   audits: (Audit & { user: { name: string } })[];
   generator: string;
+  externalSending: boolean;
+  mailMode: string;
+  smtpPort: number | null;
+  smtpSecure: boolean;
 };
 const nav = [
   "Dashboard",
@@ -52,6 +56,9 @@ const labels: Record<string, string> = {
   INVALIDATED: "Ungültig",
   SIMULATED: "Lokal simuliert",
   BLOCKED: "Blockiert",
+  SENDING: "Versand reserviert",
+  UNKNOWN: "Zustellung unklar · keine Wiederholung",
+  TEST_SENT: "Intern versandt",
 };
 const empty = {
   organisation: "",
@@ -98,7 +105,13 @@ export default function App() {
     [message, setMessage] = useState({ recipient: "", subject: "", body: "" }),
     [read, setRead] = useState(false),
     [rationale, setRationale] = useState(""),
-    [procurement, setProcurement] = useState(false);
+    [procurement, setProcurement] = useState(false),
+    [dispatchConfirm, setDispatchConfirm] = useState(false);
+  const mailLabel = data?.externalSending
+    ? data.mailMode === "test"
+      ? "Interner SMTP-Testmodus"
+      : "Produktionsversand aktiv"
+    : "Versand deaktiviert";
   async function refresh() {
     const r = await fetch("/api/state", { cache: "no-store" });
     if (r.status === 401) {
@@ -226,6 +239,7 @@ export default function App() {
     const v = d.versions[0];
     setMessage({ recipient: v.recipient, subject: v.subject, body: v.body });
     setRead(false);
+    setDispatchConfirm(false);
   }
   const dirty = draft
     ? message.recipient !== draft.versions[0].recipient ||
@@ -339,7 +353,9 @@ export default function App() {
               {error}
             </p>
           )}
-          <p className="safe">● V1 · Externer Versand deaktiviert</p>
+          <p className="safe">
+            Persönlicher Zugang · Versand nur nach Freigabe
+          </p>
         </div>
       </main>
     );
@@ -375,9 +391,9 @@ export default function App() {
         </nav>
         <div className="sidebar-bottom">
           <p>
-            <span className="dot" /> SICHERER TESTMODUS
+            <span className="dot" /> {mailLabel}
           </p>
-          <p>Kein externer E-Mail-Versand</p>
+          <p>Nachrichtenversionen einzeln prüfen</p>
           <div className="profile">
             <span className="avatar">
               {data.user.name
@@ -403,7 +419,7 @@ export default function App() {
           <span>
             STUDIOJEKER GMBH <span className="muted">/ Akquiseplattform</span>
           </span>
-          <span className="test-tag">● V1 · Versand deaktiviert</span>
+          <span className="test-tag">● {mailLabel}</span>
         </header>
         <main className="content">
           <div className="page-heading">
@@ -447,7 +463,7 @@ export default function App() {
                     exakte Version geprüft hat.
                   </p>
                 </div>
-                <span className="outline-tag">LOKALER TESTMODUS</span>
+                <span className="outline-tag">{mailLabel.toUpperCase()}</span>
               </div>
               <div className="metrics">
                 {[
@@ -553,8 +569,9 @@ export default function App() {
                     </li>
                   </ol>
                   <div className="panel-note">
-                    V1 simuliert ausschliesslich lokal. Es werden keine externen
-                    E-Mails versandt.
+                    {data.externalSending
+                      ? "Jeder Versand benötigt die Freigabe der exakten Version und eine separate Versandbestätigung."
+                      : "Es werden keine externen E-Mails versandt. Lokale Simulation bleibt möglich."}
                   </div>
                 </section>
               </div>
@@ -705,7 +722,7 @@ export default function App() {
             <section className="panel">
               <div className="section-head">
                 <h2>Nachrichtenprotokoll</h2>
-                <span className="test-tag">Externer Versand gesperrt</span>
+                <span className="test-tag">{mailLabel}</span>
               </div>
               <div className="table-wrap">
                 <table>
@@ -726,7 +743,13 @@ export default function App() {
                         <td>
                           <Badge value={d.status} />
                         </td>
-                        <td className="mono">{d.messageId}</td>
+                        <td className="mono">
+                          {d.messageId}
+                          <small>
+                            {d.mode} · {d.envelopeRecipients?.join(", ")}
+                          </small>
+                          {d.error && <small>{d.error}</small>}
+                        </td>
                         <td>{date(d.createdAt)}</td>
                       </tr>
                     ))}
@@ -734,10 +757,7 @@ export default function App() {
                 </table>
               </div>
               {!data.deliveries.length && (
-                <p className="empty">
-                  Keine Nachrichten. Auch bei Freigabe bleibt der externe
-                  Versand deaktiviert.
-                </p>
+                <p className="empty">Keine Nachrichten. {mailLabel}.</p>
               )}
             </section>
           )}
@@ -752,10 +772,18 @@ export default function App() {
                     <dt>Absender</dt>
                     <dd>njeker@studiojeker.ch</dd>
                     <dt>Port / Verschlüsselung</dt>
-                    <dd>Noch durch Metanet zu bestätigen</dd>
+                    <dd>
+                      {data.smtpPort
+                        ? `${data.smtpPort} / ${data.smtpSecure ? "TLS" : "STARTTLS"}`
+                        : "Noch durch Metanet zu bestätigen"}
+                    </dd>
                     <dt>Externer Versand</dt>
                     <dd>
-                      <Badge value="BLOCKED" />
+                      {data.externalSending ? (
+                        mailLabel
+                      ) : (
+                        <Badge value="BLOCKED" />
+                      )}
                     </dd>
                     <dt>IMAP</dt>
                     <dd>Header-Zuordnung vorbereitet · nicht verbunden</dd>
@@ -1245,9 +1273,54 @@ export default function App() {
                 Lokal simulieren
               </button>
             </div>
+            {data.externalSending && (
+              <section className="legal">
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={dispatchConfirm}
+                    disabled={dirty}
+                    onChange={(e) => setDispatchConfirm(e.target.checked)}
+                  />
+                  {data.mailMode === "test"
+                    ? "Ich bestätige den Versand dieser Version ausschliesslich an die serverseitig festgelegten internen Testempfänger."
+                    : "Ich bestätige den tatsächlichen Versand dieser freigegebenen Version an den angezeigten Kontakt."}
+                </label>
+                <button
+                  disabled={
+                    busy ||
+                    dirty ||
+                    !dispatchConfirm ||
+                    latest(draft) !== "APPROVED"
+                  }
+                  onClick={() =>
+                    action(async () => {
+                      const result = await post("send", {
+                        draftId: draft.id,
+                        version,
+                        confirmDispatch: true,
+                      });
+                      setDispatchConfirm(false);
+                      if (
+                        !["SENT", "TEST_SENT"].includes(result.delivery.status)
+                      )
+                        throw new Error(
+                          "Zustellung nicht bestätigt. Protokoll prüfen; nicht erneut senden.",
+                        );
+                      setDraft(null);
+                    }, "Versand protokolliert.")
+                  }
+                >
+                  {data.mailMode === "test"
+                    ? "Internen Test versenden"
+                    : "Freigegebene Version versenden"}
+                </button>
+              </section>
+            )}
             <p className="warning">
-              Externer Versand ist in V1 gesperrt. Freigabe und rechtliche
-              Prüfung sind getrennte Entscheidungen.
+              {mailLabel}. Freigabe und rechtliche Prüfung sind getrennte
+              Entscheidungen. Unklare Zustellungen werden niemals automatisch
+              wiederholt.
             </p>
             <details>
               <summary>Versionen & Freigabeprotokoll</summary>

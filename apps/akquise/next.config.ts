@@ -4,7 +4,9 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 const development = process.env.NODE_ENV === "development";
 const config: NextConfig = {
   agentRules: false,
+  experimental: { useTypeScriptCli: false },
   poweredByHeader: false,
+  output: "standalone",
   outputFileTracingRoot: root,
   turbopack: { root },
   serverExternalPackages: ["exceljs"],
