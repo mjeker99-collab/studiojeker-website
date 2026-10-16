@@ -7,3 +7,10 @@ node_modules/
 test-results/
 playwright-report/
 .local/
+
+*.env
+**/demo-access*
+*.dump
+*.partial
+*.pem
+*.key

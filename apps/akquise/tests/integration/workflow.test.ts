@@ -262,3 +262,128 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
     }),
   );
 });
+
+const { dispatchApproved } = await import("../../lib/delivery");
+async function withMockSmtp(
+  mode: "test" | "production",
+  run: () => Promise<void>,
+) {
+  const config = {
+    MAIL_MODE: mode,
+    ENABLE_EMAIL_SENDING: "true",
+    SMTP_CONFIGURATION_CONFIRMED: "true",
+    SMTP_HOST: "jovinus.metanet.ch",
+    SMTP_PORT: "587",
+    SMTP_SECURE: "false",
+    SMTP_USER: "njeker@studiojeker.ch",
+    SMTP_PASSWORD: "synthetic-unused-password",
+    MAIL_FROM: "njeker@studiojeker.ch",
+    TEST_MAIL_RECIPIENTS: "nora@studiojeker.ch",
+    DAILY_SEND_LIMIT: "500",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(config).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, config);
+  try {
+    await run();
+  } finally {
+    for (const [key, value] of Object.entries(previous))
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+  }
+}
+test("SMTP-Dispatch ist ohne explizite Konfiguration blockiert; kein Transportaufruf", async () => {
+  const { d } = await prepared("disabled-smtp");
+  let calls = 0;
+  await assert.rejects(
+    dispatchApproved(martin, d.id, 1, async () => {
+      calls++;
+      return { accepted: [], rejected: [] };
+    }),
+    /deaktiviert/,
+  );
+  assert.equal(calls, 0);
+});
+test("Interner SMTP-Test überschreibt Header und Envelope mit der festen internen Liste", async () => {
+  await withMockSmtp("test", async () => {
+    const { c, d } = await prepared("internal-smtp");
+    let calls = 0;
+    const result = await dispatchApproved(nora, d.id, 1, async (m) => {
+      calls++;
+      assert.deepEqual(m.envelopeRecipients, ["nora@studiojeker.ch"]);
+      assert.equal(m.recipient, c.email);
+      assert.equal(m.test, true);
+      return { accepted: m.envelopeRecipients, rejected: [] };
+    });
+    assert.equal(calls, 1);
+    assert.equal(result.delivery.status, "TEST_SENT");
+    assert.notEqual(
+      (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).status,
+      "SENT",
+    );
+  });
+});
+test("Paralleler Produktionsdispatch mit Mock erzeugt nur einen Transportaufruf", async () => {
+  await withMockSmtp("production", async () => {
+    const { d } = await prepared("smtp-parallel");
+    let calls = 0;
+    const mock = async (m: import("../../lib/mail").OutboundMessage) => {
+      calls++;
+      return { accepted: m.envelopeRecipients, rejected: [] };
+    };
+    const results = await Promise.all([
+      dispatchApproved(martin, d.id, 1, mock),
+      dispatchApproved(nora, d.id, 1, mock),
+    ]);
+    assert.equal(calls, 1);
+    assert.equal(results[0].delivery.id, results[1].delivery.id);
+    assert.equal(
+      (
+        await db.delivery.findUniqueOrThrow({
+          where: { id: results[0].delivery.id },
+        })
+      ).status,
+      "SENT",
+    );
+  });
+});
+test("SMTP-Timeout ist UNKNOWN und wird nie automatisch wiederholt", async () => {
+  await withMockSmtp("production", async () => {
+    const { d } = await prepared("smtp-timeout");
+    let calls = 0;
+    const mock = async () => {
+      calls++;
+      throw new Error("Synthetic socket timeout");
+    };
+    const first = await dispatchApproved(martin, d.id, 1, mock);
+    assert.equal(first.delivery.status, "UNKNOWN");
+    assert.equal(first.delivery.error, "SMTP_RESULT_UNCERTAIN_NO_RETRY");
+    const second = await dispatchApproved(martin, d.id, 1, mock);
+    assert.equal(second.reused, true);
+    assert.equal(calls, 1);
+  });
+});
+test("Änderung nach Freigabe verhindert SMTP; bestehende Datensätze bleiben erhalten", async () => {
+  await withMockSmtp("production", async () => {
+    const { d } = await prepared("smtp-edited");
+    const v = await db.draftVersion.findFirstOrThrow({
+      where: { draftId: d.id },
+    });
+    await editDraft(martin, d.id, 1, {
+      recipient: v.recipient,
+      subject: v.subject,
+      body: v.body + " Änderung.",
+    });
+    let calls = 0;
+    await assert.rejects(
+      dispatchApproved(nora, d.id, 1, async () => {
+        calls++;
+        return { accepted: [], rejected: [] };
+      }),
+      /geändert/,
+    );
+    assert.equal(calls, 0);
+    assert.equal(await db.draftVersion.count({ where: { draftId: d.id } }), 2);
+  });
+});

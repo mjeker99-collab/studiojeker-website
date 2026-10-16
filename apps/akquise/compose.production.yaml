@@ -1,0 +1,66 @@
+name: studiojeker-akquise
+services:
+  db:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: akquise
+      POSTGRES_USER: akquise
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a unique database secret}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U akquise -d akquise']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+  migrate:
+    build:
+      context: .
+      target: operations
+    env_file: deploy/production.env
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-${DATABASE_URL:?Set DATABASE_URL}}
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [backend]
+    restart: 'no'
+  app:
+    build:
+      context: .
+      target: runtime
+    env_file: deploy/production.env
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: ['/tmp', '/app/.next/cache']
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [backend, outbound]
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set the dedicated acquisition subdomain}
+      ACME_EMAIL: ${ACME_EMAIL:?Set certificate administrator email}
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app: {condition: service_healthy}
+    networks: [outbound]
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+networks:
+  backend: {internal: true}
+  outbound:

@@ -4,7 +4,9 @@ import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { login, requireUser, tokenHash } from "@/lib/auth";
-import { PolicyError, assertExternalSendingAllowed } from "@/lib/policy";
+import { PolicyError } from "@/lib/policy";
+import { appOrigin, sessionCookieName, readMailConfig } from "@/lib/config.mjs";
+import { dispatchApproved } from "@/lib/delivery";
 import { parseImport } from "@/lib/import";
 import {
   saveContact,
@@ -70,8 +72,7 @@ async function handler(
     const { path } = await context.params;
     const route = path.join("/");
     if (req.method !== "GET") {
-      const expected = new URL(process.env.APP_URL ?? "http://localhost:3100")
-        .origin;
+      const expected = appOrigin();
       if (req.headers.get("origin") !== expected)
         throw new PolicyError("Ungültiger Anfrage-Ursprung.", 403);
     }
@@ -85,7 +86,7 @@ async function handler(
         .parse(await jsonBody(req));
       const result = await login(data.email, data.password);
       if ("error" in result) throw new PolicyError(result.error!, 401);
-      (await cookies()).set("akquise-session", result.token!, {
+      (await cookies()).set(sessionCookieName(), result.token!, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -97,10 +98,10 @@ async function handler(
     const user = await requireUser();
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
-      const token = jar.get("akquise-session")?.value;
+      const token = jar.get(sessionCookieName())?.value;
       if (token)
         await db.session.deleteMany({ where: { id: tokenHash(token) } });
-      jar.delete("akquise-session");
+      jar.delete(sessionCookieName());
       return NextResponse.json({ ok: true });
     }
     if (route === "state" && req.method === "GET") {
@@ -144,7 +145,10 @@ async function handler(
         suppressions,
         audits,
         users,
-        externalSending: false,
+        externalSending: readMailConfig().smtpAllowed,
+        mailMode: readMailConfig().mode,
+        smtpPort: readMailConfig().port || null,
+        smtpSecure: readMailConfig().secure,
         generator: "Lokale Vorlage · KI-Schnittstelle vorbereitet",
       });
     }
@@ -251,10 +255,21 @@ async function handler(
       return NextResponse.json(await simulate(user.id, d.draftId, d.version));
     }
     if (route === "send") {
-      await audit(db, user.id, "SEND_BLOCKED", "v1", {
-        reason: "External sending disabled",
-      });
-      assertExternalSendingAllowed();
+      if (!readMailConfig().smtpAllowed) {
+        await audit(db, user.id, "SEND_BLOCKED", "configuration", {});
+        throw new PolicyError("Externer E-Mail-Versand ist deaktiviert.", 403);
+      }
+      const d = z
+        .object({
+          draftId: z.string(),
+          version: z.number().int().positive(),
+          confirmDispatch: z.literal(true),
+        })
+        .strict()
+        .parse(body);
+      return NextResponse.json(
+        await dispatchApproved(user.id, d.draftId, d.version),
+      );
     }
     throw new PolicyError("Nicht gefunden.", 404);
   } catch (error) {

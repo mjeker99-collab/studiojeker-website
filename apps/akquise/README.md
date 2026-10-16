@@ -2,7 +2,9 @@
 
 Eigenständige interne Next.js-Anwendung unter `apps/akquise/`. Die bestehende Studiojeker-Website, ihr CMS und ihre Deployments bleiben unverändert. Kein produktives Deployment wurde eingerichtet.
 
-**V1 kann keine externen E-Mails senden.** Selbst `ENABLE_EMAIL_SENDING=true` hebt die fest codierte Sperre nicht auf. Nodemailer wird ausschliesslich mit lokalem Stream-Transport verwendet. Es gibt keine automatische Versandwarteschlange, keine Test-Mailbox-Weiterleitung und keine automatischen Follow-ups.
+**Produktionsvorbereitung:** Start-, HTTPS-, Datenbank-, Backup- und Betriebsanleitung: [docs/PRODUCTION.md](docs/PRODUCTION.md). Noch nicht veröffentlicht. Das bestehende Metanet-Webhosting unterstützt laut Projektdokumentation keine Node.js-Runtime und ist daher für diese App nicht ausreichend.
+
+**Versand ist standardmässig deaktiviert.** SMTP benötigt einen expliziten Modus, beide Freigabeschalter, bestätigte Metanet-Konfiguration, die Freigabe der konkreten Nachrichtenversion und eine separate Versandbestätigung. Interner Testmodus leitet Header und Envelope ausschliesslich an eine festgelegte interne Liste um. Aktuell keine echten E-Mail-Versuche.
 
 ## Lokal starten und im Browser ansehen
 
@@ -32,7 +34,7 @@ ALLOW_SYNTHETIC_SEED=true npm run db:seed
 npm run dev
 ```
 
-**Browser: http://localhost:3100**. Bei einer entfernten Entwicklungsumgebung Port 3100 lokal weiterleiten. `APP_URL` muss exakt dem Browser-Ursprung entsprechen; eine andere Preview-Domain erfordert Anpassung und Neustart. `NODE_ENV=production` benötigt HTTPS für das Secure-Sitzungscookie.
+**Browser: http://localhost:3100**. Bei einer entfernten Entwicklungsumgebung Port 3100 lokal weiterleiten. `APP_URL` muss exakt dem Browser-Ursprung entsprechen; eine andere Preview-Domain erfordert Anpassung und Neustart. `NODE_ENV=production` benötigt eine eigene HTTPS-APP_URL, echte persönliche Konten und eine Produktions-Datenbankkonfiguration; localhost und Demo-Konten werden dann abgewiesen.
 
 Der Seed legt ausschliesslich synthetische `.example.test`-Kontakte sowie individuelle lokale Konten `martin@example.test` und `nora@example.test` an. Zufällige Passwörter werden einmalig im Terminal ausgegeben und geschützt unter `.local/demo-access.txt` abgelegt. Diese Datei ist nicht in Git. Kein gemeinsames Passwort, kein eingebauter Login und kein automatischer Demo-Zugang. Seed niemals gegen produktive Daten ausführen.
 
@@ -94,14 +96,14 @@ PLAYWRIGHT_BROWSERS_PATH="$PWD/.local/playwright" npm run test:browser
 
 Die Tests lesen die lokalen Demo-Zugangsdaten aus `.local/demo-access.txt`; alternativ `E2E_EMAIL` und `E2E_PASSWORD` setzen. Die UI-Tests erzeugen einen synthetischen Entwurf, aber keine externen Nachrichten. Screenshots liegen lokal unter `.local/dashboard-*.png`. Ergebnisse und Grenzen: [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md).
 
-## Späteres separates Deployment
+## Separates Hosting und Deployment
 
-Noch kein Deployment ausführen. Nach technischer und organisatorischer Abnahme:
+Die konkret vorbereiteten Produktionswege (Docker Compose oder Standalone/systemd), SMTP-Freigaben, Secrets, Backup/Restore und Datenübernahme stehen in [docs/PRODUCTION.md](docs/PRODUCTION.md). Die vorhandene Website bleibt unverändert. Kein Produktionsdeployment wurde ausgeführt.
 
-- Eigenen App-Service und eigene PostgreSQL-Datenbank bereitstellen; niemals den Website-Service ersetzen. Build-/Working-Directory ausschliesslich `apps/akquise`.
-- Node.js 22+, `npm ci`, `npm run db:generate`, `npm run db:migrate`, `npm run build`, dann `npm start` hinter HTTPS-Reverse-Proxy. Migrationen mit separatem administrativem Job ausführen; Laufzeit-Datenbankkonto möglichst einschränken.
-- `APP_URL=https://akquise.studiojeker.ch` setzen. TLS, Backups samt Restore-Test, Protokollaufbewahrung, Monitoring, Server-Updates und externes Rate-Limiting einrichten. Datenbank nur intern erreichbar machen. `.env`/Secrets in serverseitigem Secret-Store pflegen.
-- Testkonten und synthetische Daten nicht in Produktion übernehmen. Martin/Nora einzeln provisionieren. Keine gemeinsame Benutzerkennung.
-- `ENABLE_EMAIL_SENDING=false` belassen. Auch mit anderem Wert blockiert V1. Metanet-Port, TLS und Authentifizierung bleiben unbestätigt. Ein künftiger echter Versand benötigt eine separate Implementierung und erneute explizite Abnahme; ein Umgebungsvariablenwechsel reicht nicht.
+- Vollständige Konfiguration: `.env.example`; separate Produktionsvorlage: `deploy/production.env.example`.
+- Produktionsstart: `npm start`; Standalone-Artefakt: nach `npm run build` mit `npm run release:package` erzeugen.
+- Gesundheitsprüfung: `/api/health/live` und `/api/health/ready`.
+- Aktuelle Prüfergebnisse und noch nicht ausgeführte Hostprüfungen: [docs/PRODUCTION_TEST_RESULTS.md](docs/PRODUCTION_TEST_RESULTS.md).
+- Historische V1-Ergebnisse vom 15. Oktober sind weiterhin separat dokumentiert und keine Behauptung über neue Produktionsprüfungen.
 
-[Architektur](docs/ARCHITECTURE.md) · [Auslagerung ohne Datenverlust](docs/EXTRACTION.md) · [Prüfergebnisse](docs/TEST_RESULTS.md)
+[Architektur](docs/ARCHITECTURE.md) · [Auslagerung ohne Datenverlust](docs/EXTRACTION.md) · [Produktionsbetrieb](docs/PRODUCTION.md)

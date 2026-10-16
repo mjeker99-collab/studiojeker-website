@@ -1,5 +1,7 @@
 # Architekturplan – vor Implementierung festgelegt
 
+> Historischer Stand der lokalen V1. Die Produktionsvorbereitung vom 16. Oktober ist in PRODUCTION.md und PRODUCTION_TEST_RESULTS.md dokumentiert; deren Konfigurations- und Versandregeln ersetzen die ursprüngliche dauerhafte SMTP-Sperre.
+
 Die bestehende Website liegt im Repository-Root. Alle Ergänzungen liegen isoliert in apps/akquise. Keine Root-Abhängigkeiten, Website-Komponenten, CMS-Konfigurationen oder Deployments werden geändert.
 
 - Next.js App Router, TypeScript, Tailwind, Node-Runtime, eigene Portnummer 3100.

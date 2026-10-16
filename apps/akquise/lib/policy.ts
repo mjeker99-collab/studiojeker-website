@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readMailConfig } from "./config.mjs";
 export class PolicyError extends Error {
   constructor(
     message: string,
@@ -47,13 +48,12 @@ export function verifiedContact(c: {
   if (c.verifiedAt > new Date())
     throw new PolicyError("Verifikation darf nicht in der Zukunft liegen.");
 }
-// V1 invariant: this constant is deliberately independent of environment settings.
-export const V1_EXTERNAL_SENDING_ALLOWED = false;
-export function assertExternalSendingAllowed(): never {
-  throw new PolicyError(
-    "V1: Externer E-Mail-Versand ist dauerhaft deaktiviert.",
-    403,
-  );
+// Enabling a variable alone never permits SMTP: configuration and mode must agree.
+export function assertExternalSendingAllowed(): void {
+  try {
+    if (readMailConfig().smtpAllowed) return;
+  } catch {}
+  throw new PolicyError("Externer E-Mail-Versand ist deaktiviert.", 403);
 }
 export function legalAllowed(
   review: {

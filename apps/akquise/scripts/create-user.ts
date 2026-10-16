@@ -1,4 +1,5 @@
 import { db } from "../lib/db";
+import { allowedAccount } from "../lib/config.mjs";
 import { hashPassword } from "../lib/auth";
 // Read initial password from stdin; never from a command argument or committed file.
 const [name, email] = process.argv.slice(2);
@@ -9,6 +10,10 @@ if (
 )
   throw new Error(
     'Aufruf: npm run user:create -- "Martin Jeker" individuelle@adresse.ch < passwortdatei',
+  );
+if (!allowedAccount({ name, email: email.trim().toLowerCase() }))
+  throw new Error(
+    "E-Mail muss zum konfigurierten persönlichen Produktionskonto passen.",
   );
 let password = "";
 for await (const chunk of process.stdin) password += chunk;
