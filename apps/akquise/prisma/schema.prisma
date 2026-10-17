@@ -71,31 +71,33 @@ model LoginAttempt {
 }
 
 model Contact {
-  id                 String        @id @default(cuid())
+  organizationId     String             @default("studiojeker")
+  organization       StudioOrganization @relation(fields: [organizationId], references: [id])
+  id                 String             @id @default(cuid())
   organisation       String
-  industry           String        @default("")
-  region             String        @default("")
+  industry           String             @default("")
+  region             String             @default("")
   firstName          String
   lastName           String
-  position           String        @default("")
-  email              String        @unique
-  personKey          String        @unique
-  website            String        @default("")
-  sourceUrl          String        @default("")
+  position           String             @default("")
+  email              String             @unique
+  personKey          String             @unique
+  website            String             @default("")
+  sourceUrl          String             @default("")
   verifiedAt         DateTime?
-  confidence         String        @default("UNCONFIRMED")
-  hook               String        @default("")
-  service            String        @default("")
-  legalCategory      String        @default("UNASSESSED")
-  publicAuthority    Boolean       @default(false)
-  newsletterConsent  Boolean       @default(false)
-  newsletterEvidence String        @default("")
-  status             ContactStatus @default(NEW)
-  owner              String        @default("")
-  notes              String        @default("")
-  revision           Int           @default(1)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  confidence         String             @default("UNCONFIRMED")
+  hook               String             @default("")
+  service            String             @default("")
+  legalCategory      String             @default("UNASSESSED")
+  publicAuthority    Boolean            @default(false)
+  newsletterConsent  Boolean            @default(false)
+  newsletterEvidence String             @default("")
+  status             ContactStatus      @default(NEW)
+  owner              String             @default("")
+  notes              String             @default("")
+  revision           Int                @default(1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   drafts             Draft[]
   legalReviews       LegalReview[]
 }
@@ -113,18 +115,20 @@ model LegalReview {
 }
 
 model Draft {
+  organizationId   String             @default("studiojeker")
+  organization     StudioOrganization @relation(fields: [organizationId], references: [id])
   campaignId       String?
-  campaign         Campaign?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  campaign         Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   ownerId          String?
-  owner            User?          @relation("DraftOwner", fields: [ownerId], references: [id])
+  owner            User?              @relation("DraftOwner", fields: [ownerId], references: [id])
   scheduledAt      DateTime?
-  planningRevision Int            @default(1)
-  id               String         @id @default(cuid())
+  planningRevision Int                @default(1)
+  id               String             @id @default(cuid())
   contactId        String
-  contact          Contact        @relation(fields: [contactId], references: [id])
-  version          Int            @default(1)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  contact          Contact            @relation(fields: [contactId], references: [id])
+  version          Int                @default(1)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   versions         DraftVersion[]
   approvals        Approval[]
   deliveries       Delivery[]
@@ -220,38 +224,44 @@ enum EditorialStatus {
 }
 
 model Campaign {
-  id        String             @id @default(cuid())
-  title     String
-  goal      String
-  audience  String
-  startsAt  DateTime
-  endsAt    DateTime
-  ownerId   String
-  owner     User               @relation("CampaignOwner", fields: [ownerId], references: [id])
-  revision  Int                @default(1)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  contents  MarketingContent[]
-  drafts    Draft[]
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  id             String             @id @default(cuid())
+  title          String
+  goal           String
+  audience       String
+  startsAt       DateTime
+  endsAt         DateTime
+  ownerId        String
+  owner          User               @relation("CampaignOwner", fields: [ownerId], references: [id])
+  revision       Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  contents       MarketingContent[]
+  drafts         Draft[]
 }
 
 model MarketingContent {
-  id           String              @id @default(cuid())
-  kind         ContentKind
-  title        String
-  version      Int                 @default(1)
-  status       EditorialStatus     @default(DRAFT)
-  campaignId   String?
-  campaign     Campaign?           @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  ownerId      String
-  owner        User                @relation("ContentOwner", fields: [ownerId], references: [id])
-  scheduledAt  DateTime?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  versions     MarketingVersion[]
-  approvals    MarketingApproval[]
-  publications ManualPublication[]
-  exports      NewsletterExport[]
+  studioSeriesId String?
+  studioSeries   StudioSeries?       @relation(fields: [studioSeriesId], references: [id])
+  organizationId String              @default("studiojeker")
+  organization   StudioOrganization  @relation(fields: [organizationId], references: [id])
+  id             String              @id @default(cuid())
+  kind           ContentKind
+  title          String
+  version        Int                 @default(1)
+  status         EditorialStatus     @default(DRAFT)
+  campaignId     String?
+  campaign       Campaign?           @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  ownerId        String
+  owner          User                @relation("ContentOwner", fields: [ownerId], references: [id])
+  scheduledAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  versions       MarketingVersion[]
+  approvals      MarketingApproval[]
+  publications   ManualPublication[]
+  exports        NewsletterExport[]
 
   @@index([campaignId, scheduledAt])
 }
@@ -303,4 +313,74 @@ model NewsletterExport {
   userId    String
   format    String           @default("HTML_AND_TEXT")
   createdAt DateTime         @default(now())
+}
+
+// Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.
+model StudioOrganization {
+  id        String             @id
+  name      String
+  brand     Json
+  createdAt DateTime           @default(now())
+  series    StudioSeries[]
+  assets    StudioAsset[]
+  jobs      StudioJob[]
+  contacts  Contact[]
+  drafts    Draft[]
+  campaigns Campaign[]
+  contents  MarketingContent[]
+}
+
+model StudioSeries {
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  title          String
+  briefing       Json
+  ownerId        String
+  createdAt      DateTime           @default(now())
+  contents       MarketingContent[]
+  jobs           StudioJob[]
+}
+
+model StudioAsset {
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  objectKey      String             @unique
+  name           String
+  mime           String
+  size           Int
+  sha256         String
+  kind           String
+  width          Int?
+  height         Int?
+  userId         String
+  deletedAt      DateTime?
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
+model StudioJob {
+  id                String             @id @default(cuid())
+  organizationId    String             @default("studiojeker")
+  organization      StudioOrganization @relation(fields: [organizationId], references: [id])
+  seriesId          String
+  series            StudioSeries       @relation(fields: [seriesId], references: [id])
+  requestKey        String             @unique
+  kind              String
+  status            String             @default("QUEUED")
+  input             Json
+  result            Json?
+  model             String
+  reserveUsd        Float
+  usage             Json?
+  error             String?
+  providerRequestId String?
+  userId            String
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime           @default(now())
+
+  @@index([organizationId, status, createdAt])
 }

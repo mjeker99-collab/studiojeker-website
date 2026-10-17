@@ -23,6 +23,18 @@ const {
 } = await import("../../lib/workflow");
 const { parseImport } = await import("../../lib/import");
 const { execFileSync } = await import("node:child_process");
+// Load all modules before registering hooks/tests: late top-level awaits can
+// let the node:test runner finish a filtered suite and drop its schema early.
+const { dispatchApproved } = await import("../../lib/delivery");
+const hub = await import("../../lib/hub/workflow");
+const { exportNewsletter } = await import("../../lib/hub/newsletter");
+const studio = await import("../../lib/studio/service");
+const studioAssets = await import("../../lib/studio/assets");
+const studioRender = await import("../../lib/studio/render");
+const { contentInput: studioContentInput } =
+  await import("../../lib/hub/input");
+const { ProviderFailure } = await import("../../lib/studio/provider");
+const sharp = (await import("sharp")).default;
 let martin: string, nora: string;
 const input = (suffix: string) => ({
   organisation: "Synthetisch " + suffix,
@@ -39,7 +51,11 @@ before(async () => {
   execFileSync(
     "node",
     ["node_modules/prisma/build/index.js", "migrate", "deploy"],
-    { env: process.env, stdio: "pipe" },
+    {
+      env: { ...process.env, NODE_TEST_CONTEXT: undefined },
+      stdio: "pipe",
+      timeout: 20000,
+    },
   );
   martin = (
     await db.user.create({
@@ -263,7 +279,6 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
   );
 });
 
-const { dispatchApproved } = await import("../../lib/delivery");
 async function withMockSmtp(
   mode: "test" | "production",
   run: () => Promise<void>,
@@ -389,8 +404,6 @@ test("Änderung nach Freigabe verhindert SMTP; bestehende Datensätze bleiben er
 });
 
 // Marketing Hub uses the same isolated schema and only synthetic fixtures.
-const hub = await import("../../lib/hub/workflow");
-const { exportNewsletter } = await import("../../lib/hub/newsletter");
 const social = (ownerId: string, campaignId: string | null = null) => ({
   kind: "SOCIAL" as const,
   title: "Synthetische Kampagnenidee",
@@ -690,4 +703,441 @@ test("Hub: Akquise-Planung bewahrt bestehende Nachricht und Freigabe; Kalender l
   assert.ok(state.contents.some((x) => x.kind === "SOCIAL"));
   assert.ok(state.contents.some((x) => x.kind === "NEWSLETTER"));
   assert.equal(state.integrations.mailchimp, "NOT_CONNECTED");
+});
+
+// Explicit in-memory storage and AI adapters below are test-only. No provider/network calls.
+const objectBytes = new Map<string, Buffer>();
+const testStore: import("../../lib/studio/storage").ObjectStore = {
+  async put(k, b) {
+    objectBytes.set(k, Buffer.from(b));
+  },
+  async get(k) {
+    const b = objectBytes.get(k);
+    if (!b) throw new Error("Test object missing");
+    return b;
+  },
+  async remove(k) {
+    objectBytes.delete(k);
+  },
+};
+const studioBrief = (count = 1) => ({
+  title: "Synthetische Studio-Serie",
+  topic: "Eigene Fotografie",
+  offer: "Dokumentierte Fotografie",
+  goal: "Informieren",
+  audience: "Synthetische KMU",
+  tone: "Schweizer Hochdeutsch",
+  channels: ["LINKEDIN", "INSTAGRAM", "FACEBOOK"],
+  count,
+  formats: ["1:1", "4:5", "9:16"],
+  campaignId: null,
+  referenceAssetIds: [],
+});
+async function studioContent(seriesId: string) {
+  return db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: seriesId },
+    include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+  });
+}
+async function testMotif() {
+  return studioAssets.storeAsset(
+    martin,
+    await sharp({
+      create: { width: 320, height: 240, channels: 3, background: "#00c8ff" },
+    })
+      .png()
+      .toBuffer(),
+    "synthetisches-testmotiv.png",
+    "ORIGINAL",
+    undefined,
+    testStore,
+  );
+}
+test("Studio: Speichern/Wiederladen, bestehende Datenzuordnung und Serien bis sechs", async () => {
+  const before = await db.contact.count();
+  const series = await studio.createSeries(martin, studioBrief(6));
+  const all = await db.marketingContent.findMany({
+    where: { studioSeriesId: series.id },
+  });
+  assert.equal(all.length, 6);
+  assert.ok(all.every((c) => c.organizationId === "studiojeker"));
+  assert.equal(await db.contact.count(), before);
+  const configBefore = process.env.STUDIO_LOCAL_ASSETS;
+  process.env.STUDIO_LOCAL_ASSETS = "true";
+  try {
+    const state = await studio.studioState(nora);
+    assert.equal(
+      state.series.find((s) => s.id === series.id)!.contents.length,
+      6,
+    );
+  } finally {
+    if (configBefore === undefined) delete process.env.STUDIO_LOCAL_ASSETS;
+    else process.env.STUDIO_LOCAL_ASSETS = configBefore;
+  }
+  await assert.rejects(
+    studio.createSeries("unbekannt", studioBrief()),
+    /Berechtigung/,
+  );
+});
+test("Studio: geschützte Assets, falsche Typen, fremde Organisation und Hash-Manipulation", async () => {
+  await assert.rejects(
+    studioAssets.storeAsset(
+      martin,
+      Buffer.from("<svg><script/></svg>"),
+      "bad.svg",
+      "ORIGINAL",
+      undefined,
+      testStore,
+    ),
+    /Ungültiges Bild/,
+  );
+  await assert.rejects(
+    studioAssets.storeAsset(
+      martin,
+      Buffer.alloc(8 * 1024 * 1024 + 1),
+      "big.png",
+      "ORIGINAL",
+      undefined,
+      testStore,
+    ),
+    /gross/,
+  );
+  const asset = await testMotif();
+  assert.equal(
+    (await studioAssets.readAsset(nora, asset.id, testStore)).asset.sha256,
+    asset.sha256,
+  );
+  await assert.rejects(
+    studioAssets.readAsset("unbekannt", asset.id, testStore),
+    /Berechtigung/,
+  );
+  await db.studioOrganization.create({
+    data: { id: "foreign-test", name: "Synthetisch fremd", brand: {} },
+  });
+  await db.studioAsset.update({
+    where: { id: asset.id },
+    data: { organizationId: "foreign-test" },
+  });
+  await assert.rejects(
+    studioAssets.readAsset(nora, asset.id, testStore),
+    /nicht gefunden/,
+  );
+  await db.studioAsset.update({
+    where: { id: asset.id },
+    data: { organizationId: "studiojeker" },
+  });
+  objectBytes.set(asset.objectKey, Buffer.from("tampered"));
+  await assert.rejects(
+    studioAssets.readAsset(martin, asset.id, testStore),
+    /Prüfsumme/,
+  );
+});
+test("Studio: konkrete Bild-/Layoutfreigabe, Entwertung nach Änderung, Export und ZIP", async () => {
+  const s = await studio.createSeries(martin, studioBrief()),
+    c = await studioContent(s.id),
+    asset = await testMotif();
+  const payload = studioContentInput.parse(c.versions[0].payload);
+  payload.studio = {
+    ...payload.studio!,
+    motifAssetId: asset.id,
+    motifSha256: asset.sha256,
+    headline: "Synthetischer Test",
+    showHeadline: false,
+  };
+  payload.variants = payload.variants.map((v) => ({
+    ...v,
+    mediaType: "IMAGE",
+    mediaReference: `Studio-Asset ${asset.id}`,
+  }));
+  await hub.saveContent(nora, payload, c.id, 1);
+  await assert.rejects(
+    hub.reviewContent(martin, c.id, 2, "APPROVED", false),
+    /prüfen/,
+  );
+  await assert.rejects(
+    studioRender.exportContent(martin, c.id, 2, "1:1", "png", false, testStore),
+    /freigegeben/,
+  );
+  await hub.reviewContent(martin, c.id, 2, "APPROVED", true);
+  for (const format of ["1:1", "4:5", "9:16"] as const) {
+    const r = await studioRender.exportContent(
+      nora,
+      c.id,
+      2,
+      format,
+      "png",
+      false,
+      testStore,
+    );
+    const img = await studioAssets.readAsset(martin, r.assetId, testStore);
+    const m = await sharp(img.bytes).metadata();
+    assert.equal(m.width, 1080);
+    assert.equal(
+      m.height,
+      format === "1:1" ? 1080 : format === "4:5" ? 1350 : 1920,
+    );
+  }
+  const motif = await studioRender.exportMotif(nora, c.id, 2, "jpg", testStore);
+  const motifBytes = await studioAssets.readAsset(
+    martin,
+    motif.assetId,
+    testStore,
+  );
+  assert.equal(motifBytes.asset.mime, "image/jpeg");
+  assert.equal((await sharp(motifBytes.bytes).metadata()).width, 320);
+  const jpg = await studioRender.exportContent(
+    nora,
+    c.id,
+    2,
+    "1:1",
+    "jpg",
+    false,
+    testStore,
+  );
+  assert.equal(
+    (await studioAssets.readAsset(martin, jpg.assetId, testStore)).asset.mime,
+    "image/jpeg",
+  );
+  const zip = await studioRender.exportSeries(nora, s.id, testStore);
+  assert.equal(
+    (await studioAssets.readAsset(martin, zip.assetId, testStore)).bytes
+      .subarray(0, 2)
+      .toString(),
+    "PK",
+  );
+  await hub.saveContent(
+    nora,
+    { ...payload, studio: { ...payload.studio, cropX: 0.25 } },
+    c.id,
+    2,
+  );
+  assert.equal(
+    await db.marketingApproval.count({
+      where: { contentId: c.id, status: "APPROVED" },
+    }),
+    0,
+  );
+  await assert.rejects(
+    studioRender.exportSeries(martin, s.id, testStore),
+    /freigegeben/,
+  );
+  await assert.rejects(
+    hub.saveContent(
+      nora,
+      {
+        ...payload,
+        studio: { ...payload.studio, motifSha256: "0".repeat(64) },
+      },
+      c.id,
+      3,
+    ),
+    /nicht zugänglich/,
+  );
+  await assert.rejects(
+    hub.saveContent(nora, { ...payload, studio: undefined }, c.id, 3),
+    /Zuordnung/,
+  );
+});
+test("Studio: Schriftdatei fehlt – sichtbare Textebenen werden nicht mit Ersatzschrift freigegeben", async () => {
+  const s = await studio.createSeries(martin, studioBrief()),
+    c = await studioContent(s.id),
+    asset = await testMotif();
+  const p = studioContentInput.parse(c.versions[0].payload);
+  p.studio = {
+    ...p.studio!,
+    motifAssetId: asset.id,
+    motifSha256: asset.sha256,
+    headline: "Test",
+    showHeadline: true,
+  };
+  await hub.saveContent(martin, p, c.id, 1);
+  await assert.rejects(
+    hub.reviewContent(nora, c.id, 2, "APPROVED", true),
+    /Schriftdatei/,
+  );
+  await assert.rejects(
+    studioRender.exportContent(martin, c.id, 2, "1:1", "png", true, testStore),
+    /Schriftdatei/,
+  );
+});
+test("Studio: keine API-Schlüssel, deduplizierte Aufträge, Fehler und Wiederaufnahme ohne Live-KI", async () => {
+  const s = await studio.createSeries(martin, studioBrief()),
+    c = await studioContent(s.id);
+  const envNames = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "CONTENT_DAILY_REQUEST_LIMIT",
+    "CONTENT_DAILY_BUDGET_USD",
+    "STUDIO_LOCAL_ASSETS",
+  ];
+  const old = Object.fromEntries(envNames.map((k) => [k, process.env[k]]));
+  try {
+    delete process.env.OPENAI_API_KEY;
+    process.env.CONTENT_AI_ENABLED = "true";
+    const { randomUUID } = await import("node:crypto");
+    const request = {
+      seriesId: s.id,
+      kind: "TEXT",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [],
+      referenceRights: false,
+      referenceTransfer: false,
+      confirmedCosts: true,
+    };
+    await assert.rejects(studio.queueJob(martin, request), /Nicht verbunden/);
+    process.env.OPENAI_API_KEY = "explicit-test-adapter-not-a-key";
+    process.env.STUDIO_LOCAL_ASSETS = "true";
+    process.env.CONTENT_DAILY_REQUEST_LIMIT = "100";
+    process.env.CONTENT_DAILY_BUDGET_USD = "100";
+    const j = await studio.queueJob(martin, request);
+    assert.equal((await studio.queueJob(nora, request)).id, j.id);
+    let calls = 0;
+    const fake: import("../../lib/studio/provider").AIProvider = {
+      async text() {
+        calls++;
+        return {
+          posts: [
+            {
+              imageIdea: "TESTADAPTER: geometrisches Motiv",
+              headline: "TESTADAPTER",
+              hashtags: "#Test",
+              variants: ["LINKEDIN", "INSTAGRAM", "FACEBOOK"].map(
+                (channel) => ({
+                  channel: channel as "LINKEDIN",
+                  text: "TESTADAPTER – synthetischer Text",
+                  cta: "Test",
+                }),
+              ),
+            },
+          ],
+          usage: { testAdapter: true },
+          requestId: "test-adapter",
+        };
+      },
+      async image() {
+        throw new Error("No image call expected");
+      },
+    };
+    const both = await Promise.allSettled([
+      studio.runJob(martin, j.id, fake, testStore),
+      studio.runJob(nora, j.id, fake, testStore),
+    ]);
+    assert.equal(both.filter((r) => r.status === "fulfilled").length, 1);
+    assert.equal(calls, 1);
+    await assert.rejects(
+      studio.runJob(nora, j.id, fake, testStore),
+      /bereits gestartet/,
+    );
+    assert.equal(
+      (await studio.studioState(nora)).jobs.find((job) => job.id === j.id)!
+        .status,
+      "SUCCEEDED",
+    );
+    await studio.applyJob(nora, j.id);
+    assert.equal((await studioContent(s.id)).version, 2);
+    assert.equal((await studioContent(s.id)).id, c.id);
+    await assert.rejects(studio.applyJob(nora, j.id), /noch nicht/);
+    const failed = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await studio.runJob(
+      martin,
+      failed.id,
+      {
+        ...fake,
+        async text() {
+          throw new ProviderFailure(false, "TESTADAPTER HTTP 429");
+        },
+      },
+      testStore,
+    );
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: failed.id } }))
+        .status,
+      "FAILED",
+    );
+    const unknown = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await studio.runJob(
+      martin,
+      unknown.id,
+      {
+        ...fake,
+        async text() {
+          throw new ProviderFailure(true, "TESTADAPTER Timeout");
+        },
+      },
+      testStore,
+    );
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: unknown.id } }))
+        .status,
+      "UNKNOWN",
+    );
+    await assert.rejects(
+      studio.runJob(nora, unknown.id, fake, testStore),
+      /bereits gestartet/,
+    );
+    process.env.CONTENT_DAILY_REQUEST_LIMIT = "1";
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, requestKey: randomUUID() }),
+      /Tageslimit/,
+    );
+  } finally {
+    for (const k of envNames) {
+      if (old[k] === undefined) delete process.env[k];
+      else process.env[k] = old[k];
+    }
+  }
+});
+
+test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und escaped Text", async (t) => {
+  const { readFileSync, existsSync } = await import("node:fs");
+  const path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+  if (!existsSync(path))
+    return t.skip(
+      "Explizite lokale Testschrift nicht vorhanden; keine Ersatzschrift verwenden.",
+    );
+  // This font is used only by this synthetic test, never shipped as a brand asset.
+  const font = await studioAssets.storeAsset(
+    martin,
+    readFileSync(path),
+    "TESTADAPTER-DejaVuSans.ttf",
+    "FONT",
+    undefined,
+    testStore,
+  );
+  assert.match(studioRender.fontFamily(readFileSync(path)), /DejaVu/);
+  const s = await studio.createSeries(martin, studioBrief()),
+    c = await studioContent(s.id),
+    image = await testMotif();
+  const p = studioContentInput.parse(c.versions[0].payload);
+  p.studio = {
+    ...p.studio!,
+    motifAssetId: image.id,
+    motifSha256: image.sha256,
+    fontAssetId: font.id,
+    fontSha256: font.sha256,
+    headline: "TESTADAPTER <span> & " + "Test ".repeat(20),
+    showHeadline: true,
+    showClaim: true,
+  };
+  await hub.saveContent(martin, p, c.id, 1);
+  await hub.reviewContent(nora, c.id, 2, "APPROVED", true);
+  for (const format of ["1:1", "4:5", "9:16"] as const)
+    assert.ok(
+      (
+        await studioRender.renderLayout(
+          nora,
+          p.studio,
+          format,
+          "png",
+          testStore,
+        )
+      ).length > 100,
+    );
 });

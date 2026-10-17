@@ -1,3 +1,4 @@
+import { validateStudio } from "../studio/validate";
 import { createHash } from "node:crypto";
 import { db } from "../db";
 import { allowedAccount } from "../config.mjs";
@@ -56,45 +57,62 @@ export async function saveContent(
   expectedVersion?: number,
 ) {
   const payload = contentInput.parse(raw);
-  return db.$transaction(async (tx) => {
-    await hubActor(tx, actor);
-    await associations(tx, payload.ownerId, payload.campaignId);
-    if (id) await lock(tx, id);
-    const old = id
-      ? await tx.marketingContent.findUniqueOrThrow({ where: { id } })
-      : null;
-    if (old && (old.version !== expectedVersion || old.kind !== payload.kind))
-      throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
-    const version = (old?.version ?? 0) + 1;
-    const data = {
-      title: payload.title,
-      kind: payload.kind,
-      ownerId: payload.ownerId,
-      campaignId: payload.campaignId,
-      scheduledAt: payload.scheduledAt,
-      version,
-      status: "DRAFT" as const,
-    };
-    const c = old
-      ? await tx.marketingContent.update({ where: { id }, data })
-      : await tx.marketingContent.create({ data });
-    await tx.marketingVersion.create({
-      data: {
-        contentId: c.id,
-        version,
-        payload,
-        hash: contentHash(payload),
-        authorId: actor,
-      },
-    });
-    await tx.marketingApproval.updateMany({
-      where: { contentId: c.id, status: { in: ["APPROVED", "PENDING"] } },
-      data: { status: "INVALIDATED" },
-    });
-    await audit(tx, actor, "MARKETING_VERSION_SAVED", c.id, { version });
-    return c;
-  });
+  return db.$transaction((tx) =>
+    saveContentInTx(tx, actor, payload, id, expectedVersion),
+  );
 }
+export async function saveContentInTx(
+  tx: Tx,
+  actor: string,
+  payload: ContentInput,
+  id?: string,
+  expectedVersion?: number,
+) {
+  await hubActor(tx, actor);
+  await associations(tx, payload.ownerId, payload.campaignId);
+  if (payload.studio) await validateStudio(tx, payload.studio);
+  if (id) await lock(tx, id);
+  const old = id
+    ? await tx.marketingContent.findUniqueOrThrow({ where: { id } })
+    : null;
+  if (old && (old.version !== expectedVersion || old.kind !== payload.kind))
+    throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
+  if (old?.studioSeriesId && old.studioSeriesId !== payload.studio?.seriesId)
+    throw new PolicyError(
+      "Studio-Zuordnung darf nicht entfernt oder geändert werden.",
+      409,
+    );
+  const version = (old?.version ?? 0) + 1;
+  const data = {
+    studioSeriesId: payload.studio?.seriesId,
+    title: payload.title,
+    kind: payload.kind,
+    ownerId: payload.ownerId,
+    campaignId: payload.campaignId,
+    scheduledAt: payload.scheduledAt,
+    version,
+    status: "DRAFT" as const,
+  };
+  const c = old
+    ? await tx.marketingContent.update({ where: { id }, data })
+    : await tx.marketingContent.create({ data });
+  await tx.marketingVersion.create({
+    data: {
+      contentId: c.id,
+      version,
+      payload,
+      hash: contentHash(payload),
+      authorId: actor,
+    },
+  });
+  await tx.marketingApproval.updateMany({
+    where: { contentId: c.id, status: { in: ["APPROVED", "PENDING"] } },
+    data: { status: "INVALIDATED" },
+  });
+  await audit(tx, actor, "MARKETING_VERSION_SAVED", c.id, { version });
+  return c;
+}
+
 export async function reviewContent(
   actor: string,
   id: string,
@@ -121,6 +139,19 @@ export async function reviewContent(
         409,
       );
     const v = c.versions[0];
+    const checkedPayload = contentInput.parse(v.payload);
+    if (decision === "APPROVED" && checkedPayload.studio) {
+      const s = checkedPayload.studio;
+      await validateStudio(tx, s);
+      if (!s.motifAssetId)
+        throw new PolicyError(
+          "Studio-Freigabe benötigt ein zugeordnetes Bildmotiv.",
+        );
+      if (((s.showHeadline && s.headline) || s.showClaim) && !s.fontAssetId)
+        throw new PolicyError(
+          "Freigegebene Schriftdatei für sichtbare Textebenen fehlt.",
+        );
+    }
     await tx.marketingApproval.updateMany({
       where: { contentId: id, status: { in: ["PENDING", "APPROVED"] } },
       data: { status: "INVALIDATED" },

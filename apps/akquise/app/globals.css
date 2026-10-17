@@ -1234,3 +1234,29 @@ pre {
     flex-wrap: wrap;
   }
 }
+
+/* Content-Studio: same compact internal design; fixed readable desktop editor. */
+.studio-workspace { min-width:0; }
+.studio-connections { display:flex; flex-wrap:wrap; gap:12px 24px; padding:14px 0; color:var(--muted,#aabcc2); font-size:13px; }
+.studio-columns { display:grid; grid-template-columns:minmax(190px,240px) minmax(0,1fr); gap:24px; align-items:start; margin-top:20px; }
+.studio-series { position:sticky; top:16px; max-height:80vh; overflow:auto; }
+.studio-series section { padding:12px 0; border-bottom:1px solid #344247; }
+.studio-series button { display:flex; flex-direction:column; align-items:flex-start; text-align:left; width:100%; margin:6px 0; gap:6px; overflow-wrap:anywhere; }
+.studio-series .studio-active { border-color:#00c8ff; color:#00c8ff; }
+.studio-editor { min-width:0; }
+.studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:20px; border:1px solid #344247; margin-bottom:20px; }
+.studio-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.studio-workspace label { display:block; margin:10px 0; }
+.studio-workspace label.check { display:flex; gap:10px; align-items:flex-start; }
+.studio-workspace input[type=checkbox] { width:20px; height:20px; flex:0 0 20px; }
+.studio-workspace fieldset { border:1px solid #344247; padding:14px; margin:16px 0; min-width:0; }
+.studio-workspace fieldset>.check { display:inline-flex; margin-right:20px; }
+.studio-workspace summary { cursor:pointer; padding:8px 0; }
+.studio-workspace pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:400px; overflow:auto; }
+.studio-preview img { display:block; width:100%; max-width:480px; max-height:640px; object-fit:contain; margin:14px auto; background:#000; }
+.studio-preview article { padding:12px 0; border-top:1px solid #344247; }
+.studio-jobs article { padding:16px; border:1px solid #344247; margin-top:12px; }
+.studio-workspace dd { margin:4px 0 12px; white-space:pre-wrap; }
+.studio-workspace .actions { flex-wrap:wrap; }
+@media(max-width:900px) { .studio-columns { grid-template-columns:1fr; } .studio-series { position:static; max-height:260px; } }
+@media(max-width:600px) { .studio-fields { grid-template-columns:1fr; } .studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:12px; } }

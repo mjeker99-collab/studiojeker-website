@@ -1,3 +1,7 @@
+import { studioState } from "@/lib/studio/service";
+import { studioMutation } from "@/lib/studio/api";
+import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
+import { logoBytes } from "@/lib/studio/config";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z, ZodError } from "zod";
@@ -97,7 +101,47 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
-    if (route === "hub/state" && req.method === "GET") return NextResponse.json(await hubState());
+    if (route === "studio/state" && req.method === "GET")
+      return NextResponse.json(await studioState(user.id));
+    if (route === "studio/logo" && req.method === "GET")
+      return new NextResponse(new Uint8Array(logoBytes()), {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "no-store, private",
+        },
+      });
+    if (
+      path[0] === "studio" &&
+      path[1] === "assets" &&
+      path.length === 3 &&
+      req.method === "GET"
+    ) {
+      const { asset, bytes } = await readAsset(user.id, path[2]);
+      return new NextResponse(new Uint8Array(bytes), {
+        headers: {
+          "Content-Type": asset.mime,
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+          "Content-Disposition": `${req.nextUrl.searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(asset.name)}`,
+        },
+      });
+    }
+    if (route === "studio/upload" && req.method === "POST") {
+      const kind =
+        req.headers.get("x-studio-kind") === "FONT" ? "FONT" : "ORIGINAL";
+      if (req.headers.get("x-rights-confirmed") !== "true")
+        throw new PolicyError("Nutzungsrechte an der Datei bestätigen.");
+      const bytes = await boundedBody(req, MAX_UPLOAD);
+      const a = await storeAsset(
+        user.id,
+        bytes,
+        decodeURIComponent(req.headers.get("x-file-name") || "datei"),
+        kind,
+      );
+      return NextResponse.json(a);
+    }
+    if (route === "hub/state" && req.method === "GET")
+      return NextResponse.json(await hubState());
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
       const token = jar.get(sessionCookieName())?.value;
@@ -178,6 +222,8 @@ async function handler(
     if (Number(req.headers.get("content-length")) > 64000)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req);
+    if (path[0] === "studio")
+      return NextResponse.json(await studioMutation(user.id, path, body));
     if (path[0] === "hub") {
       const result = await hubMutation(user.id, path, body);
       if (result !== null) return NextResponse.json(result);

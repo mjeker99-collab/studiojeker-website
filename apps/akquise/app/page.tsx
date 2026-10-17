@@ -1,5 +1,6 @@
 "use client";
 import Hub from "./hub/Hub";
+import ContentStudio from "./studio/ContentStudio";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
   Contact,
@@ -38,6 +39,7 @@ const nav = [
   "Kontakte/Akquise",
   "Kampagnen",
   "Social Media",
+  "Content-Studio",
   "Newsletter",
   "Kalender",
   "Einstellungen",
@@ -304,7 +306,7 @@ export default function App() {
     return (
       <main className="login">
         <h1>Studiojeker</h1>
-        <p>Marketing Hub wird geladen …</p>
+        <p>Studiojeker ONE wird geladen …</p>
       </main>
     );
   if (!data)
@@ -375,7 +377,7 @@ export default function App() {
         <div className="wordmark">
           studiojeker<span>®</span>
         </div>
-        <p className="eyebrow">MARKETING HUB / WORKSPACE</p>
+        <p className="eyebrow">STUDIOJEKER ONE / WORKSPACE</p>
         <nav aria-label="Hauptnavigation">
           {nav.map((n, i) => (
             <button
@@ -441,7 +443,7 @@ export default function App() {
       <div className="workspace" inert={showContact || !!draft}>
         <header>
           <span>
-            STUDIOJEKER GMBH <span className="muted">/ Marketing Hub</span>
+            STUDIOJEKER GMBH <span className="muted">/ Studiojeker ONE</span>
           </span>
           <span className="test-tag">● {mailLabel}</span>
         </header>
@@ -499,6 +501,7 @@ export default function App() {
           ].includes(tab) && (
             <Hub key={tab} section={tab} userId={data.user.id} />
           )}
+          {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
           {tab === "Übersicht" && (
             <>
               <div className="banner">
@@ -926,7 +929,7 @@ export default function App() {
           )}
           <footer>
             STUDIOJEKER · WE CREATE VISIBILITY.{" "}
-            <span>Studiojeker Marketing Hub V1 / intern</span>
+            <span>Studiojeker ONE V1 / intern</span>
           </footer>
         </main>
       </div>
