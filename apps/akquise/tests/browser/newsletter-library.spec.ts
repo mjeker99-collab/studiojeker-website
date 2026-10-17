@@ -99,9 +99,14 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
       )
       .toMatchObject({ overflow: false, viewport: width === 390 ? 390 : 700 });
   }
+  // Audit editor controls separately: axe cannot inject scripts into the opaque
+  // sandbox. Its title, sandbox, content and layout are checked explicitly here.
+  await expect(
+    editor.locator('iframe[title="Newsletter HTML-Vorschau"]'),
+  ).toHaveAttribute("sandbox", "");
   const results = await new AxeBuilder({ page })
     .include('[aria-label="Inhaltseditor"]')
-    .disableRules(["frame-tested"])
+    .exclude("iframe")
     .analyze();
   expect(results.violations).toEqual([]);
   await editor.getByLabel(/Ich habe die vollständige Version/).check();
