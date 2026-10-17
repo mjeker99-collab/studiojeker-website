@@ -26,14 +26,12 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await expect(page.getByRole("status")).toContainText(
     "Vorhandene Newsletter übernommen",
   );
-  const source = page
-    .locator("article[data-content-id]")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Newsletter 02 · Visibility",
-        exact: true,
-      }),
-    });
+  const source = page.locator("article[data-content-id]").filter({
+    has: page.getByRole("heading", {
+      name: "Newsletter 02 · Visibility",
+      exact: true,
+    }),
+  });
   await source
     .getByRole("button", { name: "Duplizieren", exact: true })
     .click();
@@ -75,32 +73,52 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBe(true);
-    expect(
-      await iframe
-        .locator("body")
-        .evaluate(
-          (el) =>
-            el.scrollWidth <= el.ownerDocument.documentElement.clientWidth,
-        ),
-    ).toBe(true);
+    await expect
+      .poll(
+        async () =>
+          iframe.locator("body").evaluate((el) => {
+            const viewport = el.ownerDocument.documentElement.clientWidth;
+            return {
+              overflow: el.scrollWidth > viewport,
+              viewport,
+              width: el.scrollWidth,
+              elements: Array.from(el.querySelectorAll("*"))
+                .filter(
+                  (node) => node.getBoundingClientRect().right > viewport + 1,
+                )
+                .slice(-12)
+                .map((node) => ({
+                  tag: node.tagName,
+                  class: node.className,
+                  text: node.textContent?.trim().slice(0, 80),
+                  width: node.getBoundingClientRect().width,
+                })),
+            };
+          }),
+        { message: `Newsletter overflow at app viewport ${width}px` },
+      )
+      .toMatchObject({ overflow: false, viewport: width === 390 ? 390 : 700 });
   }
+  // Audit editor controls separately: axe cannot inject scripts into the opaque
+  // sandbox. Its title, sandbox, content and layout are checked explicitly here.
+  await expect(
+    editor.locator('iframe[title="Newsletter HTML-Vorschau"]'),
+  ).toHaveAttribute("sandbox", "");
   const results = await new AxeBuilder({ page })
     .include('[aria-label="Inhaltseditor"]')
-    .disableRules(["frame-tested"])
+    .exclude("iframe")
     .analyze();
   expect(results.violations).toEqual([]);
   await editor.getByLabel(/Ich habe die vollständige Version/).check();
   await editor
     .getByRole("button", { name: "Version freigeben", exact: true })
     .click();
-  const copy = page
-    .locator("article[data-content-id]")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Browserprüfung Newsletter",
-        exact: true,
-      }),
-    });
+  const copy = page.locator("article[data-content-id]").filter({
+    has: page.getByRole("heading", {
+      name: "Browserprüfung Newsletter",
+      exact: true,
+    }),
+  });
   await copy.getByRole("button", { name: /Inhalt öffnen/ }).click();
   const download = page.waitForEvent("download");
   await editor.getByRole("button", { name: "HTML & Text exportieren" }).click();

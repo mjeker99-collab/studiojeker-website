@@ -1,3 +1,9 @@
+import {
+  libraryState,
+  saveLibraryItem,
+  archiveItem,
+  saveBrand,
+} from "@/lib/library/service";
 import { studioState } from "@/lib/studio/service";
 import { studioMutation } from "@/lib/studio/api";
 import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
@@ -101,6 +107,8 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "library/state" && req.method === "GET")
+      return NextResponse.json(await libraryState(user.id));
     if (route === "studio/state" && req.method === "GET")
       return NextResponse.json(await studioState(user.id));
     if (route === "studio/logo" && req.method === "GET")
@@ -122,13 +130,18 @@ async function handler(
           "Content-Type": asset.mime,
           "Cache-Control": "no-store, private",
           "X-Content-Type-Options": "nosniff",
-          "Content-Disposition": `${req.nextUrl.searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(asset.name)}`,
+          "Content-Security-Policy": "default-src 'none'; sandbox",
+          "Content-Disposition": `${req.nextUrl.searchParams.has("download") || !asset.mime.startsWith("image/") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(asset.name)}`,
         },
       });
     }
     if (route === "studio/upload" && req.method === "POST") {
       const kind =
-        req.headers.get("x-studio-kind") === "FONT" ? "FONT" : "ORIGINAL";
+        req.headers.get("x-studio-kind") === "FONT"
+          ? "FONT"
+          : req.headers.get("x-studio-kind") === "DOCUMENT"
+            ? "DOCUMENT"
+            : "ORIGINAL";
       if (req.headers.get("x-rights-confirmed") !== "true")
         throw new PolicyError("Nutzungsrechte an der Datei bestätigen.");
       const bytes = await boundedBody(req, MAX_UPLOAD);
@@ -222,6 +235,12 @@ async function handler(
     if (Number(req.headers.get("content-length")) > 64000)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req);
+    if (route === "library/item")
+      return NextResponse.json(await saveLibraryItem(user.id, body));
+    if (route === "library/archive")
+      return NextResponse.json(await archiveItem(user.id, body));
+    if (route === "library/brand")
+      return NextResponse.json(await saveBrand(user.id, body));
     if (path[0] === "studio")
       return NextResponse.json(await studioMutation(user.id, path, body));
     if (path[0] === "hub") {

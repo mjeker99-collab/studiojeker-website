@@ -34,3 +34,10 @@ Vom Nutzer gelieferte Originaldatei unverändert auf Login und in der Navigation
 
 - [Login auf Desktop](studioone-login-desktop.png)
 - [Login auf Mobil](studioone-login-mobile.png)
+
+Bibliothek und Markenprofil (synthetische lokale Browserabnahme):
+
+- [Bibliothek Desktop](library-desktop.png)
+- [Markenprofil Studiojeker](library-brand-desktop.png)
+- [Medienauswahl im Content-Studio](library-picker-desktop.png)
+- [Bibliothek iPad quer](library-ipad-landscape.png)

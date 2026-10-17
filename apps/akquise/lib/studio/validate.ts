@@ -11,6 +11,18 @@ export async function validateStudio(tx: Tx, s: StudioSnapshot) {
     throw new PolicyError("Serie nicht zugänglich.", 403);
   if (s.logoSha256 !== logoHash())
     throw new PolicyError("Original-Logo stimmt nicht überein.", 409);
+  if (s.brandProfile?.logoAssetId) {
+    const logo = await tx.studioAsset.findFirst({
+      where: {
+        id: s.brandProfile.logoAssetId,
+        organizationId: ORG,
+        deletedAt: null,
+        mime: { startsWith: "image/" },
+      },
+    });
+    if (!logo || logo.sha256 !== s.brandLogoSha256)
+      throw new PolicyError("Markenlogo-Version nicht zugänglich.", 403);
+  }
   for (const [id, hash, font] of [
     [s.motifAssetId, s.motifSha256, false],
     [s.fontAssetId, s.fontSha256, true],

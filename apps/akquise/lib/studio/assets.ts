@@ -13,7 +13,7 @@ export async function storeAsset(
   actor: string,
   bytes: Buffer,
   name: string,
-  kind: "ORIGINAL" | "MOTIF" | "FONT" | "EXPORT",
+  kind: "ORIGINAL" | "MOTIF" | "FONT" | "EXPORT" | "DOCUMENT",
   mime?: string,
   store: ObjectStore = objectStore(),
 ) {
@@ -28,6 +28,29 @@ export async function storeAsset(
     if (!["00010000", "4f54544f"].includes(sig) || bytes.length < 64)
       throw new PolicyError("Nur geprüfte TTF-/OTF-Schriftdateien erlaubt.");
     mime = sig === "4f54544f" ? "font/otf" : "font/ttf";
+  } else if (kind === "DOCUMENT") {
+    if (name.toLowerCase().endsWith(".txt")) {
+      try {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text))
+          throw new Error();
+      } catch {
+        throw new PolicyError("TXT muss gültiger UTF-8-Text sein.");
+      }
+      mime = "text/plain; charset=utf-8";
+    } else if (
+      name.toLowerCase().endsWith(".pdf") &&
+      bytes.subarray(0, 5).toString() === "%PDF-" &&
+      bytes.subarray(-1024).includes(Buffer.from("%%EOF")) &&
+      /\/Type\s*\/Catalog\b/.test(bytes.toString("latin1")) &&
+      /\bobj\b[\s\S]*\bendobj\b/.test(bytes.toString("latin1")) &&
+      /\bstartxref\b/.test(bytes.toString("latin1"))
+    ) {
+      mime = "application/pdf";
+    } else
+      throw new PolicyError(
+        "Nur PDF oder UTF-8-TXT bis 8 MB. PDF wird ausschliesslich abgelegt, nicht analysiert.",
+      );
   } else if (kind !== "EXPORT") {
     try {
       const m = await sharp(bytes, {
@@ -55,40 +78,81 @@ export async function storeAsset(
       );
     }
   }
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
   const id = randomUUID(),
     objectKey = `${ORG}/${id}`;
-  await db.$transaction((tx) => hubActor(tx, actor));
-  await store.put(objectKey, bytes, mime!);
+  let uploaded = false;
   try {
-    return await db.$transaction(async (tx) => {
-      await hubActor(tx, actor);
-      const a = await tx.studioAsset.create({
-        data: {
-          id,
-          organizationId: ORG,
-          objectKey,
-          name: name.replace(/[^\p{L}\p{N}_. -]/gu, "_").slice(0, 150),
-          mime: mime!,
+    return await db.$transaction(
+      async (tx) => {
+        await hubActor(tx, actor);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"asset:" + ORG + sha256}))`;
+        const existing = await tx.studioAsset.findFirst({
+          where: { organizationId: ORG, sha256, kind, deletedAt: null },
+        });
+        if (existing && kind !== "EXPORT") {
+          const original = await store.get(existing.objectKey);
+          if (createHash("sha256").update(original).digest("hex") !== sha256)
+            throw new PolicyError(
+              "Vorhandene Datei ist beschädigt. Wiederverwendung blockiert; Wiederherstellung prüfen.",
+              503,
+            );
+          return { ...existing, reused: true };
+        }
+        await store.put(objectKey, bytes, mime!);
+        uploaded = true;
+        const a = await tx.studioAsset.create({
+          data: {
+            id,
+            organizationId: ORG,
+            objectKey,
+            name: name.replace(/[^\p{L}\p{N}_. -]/gu, "_").slice(0, 150),
+            mime: mime!,
+            kind,
+            size: bytes.length,
+            sha256,
+            width,
+            height,
+            userId: actor,
+          },
+        });
+        await tx.libraryItem.create({
+          data: {
+            assetId: id,
+            organizationId: ORG,
+            title: a.name,
+            kind:
+              kind === "FONT"
+                ? "FONT"
+                : kind === "EXPORT"
+                  ? "EXPORT"
+                  : kind === "DOCUMENT"
+                    ? "DOCUMENT"
+                    : "IMAGE",
+            rights: ["ORIGINAL", "FONT", "DOCUMENT"].includes(kind)
+              ? "Nutzungsrechte beim Upload bestätigt; Details ergänzen."
+              : "Herkunft und Nutzungsrechte prüfen.",
+            text:
+              kind === "DOCUMENT" && mime!.startsWith("text/plain")
+                ? new TextDecoder().decode(bytes).slice(0, 16000)
+                : "",
+          },
+        });
+        await audit(tx, actor, "STUDIO_ASSET_STORED", id, {
           kind,
           size: bytes.length,
-          sha256: createHash("sha256").update(bytes).digest("hex"),
-          width,
-          height,
-          userId: actor,
-        },
-      });
-      await audit(tx, actor, "STUDIO_ASSET_STORED", id, {
-        kind,
-        size: bytes.length,
-        sha256: a.sha256,
-      });
-      return a;
-    });
+          sha256,
+        });
+        return { ...a, reused: false };
+      },
+      { timeout: 30000, maxWait: 10000 },
+    );
   } catch (e) {
-    await store.remove(objectKey).catch(() => {});
+    if (uploaded) await store.remove(objectKey).catch(() => {});
     throw e;
   }
 }
+
 export async function readAsset(
   actor: string,
   id: string,

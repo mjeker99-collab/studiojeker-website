@@ -44,6 +44,12 @@ export function publicConfig() {
   return {
     connected: c.connected,
     storage: c.storage,
+    missingStorage: [
+      "STUDIO_S3_ENDPOINT",
+      "STUDIO_S3_BUCKET",
+      "STUDIO_S3_ACCESS_KEY_ID",
+      "STUDIO_S3_SECRET_ACCESS_KEY",
+    ].filter((k) => !process.env[k]),
     textModel: c.textModel,
     imageModel: c.imageModel,
     dailyRequests: c.dailyRequests,

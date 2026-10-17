@@ -98,7 +98,7 @@ export async function renderLayout(
     });
   overlays.push({
     input: Buffer.from(
-      `<svg width="${width}" height="8"><rect width="100%" height="8" fill="#00c8ff"/></svg>`,
+      `<svg width="${width}" height="8"><rect width="100%" height="8" fill="${s.brandProfile?.colors.cyan || "#00c8ff"}"/></svg>`,
     ),
     left: 0,
     top: panelY,
@@ -142,7 +142,7 @@ export async function renderLayout(
       for (let size = 64; size >= 32; size -= 4) {
         const candidate = await sharp({
           text: {
-            text: `<span foreground="#ffffff">${escape(s.headline)}</span>`,
+            text: `<span foreground="${s.brandProfile?.colors.white || "#ffffff"}">${escape(s.headline)}</span>`,
             font: `${family} ${size}`,
             fontfile: fontPath,
             width: width - 96,
@@ -163,10 +163,13 @@ export async function renderLayout(
         );
       overlays.push({ input: text, left: 48, top: panelY + 30 });
     }
-    if (s.showClaim) {
+    if (
+      s.showClaim &&
+      (s.brandProfile ? s.brandProfile.claim : "We create visibility")
+    ) {
       const text = await sharp({
         text: {
-          text: '<span foreground="#00c8ff">We create visibility</span>',
+          text: `<span foreground="${s.brandProfile?.colors.cyan || "#00c8ff"}">${escape(s.brandProfile ? s.brandProfile.claim : "We create visibility")}</span>`,
           font: `${family} 28`,
           fontfile: fontPath,
           rgba: true,
@@ -179,7 +182,12 @@ export async function renderLayout(
   }
   if (s.showLogo) {
     // Exact original SVG bytes; preserve its aspect ratio and colours.
-    const logo = await sharp(logoBytes())
+    const originalLogo = s.brandProfile?.logoAssetId
+      ? await readAsset(actor, s.brandProfile.logoAssetId, store)
+      : null;
+    if (originalLogo && originalLogo.asset.sha256 !== s.brandLogoSha256)
+      throw new PolicyError("Markenlogo-Prüfsumme stimmt nicht überein.", 409);
+    const logo = await sharp(originalLogo?.bytes || logoBytes())
       .resize({ width: 220 })
       .png()
       .toBuffer();
@@ -206,10 +214,18 @@ export async function renderLayout(
     });
   }
   const image = sharp({
-    create: { width, height, channels: 4, background: "#000000" },
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: s.brandProfile?.colors.black || "#000000",
+    },
   }).composite(overlays);
   return encoding === "jpg"
-    ? image.flatten({ background: "#000000" }).jpeg({ quality: 92 }).toBuffer()
+    ? image
+        .flatten({ background: s.brandProfile?.colors.black || "#000000" })
+        .jpeg({ quality: 92 })
+        .toBuffer()
     : image.png().toBuffer();
 }
 export function channelTexts(payload: ReturnType<typeof contentInput.parse>) {
@@ -264,6 +280,14 @@ export async function exportContent(
       encoding === "jpg" ? "image/jpeg" : "image/png",
       store,
     );
+    await db.libraryItem.updateMany({
+      where: { assetId: asset.id, organizationId: ORG },
+      data: {
+        parentAssetId: payload.studio.motifAssetId,
+        campaignId: payload.campaignId,
+        description: `${preview ? "Vorschau" : "Sujet"} aus Beitrag ${id}, Version ${version}, ${format}`,
+      },
+    });
     await db.$transaction((tx) =>
       audit(tx, actor, preview ? "STUDIO_PREVIEW" : "STUDIO_EXPORT", id, {
         version,
@@ -360,6 +384,13 @@ export async function exportSeries(
         "application/zip",
         store,
       );
+      await db.libraryItem.updateMany({
+        where: { assetId: asset.id, organizationId: ORG },
+        data: {
+          source: `Studio-Serie ${id}`,
+          description: `ZIP aus ${snapshots.map((c) => `${c.id} v${c.version}`).join(", ")}`,
+        },
+      });
       await db.$transaction((tx) =>
         audit(tx, actor, "STUDIO_SERIES_EXPORTED", id, {
           assetId: asset.id,
@@ -420,6 +451,13 @@ export async function exportMotif(
       encoding === "jpg" ? "image/jpeg" : "image/png",
       store,
     );
+    await db.libraryItem.updateMany({
+      where: { assetId: asset.id, organizationId: ORG },
+      data: {
+        parentAssetId: s.motifAssetId,
+        description: `Reines Motiv aus Beitrag ${id}, Version ${version}`,
+      },
+    });
     await db.$transaction((tx) =>
       audit(tx, actor, "STUDIO_MOTIF_EXPORTED", id, {
         version,

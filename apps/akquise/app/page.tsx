@@ -1,6 +1,7 @@
 "use client";
 import Hub from "./hub/Hub";
 import Image from "next/image";
+import Library from "./library/Library";
 import ContentStudio from "./studio/ContentStudio";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
@@ -41,6 +42,7 @@ const nav = [
   "Kampagnen",
   "Social Media",
   "Content-Studio",
+  "Bibliothek",
   "Newsletter",
   "Kalender",
   "Einstellungen",
@@ -512,6 +514,7 @@ export default function App() {
           ].includes(tab) && (
             <Hub key={tab} section={tab} userId={data.user.id} />
           )}
+          {tab === "Bibliothek" && <Library />}
           {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
           {tab === "Übersicht" && (
             <>

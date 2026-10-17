@@ -826,11 +826,14 @@ test("Studio: geschützte Assets, falsche Typen, fremde Organisation und Hash-Ma
     where: { id: asset.id },
     data: { organizationId: "studiojeker" },
   });
+  const originalBytes = objectBytes.get(asset.objectKey)!;
   objectBytes.set(asset.objectKey, Buffer.from("tampered"));
   await assert.rejects(
     studioAssets.readAsset(martin, asset.id, testStore),
     /Prüfsumme/,
   );
+  // Deduplication reuses this original in later tests; restore the deliberately corrupted fixture.
+  objectBytes.set(asset.objectKey, originalBytes);
 });
 test("Studio: konkrete Bild-/Layoutfreigabe, Entwertung nach Änderung, Export und ZIP", async () => {
   const s = await studio.createSeries(martin, studioBrief()),

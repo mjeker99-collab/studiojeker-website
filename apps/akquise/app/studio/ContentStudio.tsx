@@ -1,5 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
+import {
+  LibraryPicker,
+  libraryApi,
+  type LibraryEntry,
+} from "../library/Library";
 import { useEffect, useState } from "react";
 import { contentInput, type ContentInput } from "@/lib/hub/input";
 import {
@@ -70,6 +75,8 @@ export default function ContentStudio({ userId }: { userId: string }) {
     [preview, setPreview] = useState(""),
     [format, setFormat] = useState<StudioFormat>("1:1"),
     [encoding, setEncoding] = useState<"png" | "jpg">("png");
+  const [picking, setPicking] = useState<"motif" | "reference" | null>(null);
+  const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
     editing &&
     form &&
@@ -219,6 +226,60 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
+      {picking && (
+        <LibraryPicker
+          imagesOnly={picking === "motif"}
+          onClose={() => setPicking(null)}
+          onSelect={(i) => {
+            if (
+              picking === "motif" &&
+              form?.studio &&
+              i.asset?.mime.startsWith("image/")
+            ) {
+              update({
+                studio: {
+                  ...form.studio,
+                  motifAssetId: i.asset.id,
+                  motifSha256: i.asset.sha256,
+                  source: i.asset.kind === "MOTIF" ? "AI" : "OWN",
+                },
+                variants: form.variants.map((v) => ({
+                  ...v,
+                  mediaType: "IMAGE",
+                  mediaUrl: "",
+                  mediaReference: `Studio-Asset ${i.asset!.id} · ${i.asset!.sha256}`,
+                })),
+              });
+            } else if (picking === "reference") {
+              if (
+                i.asset?.mime.startsWith("image/") &&
+                ["ORIGINAL", "MOTIF", "EXPORT"].includes(i.asset.kind)
+              )
+                setBrief({
+                  ...brief,
+                  referenceAssetIds: Array.from(
+                    new Set([...brief.referenceAssetIds, i.asset.id]),
+                  ).slice(0, 4),
+                });
+              else {
+                setLibraryRefs((old) =>
+                  Array.from(
+                    new Map([...old, i].map((x) => [x.id, x])).values(),
+                  ).slice(0, 4),
+                );
+                setBrief({
+                  ...brief,
+                  libraryReferenceIds: Array.from(
+                    new Set([...(brief.libraryReferenceIds || []), i.id]),
+                  ).slice(0, 4),
+                });
+              }
+            }
+            setPicking(null);
+          }}
+        />
+      )}
+
       <div className="hub-toolbar">
         <div>
           <p className="eyebrow">STUDIOONE / CONTENT-STUDIO</p>
@@ -411,6 +472,71 @@ export default function ContentStudio({ userId }: { userId: string }) {
           </fieldset>
           <fieldset>
             <legend>Optionale eigene Referenzbilder</legend>
+            <button type="button" onClick={() => setPicking("reference")}>
+              Aus Bibliothek wählen · Referenzen
+            </button>
+            {libraryRefs.map((r) => (
+              <p key={r.id}>
+                {r.title} ·{" "}
+                {r.text
+                  ? "Text für KI ausgewählt"
+                  : "Nur Referenz, kein Text verfügbar"}{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLibraryRefs((old) => old.filter((x) => x.id !== r.id));
+                    setBrief({
+                      ...brief,
+                      libraryReferenceIds: (
+                        brief.libraryReferenceIds || []
+                      ).filter((id) => id !== r.id),
+                    });
+                  }}
+                >
+                  Entfernen
+                </button>
+              </p>
+            ))}
+            <p>
+              PDF, Vimeo und Drive werden nicht automatisch gelesen. Nur
+              ausdrücklich ausgewählte Textinhalte werden übermittelt.
+            </p>
+            <fieldset>
+              <legend>Markenregeln für KI auswählen</legend>
+              {(
+                [
+                  "tone",
+                  "services",
+                  "audiences",
+                  "examples",
+                  "address",
+                ] as const
+              ).map((k) => (
+                <label key={k}>
+                  <input
+                    type="checkbox"
+                    checked={(brief.brandRules || []).includes(k)}
+                    onChange={(e) =>
+                      setBrief({
+                        ...brief,
+                        brandRules: e.target.checked
+                          ? [...(brief.brandRules || []), k]
+                          : (brief.brandRules || []).filter((v) => v !== k),
+                      })
+                    }
+                  />
+                  {
+                    {
+                      tone: "Tonalität",
+                      services: "Leistungen",
+                      audiences: "Zielgruppen",
+                      examples: "Beispieltexte",
+                      address: "Ansprache",
+                    }[k]
+                  }
+                </label>
+              ))}
+            </fieldset>
             {originalAssets.map((a) => (
               <label className="check" key={a.id}>
                 <input
@@ -492,6 +618,66 @@ export default function ContentStudio({ userId }: { userId: string }) {
             <section className="studio-generation">
               <h3>KI-Auftrag ausdrücklich starten</h3>
               <p>{state.config.costNote}</p>
+              <details>
+                <summary>Welche Inhalte werden an OpenAI übertragen?</summary>
+                <p>
+                  Textauftrag: gespeichertes Briefing, ausdrücklich ausgewählte
+                  Markenregeln und ausgewählte Texte/TXT-Auszüge. Keine PDF-
+                  oder Linkanalyse, keine gesamte Bibliothek. Bildauftrag:
+                  Bildidee und unten ausgewählte Bildreferenzen.
+                </p>
+                <pre style={{ whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(
+                    {
+                      briefing: series.briefing,
+                      markenregeln: Object.fromEntries(
+                        (
+                          briefingSchema.parse(series.briefing).brandRules || []
+                        ).map((k) => [
+                          k,
+                          snapshot.brandProfile?.[k] || "Offen",
+                        ]),
+                      ),
+                    },
+                    null,
+                    2,
+                  )}
+                </pre>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void libraryApi("state")
+                      .then((s) =>
+                        setLibraryRefs(
+                          s.items.filter((i: LibraryEntry) =>
+                            (
+                              briefingSchema.parse(series.briefing)
+                                .libraryReferenceIds || []
+                            ).includes(i.id),
+                          ),
+                        ),
+                      )
+                      .catch((e) => setError(e.message))
+                  }
+                >
+                  Ausgewählte Bibliothekstexte anzeigen
+                </button>
+                {libraryRefs
+                  .filter((r) =>
+                    (
+                      briefingSchema.parse(series.briefing)
+                        .libraryReferenceIds || []
+                    ).includes(r.id),
+                  )
+                  .map((r) => (
+                    <div key={r.id}>
+                      <strong>{r.title}</strong>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {r.text || "Kein Text verfügbar; keine Analyse."}
+                      </pre>
+                    </div>
+                  ))}
+              </details>
               <p>
                 Textauftrag: {series.contents.length} Beitrag/Beiträge,
                 Budgetreservierung USD {state.config.textReserve.toFixed(2)}.
@@ -726,6 +912,11 @@ export default function ContentStudio({ userId }: { userId: string }) {
               ))}
               <h3>Motiv und reproduzierbares Layout</h3>
               <div className="studio-fields">
+                <div>
+                  <button type="button" onClick={() => setPicking("motif")}>
+                    Aus Bibliothek wählen · Motiv
+                  </button>
+                </div>
                 <label>
                   Eigenes oder generiertes Motiv
                   <select
@@ -840,7 +1031,12 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   [
                     ["showLogo", "Original-Logo"],
                     ["showHeadline", "Headline"],
-                    ["showClaim", "We create visibility"],
+                    [
+                      "showClaim",
+                      snapshot.brandProfile
+                        ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
+                        : "We create visibility",
+                    ],
                   ] as const
                 ).map(([key, label]) => (
                   <label className="check" key={key}>

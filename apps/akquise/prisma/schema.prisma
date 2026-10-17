@@ -317,17 +317,19 @@ model NewsletterExport {
 
 // Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.
 model StudioOrganization {
-  id        String             @id
-  name      String
-  brand     Json
-  createdAt DateTime           @default(now())
-  series    StudioSeries[]
-  assets    StudioAsset[]
-  jobs      StudioJob[]
-  contacts  Contact[]
-  drafts    Draft[]
-  campaigns Campaign[]
-  contents  MarketingContent[]
+  id            String             @id
+  name          String
+  brand         Json
+  createdAt     DateTime           @default(now())
+  library       LibraryItem[]
+  brandRevision Int                @default(1)
+  series        StudioSeries[]
+  assets        StudioAsset[]
+  jobs          StudioJob[]
+  contacts      Contact[]
+  drafts        Draft[]
+  campaigns     Campaign[]
+  contents      MarketingContent[]
 }
 
 model StudioSeries {
@@ -346,6 +348,7 @@ model StudioAsset {
   id             String             @id @default(cuid())
   organizationId String             @default("studiojeker")
   organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  libraryItem    LibraryItem?
   objectKey      String             @unique
   name           String
   mime           String
@@ -383,4 +386,29 @@ model StudioJob {
   createdAt         DateTime           @default(now())
 
   @@index([organizationId, status, createdAt])
+}
+
+model LibraryItem {
+  id               String             @id @default(cuid())
+  organizationId   String             @default("studiojeker")
+  organization     StudioOrganization @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  assetId          String?            @unique
+  asset            StudioAsset?       @relation(fields: [assetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  kind             String
+  title            String
+  description      String             @default("")
+  source           String             @default("")
+  rights           String             @default("")
+  tags             String[]           @default([])
+  campaignId       String?
+  text             String             @default("")
+  url              String             @default("")
+  thumbnailAssetId String?
+  parentAssetId    String?
+  revision         Int                @default(1)
+  archivedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
 }

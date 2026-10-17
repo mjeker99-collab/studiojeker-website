@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getNewsletterTemplate,
   renderNewsletter,
@@ -89,6 +89,9 @@ export function NewsletterPreview({
   html?: string;
 }) {
   const [width, setWidth] = useState(700);
+  const viewport = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const scale = availableWidth > 0 ? Math.min(1, availableWidth / width) : 0;
   let html = originalHtml || "",
     error = "";
   if (newsletter) {
@@ -103,6 +106,15 @@ export function NewsletterPreview({
         "Bitte die markierten Inhalte prüfen: Alle Bild- und Ziel-Links benötigen vollständige HTTPS-Adressen.";
     }
   }
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setAvailableWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [error]);
   return (
     <section
       className="newsletter-preview"
@@ -125,19 +137,34 @@ export function NewsletterPreview({
       {error ? (
         <p role="alert">{error}</p>
       ) : (
-        <div className="newsletter-frame-viewport">
-          <iframe
-            title="Newsletter HTML-Vorschau"
-            sandbox=""
-            referrerPolicy="no-referrer"
-            srcDoc={previewDocument(html)}
-            style={{ width, maxWidth: "100%", height: 900 }}
-          />
+        <div className="newsletter-frame-viewport" ref={viewport}>
+          <div
+            style={{
+              width: width * scale,
+              height: 900 * scale,
+              margin: "0 auto",
+            }}
+          >
+            <iframe
+              title="Newsletter HTML-Vorschau"
+              sandbox=""
+              referrerPolicy="no-referrer"
+              srcDoc={previewDocument(html)}
+              style={{
+                width,
+                maxWidth: "none",
+                height: 900,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            />
+          </div>
         </div>
       )}
       <p className="muted">
-        Links sind in der Vorschau inaktiv. Die Vorschau passt sich bei schmalem
-        Bildschirm an. Mailchimp-Platzhalter werden beim Versand aufgelöst.
+        Links sind in der Vorschau inaktiv. Auf schmalen Bildschirmen wird die
+        gewählte Vorschaubreite verkleinert dargestellt. Mailchimp-Platzhalter
+        werden beim Versand aufgelöst.
       </p>
     </section>
   );
