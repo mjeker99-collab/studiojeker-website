@@ -1,4 +1,13 @@
 "use client";
+import {
+  NewsletterFields,
+  NewsletterPreview,
+} from "../newsletter/NewsletterEditor";
+import {
+  newsletterLibrary,
+  newsletterDefaults,
+  newsletterText,
+} from "@/lib/hub/newsletter-template";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
@@ -117,6 +126,8 @@ export default function Hub({
   section: string;
   userId: string;
 }) {
+  const [templateId, setTemplateId] = useState("master-v7");
+  const [showOriginal, setShowOriginal] = useState(false);
   const [data, setData] = useState<HubState | null>(null);
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -324,6 +335,28 @@ export default function Hub({
               <button className="secondary" onClick={() => edit(c)}>
                 Inhalt öffnen ↗
               </button>
+              {c.kind === "NEWSLETTER" && (
+                <button
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    act(async () => {
+                      const copy = await post("newsletter-duplicate/" + c.id, {
+                        version: c.version,
+                      });
+                      const r = await fetch("/api/hub/state", {
+                        cache: "no-store",
+                      });
+                      if (!r.ok)
+                        throw new Error("Kopie gespeichert. Bitte neu laden.");
+                      const updated: HubState = await r.json();
+                      edit(updated.contents.find((x) => x.id === copy.id)!);
+                    }, "Kopie als neuer Entwurf erstellt.")
+                  }
+                >
+                  Duplizieren
+                </button>
+              )}
             </div>
           </article>
         );
@@ -637,16 +670,78 @@ export default function Hub({
       )}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
+          {section === "Newsletter" && (
+            <section className="panel padded" aria-label="Vorlagenbibliothek">
+              <h2>Vorlagen & bestehende Ausgaben</h2>
+              <p>
+                Die Originale bleiben als geschützte Vorlagen erhalten. Zum
+                Weiterarbeiten einen Entwurf erstellen oder die bestehenden
+                Ausgaben einmalig übernehmen.
+              </p>
+              <label>
+                Newsletter-Vorlage
+                <select
+                  value={templateId}
+                  onChange={(e) => setTemplateId(e.target.value)}
+                >
+                  {newsletterLibrary.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setShowOriginal(!showOriginal)}
+                >
+                  {showOriginal
+                    ? "Originalvorschau schliessen"
+                    : "Original ansehen"}
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    act(async () => {
+                      await post("newsletter/import", {});
+                    }, "Vorhandene Newsletter übernommen. Bereits importierte Ausgaben bleiben erhalten.")
+                  }
+                >
+                  Bestehende Ausgaben importieren
+                </button>
+              </div>
+              {showOriginal && (
+                <NewsletterPreview
+                  html={
+                    newsletterLibrary.find((t) => t.id === templateId)!.html
+                  }
+                />
+              )}
+            </section>
+          )}
           <div className="actions">
             <button
               onClick={() => {
                 setEditing(null);
-                setForm(
-                  newContent(
-                    section === "Newsletter" ? "NEWSLETTER" : "SOCIAL",
-                    userId,
-                  ),
+                const fresh = newContent(
+                  section === "Newsletter" ? "NEWSLETTER" : "SOCIAL",
+                  userId,
                 );
+                if (fresh.kind === "NEWSLETTER") {
+                  const template = newsletterLibrary.find(
+                    (t) => t.id === templateId,
+                  )!;
+                  fresh.newsletter = newsletterDefaults(templateId);
+                  fresh.title = template.name + " · Entwurf";
+                  fresh.subject = template.subject;
+                  fresh.preheader = template.preheader;
+                  fresh.body = newsletterText(fresh.newsletter);
+                }
+                setForm(fresh);
                 setRead(false);
               }}
             >
@@ -863,15 +958,24 @@ export default function Hub({
                     onChange={(e) => update({ preheader: e.target.value })}
                   />
                 </label>
-                <label>
-                  Newsletter-Inhalt
-                  <textarea
-                    required
-                    rows={12}
-                    value={form.body}
-                    onChange={(e) => update({ body: e.target.value })}
+                {form.newsletter ? (
+                  <NewsletterFields
+                    value={form.newsletter}
+                    change={(newsletter) =>
+                      update({ newsletter, body: newsletterText(newsletter) })
+                    }
                   />
-                </label>
+                ) : (
+                  <label>
+                    Newsletter-Inhalt
+                    <textarea
+                      required
+                      rows={12}
+                      value={form.body}
+                      onChange={(e) => update({ body: e.target.value })}
+                    />
+                  </label>
+                )}
                 <label>
                   Empfänger / Zielgruppensegment
                   <textarea
@@ -943,6 +1047,12 @@ export default function Hub({
                   </p>
                 </article>
               ))
+            ) : form.newsletter ? (
+              <NewsletterPreview
+                subject={form.subject}
+                preheader={form.preheader}
+                newsletter={form.newsletter}
+              />
             ) : (
               <article>
                 <strong>studiojeker®</strong>

@@ -3,19 +3,20 @@ import { db } from "../db";
 import { PolicyError } from "../policy";
 import { audit } from "../workflow";
 import { approvedContent, hubActor } from "./workflow";
-export const escapeHtml = (value: string) =>
-  value.replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ]!,
-  );
+import {
+  escapeHtml,
+  renderNewsletter,
+  newsletterText,
+  type NewsletterSnapshot,
+} from "./newsletter-template";
 export function newsletterHtml(input: {
   subject: string;
   preheader: string;
   body: string;
+  newsletter?: NewsletterSnapshot;
 }) {
+  if (input.newsletter)
+    return renderNewsletter({ ...input, newsletter: input.newsletter });
   return template.html.replace(
     /\{\{(subject|preheader|body)\}\}/g,
     (_, key: "subject" | "preheader" | "body") =>
@@ -44,7 +45,9 @@ export async function exportNewsletter(
     });
     return {
       html: newsletterHtml(payload),
-      text: payload.body,
+      text: payload.newsletter
+        ? newsletterText(payload.newsletter)
+        : payload.body,
       subject: payload.subject,
       preheader: payload.preheader,
       version,

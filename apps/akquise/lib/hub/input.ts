@@ -1,3 +1,4 @@
+import { newsletterSnapshot } from "./newsletter-template";
 import { studioSnapshot } from "../studio/input";
 import { z } from "zod";
 const text = (max: number) => z.string().trim().max(max);
@@ -33,6 +34,7 @@ const variant = z
 export const contentInput = z
   .object({
     studio: studioSnapshot.optional(),
+    newsletter: newsletterSnapshot.optional(),
     kind: z.enum(["SOCIAL", "NEWSLETTER"]),
     title: text(200).min(1),
     ownerId: z.string().min(1),
@@ -46,6 +48,11 @@ export const contentInput = z
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (v.newsletter && v.kind !== "NEWSLETTER")
+      ctx.addIssue({
+        code: "custom",
+        message: "Newsletter-Vorlage nur für Newsletter zulässig.",
+      });
     if (
       v.kind === "SOCIAL" &&
       (!v.variants.length ||
