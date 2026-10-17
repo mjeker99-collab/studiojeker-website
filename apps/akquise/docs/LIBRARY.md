@@ -82,3 +82,7 @@ Keine Kundenzugänge, Videobearbeitung, Metadatenabrufe, PDF-Analyse oder Publik
 - Screenshots mit ausschliesslich synthetischen Inhalten: [Bibliothek](screenshots/library-desktop.png), [Markenprofil](screenshots/library-brand-desktop.png), [Medienauswahl](screenshots/library-picker-desktop.png), [iPad quer](screenshots/library-ipad-landscape.png).
 
 Nicht geprüft: reales Render-Deployment, echter S3-Schreib-/Lesezugriff, OpenAI-Liveaufrufe, physisches Safari/iPad, Malware-Scan oder vollständige semantische PDF-Validierung. Diese Punkte werden nicht als produktiv bestätigt dargestellt. Kein zusätzlicher Worker und keine neuen gebuchten Dienste. Ein eigener Speicheranbieter und dessen Kosten müssen vor dem ersten echten Bilderimport festgelegt werden.
+
+### CI-Korrektur: synthetische Browserzugänge
+
+Der erste GitHub-Lauf von #147 bestand Build, Unit-/Datenbanktests und 15 von 16 Browserprüfungen. Der neue Bibliothekstest verlangte jedoch ausschliesslich `E2E_EMAIL`/`E2E_PASSWORD`, während der vorhandene CI-Seed seine zufälligen synthetischen Zugänge in `.local/demo-access.txt` bereitstellt. Der Test unterstützt jetzt beide vorgesehenen Wege, weiterhin nur `@example.test`. Drei zusätzliche Tests prüfen den Harness-Weg, das CI-Dateiformat und die Ablehnung realer beziehungsweise unvollständiger Zugangsdaten. Keine Änderung an App-Authentifizierung, Produktionszugängen oder Deployment-Workflows.

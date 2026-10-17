@@ -1,3 +1,4 @@
+import { browserCredentials } from "./credentials";
 import { test, expect } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import sharp from "sharp";
@@ -7,19 +8,13 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
 }) => {
   test.setTimeout(90000);
   page.setDefaultTimeout(12000);
-  if (
-    !process.env.E2E_EMAIL?.endsWith("@example.test") ||
-    !process.env.E2E_PASSWORD
-  )
-    throw new Error("Nur isolierter Browser-Testadapter erlaubt.");
+  const credentials = browserCredentials();
   const anon = await request.get("/api/library/state");
   expect(anon.status()).toBe(401);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByLabel("E-Mail", { exact: true }).fill(process.env.E2E_EMAIL);
-  await page
-    .getByLabel("Passwort", { exact: true })
-    .fill(process.env.E2E_PASSWORD);
+  await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
+  await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   const nav = page.getByRole("navigation", { name: "Hauptnavigation" });
   await nav.getByRole("button", { name: /Bibliothek/ }).click();
