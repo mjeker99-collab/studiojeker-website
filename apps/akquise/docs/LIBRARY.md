@@ -2,6 +2,14 @@
 
 ## Integration
 
+PR #146 ist in den Bibliotheksbranch integriert. Die CSS-Regeln beider Module
+bleiben erhalten; der gemeinsame Integrationstest enthält die Newsletterprüfung.
+Die Newsletter-Vorschau rendert in der gewählten Breite und skaliert auf schmalen
+Bildschirmen nur ihre Darstellung. Dadurch verkleinern die Seitenränder einen
+390-px-Newsletter nicht mehr unbeabsichtigt auf unter 300 px. Die Originalvorlagen
+und der Export bleiben unverändert; die 320-px-Ansicht kann weiterhin Überläufe
+der Originalvorlage sichtbar machen.
+
 Basis: tatsächlicher GitHub-Head `cef027a6476cc0fab1354b37f660e59ebb1eebdc` von `feat/akquise-render-frankfurt` (17.10.2026). #144 und #145 sind dort gemergt. #133 → #140 → #141 bleiben gestapelt offen. Der Bibliotheks-PR hat den vollständigen Render-Branch als Ziel; keine automatischen Merges. Die Website und ihre Workflows werden nicht geändert.
 
 Neue Bibliothekseinträge ergänzen die vorhandenen StudioAssets. `20261017150000_library_brand` fügt eine Tabelle, einen Markenrevisionszähler und Bibliotheksmetadaten für bestehende Assets hinzu. Keine Dateien werden verschoben, kein Konto und kein Briefing überschrieben, keine Freigabe neu berechnet. Kein Seed, Reset oder `db push` in Produktion.
