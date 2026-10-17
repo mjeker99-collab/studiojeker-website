@@ -27,3 +27,10 @@ Sämtliche Motive und Texte sind synthetisch; keine KI-Livegenerierung. Der Abla
 - [Entwertung nach Änderung](studio-05-entwertung-desktop.png)
 - [1024 Pixel](studio-1024.png)
 - [390 Pixel](studio-390.png)
+
+## STUDIOONE-Logo
+
+Vom Nutzer gelieferte Originaldatei unverändert auf Login und in der Navigation eingebunden. Logo-Browserprüfung gegen lokalen Produktionsbuild, ohne Login oder Datenbankänderung:
+
+- [Login auf Desktop](studioone-login-desktop.png)
+- [Login auf Mobil](studioone-login-mobile.png)

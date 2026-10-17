@@ -26,3 +26,13 @@ Nach der ersten Browser-Abnahme wurde die Logo-Lesbarkeit durch eine separate we
 - Keine neue vollständige Regressionssuite lokal. Vorhandene CI führt die Projektprüfungen beim PR automatisch aus; Ergebnis im PR kontrollieren.
 - Kein Last-/RSS-Nachweis auf dem tatsächlichen 512-MB-Render-Tarif, kein Deployment. 1 Worker/serielle Exporte und Grenzen sind umgesetzt; Spitzenspeicher vor Go-live mit realistischen Medien messen.
 - Asset-/Datenbank-Backup-Restore mit echten Bestandsdaten sowie externe Mandantentrennung bleiben getrennte Go-live-/Folgeschritte. Kundenzugänge deaktiviert.
+
+## Ergänzung: STUDIOONE-Anwendungslogo
+
+Original-JPEG vom Nutzer statt typografischer studiojeker-Wortmarke auf Login und Navigation. Datei-SHA256 mit Upload identisch, Seitenverhältnis 1280×593 unverändert. Eigenständige öffentliche /brand/logo-Route; keine Änderung der privaten Assetberechtigungen oder des Unternehmenslogos in Marketinglayouts. Produktname StudioONE in Seitentitel und App-Kennung.
+
+Produktionsbuild einschliesslich TypeScript und gezieltes ESLint erfolgreich. Eng begrenzte Browser-Sichtprüfung des Produktionsbuilds auf 1440 und 390 Pixel: Logo geladen, Originalmasse geprüft, kein Überlauf. Screenshots studioone-login-*.png. Keine neue vollständige lokale Testsuite, keine Datenbankänderung, kein Deployment.
+
+Der vorherige vollständige GitHub-Check für den Content-Studio-Stand 2cf8584e530c6c009b89a8536ae3d88972923be0 war erfolgreich: https://github.com/mjeker99-collab/studiojeker-website/actions/runs/39026650679. Der Logo-Commit wird durch die bestehende PR-CI erneut automatisch geprüft.
+
+Logo-Aktualisierung 17.10.2026: erneut gelieferte dunkle Originaldatei unverändert übernommen (SHA256 53790c45d67dcb83c1563cf72903b192d8626f9182df1c76a38354bfa408d254). Logo-URL versioniert, damit die vorherige Datei nicht aus dem Browsercache angezeigt wird. Produktionsbuild inklusive TypeScript, gezieltes ESLint und Browserprüfung bei 1440/390 Pixel erneut erfolgreich; Screenshots aktualisiert. Keine Datenbankänderung.

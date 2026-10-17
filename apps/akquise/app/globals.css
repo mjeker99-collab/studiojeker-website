@@ -1260,3 +1260,23 @@ pre {
 .studio-workspace .actions { flex-wrap:wrap; }
 @media(max-width:900px) { .studio-columns { grid-template-columns:1fr; } .studio-series { position:static; max-height:260px; } }
 @media(max-width:600px) { .studio-fields { grid-template-columns:1fr; } .studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:12px; } }
+
+/* User-supplied StudioONE app logo: exact original JPEG, no recolouring/cropping. */
+.app-brand {
+  width: 100%;
+  max-width: 360px;
+  background: #000;
+  line-height: 0;
+  letter-spacing: normal;
+}
+.app-brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sidebar > .app-brand {
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .sidebar > .app-brand { max-width: 260px; }
+}
