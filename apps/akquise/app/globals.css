@@ -1265,7 +1265,7 @@ pre {
 .app-brand {
   width: 100%;
   max-width: 360px;
-  background: #fff;
+  background: #000;
   line-height: 0;
   letter-spacing: normal;
 }

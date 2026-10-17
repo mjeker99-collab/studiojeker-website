@@ -34,3 +34,5 @@ Original-JPEG vom Nutzer statt typografischer studiojeker-Wortmarke auf Login un
 Produktionsbuild einschliesslich TypeScript und gezieltes ESLint erfolgreich. Eng begrenzte Browser-Sichtprüfung des Produktionsbuilds auf 1440 und 390 Pixel: Logo geladen, Originalmasse geprüft, kein Überlauf. Screenshots studioone-login-*.png. Keine neue vollständige lokale Testsuite, keine Datenbankänderung, kein Deployment.
 
 Der vorherige vollständige GitHub-Check für den Content-Studio-Stand 2cf8584e530c6c009b89a8536ae3d88972923be0 war erfolgreich: https://github.com/mjeker99-collab/studiojeker-website/actions/runs/39026650679. Der Logo-Commit wird durch die bestehende PR-CI erneut automatisch geprüft.
+
+Logo-Aktualisierung 17.10.2026: erneut gelieferte dunkle Originaldatei unverändert übernommen (SHA256 53790c45d67dcb83c1563cf72903b192d8626f9182df1c76a38354bfa408d254). Logo-URL versioniert, damit die vorherige Datei nicht aus dem Browsercache angezeigt wird. Produktionsbuild inklusive TypeScript, gezieltes ESLint und Browserprüfung bei 1440/390 Pixel erneut erfolgreich; Screenshots aktualisiert. Keine Datenbankänderung.

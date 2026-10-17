@@ -104,7 +104,7 @@ function AppLogo() {
   return (
     <div className="wordmark app-brand">
       <Image
-        src="/brand/logo"
+        src="/brand/logo?v=2"
         alt="STUDIOONE – Dein Marketing. Ein Ort."
         width={1280}
         height={593}
