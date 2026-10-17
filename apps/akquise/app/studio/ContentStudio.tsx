@@ -1031,7 +1031,12 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   [
                     ["showLogo", "Original-Logo"],
                     ["showHeadline", "Headline"],
-                    ["showClaim", "We create visibility"],
+                    [
+                      "showClaim",
+                      snapshot.brandProfile
+                        ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
+                        : "We create visibility",
+                    ],
                   ] as const
                 ).map(([key, label]) => (
                   <label className="check" key={key}>
