@@ -1307,3 +1307,44 @@ pre {
 .newsletter-preview { min-width: 0; }
 .newsletter-preview button[aria-pressed="true"] { border-color: #007a99; background: #e6f8fd; color: #14212a; }
 .newsletter-fields summary:focus-visible { outline: 2px solid #007a99; outline-offset: 3px; }
+
+/* Content conversations reuse the StudioONE form and colour system. */
+.studio-chat {
+  min-width: 0;
+  border: 1px solid #d9dfe2;
+  padding: clamp(16px, 3vw, 32px);
+  background: white;
+  margin-bottom: 24px;
+}
+.studio-chat-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+}
+.studio-chat-controls label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.studio-chat select,
+.studio-chat textarea {
+  width: 100%;
+  max-width: 100%;
+}
+.studio-chat-transcript {
+  max-height: 480px;
+  overflow: auto;
+  margin: 20px 0;
+}
+.studio-chat-transcript article {
+  border-bottom: 1px solid #d9dfe2;
+  padding: 12px 0;
+}
+.studio-chat-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.studio-chat form {
+  display: grid;
+  gap: 12px;
+}

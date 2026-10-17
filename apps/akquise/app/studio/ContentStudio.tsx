@@ -1,4 +1,5 @@
 "use client";
+import StudioChat from "./StudioChat";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
 import {
   LibraryPicker,
@@ -226,6 +227,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
+      <StudioChat state={state} refresh={() => refresh()} />
       {picking && (
         <LibraryPicker
           imagesOnly={picking === "motif"}
@@ -1343,7 +1345,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   Wartenden Auftrag bewusst starten
                 </button>
               )}
-              {j.status === "SUCCEEDED" && (
+              {j.status === "SUCCEEDED" && j.kind !== "CHAT" && (
                 <button
                   disabled={busy || dirty}
                   onClick={() =>

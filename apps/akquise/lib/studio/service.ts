@@ -79,6 +79,7 @@ export async function studioState(actor: string) {
         completedAt: true,
         providerRequestId: true,
         result: true,
+        input: true,
       },
     }),
     db.campaign.findMany({
@@ -230,7 +231,8 @@ export async function createSeries(actor: string, raw: unknown) {
 const requestSchema = z
   .object({
     seriesId: z.string().min(1),
-    kind: z.enum(["TEXT", "IMAGE"]),
+    kind: z.enum(["TEXT", "IMAGE", "CHAT"]),
+    message: z.string().trim().min(1).max(4000).optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -242,6 +244,8 @@ const requestSchema = z
 export async function queueJob(actor: string, raw: unknown) {
   const data = requestSchema.parse(raw),
     config = studioConfig();
+  if (data.kind === "CHAT" && !data.message)
+    throw new PolicyError("Nachricht fehlt.");
   if (!config.connected)
     throw new PolicyError(
       "KI: Nicht verbunden. API-Schlüssel und CONTENT_AI_ENABLED serverseitig konfigurieren.",
@@ -297,7 +301,7 @@ export async function queueJob(actor: string, raw: unknown) {
       new Set(data.referenceIds).size !== data.referenceIds.length
     )
       throw new PolicyError("Nur ausgewählte Briefing-Referenzen verwenden.");
-    if (data.kind === "TEXT" && data.referenceIds.length)
+    if (data.kind !== "IMAGE" && data.referenceIds.length)
       throw new PolicyError("Textgenerierung übermittelt keine Bilder.");
     if (
       (await tx.studioAsset.count({
@@ -316,7 +320,7 @@ export async function queueJob(actor: string, raw: unknown) {
       where: { organizationId: ORG, createdAt: { gte: since } },
     });
     const reserveUsd =
-      data.kind === "TEXT" ? config.textReserve : config.imageReserve;
+      data.kind !== "IMAGE" ? config.textReserve : config.imageReserve;
     if (
       jobs.length >= config.dailyRequests ||
       jobs.reduce((s, j) => s + j.reserveUsd, 0) + reserveUsd >
@@ -364,6 +368,42 @@ export async function queueJob(actor: string, raw: unknown) {
       imageIdea: content
         ? contentInput.parse(content.versions[0].payload).studio?.imageIdea
         : null,
+      ...(data.kind === "CHAT"
+        ? {
+            campaign: brief.campaignId
+              ? await tx.campaign.findFirst({
+                  where: { id: brief.campaignId, organizationId: ORG },
+                  select: { title: true, goal: true, audience: true },
+                })
+              : null,
+            contents: series.contents.map((c) =>
+              contentInput.parse(c.versions[0].payload),
+            ),
+            history: (
+              await tx.studioJob.findMany({
+                where: {
+                  organizationId: ORG,
+                  seriesId: series.id,
+                  kind: "CHAT",
+                  status: "SUCCEEDED",
+                },
+                orderBy: { createdAt: "desc" },
+                take: 12,
+              })
+            )
+              .reverse()
+              .flatMap((j) => {
+                const old = j.input as { request?: { message?: string } };
+                const result = j.result as { reply?: string } | null;
+                return old.request?.message && result?.reply
+                  ? [
+                      { role: "user", content: old.request.message },
+                      { role: "assistant", content: result.reply },
+                    ]
+                  : [];
+              }),
+          }
+        : {}),
     };
     const j = await tx.studioJob.create({
       data: {
@@ -372,7 +412,7 @@ export async function queueJob(actor: string, raw: unknown) {
         requestKey: data.requestKey,
         kind: data.kind,
         input: json(input),
-        model: data.kind === "TEXT" ? config.textModel : config.imageModel,
+        model: data.kind !== "IMAGE" ? config.textModel : config.imageModel,
         reserveUsd,
         userId: actor,
       },
@@ -426,10 +466,33 @@ export async function runJob(
     references?: unknown;
     imageIdea: string;
     versions: { id: string; version: number }[];
+    history?: { role: "user" | "assistant"; content: string }[];
+    campaign?: unknown;
+    contents?: unknown;
   };
   try {
     let result: unknown, usage: unknown, requestId: string | null;
-    if (job.kind === "TEXT") {
+    if (job.kind === "CHAT") {
+      if (!provider.chat)
+        throw new ProviderFailure(false, "Chat-Anbieter nicht eingerichtet.");
+      const r = await provider.chat(
+        {
+          briefing: input.brief,
+          campaign: input.campaign,
+          contents: input.contents,
+          rules: input.selectedRules,
+          references: input.references,
+        },
+        [
+          ...(input.history || []),
+          { role: "user", content: input.request.message! },
+        ],
+        job.model,
+      );
+      result = { reply: r.reply };
+      usage = r.usage;
+      requestId = r.requestId;
+    } else if (job.kind === "TEXT") {
       const r = await provider.text(
         briefingSchema.parse(input.brief),
         job.model,
@@ -509,6 +572,10 @@ export async function applyJob(actor: string, id: string) {
         throw new PolicyError(
           "Erfolgreicher, noch nicht übernommener Auftrag erforderlich.",
           409,
+        );
+      if (job.kind === "CHAT")
+        throw new PolicyError(
+          "Chat-Antwort ist bereits im Gespräch gespeichert.",
         );
       const input = job.input as {
         request: z.infer<typeof requestSchema>;

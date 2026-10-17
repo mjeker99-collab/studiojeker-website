@@ -83,6 +83,86 @@ const item = (kind = "TEXT") => ({
   url: kind === "TEXT" ? "" : "https://vimeo.com/12345",
   thumbnailAssetId: null,
 });
+test("Chat persists turns, isolates series and enforces single execution", async () => {
+  const oldKey = process.env.OPENAI_API_KEY,
+    oldFlag = process.env.CONTENT_AI_ENABLED;
+  process.env.OPENAI_API_KEY = "synthetic-only";
+  process.env.CONTENT_AI_ENABLED = "true";
+  try {
+    const s = await createSeries(martin, {
+      title: "SYNTHETISCH Chat",
+      topic: "Test",
+      offer: "",
+      goal: "Testziel",
+      audience: "Testpublikum",
+      tone: "Deutsch",
+      channels: ["INSTAGRAM"],
+      count: 1,
+      formats: ["4:5"],
+      campaignId: null,
+      referenceAssetIds: [],
+    });
+    const request = {
+      seriesId: s.id,
+      kind: "CHAT",
+      message: "Eine Headline",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [],
+      referenceRights: true,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    };
+    await assert.rejects(queueJob("missing", request), /Berechtigung/);
+    const j = await queueJob(martin, request);
+    assert.equal((await queueJob(martin, request)).id, j.id);
+    let calls = 0;
+    const provider = {
+      async text() {
+        throw new Error("Unexpected text generation");
+      },
+      async image() {
+        throw new Error("Unexpected image generation");
+      },
+      async chat(
+        _context: unknown,
+        messages: { role: string; content: string }[],
+      ) {
+        calls++;
+        assert.equal(
+          messages.at(-1)?.content,
+          calls === 1 ? "Eine Headline" : "Kürzer",
+        );
+        assert.equal(messages.length, calls === 1 ? 1 : 3);
+        return {
+          reply: "Synthetische Antwort",
+          usage: {},
+          requestId: "synthetic",
+        };
+      },
+    };
+    await runJob(martin, j.id, provider);
+    await assert.rejects(runJob(martin, j.id, provider), /bereits gestartet/);
+    const second = await queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+      message: "Kürzer",
+    });
+    await runJob(martin, second.id, provider);
+    assert.equal(calls, 2);
+    const state = await studioState(nora);
+    assert.equal(
+      state.jobs.filter((j) => j.seriesId === s.id && j.status === "SUCCEEDED")
+        .length,
+      2,
+    );
+  } finally {
+    if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = oldKey;
+    if (oldFlag === undefined) delete process.env.CONTENT_AI_ENABLED;
+    else process.env.CONTENT_AI_ENABLED = oldFlag;
+  }
+});
 test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderungen", async () => {
   await assert.rejects(libraryState("missing"), /Berechtigung/);
   const saved = await saveLibraryItem(martin, item());
