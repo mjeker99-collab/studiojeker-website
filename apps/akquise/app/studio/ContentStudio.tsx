@@ -221,7 +221,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
     <div className="studio-workspace">
       <div className="hub-toolbar">
         <div>
-          <p className="eyebrow">STUDIOJEKER ONE / CONTENT-STUDIO</p>
+          <p className="eyebrow">STUDIOONE / CONTENT-STUDIO</p>
           <p>
             Briefing → Ideen → Bild & Text → Layout → Prüfung → Export & Planung
           </p>

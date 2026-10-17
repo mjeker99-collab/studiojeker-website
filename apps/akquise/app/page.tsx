@@ -1,5 +1,6 @@
 "use client";
 import Hub from "./hub/Hub";
+import Image from "next/image";
 import ContentStudio from "./studio/ContentStudio";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
@@ -98,6 +99,20 @@ const date = (v: unknown) =>
     : "–";
 function Badge({ value }: { value: string }) {
   return <span className={`badge b-${value}`}>{labels[value] ?? value}</span>;
+}
+function AppLogo() {
+  return (
+    <div className="wordmark app-brand">
+      <Image
+        src="/brand/logo"
+        alt="STUDIOONE – Dein Marketing. Ein Ort."
+        width={1280}
+        height={593}
+        unoptimized
+        priority
+      />
+    </div>
+  );
 }
 export default function App() {
   const [data, setData] = useState<State | null>(null),
@@ -305,18 +320,16 @@ export default function App() {
   if (!loaded)
     return (
       <main className="login">
-        <h1>Studiojeker</h1>
-        <p>Studiojeker ONE wird geladen …</p>
+        <h1>StudioONE</h1>
+        <p>StudioONE wird geladen …</p>
       </main>
     );
   if (!data)
     return (
       <main className="login">
         <div className="login-card">
-          <div className="wordmark">
-            studiojeker<span>®</span>
-          </div>
-          <p className="eyebrow">STUDIOJEKER MARKETING HUB / V1</p>
+          <AppLogo />
+          <p className="eyebrow">STUDIOONE / MARKETING HUB</p>
           <h1>
             Gute Kontakte.
             <br />
@@ -374,10 +387,8 @@ export default function App() {
   return (
     <div className="shell">
       <aside className="sidebar" inert={showContact || !!draft}>
-        <div className="wordmark">
-          studiojeker<span>®</span>
-        </div>
-        <p className="eyebrow">STUDIOJEKER ONE / WORKSPACE</p>
+        <AppLogo />
+        <p className="eyebrow">STUDIOONE / WORKSPACE</p>
         <nav aria-label="Hauptnavigation">
           {nav.map((n, i) => (
             <button
@@ -443,7 +454,7 @@ export default function App() {
       <div className="workspace" inert={showContact || !!draft}>
         <header>
           <span>
-            STUDIOJEKER GMBH <span className="muted">/ Studiojeker ONE</span>
+            STUDIOJEKER GMBH <span className="muted">/ StudioONE</span>
           </span>
           <span className="test-tag">● {mailLabel}</span>
         </header>
@@ -929,7 +940,7 @@ export default function App() {
           )}
           <footer>
             STUDIOJEKER · WE CREATE VISIBILITY.{" "}
-            <span>Studiojeker ONE V1 / intern</span>
+            <span>StudioONE V1 / intern</span>
           </footer>
         </main>
       </div>
