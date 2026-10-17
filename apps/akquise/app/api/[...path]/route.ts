@@ -31,6 +31,13 @@ import {
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
 import { readSheetContacts } from "@/lib/sheets";
+import {
+  beginDrive,
+  chooseDriveFolder,
+  disconnectDrive,
+  driveStatus,
+  listDriveFiles,
+} from "@/lib/drive/service";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const draftSchema = z
@@ -107,6 +114,40 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "drive/status" && req.method === "GET")
+      return NextResponse.json(await driveStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "drive/files" && req.method === "GET")
+      return NextResponse.json(
+        await listDriveFiles(
+          user.id,
+          req.nextUrl.searchParams.get("pageToken") || undefined,
+        ),
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    if (route === "drive/connect" && req.method === "POST") {
+      const session = (await cookies()).get(sessionCookieName())!.value;
+      const auth = await beginDrive(user.id, tokenHash(session));
+      const result = NextResponse.json(
+        { url: auth.url },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+      result.cookies.set("studio-drive-state", auth.state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/drive",
+        maxAge: 600,
+      });
+      return result;
+    }
+    if (route === "drive/disconnect" && req.method === "POST")
+      return NextResponse.json(await disconnectDrive(user.id));
+    if (route === "drive/folder" && req.method === "POST")
+      return NextResponse.json(
+        await chooseDriveFolder(user.id, await jsonBody(req)),
+      );
     if (route === "library/state" && req.method === "GET")
       return NextResponse.json(await libraryState(user.id));
     if (route === "studio/state" && req.method === "GET")

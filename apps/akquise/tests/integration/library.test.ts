@@ -83,6 +83,77 @@ const item = (kind = "TEXT") => ({
   url: kind === "TEXT" ? "" : "https://vimeo.com/12345",
   thumbnailAssetId: null,
 });
+test("Drive OAuth binds browser and live session, rejects replay and isolates connections", async () => {
+  const { beginDrive, completeDrive, stateHash, driveStatus, disconnectDrive } =
+    await import("../../lib/drive/service");
+  const names = [
+    "DRIVE_CLIENT_ID",
+    "DRIVE_CLIENT_SECRET",
+    "DRIVE_TOKEN_ENCRYPTION_KEY",
+  ] as const;
+  const previous = names.map((name) => process.env[name]);
+  process.env.DRIVE_CLIENT_ID = "synthetic-client";
+  process.env.DRIVE_CLIENT_SECRET = "synthetic-secret";
+  process.env.DRIVE_TOKEN_ENCRYPTION_KEY = "ab".repeat(32);
+  try {
+    const session = await db.session.create({
+      data: {
+        id: randomUUID(),
+        userId: martin,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+    });
+    const auth = await beginDrive(martin, session.id);
+    assert.equal(
+      new URL(auth.url).searchParams.get("code_challenge_method"),
+      "S256",
+    );
+    await assert.rejects(
+      completeDrive(auth.state, "wrong-browser", null, true),
+    );
+    assert.ok(
+      await db.driveOAuthState.findUnique({
+        where: { id: stateHash(auth.state) },
+      }),
+    );
+    await assert.rejects(
+      completeDrive(auth.state, auth.state, null, true),
+      /nicht freigegeben/,
+    );
+    await assert.rejects(
+      completeDrive(auth.state, auth.state, null, true),
+      /abgelaufen/,
+    );
+    const expired = await beginDrive(martin, session.id);
+    await db.session.delete({ where: { id: session.id } });
+    await assert.rejects(
+      completeDrive(expired.state, expired.state, null, true),
+      /Sitzung/,
+    );
+    await db.driveConnection.create({
+      data: {
+        userId: martin,
+        email: "synthetic@example.test",
+        encryptedToken: "never-expose-this",
+      },
+    });
+    assert.ok(
+      !JSON.stringify(await driveStatus(martin)).includes("never-expose"),
+    );
+    assert.equal((await driveStatus(nora)).connection, null);
+    await disconnectDrive(martin);
+    assert.equal(
+      await db.driveOAuthState.count({ where: { userId: martin } }),
+      0,
+    );
+    assert.equal((await driveStatus(martin)).connection, null);
+  } finally {
+    names.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name];
+      else process.env[name] = previous[index];
+    });
+  }
+});
 test("Chat persists turns, isolates series and enforces single execution", async () => {
   const oldKey = process.env.OPENAI_API_KEY,
     oldFlag = process.env.CONTENT_AI_ENABLED;

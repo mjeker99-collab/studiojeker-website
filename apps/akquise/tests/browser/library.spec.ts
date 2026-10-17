@@ -21,6 +21,12 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   await expect(
     page.getByRole("heading", { name: "Bibliothek", exact: true, level: 2 }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Google Drive", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Google Drive verbinden", exact: true }),
+  ).toBeDisabled();
   await page.getByRole("checkbox", { name: /Ich darf die Dateien/ }).check();
   const buffer = await sharp({
     create: { width: 900, height: 650, channels: 3, background: "#204451" },

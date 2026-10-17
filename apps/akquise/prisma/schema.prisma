@@ -388,6 +388,23 @@ model StudioJob {
   @@index([organizationId, status, createdAt])
 }
 
+model DriveConnection {
+  userId String @id
+  encryptedToken String
+  email String
+  folderId String?
+  folderName String?
+  updatedAt DateTime @updatedAt
+}
+
+model DriveOAuthState {
+  id String @id
+  userId String
+  sessionId String
+  verifier String
+  expiresAt DateTime
+}
+
 model LibraryItem {
   id               String             @id @default(cuid())
   organizationId   String             @default("studiojeker")
