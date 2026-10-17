@@ -297,12 +297,17 @@ export async function queueJob(actor: string, raw: unknown) {
         "Nutzungsrechte und Übermittlung ausdrücklich bestätigen.",
       );
     if (
-      data.referenceIds.some((id) => !brief.referenceAssetIds.includes(id)) ||
+      (data.kind !== "CHAT" &&
+        data.referenceIds.some(
+          (id) => !brief.referenceAssetIds.includes(id),
+        )) ||
       new Set(data.referenceIds).size !== data.referenceIds.length
     )
       throw new PolicyError("Nur ausgewählte Briefing-Referenzen verwenden.");
-    if (data.kind !== "IMAGE" && data.referenceIds.length)
+    if (data.kind === "TEXT" && data.referenceIds.length)
       throw new PolicyError("Textgenerierung übermittelt keine Bilder.");
+    if (data.referenceIds.length && config.storage === "DISCONNECTED")
+      throw new PolicyError("Privater Bildspeicher: Nicht verbunden.", 503);
     if (
       (await tx.studioAsset.count({
         where: {
@@ -310,6 +315,7 @@ export async function queueJob(actor: string, raw: unknown) {
           organizationId: ORG,
           deletedAt: null,
           mime: { startsWith: "image/" },
+          libraryItem: { is: { archivedAt: null } },
         },
       })) !== data.referenceIds.length
     )
@@ -475,6 +481,19 @@ export async function runJob(
     if (job.kind === "CHAT") {
       if (!provider.chat)
         throw new ProviderFailure(false, "Chat-Anbieter nicht eingerichtet.");
+      const refs = [];
+      for (const ref of input.request.referenceIds) {
+        if (
+          !(await db.libraryItem.findFirst({
+            where: { assetId: ref, organizationId: ORG, archivedAt: null },
+          }))
+        )
+          throw new PolicyError("Bildreferenz nicht mehr verfügbar.");
+        const a = await readAsset(actor, ref, store);
+        if (!["image/jpeg", "image/png", "image/webp"].includes(a.asset.mime))
+          throw new PolicyError("Ungültige Bildreferenz.");
+        refs.push({ bytes: a.bytes, mime: a.asset.mime });
+      }
       const r = await provider.chat(
         {
           briefing: input.brief,
@@ -488,6 +507,7 @@ export async function runJob(
           { role: "user", content: input.request.message! },
         ],
         job.model,
+        refs,
       );
       result = { reply: r.reply };
       usage = r.usage;

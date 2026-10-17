@@ -26,6 +26,41 @@ export default function StudioChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [referenceIds, setReferenceIds] = useState<string[]>([]);
+  const [uploadRights, setUploadRights] = useState(false);
+  const images = state.assets.filter((a) =>
+    ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
+  );
+  const storageReady = state.config.storage !== "DISCONNECTED";
+  async function uploadImage(file: File) {
+    if (busy || !uploadRights || !storageReady || referenceIds.length >= 4)
+      return;
+    setBusy(true);
+    setError("");
+    try {
+      if (file.size > 8 * 1024 * 1024)
+        throw new Error("Maximale Dateigrösse: 8 MB.");
+      const r = await fetch("/api/studio/upload", {
+        method: "POST",
+        headers: {
+          "x-file-name": encodeURIComponent(file.name),
+          "x-studio-kind": "ORIGINAL",
+          "x-rights-confirmed": "true",
+        },
+        body: file,
+        signal: AbortSignal.timeout(30000),
+      });
+      const a = await r.json();
+      if (!r.ok) throw new Error(a.error || "Upload fehlgeschlagen.");
+      await refresh();
+      setReferenceIds((ids) => Array.from(new Set([...ids, a.id])).slice(0, 4));
+      setConfirmed(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload fehlgeschlagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const jobs = state.jobs
     .filter((j) => j.kind === "CHAT" && j.seriesId === seriesId)
     .slice()
@@ -62,7 +97,7 @@ export default function StudioChat({
         message: message.trim(),
         contentId: null,
         requestKey: crypto.randomUUID(),
-        referenceIds: [],
+        referenceIds,
         referenceRights: confirmed,
         referenceTransfer: confirmed,
         confirmedCosts: true,
@@ -104,6 +139,7 @@ export default function StudioChat({
             onChange={(e) => {
               setSeriesId(e.target.value);
               setConfirmed(false);
+              setReferenceIds([]);
               setError("");
             }}
           >
@@ -158,7 +194,9 @@ export default function StudioChat({
           </p>
         )}
         {jobs.map((j) => {
-          const input = j.input as { request?: { message?: string } };
+          const input = j.input as {
+            request?: { message?: string; referenceIds?: string[] };
+          };
           const result = j.result as { reply?: string } | null;
           return (
             <article key={j.id}>
@@ -166,6 +204,18 @@ export default function StudioChat({
                 <strong>Du</strong>
               </p>
               <p className="studio-chat-message">{input.request?.message}</p>
+              {!!input.request?.referenceIds?.length && (
+                <p className="muted">
+                  Bildreferenzen:{" "}
+                  {input.request.referenceIds
+                    .map(
+                      (id) =>
+                        state.assets.find((a) => a.id === id)?.name ||
+                        "Nicht mehr verfügbar",
+                    )
+                    .join(", ")}
+                </p>
+              )}
               <p>
                 <strong>GPT</strong>
               </p>
@@ -185,7 +235,9 @@ export default function StudioChat({
       <p className="muted">
         Bild- und Videoausführung über Higgsfield: noch nicht verbunden. Dieser
         Chat erstellt Texte und Prompts. Die letzten 12 erfolgreichen
-        Gesprächsrunden werden als Kontext verwendet.
+        Gesprächsrunden werden als Textkontext verwendet. Nur die aktuell
+        ausgewählten Bilder werden übermittelt. Die Bildauswahl bleibt für
+        weitere Nachrichten dieses Gesprächs bestehen, bis du sie entfernst.
       </p>
       {!state.config.connected && (
         <p>
@@ -209,6 +261,58 @@ export default function StudioChat({
           disabled={busy}
           onChange={(e) => setMessage(e.target.value)}
         />
+        <fieldset disabled={busy || !storageReady}>
+          <legend>Bildreferenzen ({referenceIds.length}/4)</legend>
+          {!storageReady && (
+            <p>
+              Bildspeicher noch nicht eingerichtet. Textgespräche sind weiterhin
+              möglich.
+            </p>
+          )}
+          {images.length === 0 && <p>Noch keine Bilder in der Bibliothek.</p>}
+          {images.map((a) => (
+            <label className="check" key={a.id}>
+              <input
+                type="checkbox"
+                checked={referenceIds.includes(a.id)}
+                disabled={
+                  !referenceIds.includes(a.id) && referenceIds.length >= 4
+                }
+                onChange={(e) => {
+                  setReferenceIds(
+                    e.target.checked
+                      ? [...referenceIds, a.id]
+                      : referenceIds.filter((id) => id !== a.id),
+                  );
+                  setConfirmed(false);
+                }}
+              />
+              {a.name}
+            </label>
+          ))}
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={uploadRights}
+              onChange={(e) => setUploadRights(e.target.checked)}
+            />
+            Ich darf das hochgeladene Bild verwenden und in der Bibliothek
+            speichern.
+          </label>
+          <label>
+            Bild hochladen (JPEG, PNG oder WebP, maximal 8 MB)
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={!uploadRights || referenceIds.length >= 4}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void uploadImage(file);
+              }}
+            />
+          </label>
+        </fieldset>
         <label className="check">
           <input
             type="checkbox"
@@ -216,10 +320,11 @@ export default function StudioChat({
             disabled={busy}
             onChange={(e) => setConfirmed(e.target.checked)}
           />
-          Gespräch, Serienbriefing und ausgewählte Referenztexte an OpenAI
-          übermitteln. Budgetreservierung: USD{" "}
-          {state.config.textReserve.toFixed(2)} pro Nachricht, kein garantierter
-          Preis.
+          Ich bestätige die Nutzungsrechte und die Übermittlung von Gespräch,
+          Serienbriefing, Referenztexten und {referenceIds.length} ausgewählten
+          Bildern an OpenAI. Bildanalyse verursacht zusätzliche Eingabetokens.
+          Budgetreservierung: USD {state.config.textReserve.toFixed(2)} pro
+          Nachricht, kein garantierter Preis.
         </label>
         <button
           disabled={
