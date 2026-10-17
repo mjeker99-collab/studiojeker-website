@@ -3,6 +3,48 @@ import assert from "node:assert/strict";
 import { zurichInstant, zurichInput } from "../lib/hub/time";
 import { contentInput, safeUrl } from "../lib/hub/input";
 import { newsletterHtml } from "../lib/hub/newsletter";
+import { contentHash } from "../lib/hub/workflow";
+import { createHash } from "node:crypto";
+import {
+  newsletterDefaults,
+  newsletterText,
+} from "../lib/hub/newsletter-template";
+
+test("Newsletter-Prüfsumme bleibt bei JSONB-Feldreihenfolge stabil, Inhaltsänderungen bleiben erkennbar", () => {
+  const newsletter = newsletterDefaults("newsletter-02");
+  const payload = contentInput.parse({
+    kind: "NEWSLETTER",
+    title: "Test",
+    ownerId: "user",
+    campaignId: null,
+    scheduledAt: null,
+    subject: "Test",
+    preheader: "Vorschau",
+    body: newsletterText(newsletter),
+    audience: "Testzielgruppe",
+    variants: [],
+    newsletter,
+  });
+  const originalOrder = Object.keys(payload.newsletter!.fields);
+  const reordered = contentInput.parse({
+    ...payload,
+    newsletter: {
+      ...newsletter,
+      fields: Object.fromEntries(Object.entries(newsletter.fields).reverse()),
+    },
+  });
+  assert.notDeepEqual(Object.keys(reordered.newsletter!.fields), originalOrder);
+  assert.equal(contentHash(payload), contentHash(reordered));
+  assert.deepEqual(Object.keys(payload.newsletter!.fields), originalOrder);
+  reordered.newsletter!.fields[originalOrder[0]] += " geändert";
+  assert.notEqual(contentHash(payload), contentHash(reordered));
+  const legacy = { ...payload };
+  delete legacy.newsletter;
+  assert.equal(
+    contentHash(legacy),
+    createHash("sha256").update(JSON.stringify(legacy)).digest("hex"),
+  );
+});
 test("Zürich speichert Sommer/Winter als UTC und lehnt DST-Lücken/Dopplungen ab", () => {
   assert.equal(zurichInstant("2026-07-10T10:30"), "2026-07-10T08:30:00.000Z");
   assert.equal(zurichInstant("2026-01-10T10:30"), "2026-01-10T09:30:00.000Z");

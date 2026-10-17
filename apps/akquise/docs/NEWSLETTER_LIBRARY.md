@@ -67,3 +67,13 @@ Origin-Regeln bleiben unverändert. Vorschau-URLs senden keinen Referrer.
 Vor Merge müssen die vorhandenen GitHub-Actions-Prüfungen mit PostgreSQL und Chromium
 sowie die visuelle Prüfung erfolgreich sein. Keine Produktionsdaten geändert,
 kein Merge/Deployment und kein Mailchimp-/SMTP-Versand durch diese Implementierung.
+
+## Korrektur nach erster CI-Prüfung
+
+GitHub führte 30 von 31 Integrationstests erfolgreich aus. Der neue Newsletter-Test
+deckte auf, dass PostgreSQL JSONB die Reihenfolge der freien Inhaltsfelder ändert.
+Die Prüfsumme sortiert deshalb jetzt die Newsletter-Feldschlüssel, ohne Werte oder
+gespeicherte Inhalte zu verändern. Bestehende Hashes von Inhalten ohne diese neuen
+Vorlagenfelder bleiben kompatibel. Ein zusätzlicher Regressionstest prüft identische
+Hashes nach Umordnung, unterschiedliche Hashes nach Textänderung und die unveränderte
+Legacy-Berechnung. Die vollständige CI muss den Fix erneut prüfen.

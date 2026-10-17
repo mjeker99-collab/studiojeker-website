@@ -6,8 +6,24 @@ import { allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
 import { audit, type Tx } from "../workflow";
 import { campaignInput, contentInput, type ContentInput } from "./input";
-export const contentHash = (payload: ContentInput) =>
-  createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+export const contentHash = (payload: ContentInput) => {
+  // PostgreSQL JSONB may reorder record keys. Canonicalize the new newsletter
+  // fields only, preserving the existing hash format for legacy content.
+  const canonical = payload.newsletter
+    ? {
+        ...payload,
+        newsletter: {
+          ...payload.newsletter,
+          fields: Object.fromEntries(
+            Object.entries(payload.newsletter.fields).sort(([a], [b]) =>
+              a < b ? -1 : a > b ? 1 : 0,
+            ),
+          ),
+        },
+      }
+    : payload;
+  return createHash("sha256").update(JSON.stringify(canonical)).digest("hex");
+};
 export async function hubActor(tx: Tx, id: string) {
   const u = await tx.user.findFirst({ where: { id, active: true } });
   if (!u || !allowedAccount(u))
