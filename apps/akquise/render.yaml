@@ -43,6 +43,10 @@ services:
         value: njeker@studiojeker.ch
       - key: DATABASE_CONNECTION_LIMIT
         value: "3"
+      - key: CONTENT_AI_ENABLED
+        value: "false"
+      - key: STUDIO_LOCAL_ASSETS
+        value: "false"
       - key: DAILY_SEND_LIMIT
         value: "20"
 databases:

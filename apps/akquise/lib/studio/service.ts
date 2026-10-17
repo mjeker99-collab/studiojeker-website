@@ -1,0 +1,541 @@
+import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import { createHash } from "node:crypto";
+import { db } from "../db";
+import { contentInput, type ContentInput } from "../hub/input";
+import { saveContentInTx, hubActor } from "../hub/workflow";
+import { audit } from "../workflow";
+import { PolicyError } from "../policy";
+import {
+  briefingSchema,
+  ORG,
+  generatedPostSchema,
+  type StudioSnapshot,
+} from "./input";
+import { publicConfig, studioConfig, logoHash } from "./config";
+import { readAsset, storeAsset } from "./assets";
+import { openAIProvider, ProviderFailure, type AIProvider } from "./provider";
+import type { ObjectStore } from "./storage";
+const json = (v: unknown) =>
+  JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
+const digest = (v: unknown) =>
+  createHash("sha256").update(JSON.stringify(v)).digest("hex");
+export async function studioState(actor: string) {
+  await db.$transaction((tx) => hubActor(tx, actor));
+  const [series, assets, brand, jobs, campaigns, users] = await Promise.all([
+    db.studioSeries.findMany({
+      where: { organizationId: ORG },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        contents: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            versions: { orderBy: { version: "desc" }, take: 1 },
+            approvals: {
+              orderBy: { createdAt: "desc" },
+              include: { user: { select: { name: true } } },
+            },
+          },
+        },
+      },
+    }),
+    db.studioAsset.findMany({
+      where: { organizationId: ORG, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      select: {
+        id: true,
+        name: true,
+        mime: true,
+        size: true,
+        sha256: true,
+        kind: true,
+        width: true,
+        height: true,
+      },
+    }),
+    db.studioOrganization.findUniqueOrThrow({ where: { id: ORG } }),
+    db.studioJob.findMany({
+      where: { organizationId: ORG },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        seriesId: true,
+        kind: true,
+        status: true,
+        model: true,
+        reserveUsd: true,
+        error: true,
+        usage: true,
+        createdAt: true,
+        startedAt: true,
+        completedAt: true,
+        providerRequestId: true,
+        result: true,
+      },
+    }),
+    db.campaign.findMany({
+      where: { organizationId: ORG },
+      select: { id: true, title: true },
+    }),
+    db.user.findMany({
+      where: { active: true },
+      select: { id: true, name: true },
+    }),
+  ]);
+  return {
+    series,
+    assets,
+    brand: brand.brand,
+    jobs,
+    campaigns,
+    users,
+    config: publicConfig(),
+  };
+}
+export async function createSeries(actor: string, raw: unknown) {
+  const brief = briefingSchema.parse(raw);
+  return db.$transaction(
+    async (tx) => {
+      await hubActor(tx, actor);
+      if (
+        brief.campaignId &&
+        !(await tx.campaign.findFirst({
+          where: { id: brief.campaignId, organizationId: ORG },
+        }))
+      )
+        throw new PolicyError("Kampagne nicht zugänglich.", 403);
+      if (
+        (await tx.studioAsset.count({
+          where: {
+            id: { in: brief.referenceAssetIds },
+            organizationId: ORG,
+            deletedAt: null,
+            kind: "ORIGINAL",
+          },
+        })) !== new Set(brief.referenceAssetIds).size
+      )
+        throw new PolicyError("Referenz nicht zugänglich.", 403);
+      const series = await tx.studioSeries.create({
+        data: {
+          title: brief.title,
+          briefing: json(brief),
+          ownerId: actor,
+          organizationId: ORG,
+        },
+      });
+      for (let i = 0; i < brief.count; i++) {
+        const studio: StudioSnapshot = {
+          organizationId: ORG,
+          seriesId: series.id,
+          brandVersion: "studio-v1",
+          imageIdea: "",
+          headline: "",
+          hashtags: "",
+          motifAssetId: null,
+          motifSha256: "",
+          fontAssetId: null,
+          fontSha256: "",
+          logoSha256: logoHash(),
+          template: "PANEL",
+          formats: brief.formats,
+          cropX: 0.5,
+          cropY: 0.5,
+          zoom: 1,
+          showLogo: true,
+          showClaim: false,
+          showHeadline: false,
+          source: "OWN",
+        };
+        await saveContentInTx(
+          tx,
+          actor,
+          contentInput.parse({
+            kind: "SOCIAL",
+            title: `${brief.title} · ${i + 1}`,
+            ownerId: actor,
+            campaignId: brief.campaignId,
+            scheduledAt: null,
+            subject: "",
+            preheader: "",
+            body: "",
+            audience: brief.audience,
+            studio,
+            variants: brief.channels.map((channel) => ({
+              channel,
+              text: brief.topic,
+              link: "",
+              cta: "",
+              mediaType: "NONE",
+              mediaUrl: "",
+              mediaReference: "",
+              scheduledAt: null,
+            })),
+          }),
+        );
+      }
+      await audit(tx, actor, "STUDIO_SERIES_CREATED", series.id, {
+        count: brief.count,
+      });
+      return series;
+    },
+    { timeout: 15000 },
+  );
+}
+const requestSchema = z
+  .object({
+    seriesId: z.string().min(1),
+    kind: z.enum(["TEXT", "IMAGE"]),
+    contentId: z.string().nullable(),
+    requestKey: z.string().uuid(),
+    referenceIds: z.array(z.string()).max(4),
+    referenceRights: z.boolean(),
+    referenceTransfer: z.boolean(),
+    confirmedCosts: z.literal(true),
+  })
+  .strict();
+export async function queueJob(actor: string, raw: unknown) {
+  const data = requestSchema.parse(raw),
+    config = studioConfig();
+  if (!config.connected)
+    throw new PolicyError(
+      "KI: Nicht verbunden. API-Schlüssel und CONTENT_AI_ENABLED serverseitig konfigurieren.",
+      503,
+    );
+  if (data.kind === "IMAGE" && config.storage === "DISCONNECTED")
+    throw new PolicyError("Privater Bildspeicher: Nicht verbunden.", 503);
+  return db.$transaction(async (tx) => {
+    await hubActor(tx, actor);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"studio-jobs:" + ORG}))`;
+    const previous = await tx.studioJob.findUnique({
+      where: { requestKey: data.requestKey },
+    });
+    if (previous) {
+      const prev = previous.input as Record<string, unknown>;
+      if (
+        previous.organizationId !== ORG ||
+        digest(requestSchema.parse(prev.request)) !== digest(data)
+      )
+        throw new PolicyError(
+          "Auftragsschlüssel bereits anders verwendet.",
+          409,
+        );
+      return previous;
+    }
+    const series = await tx.studioSeries.findFirst({
+      where: { id: data.seriesId, organizationId: ORG },
+      include: {
+        contents: {
+          orderBy: { createdAt: "asc" },
+          include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        },
+      },
+    });
+    if (!series) throw new PolicyError("Serie nicht zugänglich.", 403);
+    const brief = briefingSchema.parse(series.briefing);
+    const content = series.contents.find((c) => c.id === data.contentId);
+    if (
+      data.kind === "IMAGE" &&
+      (!content ||
+        !contentInput.parse(content.versions[0].payload).studio?.imageIdea)
+    )
+      throw new PolicyError("Beitrag und Bildidee erforderlich.");
+    if (
+      data.referenceIds.length &&
+      (!data.referenceRights || !data.referenceTransfer)
+    )
+      throw new PolicyError(
+        "Nutzungsrechte und Übermittlung ausdrücklich bestätigen.",
+      );
+    if (
+      data.referenceIds.some((id) => !brief.referenceAssetIds.includes(id)) ||
+      new Set(data.referenceIds).size !== data.referenceIds.length
+    )
+      throw new PolicyError("Nur ausgewählte Briefing-Referenzen verwenden.");
+    if (data.kind === "TEXT" && data.referenceIds.length)
+      throw new PolicyError("Textgenerierung übermittelt keine Bilder.");
+    if (
+      (await tx.studioAsset.count({
+        where: {
+          id: { in: data.referenceIds },
+          organizationId: ORG,
+          deletedAt: null,
+          kind: "ORIGINAL",
+        },
+      })) !== data.referenceIds.length
+    )
+      throw new PolicyError("Referenz nicht zugänglich.", 403);
+    const since = new Date();
+    since.setUTCHours(0, 0, 0, 0);
+    const jobs = await tx.studioJob.findMany({
+      where: { organizationId: ORG, createdAt: { gte: since } },
+    });
+    const reserveUsd =
+      data.kind === "TEXT" ? config.textReserve : config.imageReserve;
+    if (
+      jobs.length >= config.dailyRequests ||
+      jobs.reduce((s, j) => s + j.reserveUsd, 0) + reserveUsd >
+        config.dailyBudget + 1e-9
+    )
+      throw new PolicyError(
+        "Tageslimit für Aufträge/Budgetreservierungen erreicht.",
+        429,
+      );
+    if (
+      await tx.studioJob.count({
+        where: { organizationId: ORG, status: { in: ["QUEUED", "RUNNING"] } },
+      })
+    )
+      throw new PolicyError(
+        "Ein Auftrag wartet oder läuft bereits. Zuerst prüfen.",
+        409,
+      );
+    const input = {
+      request: data,
+      brief,
+      versions: series.contents.map((c) => ({ id: c.id, version: c.version })),
+      imageIdea: content
+        ? contentInput.parse(content.versions[0].payload).studio?.imageIdea
+        : null,
+    };
+    const j = await tx.studioJob.create({
+      data: {
+        seriesId: series.id,
+        organizationId: ORG,
+        requestKey: data.requestKey,
+        kind: data.kind,
+        input: json(input),
+        model: data.kind === "TEXT" ? config.textModel : config.imageModel,
+        reserveUsd,
+        userId: actor,
+      },
+    });
+    await audit(tx, actor, "STUDIO_AI_REQUESTED", j.id, {
+      kind: j.kind,
+      model: j.model,
+      reserveUsd,
+      referenceIds: data.referenceIds,
+      referenceRights: data.referenceRights,
+      referenceTransfer: data.referenceTransfer,
+    });
+    return j;
+  });
+}
+export async function runJob(
+  actor: string,
+  id: string,
+  provider: AIProvider = openAIProvider,
+  store?: ObjectStore,
+) {
+  const job = await db.$transaction(async (tx) => {
+    await hubActor(tx, actor);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"studio-jobs:" + ORG}))`;
+    const j = await tx.studioJob.findFirst({
+      where: { id, organizationId: ORG },
+    });
+    if (!j) throw new PolicyError("Auftrag nicht zugänglich.", 403);
+    if (j.status !== "QUEUED")
+      throw new PolicyError(
+        "Auftrag wurde bereits gestartet. Keine Wiederholung.",
+        409,
+      );
+    if (
+      await tx.studioJob.count({
+        where: { organizationId: ORG, status: "RUNNING" },
+      })
+    )
+      throw new PolicyError("Ein Auftrag läuft bereits.", 409);
+    if (!studioConfig().connected)
+      throw new PolicyError("KI: Nicht verbunden.", 503);
+    return tx.studioJob.update({
+      where: { id },
+      data: { status: "RUNNING", startedAt: new Date() },
+    });
+  });
+  const input = job.input as {
+    request: z.infer<typeof requestSchema>;
+    brief: unknown;
+    imageIdea: string;
+    versions: { id: string; version: number }[];
+  };
+  try {
+    let result: unknown, usage: unknown, requestId: string | null;
+    if (job.kind === "TEXT") {
+      const r = await provider.text(
+        briefingSchema.parse(input.brief),
+        job.model,
+      );
+      result = { posts: r.posts };
+      usage = r.usage;
+      requestId = r.requestId;
+    } else {
+      const refs = await Promise.all(
+        input.request.referenceIds.map(async (ref) => {
+          const a = await readAsset(actor, ref, store);
+          return { bytes: a.bytes, mime: a.asset.mime };
+        }),
+      );
+      const r = await provider.image(input.imageIdea, job.model, refs);
+      const a = await storeAsset(
+        actor,
+        r.bytes,
+        `motiv-${job.id}.png`,
+        "MOTIF",
+        undefined,
+        store,
+      );
+      result = { assetId: a.id, sha256: a.sha256 };
+      usage = r.usage;
+      requestId = r.requestId;
+    }
+    await db.studioJob.update({
+      where: { id },
+      data: {
+        status: "SUCCEEDED",
+        result: json(result),
+        usage: json(usage || {}),
+        providerRequestId: requestId,
+        completedAt: new Date(),
+      },
+    });
+  } catch (e) {
+    const uncertain = !(e instanceof ProviderFailure) || e.uncertain;
+    await db.studioJob.updateMany({
+      where: { id, status: "RUNNING" },
+      data: {
+        status: uncertain ? "UNKNOWN" : "FAILED",
+        error:
+          e instanceof ProviderFailure
+            ? e.message
+            : "Verarbeitung fehlgeschlagen. Ergebnis/Kosten prüfen; keine automatische Wiederholung.",
+        completedAt: new Date(),
+      },
+    });
+  }
+  return { ok: true };
+}
+export async function applyJob(actor: string, id: string) {
+  return db.$transaction(
+    async (tx) => {
+      await hubActor(tx, actor);
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"studio-job:" + id}))`;
+      const job = await tx.studioJob.findFirst({
+        where: { id, organizationId: ORG, status: "SUCCEEDED" },
+      });
+      if (!job)
+        throw new PolicyError(
+          "Erfolgreicher, noch nicht übernommener Auftrag erforderlich.",
+          409,
+        );
+      const input = job.input as {
+        request: z.infer<typeof requestSchema>;
+        versions: { id: string; version: number }[];
+      };
+      const result = job.result as {
+        posts: unknown[];
+        assetId: string;
+        sha256: string;
+      };
+      const targets =
+        job.kind === "TEXT"
+          ? input.versions
+          : input.versions.filter((c) => c.id === input.request.contentId);
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i],
+          c = await tx.marketingContent.findFirst({
+            where: {
+              id: t.id,
+              organizationId: ORG,
+              studioSeriesId: job.seriesId,
+            },
+            include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+          });
+        if (!c || c.version !== t.version)
+          throw new PolicyError(
+            "Beitrag seit Auftrag geändert. Ergebnis bleibt gespeichert; nicht überschrieben.",
+            409,
+          );
+        const p = contentInput.parse(c.versions[0].payload),
+          s = p.studio!;
+        let updated: ContentInput;
+        if (job.kind === "TEXT") {
+          const post = generatedPostSchema.parse(result.posts[i]);
+          updated = {
+            ...p,
+            studio: {
+              ...s,
+              imageIdea: post.imageIdea,
+              headline: post.headline,
+              hashtags: post.hashtags,
+              source: "AI",
+            },
+            variants: post.variants.map((v) => ({
+              ...p.variants.find((old) => old.channel === v.channel)!,
+              ...v,
+            })),
+          };
+        } else
+          updated = {
+            ...p,
+            studio: {
+              ...s,
+              motifAssetId: result.assetId,
+              motifSha256: result.sha256,
+              source: "AI",
+            },
+            variants: p.variants.map((v) => ({
+              ...v,
+              mediaType: "IMAGE",
+              mediaUrl: "",
+              mediaReference: `Studio-Asset ${result.assetId} · ${result.sha256}`,
+            })),
+          };
+        await saveContentInTx(
+          tx,
+          actor,
+          contentInput.parse(updated),
+          c.id,
+          c.version,
+        );
+      }
+      await tx.studioJob.update({ where: { id }, data: { status: "APPLIED" } });
+      await audit(tx, actor, "STUDIO_AI_APPLIED", id, {});
+      return { ok: true };
+    },
+    { timeout: 15000 },
+  );
+}
+export async function cancelOrReconcile(actor: string, id: string) {
+  return db.$transaction(async (tx) => {
+    await hubActor(tx, actor);
+    const job = await tx.studioJob.findFirst({
+      where: { id, organizationId: ORG },
+    });
+    if (!job) throw new PolicyError("Auftrag nicht zugänglich.", 403);
+    if (job.status === "QUEUED")
+      await tx.studioJob.updateMany({
+        where: { id, status: "QUEUED" },
+        data: { status: "CANCELLED", completedAt: new Date() },
+      });
+    else if (
+      job.status === "RUNNING" &&
+      job.startedAt &&
+      Date.now() - job.startedAt.getTime() > 180000
+    )
+      await tx.studioJob.updateMany({
+        where: { id, status: "RUNNING" },
+        data: {
+          status: "UNKNOWN",
+          error:
+            "Zeitfenster überschritten. Anbieter/Kosten vor neuem Auftrag prüfen.",
+          completedAt: new Date(),
+        },
+      });
+    else
+      throw new PolicyError("Auftrag kann aktuell nicht beendet werden.", 409);
+    await audit(tx, actor, "STUDIO_JOB_RECONCILED", id, {});
+    return { ok: true };
+  });
+}

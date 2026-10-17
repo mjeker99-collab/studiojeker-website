@@ -1,4 +1,5 @@
 "use client";
+import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
@@ -896,6 +897,14 @@ export default function Hub({
               Version speichern
             </button>
           </form>
+          {form.studio && editing && (
+            <StudioLayoutPreview
+              snapshot={form.studio}
+              id={editing.id}
+              version={editing.version}
+              dirty={!!dirty}
+            />
+          )}
           <section className="hub-preview" aria-label="Beitragsvorschau">
             <p className="eyebrow">
               VORSCHAU ·{" "}

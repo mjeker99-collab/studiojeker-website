@@ -10,6 +10,8 @@
 !app/**
 !lib/
 !lib/**
+!brand/
+!brand/**
 !templates/
 !templates/**
 !prisma/

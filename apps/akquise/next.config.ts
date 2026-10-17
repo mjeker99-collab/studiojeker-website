@@ -9,7 +9,8 @@ const config: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: root,
   turbopack: { root },
-  serverExternalPackages: ["exceljs"],
+  serverExternalPackages: ["exceljs", "sharp", "archiver"],
+  outputFileTracingIncludes: { "/*": ["./brand/**"] },
   async headers() {
     return [
       {

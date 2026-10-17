@@ -1,3 +1,4 @@
+import { studioSnapshot } from "../studio/input";
 import { z } from "zod";
 const text = (max: number) => z.string().trim().max(max);
 export const safeUrl = z.union([
@@ -31,6 +32,7 @@ const variant = z
   );
 export const contentInput = z
   .object({
+    studio: studioSnapshot.optional(),
     kind: z.enum(["SOCIAL", "NEWSLETTER"]),
     title: text(200).min(1),
     ownerId: z.string().min(1),

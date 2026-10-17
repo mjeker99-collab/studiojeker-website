@@ -25,6 +25,9 @@ const env = {
   MAIL_MODE: "disabled",
   ENABLE_EMAIL_SENDING: "false",
   SMTP_CONFIGURATION_CONFIRMED: "false",
+  STUDIO_LOCAL_ASSETS: "true",
+  CONTENT_AI_ENABLED: "false",
+  OPENAI_API_KEY: "",
   E2E_EMAIL: "martin@example.test",
   E2E_PASSWORD: randomBytes(24).toString("base64url"),
 };
@@ -35,7 +38,11 @@ try {
   execFileSync(
     process.execPath,
     ["node_modules/prisma/build/index.js", "migrate", "deploy"],
-    { env, stdio: "pipe" },
+    {
+      env: { ...env, NODE_TEST_CONTEXT: undefined },
+      stdio: "pipe",
+      timeout: 20000,
+    },
   );
   for (const [name, email] of [
     ["Martin Jeker", env.E2E_EMAIL],

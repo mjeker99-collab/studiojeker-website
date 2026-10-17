@@ -15,3 +15,15 @@ Zusätzlich wurden iPad hoch und Mobil ohne Seitenüberlauf geprüft.
 
 Keine externen Integrationen verbunden; Termine sind ausschliesslich geplant.
 Screenshots sind keine Nachweise einer Veröffentlichung oder eines Versands.
+
+## Content-Studio / Studiojeker ONE Desktop V1
+
+Sämtliche Motive und Texte sind synthetisch; keine KI-Livegenerierung. Der Ablauf wurde mit privaten lokalen Entwicklungsassets im isolierten Testschema geprüft. Schriftdatei für Produktionslayouts noch nicht freigegeben; die Bildlayouts enthalten daher keine eingebrannte Headline/Claim.
+
+- [Briefing](studio-01-briefing-desktop.png)
+- [Gespeicherter Editor](studio-02-editor-desktop.png)
+- [Motiv und reproduzierbare Layoutvorschau](studio-03-layout-desktop.png)
+- [Konkrete Inhaltsfreigabe](studio-04-freigabe-desktop.png)
+- [Entwertung nach Änderung](studio-05-entwertung-desktop.png)
+- [1024 Pixel](studio-1024.png)
+- [390 Pixel](studio-390.png)
