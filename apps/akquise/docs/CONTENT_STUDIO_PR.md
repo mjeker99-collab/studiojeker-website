@@ -16,7 +16,7 @@ PR #142 wurde bereits in `feat/akquise-render-frankfurt` (#141) integriert. Dies
 
 ## Prüfung und Review
 
-Produktionsbuild, TypeScript, gezieltes ESLint, 5 Studio-Units, 4 Hub-Units, 4 Render-Guards, 9 gezielte PostgreSQL-Fälle und 1 Desktop-Browserablauf inkl. Reload/Freigabe/Download/Entwertung erfolgreich. Sieben synthetische Screenshots. Keine erneut vollständig gestartete lokale Testsuite. Zwei nachträglich ergänzte Export-/Font-Integrationserweiterungen lokal wegen unterbrochener Netzwerkfreigabe offen; CI-Ergebnis vor Reviewabschluss prüfen.
+Produktionsbuild, TypeScript, gezieltes ESLint, 5 Studio-Units, 4 Hub-Units, 4 Render-Guards, 10 gezielte PostgreSQL-Fälle und 1 Desktop-Browserablauf inkl. Reload/Freigabe/Download/Entwertung erfolgreich. Sieben synthetische Screenshots. Keine erneut vollständig gestartete lokale Testsuite. Die beiden nachträglich ergänzten Export-/Font-Fälle und der einzelne Desktopablauf sind nach den letzten Korrekturen ebenfalls erfolgreich. Der Schriftcache bleibt pro Datei-Hash über die Laufzeit stabil, damit Pango keine gelöschten temporären Fonts referenziert. CI-Ergebnis vor Reviewabschluss prüfen.
 
 Dokumentation: `apps/akquise/docs/CONTENT_STUDIO.md`, Prüfergebnisse `CONTENT_STUDIO_TEST_RESULTS.md`, Wiederaufnahme-/Sicherungsnachweis `CONTENT_STUDIO_CHECKPOINT.md`.
 

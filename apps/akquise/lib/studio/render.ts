@@ -1,6 +1,7 @@
 import sharp, { type OverlayOptions } from "sharp";
 import { ZipArchive } from "archiver";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { db } from "../db";
@@ -102,102 +103,114 @@ export async function renderLayout(
     left: 0,
     top: panelY,
   });
-  let temp: string | undefined;
-  try {
-    if ((s.showHeadline && s.headline) || s.showClaim) {
-      if (!s.fontAssetId)
-        throw new PolicyError(
-          "Freigegebene Original-Schriftdatei fehlt. Schrift hochladen oder Textebene ausblenden.",
-          409,
-        );
-      const font = await readAsset(actor, s.fontAssetId, store);
-      if (font.asset.kind !== "FONT" || font.asset.sha256 !== s.fontSha256)
-        throw new PolicyError("Schriftversion nicht gültig.", 409);
-      const family = fontFamily(font.bytes);
-      temp = await mkdtemp(join(tmpdir(), "studio-font-"));
-      const fontPath = join(temp, "brand.ttf");
-      await writeFile(fontPath, font.bytes, { mode: 0o600 });
-      if (s.showHeadline && s.headline) {
-        const availableHeight = height - panelY - 180;
-        let text: Buffer | undefined;
-        for (let size = 64; size >= 32; size -= 4) {
-          const candidate = await sharp({
-            text: {
-              text: `<span foreground="#ffffff">${escape(s.headline)}</span>`,
-              font: `${family} ${size}`,
-              fontfile: fontPath,
-              width: width - 96,
-              rgba: true,
-              wrap: "word-char",
-            },
-          })
-            .png()
-            .toBuffer();
-          if ((await sharp(candidate).metadata()).height! <= availableHeight) {
-            text = candidate;
-            break;
-          }
-        }
-        if (!text)
-          throw new PolicyError(
-            "Headline passt nicht in diese Vorlage. Bitte kürzen.",
-          );
-        overlays.push({ input: text, left: 48, top: panelY + 30 });
-      }
-      if (s.showClaim) {
-        const text = await sharp({
+
+  if ((s.showHeadline && s.headline) || s.showClaim) {
+    if (!s.fontAssetId)
+      throw new PolicyError(
+        "Freigegebene Original-Schriftdatei fehlt. Schrift hochladen oder Textebene ausblenden.",
+        409,
+      );
+    const font = await readAsset(actor, s.fontAssetId, store);
+    if (font.asset.kind !== "FONT" || font.asset.sha256 !== s.fontSha256)
+      throw new PolicyError("Schriftversion nicht gültig.", 409);
+    const family = fontFamily(font.bytes);
+    // Pango caches registered file paths. Keep an immutable per-hash cache
+    // for the runtime lifetime; deleting each temporary file causes fallback
+    // or "scaled_font: file not found" on the next export. S3 remains canonical.
+    const cache = join(tmpdir(), "studio-brand-fonts");
+    await mkdir(cache, { recursive: true, mode: 0o700 });
+    const fontPath = join(cache, `${font.asset.sha256}.ttf`);
+    try {
+      await writeFile(fontPath, font.bytes, { mode: 0o600, flag: "wx" });
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    }
+    if (
+      createHash("sha256")
+        .update(await readFile(fontPath))
+        .digest("hex") !== font.asset.sha256
+    )
+      throw new PolicyError(
+        "Schriftcache-Prüfsumme stimmt nicht überein.",
+        503,
+      );
+    process.env.XDG_CACHE_HOME ||= join(tmpdir(), "studio-fontconfig-cache");
+    await mkdir(process.env.XDG_CACHE_HOME, { recursive: true, mode: 0o700 });
+    if (s.showHeadline && s.headline) {
+      const availableHeight = height - panelY - 180;
+      let text: Buffer | undefined;
+      for (let size = 64; size >= 32; size -= 4) {
+        const candidate = await sharp({
           text: {
-            text: '<span foreground="#00c8ff">We create visibility</span>',
-            font: `${family} 28`,
+            text: `<span foreground="#ffffff">${escape(s.headline)}</span>`,
+            font: `${family} ${size}`,
             fontfile: fontPath,
+            width: width - 96,
             rgba: true,
+            wrap: "word-char",
           },
         })
           .png()
           .toBuffer();
-        overlays.push({ input: text, left: 48, top: height - 54 });
+        if ((await sharp(candidate).metadata()).height! <= availableHeight) {
+          text = candidate;
+          break;
+        }
       }
+      if (!text)
+        throw new PolicyError(
+          "Headline passt nicht in diese Vorlage. Bitte kürzen.",
+        );
+      overlays.push({ input: text, left: 48, top: panelY + 30 });
     }
-    if (s.showLogo) {
-      // Exact original SVG bytes; preserve its aspect ratio and colours.
-      const logo = await sharp(logoBytes())
-        .resize({ width: 220 })
-        .png()
-        .toBuffer();
-      const lm = await sharp(logo).metadata();
-      const plate = await sharp({
-        create: {
-          width: 244,
-          height: lm.height! + 24,
-          channels: 4,
-          background: "#ffffff",
+    if (s.showClaim) {
+      const text = await sharp({
+        text: {
+          text: '<span foreground="#00c8ff">We create visibility</span>',
+          font: `${family} 28`,
+          fontfile: fontPath,
+          rgba: true,
         },
       })
         .png()
         .toBuffer();
-      overlays.push({
-        input: plate,
-        left: width - 220 - 52,
-        top: height - lm.height! - 36,
-      });
-      overlays.push({
-        input: logo,
-        left: width - 220 - 40,
-        top: height - lm.height! - 24,
-      });
+      overlays.push({ input: text, left: 48, top: height - 54 });
     }
-    const image = sharp({
-      create: { width, height, channels: 4, background: "#000000" },
-    }).composite(overlays);
-    return encoding === "jpg"
-      ? image
-          .flatten({ background: "#000000" })
-          .jpeg({ quality: 92 })
-          .toBuffer()
-      : image.png().toBuffer();
-  } finally {
-    if (temp) await rm(temp, { recursive: true, force: true });
   }
+  if (s.showLogo) {
+    // Exact original SVG bytes; preserve its aspect ratio and colours.
+    const logo = await sharp(logoBytes())
+      .resize({ width: 220 })
+      .png()
+      .toBuffer();
+    const lm = await sharp(logo).metadata();
+    const plate = await sharp({
+      create: {
+        width: 244,
+        height: lm.height! + 24,
+        channels: 4,
+        background: "#ffffff",
+      },
+    })
+      .png()
+      .toBuffer();
+    overlays.push({
+      input: plate,
+      left: width - 220 - 52,
+      top: height - lm.height! - 36,
+    });
+    overlays.push({
+      input: logo,
+      left: width - 220 - 40,
+      top: height - lm.height! - 24,
+    });
+  }
+  const image = sharp({
+    create: { width, height, channels: 4, background: "#000000" },
+  }).composite(overlays);
+  return encoding === "jpg"
+    ? image.flatten({ background: "#000000" }).jpeg({ quality: 92 }).toBuffer()
+    : image.png().toBuffer();
 }
 export function channelTexts(payload: ReturnType<typeof contentInput.parse>) {
   return payload.variants
