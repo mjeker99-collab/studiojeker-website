@@ -1,3 +1,4 @@
+import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createHash } from "node:crypto";
@@ -41,7 +42,11 @@ export async function studioState(actor: string) {
       },
     }),
     db.studioAsset.findMany({
-      where: { organizationId: ORG, deletedAt: null },
+      where: {
+        organizationId: ORG,
+        deletedAt: null,
+        libraryItem: { is: { archivedAt: null } },
+      },
       orderBy: { createdAt: "desc" },
       take: 500,
       select: {
@@ -113,11 +118,46 @@ export async function createSeries(actor: string, raw: unknown) {
             id: { in: brief.referenceAssetIds },
             organizationId: ORG,
             deletedAt: null,
-            kind: "ORIGINAL",
+            mime: { startsWith: "image/" },
+            libraryItem: { is: { archivedAt: null } },
           },
         })) !== new Set(brief.referenceAssetIds).size
       )
         throw new PolicyError("Referenz nicht zugänglich.", 403);
+      const brandRecord = await tx.studioOrganization.findUniqueOrThrow({
+        where: { id: ORG },
+      });
+      const brandProfile = brandDefaults(brandRecord.brand);
+      const brandLogo = brandProfile.logoAssetId
+        ? await tx.studioAsset.findFirst({
+            where: {
+              id: brandProfile.logoAssetId,
+              organizationId: ORG,
+              deletedAt: null,
+            },
+          })
+        : null;
+      const brandFont = brandProfile.fontAssetId
+        ? await tx.studioAsset.findFirst({
+            where: {
+              id: brandProfile.fontAssetId,
+              organizationId: ORG,
+              deletedAt: null,
+              kind: "FONT",
+            },
+          })
+        : null;
+      if (
+        (brief.libraryReferenceIds?.length || 0) !==
+        (await tx.libraryItem.count({
+          where: {
+            id: { in: brief.libraryReferenceIds || [] },
+            organizationId: ORG,
+            archivedAt: null,
+          },
+        }))
+      )
+        throw new PolicyError("Bibliotheksreferenz nicht zugänglich.", 403);
       const series = await tx.studioSeries.create({
         data: {
           title: brief.title,
@@ -131,13 +171,16 @@ export async function createSeries(actor: string, raw: unknown) {
           organizationId: ORG,
           seriesId: series.id,
           brandVersion: "studio-v1",
+          brandProfile,
+          brandRevision: brandRecord.brandRevision,
+          ...(brandLogo ? { brandLogoSha256: brandLogo.sha256 } : {}),
           imageIdea: "",
           headline: "",
           hashtags: "",
           motifAssetId: null,
           motifSha256: "",
-          fontAssetId: null,
-          fontSha256: "",
+          fontAssetId: brandFont?.id || null,
+          fontSha256: brandFont?.sha256 || "",
           logoSha256: logoHash(),
           template: "PANEL",
           formats: brief.formats,
@@ -243,7 +286,7 @@ export async function queueJob(actor: string, raw: unknown) {
     )
       throw new PolicyError("Beitrag und Bildidee erforderlich.");
     if (
-      data.referenceIds.length &&
+      (data.referenceIds.length || brief.libraryReferenceIds?.length || 0) &&
       (!data.referenceRights || !data.referenceTransfer)
     )
       throw new PolicyError(
@@ -262,7 +305,7 @@ export async function queueJob(actor: string, raw: unknown) {
           id: { in: data.referenceIds },
           organizationId: ORG,
           deletedAt: null,
-          kind: "ORIGINAL",
+          mime: { startsWith: "image/" },
         },
       })) !== data.referenceIds.length
     )
@@ -292,9 +335,31 @@ export async function queueJob(actor: string, raw: unknown) {
         "Ein Auftrag wartet oder läuft bereits. Zuerst prüfen.",
         409,
       );
+    const firstSnapshot = contentInput.parse(
+      series.contents[0].versions[0].payload,
+    ).studio;
+    const profile = firstSnapshot?.brandProfile;
+    const selectedRules = Object.fromEntries(
+      (brief.brandRules || []).map((key) => [key, profile?.[key] || "Offen"]),
+    );
+    const references = await tx.libraryItem.findMany({
+      where: {
+        id: { in: brief.libraryReferenceIds || [] },
+        organizationId: ORG,
+        archivedAt: null,
+      },
+      select: { id: true, title: true, kind: true, text: true },
+    });
+    if (references.length !== (brief.libraryReferenceIds || []).length)
+      throw new PolicyError(
+        "Referenz wurde archiviert. Neues Briefing erforderlich.",
+        409,
+      );
     const input = {
       request: data,
       brief,
+      selectedRules,
+      references,
       versions: series.contents.map((c) => ({ id: c.id, version: c.version })),
       imageIdea: content
         ? contentInput.parse(content.versions[0].payload).studio?.imageIdea
@@ -357,6 +422,8 @@ export async function runJob(
   const input = job.input as {
     request: z.infer<typeof requestSchema>;
     brief: unknown;
+    selectedRules?: unknown;
+    references?: unknown;
     imageIdea: string;
     versions: { id: string; version: number }[];
   };
@@ -366,6 +433,7 @@ export async function runJob(
       const r = await provider.text(
         briefingSchema.parse(input.brief),
         job.model,
+        { rules: input.selectedRules, references: input.references },
       );
       result = { posts: r.posts };
       usage = r.usage;
@@ -377,7 +445,13 @@ export async function runJob(
           return { bytes: a.bytes, mime: a.asset.mime };
         }),
       );
-      const r = await provider.image(input.imageIdea, job.model, refs);
+      const imageContext = JSON.stringify({
+        imageIdea: input.imageIdea,
+        briefing: input.brief,
+        selectedRules: input.selectedRules,
+        selectedTextReferences: input.references,
+      });
+      const r = await provider.image(imageContext, job.model, refs);
       const a = await storeAsset(
         actor,
         r.bytes,
@@ -386,6 +460,13 @@ export async function runJob(
         undefined,
         store,
       );
+      await db.libraryItem.updateMany({
+        where: { assetId: a.id, organizationId: ORG },
+        data: {
+          source: `KI-Auftrag ${job.id}; Modell ${job.model}`,
+          description: `Motiv für Serie ${job.seriesId}; keine automatische Rechtefreigabe.`,
+        },
+      });
       result = { assetId: a.id, sha256: a.sha256 };
       usage = r.usage;
       requestId = r.requestId;

@@ -1,3 +1,4 @@
+import { brandInput } from "../library/input";
 import { z } from "zod";
 export const ORG = "studiojeker";
 export const studioChannels = ["LINKEDIN", "INSTAGRAM", "FACEBOOK"] as const;
@@ -28,6 +29,11 @@ export const briefingSchema = z
       .max(3)
       .refine((a) => new Set(a).size === a.length),
     campaignId: z.string().min(1).nullable(),
+    libraryReferenceIds: z.array(z.string().min(1)).max(4).optional(),
+    brandRules: z
+      .array(z.enum(["tone", "services", "audiences", "examples", "address"]))
+      .max(5)
+      .optional(),
     referenceAssetIds: z.array(z.string().min(1)).max(4),
   })
   .strict();
@@ -36,6 +42,9 @@ export const studioSnapshot = z
     organizationId: z.literal(ORG),
     seriesId: z.string().min(1),
     brandVersion: z.literal("studio-v1"),
+    brandProfile: brandInput.omit({ revision: true }).optional(),
+    brandRevision: z.number().int().positive().optional(),
+    brandLogoSha256: z.string().length(64).optional(),
     imageIdea: text(4000),
     headline: text(160),
     hashtags: text(1000),
