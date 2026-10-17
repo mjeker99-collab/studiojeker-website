@@ -1,5 +1,5 @@
 # Custom Blueprint path: apps/akquise/render.yaml. Applying creates paid resources!
-# Stacked on PR #140, which depends on #133. Never apply from main before both merge.
+# Marketing Hub depends on PR #141 -> #140 -> #133. Apply only the reviewed full stack.
 previews:
   generation: "off"
 services:
@@ -7,7 +7,7 @@ services:
     name: studiojeker-akquise
     runtime: node
     region: frankfurt
-    plan: 1c-2g
+    plan: 0.5c-512mb
     numInstances: 1
     rootDir: apps/akquise
     autoDeployTrigger: "off"
@@ -41,15 +41,17 @@ services:
         value: njeker@studiojeker.ch
       - key: MAIL_FROM
         value: njeker@studiojeker.ch
+      - key: DATABASE_CONNECTION_LIMIT
+        value: "3"
       - key: DAILY_SEND_LIMIT
         value: "20"
 databases:
   - name: studiojeker-akquise-db
     region: frankfurt
-    plan: 0.5c-1g
+    plan: 0.1c-256mb
     postgresMajorVersion: "18"
     databaseName: akquise
     user: akquise
-    diskSizeGB: 5
+    diskSizeGB: 1
     storageAutoscalingEnabled: false
     ipAllowList: []

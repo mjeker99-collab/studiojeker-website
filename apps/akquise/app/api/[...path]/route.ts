@@ -19,6 +19,7 @@ import {
   simulate,
   audit,
 } from "@/lib/workflow";
+import { hubState, hubMutation } from "@/lib/hub/api";
 import { readSheetContacts } from "@/lib/sheets";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +97,7 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "hub/state" && req.method === "GET") return NextResponse.json(await hubState());
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
       const token = jar.get(sessionCookieName())?.value;
@@ -176,6 +178,11 @@ async function handler(
     if (Number(req.headers.get("content-length")) > 64000)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req);
+    if (path[0] === "hub") {
+      const result = await hubMutation(user.id, path, body);
+      if (result !== null) return NextResponse.json(result);
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }

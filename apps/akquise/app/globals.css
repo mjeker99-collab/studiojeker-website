@@ -143,6 +143,7 @@ small {
   inset: 0 auto 0 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   padding: 33px 20px;
 }
 .wordmark {
@@ -1044,5 +1045,192 @@ pre {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+/* Marketing Hub extends the existing compact black/white/cyan workspace. */
+.hub {
+  min-width: 0;
+}
+.hub-connection {
+  font-size: 12px;
+  color: #4b5d63;
+  padding: 12px 0;
+}
+.hub-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+.hub-card {
+  margin: 0;
+  min-width: 0;
+}
+.hub-card h2 {
+  overflow-wrap: anywhere;
+}
+.hub-excerpt {
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hub-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.hub-editor {
+  margin: 20px 0;
+  scroll-margin-top: 20px;
+}
+.hub-editor .section-head {
+  padding: 0 0 18px;
+  gap: 12px;
+}
+.hub-variant {
+  border: 1px solid #b9c8cc;
+  padding: 16px;
+  margin: 18px 0;
+}
+.hub legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+.hub-preview {
+  background: #f3f5f5;
+  border-left: 4px solid #00838c;
+  padding: 20px;
+  margin: 24px 0;
+  overflow-wrap: anywhere;
+}
+.hub-preview article + article {
+  border-top: 1px solid #b9c8cc;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+.hub-media {
+  padding: 18px;
+  border: 1px dashed #7e979d;
+  background: #fff;
+}
+.hub a {
+  color: #006873;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.hub-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 16px 0;
+}
+.hub-calendar-toolbar label {
+  margin: 0;
+}
+.hub-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid #c8cfd1;
+  border-left: 1px solid #c8cfd1;
+  margin-bottom: 24px;
+}
+.hub-weekday {
+  background: #151719;
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+.hub-day {
+  min-height: 120px;
+  border-right: 1px solid #c8cfd1;
+  border-bottom: 1px solid #c8cfd1;
+  padding: 7px;
+  background: white;
+  min-width: 0;
+}
+.hub-day.outside {
+  background: #e9eded;
+}
+.hub-day time {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.hub-event {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 7px;
+  font-size: 11px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: #e0f5f1;
+  color: #164f49;
+  margin-bottom: 6px;
+}
+.hub-event span,
+.hub-event small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+}
+.hub-agenda {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.hub-subnav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.date-error {
+  color: #9e3333;
+  display: block;
+}
+@media (max-width: 1100px) {
+  .hub-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hub-cards,
+  .hub-agenda {
+    grid-template-columns: 1fr;
+  }
+  .hub-day {
+    padding: 4px;
+    min-height: 105px;
+  }
+  .hub-event {
+    padding: 5px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .hub-calendar {
+    grid-template-columns: 1fr;
+  }
+  .hub-weekday,
+  .hub-day.outside {
+    display: none;
+  }
+  .hub-day {
+    min-height: 60px;
+  }
+  .hub-day time {
+    font-weight: 700;
+  }
+  .hub-filters {
+    grid-template-columns: 1fr;
+  }
+  .hub-editor .section-head {
+    flex-wrap: wrap;
   }
 }

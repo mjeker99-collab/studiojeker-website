@@ -1,53 +1,72 @@
 # Render Frankfurt – vorbereitete Einrichtung
 
-Stand: 16.10.2026. Noch keine Ressourcen angelegt, kein Deployment, keine DNS-Änderung.
-Basis: PR #140 (`feat/akquise-production-readiness`), abhängig von PR #133.
-Zuerst #133, dann #140 und anschliessend diesen PR integrieren. Bis dahin den
+Stand: 17.10.2026. Noch keine Ressourcen angelegt, kein Deployment, keine DNS-Änderung.
+Basis: PR #141 (`feat/akquise-render-frankfurt`), aufbauend auf #140 und #133.
+Zuerst #133, dann #140, #141 und anschliessend den Marketing-Hub-PR integrieren. Bis dahin den
 vollständigen gestapelten Branch verwenden; nicht den aktuellen main-Stand.
 Die bestehende Website und ihre Deployment-Konfiguration bleiben unverändert.
 
-## Architektur und Ressourcen
+## Architektur, App-Konten und Hostingverwaltung
 
-`render.yaml` liegt absichtlich **hier unter apps/akquise/**, nicht im Repository-Root.
-Native Node.js 22, eine Web-Instanz `1c-2g` (1 CPU / 2 GB RAM), PostgreSQL 18
-`0.5c-1g` (0.5 CPU / 1 GB RAM), 5 GB Datenbankspeicher, beide Frankfurt.
-Für zwei Benutzer ist dies eine angemessene Startgrösse mit Reserve für Next.js,
-Prisma und begrenzte CSV/XLSX-Imports. Keine Lastmessung auf Render durchgeführt;
-nach Inbetriebnahme RAM/CPU, Antwortzeiten und DB-Speicher überwachen.
-512 MB Web-RAM ist wegen Next.js/ExcelJS zu knapp als verlässliche Produktionsempfehlung.
-Keine Worker, Cronjobs, IMAP-Verarbeitung, Redis, persistenten App-Disks oder
-automatischen Preview-Umgebungen nötig. Kontakte, Versionen, Freigaben,
-Sperrlisten, Sessions und Versandhistorie liegen ausschliesslich in PostgreSQL.
-Temporäre App-Dateien sind nicht dauerhaft; dort keine Backups ablegen.
+Stand: 17.10.2026, Marketing Hub V1. Die zwei persönlichen **App-Logins**
+Martin und Nora sind Datenbankkonten der Anwendung. Dafür benötigt niemand einen
+Render-Zugang. Für Deployment, Billing und Backups genügt **ein** Hosting-Administrator
+auf einem Hobby-Workspace ($0). Pro und zwei Render-Mitglieder sind nicht technisch
+notwendig. Wenn beide Personen zusätzlich Render verwalten oder sieben statt drei
+Tage PITR benötigen, ist Pro optional ($25 pauschal, keine zusätzlichen Sitzgebühren).
+
+Der Blueprint verwendet für neue Ressourcen native Node.js 22, eine bezahlte
+Web-Instanz `0.5c-512mb` (0.5 CPU / 512 MB RAM) und bezahltes PostgreSQL 18
+`0.1c-256mb` (0.1 CPU / 256 MB RAM), beide Frankfurt. Ein GB Datenbankspeicher
+ist für den Einstieg mit zwei Personen und Text-/URL-Daten vorgesehen. Medien
+werden nicht hochgeladen, Videos nicht verarbeitet und nichts automatisch publiziert.
+Daher sind kein Worker, Redis, Cronjob oder persistenter App-Datenträger erforderlich.
+Prisma nutzt drei Verbindungen pro Web-Instanz. Build und Migration laufen getrennt
+vom Webprozess. Kein kostenloses, ablaufendes PostgreSQL verwenden.
+
+Dies ist die kleinste bezahlte Startkonfiguration, keine Zusage unbegrenzter Kapazität.
+Vor Go-live mit der tatsächlichen Kontaktliste Last und freien DB-Speicher prüfen.
+Die lokalen Messungen stehen in [Marketing-Hub-Abnahme](../docs/MARKETING-HUB.md).
+Bei Web-RAM-Druck gezielt auf `1c-2g` ($25), bei DB-Druck auf `0.5c-1g` ($19)
+umstellen; dafür ist kein Pro-Workspace erforderlich. Speicher kann nur wachsen:
+Wenn bereits eine 5-GB-Datenbank besteht, nicht auf 1 GB zurückstellen oder ersetzen.
+Es wurden hier keine Render-Ressourcen angelegt; die Änderung betrifft eine neue Einrichtung.
 
 ### Monatliche Kosten (USD, vor Steuern/Währungsumrechnung)
 
-| Bestandteil                                                     | Pro Workspace, empfohlen |
-| --------------------------------------------------------------- | -----------------------: |
-| Web `1c-2g`, dauerhaft aktiv                                    |                   $25.00 |
-| PostgreSQL `0.5c-1g`                                            |                   $19.00 |
-| 5 GB PostgreSQL-Speicher × $0.30                                |                    $1.50 |
-| Pro Workspace, pauschal inkl. Martin/Nora als Render-Mitglieder |                   $25.00 |
-| **Budget pro vollem Monat**                                     |               **$70.50** |
+| Bestandteil                         | Kleiner Start | Optional Pro-Workspace |
+| ----------------------------------- | ------------: | ---------------------: |
+| Web `0.5c-512mb`, dauerhaft aktiv   |         $7.00 |                  $7.00 |
+| PostgreSQL `0.1c-256mb`, inkl. PITR |         $6.00 |                  $6.00 |
+| 1 GB DB-Speicher × $0.30            |         $0.30 |                  $0.30 |
+| Workspace                           |   $0.00 Hobby |             $25.00 Pro |
+| **Monatliches Budget**              |    **$13.30** |             **$38.30** |
 
-Kein separater Preis pro Mitglied. Wenn bereits ein Pro Workspace vorhanden ist,
-betragen die zusätzlichen App-/DB-Kosten $45.50. Hobby kostet $0 Workspacegebühr,
-erlaubt aber nur einen Render-Administrator; persönliche App-Logins sind davon
-unabhängig. Pro bietet für gemeinsamen Betrieb sieben statt drei Tage PITR.
-Die Preisseite nennt auch 1 GB inkludierten Speicher; die offizielle
-Kostenanleitung berechnet zugewiesene GB × $0.30. Ob ein Speicherfreibetrag in der
-konkreten Dashboard-Kalkulation greift, vor Kauf kontrollieren; $70.50 ist das
-Budget ohne einen solchen Abzug (maximal $0.30 Unterschied).
-Pro enthält 25 GB ausgehenden Traffic und 1000 Standard-Pipeline-Minuten/Monat;
-Mehrverbrauch: $0.15/GB bzw. $5/1000 Minuten. Keine Performance-Build-Pipeline gewählt.
-Keine HA/Replikation konfiguriert. Wiederherstellungs-/Testdatenbanken kosten extra,
-solange sie bestehen. Externe Langzeitbackups sind nicht in dieser Summe enthalten.
-Speicher-Autoscaling ist aus; Kapazität rechtzeitig überwachen und bewusst erhöhen.
+Die bisher genannten $70.50 waren eine grössere Auslegung mit 2 GB Web-RAM,
+1 GB DB-RAM, 5 GB Speicher und Pro. Diese Kombination ist für V1 nicht vorgeschrieben.
+Mit 2 GB Web-RAM und kleinem Postgres würde Hobby $31.30 kosten; bei beiden
+Compute-Upgrades und weiter 1 GB Speicher $44.30. Vor Buchung Dashboard-Preise
+gegenprüfen: Render nennt auf der Preisseite auch 1 GB inkludierten Speicher,
+die offizielle Kostenanleitung kalkuliert zugewiesene GB × $0.30. Das Budget
+enthält vorsichtig $0.30; ein angewendeter Freibetrag reduziert es entsprechend.
 
-Quellen: [Preise](https://render.com/pricing),
-[Workspace-Tarife](https://render.com/docs/new-workspace-plans),
+Hobby: 5 GB Traffic und 500 Standard-Pipeline-Minuten pro Monat inklusive.
+Pro: 25 GB und 1000 Minuten. Mehrverbrauch: $0.15/GB und $5/1000 Minuten.
+Standard-Build verwenden; keine zusätzliche Performance-Build-Pipeline bestellt.
+Keine separaten Kosten für Render-HTTPS. Ein Restore erzeugt vorübergehend eine
+weitere kostenpflichtige DB. Externe Langzeitbackup-Speicherung ist nicht gebucht
+und nicht enthalten. Speicher-Autoscaling und Preview-Deployments sind aus.
+
+PITR ist bei **beiden bezahlten DB-Plänen** enthalten: Hobby drei Tage,
+Pro sieben Tage. Logische Exporte bleiben sieben Tage bei Render abrufbar.
+Regelmässig verschlüsselt extern sichern; Ziel und Verantwortlicher vor Go-live festlegen.
+Die neuen Social-/Newsletter-/Kalenderfunktionen brauchen keine zusätzlichen Dienste.
+
+Quellen (17.10.2026): [Preise](https://render.com/pricing),
+[Workspace-Berechtigungen](https://render.com/docs/platform-features-by-plan),
 [Speicherkalkulation](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses),
-[Blueprint-Referenz](https://render.com/docs/blueprint-spec).
+[Backups](https://render.com/docs/postgresql-backups),
+[Blueprint](https://render.com/docs/blueprint-spec).
 
 ## Render-Dashboard Schritt für Schritt
 
@@ -55,14 +74,14 @@ Quellen: [Preise](https://render.com/pricing),
 und löst den ersten Deploy aus, auch bei ausgeschaltetem Auto-Deploy. Diesen Schritt
 erst nach einer separaten Freigabe ausführen.** Auch Workspace-Upgrade nicht jetzt buchen.
 
-1. Später einen Studiojeker-Workspace wählen, Pro-Tarif und Rechnungsdaten prüfen,
-   Martin und Nora mit individuellen Render-Konten und MFA hinzufügen.
+1. Später einen Studiojeker-Workspace wählen, Hobby-Tarif und Rechnungsdaten prüfen. Einen Hosting-Administrator mit MFA festlegen.
+   Nur bei zwei Hosting-Administratoren oder gewünschter 7-Tage-PITR Pro wählen.
 2. **New → Blueprint**, GitHub-Repository `mjeker99-collab/studiojeker-website`
    verbinden. Den freigegebenen Branch mit allen drei PRs wählen. Blueprint-Pfad
    **`apps/akquise/render.yaml`** angeben. Automatischen Blueprint-Sync deaktivieren,
    damit spätere Konfigurationsänderungen nur manuell übernommen werden.
 3. Vorschau kontrollieren: ausschliesslich diese zwei neuen Ressourcen, beide
-   Frankfurt, genannte bezahlte Pläne, 5 GB, keine vorhandenen Website-Dienste.
+   Frankfurt, genannte bezahlte Pläne, 1 GB, keine vorhandenen Website-Dienste.
    `MARTIN_EMAIL` und `NORA_EMAIL` mit den tatsächlichen unterschiedlichen
    Login-Adressen füllen. **Bis zur Freigabe vor Create/Apply stoppen.**
 4. Nach Freigabe Blueprint anwenden. Build installiert auch die Betriebsmittel
