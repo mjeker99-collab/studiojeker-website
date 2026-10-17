@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 // Both the isolated review harness and CI seed supply synthetic accounts.
 // Never fall back to a real application account or a shared password.
 export function browserCredentials(
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
   readAccess: () => string = () =>
     readFileSync(".local/demo-access.txt", "utf8"),
 ) {
