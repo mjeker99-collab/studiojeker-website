@@ -1,0 +1,43 @@
+# Marketing Hub V1 – Screenshots
+
+Aufgenommen am 17.10.2026 mit ausschliesslich synthetischen Daten.
+Desktop: 1440 × 1000; iPad quer: 1024 × 768; jeweils vollständige Seite.
+Zusätzlich wurden iPad hoch und Mobil ohne Seitenüberlauf geprüft.
+
+| Ansicht      | Desktop                              | iPad                              |
+| ------------ | ------------------------------------ | --------------------------------- |
+| Kampagnen    | [Bild](hub-desktop-kampagnen.png)    | [Bild](hub-ipad-kampagnen.png)    |
+| Social Media | [Bild](hub-desktop-social-media.png) | [Bild](hub-ipad-social-media.png) |
+| Newsletter   | [Bild](hub-desktop-newsletter.png)   | [Bild](hub-ipad-newsletter.png)   |
+| Kalender     | [Bild](hub-desktop-kalender.png)     | [Bild](hub-ipad-kalender.png)     |
+
+[Social-Editor mit Varianten und Vorschau](hub-desktop-social-editor.png)
+
+Keine externen Integrationen verbunden; Termine sind ausschliesslich geplant.
+Screenshots sind keine Nachweise einer Veröffentlichung oder eines Versands.
+
+## Content-Studio / Studiojeker ONE Desktop V1
+
+Sämtliche Motive und Texte sind synthetisch; keine KI-Livegenerierung. Der Ablauf wurde mit privaten lokalen Entwicklungsassets im isolierten Testschema geprüft. Schriftdatei für Produktionslayouts noch nicht freigegeben; die Bildlayouts enthalten daher keine eingebrannte Headline/Claim.
+
+- [Briefing](studio-01-briefing-desktop.png)
+- [Gespeicherter Editor](studio-02-editor-desktop.png)
+- [Motiv und reproduzierbare Layoutvorschau](studio-03-layout-desktop.png)
+- [Konkrete Inhaltsfreigabe](studio-04-freigabe-desktop.png)
+- [Entwertung nach Änderung](studio-05-entwertung-desktop.png)
+- [1024 Pixel](studio-1024.png)
+- [390 Pixel](studio-390.png)
+
+## STUDIOONE-Logo
+
+Vom Nutzer gelieferte Originaldatei unverändert auf Login und in der Navigation eingebunden. Logo-Browserprüfung gegen lokalen Produktionsbuild, ohne Login oder Datenbankänderung:
+
+- [Login auf Desktop](studioone-login-desktop.png)
+- [Login auf Mobil](studioone-login-mobile.png)
+
+Bibliothek und Markenprofil (synthetische lokale Browserabnahme):
+
+- [Bibliothek Desktop](library-desktop.png)
+- [Markenprofil Studiojeker](library-brand-desktop.png)
+- [Medienauswahl im Content-Studio](library-picker-desktop.png)
+- [Bibliothek iPad quer](library-ipad-landscape.png)

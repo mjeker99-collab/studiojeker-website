@@ -1,4 +1,8 @@
 "use client";
+import Hub from "./hub/Hub";
+import Image from "next/image";
+import Library from "./library/Library";
+import ContentStudio from "./studio/ContentStudio";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
   Contact,
@@ -33,12 +37,21 @@ type State = {
   smtpSecure: boolean;
 };
 const nav = [
-  "Dashboard",
+  "Übersicht",
+  "Kontakte/Akquise",
+  "Kampagnen",
+  "Social Media",
+  "Content-Studio",
+  "Bibliothek",
+  "Newsletter",
+  "Kalender",
+  "Einstellungen",
+];
+const acquisitionTabs = [
   "Kontakte",
   "E-Mail-Entwürfe",
   "Freigaben",
   "Versandhistorie",
-  "Einstellungen",
 ];
 const labels: Record<string, string> = {
   NEW: "Neu",
@@ -83,14 +96,30 @@ const empty = {
 };
 type ContactForm = typeof empty;
 const date = (v: unknown) =>
-  v ? new Date(String(v)).toLocaleString("de-CH") : "–";
+  v
+    ? new Date(String(v)).toLocaleString("de-CH", { timeZone: "Europe/Zurich" })
+    : "–";
 function Badge({ value }: { value: string }) {
   return <span className={`badge b-${value}`}>{labels[value] ?? value}</span>;
+}
+function AppLogo() {
+  return (
+    <div className="wordmark app-brand">
+      <Image
+        src="/brand/logo?v=2"
+        alt="STUDIOONE – Dein Marketing. Ein Ort."
+        width={1280}
+        height={593}
+        unoptimized
+        priority
+      />
+    </div>
+  );
 }
 export default function App() {
   const [data, setData] = useState<State | null>(null),
     [loaded, setLoaded] = useState(false),
-    [tab, setTab] = useState("Dashboard"),
+    [tab, setTab] = useState("Übersicht"),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -293,18 +322,16 @@ export default function App() {
   if (!loaded)
     return (
       <main className="login">
-        <h1>Studiojeker</h1>
-        <p>Akquiseplattform wird geladen …</p>
+        <h1>StudioONE</h1>
+        <p>StudioONE wird geladen …</p>
       </main>
     );
   if (!data)
     return (
       <main className="login">
         <div className="login-card">
-          <div className="wordmark">
-            studiojeker<span>®</span>
-          </div>
-          <p className="eyebrow">AKQUISEPLATTFORM / VERSION 1</p>
+          <AppLogo />
+          <p className="eyebrow">STUDIOONE / MARKETING HUB</p>
           <h1>
             Gute Kontakte.
             <br />
@@ -362,24 +389,36 @@ export default function App() {
   return (
     <div className="shell">
       <aside className="sidebar" inert={showContact || !!draft}>
-        <div className="wordmark">
-          studiojeker<span>®</span>
-        </div>
-        <p className="eyebrow">AKQUISE / WORKSPACE</p>
+        <AppLogo />
+        <p className="eyebrow">STUDIOONE / WORKSPACE</p>
         <nav aria-label="Hauptnavigation">
           {nav.map((n, i) => (
             <button
               key={n}
-              aria-current={tab === n ? "page" : undefined}
-              className={tab === n ? "active" : ""}
+              aria-current={
+                tab === n ||
+                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
+                  ? "page"
+                  : undefined
+              }
+              className={
+                tab === n ||
+                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
+                  ? "active"
+                  : ""
+              }
               onClick={() => {
-                setTab(n);
+                setTab(n === "Kontakte/Akquise" ? "Kontakte" : n);
+                setNotice("");
+                setError("");
                 setSelected([]);
                 setSearch("");
                 setFilter("");
               }}
             >
-              <span className="nav-index">0{i + 1}</span>
+              <span className="nav-index" aria-hidden="true">
+                0{i + 1}
+              </span>
               {n}
               {n === "Freigaben" && (
                 <small>
@@ -417,7 +456,7 @@ export default function App() {
       <div className="workspace" inert={showContact || !!draft}>
         <header>
           <span>
-            STUDIOJEKER GMBH <span className="muted">/ Akquiseplattform</span>
+            STUDIOJEKER GMBH <span className="muted">/ StudioONE</span>
           </span>
           <span className="test-tag">● {mailLabel}</span>
         </header>
@@ -435,7 +474,7 @@ export default function App() {
                   year: "numeric",
                 })}
               </span>
-              {["Dashboard", "Kontakte"].includes(tab) && (
+              {["Übersicht", "Kontakte"].includes(tab) && (
                 <button onClick={() => openContact(null)}>
                   Kontakt erfassen <span>＋</span>
                 </button>
@@ -452,7 +491,32 @@ export default function App() {
               {notice}
             </div>
           )}
-          {tab === "Dashboard" && (
+          {acquisitionTabs.includes(tab) && (
+            <nav className="hub-subnav" aria-label="Akquise-Navigation">
+              {acquisitionTabs.map((n) => (
+                <button
+                  className={tab === n ? "" : "secondary"}
+                  key={n}
+                  onClick={() => setTab(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </nav>
+          )}
+          {[
+            "Übersicht",
+            "Kampagnen",
+            "Social Media",
+            "Newsletter",
+            "Kalender",
+            "Einstellungen",
+          ].includes(tab) && (
+            <Hub key={tab} section={tab} userId={data.user.id} />
+          )}
+          {tab === "Bibliothek" && <Library />}
+          {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
+          {tab === "Übersicht" && (
             <>
               <div className="banner">
                 <span className="banner-icon">↗</span>
@@ -879,7 +943,7 @@ export default function App() {
           )}
           <footer>
             STUDIOJEKER · WE CREATE VISIBILITY.{" "}
-            <span>Akquiseplattform V1 / intern</span>
+            <span>StudioONE V1 / intern</span>
           </footer>
         </main>
       </div>
