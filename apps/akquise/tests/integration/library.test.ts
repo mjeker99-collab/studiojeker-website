@@ -150,11 +150,81 @@ test("Chat persists turns, isolates series and enforces single execution", async
     });
     await runJob(martin, second.id, provider);
     assert.equal(calls, 2);
+    const savedLocal = process.env.STUDIO_LOCAL_ASSETS;
+    process.env.STUDIO_LOCAL_ASSETS = "true";
+    try {
+      const bytes = await sharp({
+        create: { width: 12, height: 12, channels: 3, background: "cyan" },
+      })
+        .png()
+        .toBuffer();
+      const asset = await storeAsset(
+        martin,
+        bytes,
+        "chat-reference.png",
+        "ORIGINAL",
+        undefined,
+        store,
+      );
+      const imageRequest = {
+        ...request,
+        requestKey: randomUUID(),
+        referenceIds: [asset.id],
+      };
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, referenceTransfer: false }),
+        /ausdrücklich bestätigen/,
+      );
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, referenceIds: [randomUUID()] }),
+        /nicht zugänglich/,
+      );
+      await assert.rejects(
+        queueJob(martin, {
+          ...imageRequest,
+          referenceIds: [asset.id, asset.id],
+        }),
+        /Referenzen/,
+      );
+      const imageJob = await queueJob(martin, imageRequest);
+      await runJob(
+        martin,
+        imageJob.id,
+        {
+          ...provider,
+          async chat(_c, _m, _model, refs) {
+            assert.equal(refs?.length, 1);
+            assert.deepEqual(refs![0].bytes, bytes);
+            return {
+              reply: "Bild analysiert",
+              usage: {},
+              requestId: "synthetic-image",
+            };
+          },
+        },
+        store,
+      );
+      const entry = await db.libraryItem.findUniqueOrThrow({
+        where: { assetId: asset.id },
+      });
+      await archiveItem(martin, {
+        id: entry.id,
+        revision: entry.revision,
+        archived: true,
+      });
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, requestKey: randomUUID() }),
+        /nicht zugänglich/,
+      );
+    } finally {
+      if (savedLocal === undefined) delete process.env.STUDIO_LOCAL_ASSETS;
+      else process.env.STUDIO_LOCAL_ASSETS = savedLocal;
+    }
     const state = await studioState(nora);
     assert.equal(
       state.jobs.filter((j) => j.seriesId === s.id && j.status === "SUCCEEDED")
         .length,
-      2,
+      3,
     );
   } finally {
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
