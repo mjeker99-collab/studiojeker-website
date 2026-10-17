@@ -41,14 +41,18 @@ enum DeliveryStatus {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  passwordHash String
-  active       Boolean    @default(true)
-  sessions     Session[]
-  approvals    Approval[]
-  audits       Audit[]
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  passwordHash       String
+  active             Boolean             @default(true)
+  sessions           Session[]
+  approvals          Approval[]
+  audits             Audit[]
+  plannedDrafts      Draft[]             @relation("DraftOwner")
+  campaigns          Campaign[]          @relation("CampaignOwner")
+  marketingContents  MarketingContent[]  @relation("ContentOwner")
+  marketingApprovals MarketingApproval[] @relation("MarketingReviewer")
 }
 
 model Session {
@@ -109,15 +113,21 @@ model LegalReview {
 }
 
 model Draft {
-  id         String         @id @default(cuid())
-  contactId  String
-  contact    Contact        @relation(fields: [contactId], references: [id])
-  version    Int            @default(1)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  versions   DraftVersion[]
-  approvals  Approval[]
-  deliveries Delivery[]
+  campaignId       String?
+  campaign         Campaign?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  ownerId          String?
+  owner            User?          @relation("DraftOwner", fields: [ownerId], references: [id])
+  scheduledAt      DateTime?
+  planningRevision Int            @default(1)
+  id               String         @id @default(cuid())
+  contactId        String
+  contact          Contact        @relation(fields: [contactId], references: [id])
+  version          Int            @default(1)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  versions         DraftVersion[]
+  approvals        Approval[]
+  deliveries       Delivery[]
 }
 
 model DraftVersion {
@@ -194,4 +204,103 @@ model Audit {
   entityId  String
   detail    Json
   createdAt DateTime @default(now())
+}
+
+// Hub content uses immutable snapshots; publication records never imply API delivery.
+enum ContentKind {
+  SOCIAL
+  NEWSLETTER
+}
+
+enum EditorialStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  DONE
+}
+
+model Campaign {
+  id        String             @id @default(cuid())
+  title     String
+  goal      String
+  audience  String
+  startsAt  DateTime
+  endsAt    DateTime
+  ownerId   String
+  owner     User               @relation("CampaignOwner", fields: [ownerId], references: [id])
+  revision  Int                @default(1)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  contents  MarketingContent[]
+  drafts    Draft[]
+}
+
+model MarketingContent {
+  id           String              @id @default(cuid())
+  kind         ContentKind
+  title        String
+  version      Int                 @default(1)
+  status       EditorialStatus     @default(DRAFT)
+  campaignId   String?
+  campaign     Campaign?           @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  ownerId      String
+  owner        User                @relation("ContentOwner", fields: [ownerId], references: [id])
+  scheduledAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  versions     MarketingVersion[]
+  approvals    MarketingApproval[]
+  publications ManualPublication[]
+  exports      NewsletterExport[]
+
+  @@index([campaignId, scheduledAt])
+}
+
+model MarketingVersion {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  payload   Json
+  hash      String
+  authorId  String
+  createdAt DateTime         @default(now())
+
+  @@unique([contentId, version])
+}
+
+model MarketingApproval {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  hash      String
+  userId    String
+  user      User             @relation("MarketingReviewer", fields: [userId], references: [id])
+  status    ApprovalStatus
+  createdAt DateTime         @default(now())
+}
+
+model ManualPublication {
+  id          String           @id @default(cuid())
+  contentId   String
+  content     MarketingContent @relation(fields: [contentId], references: [id])
+  version     Int
+  channel     String
+  publishedAt DateTime
+  url         String           @default("")
+  userId      String
+  createdAt   DateTime         @default(now())
+
+  @@unique([contentId, version, channel])
+}
+
+model NewsletterExport {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  userId    String
+  format    String           @default("HTML_AND_TEXT")
+  createdAt DateTime         @default(now())
 }

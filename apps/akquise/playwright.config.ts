@@ -7,6 +7,9 @@ export default defineConfig({
   use: {
     baseURL: process.env.APP_URL ?? "http://localhost:3100",
     headless: true,
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE }
+      : {},
     trace: "retain-on-failure",
   },
   reporter: "list",

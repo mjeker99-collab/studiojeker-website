@@ -387,3 +387,307 @@ test("Änderung nach Freigabe verhindert SMTP; bestehende Datensätze bleiben er
     assert.equal(await db.draftVersion.count({ where: { draftId: d.id } }), 2);
   });
 });
+
+// Marketing Hub uses the same isolated schema and only synthetic fixtures.
+const hub = await import("../../lib/hub/workflow");
+const { exportNewsletter } = await import("../../lib/hub/newsletter");
+const social = (ownerId: string, campaignId: string | null = null) => ({
+  kind: "SOCIAL" as const,
+  title: "Synthetische Kampagnenidee",
+  ownerId,
+  campaignId,
+  scheduledAt: null,
+  subject: "",
+  preheader: "",
+  body: "",
+  audience: "",
+  variants: [
+    {
+      channel: "LINKEDIN" as const,
+      text: "Synthetischer Beitrag für die Prüfung.",
+      link: "https://example.test/projekt",
+      cta: "Mehr erfahren",
+      mediaType: "IMAGE" as const,
+      mediaUrl: "https://example.test/test.jpg",
+      mediaReference: "synthetic-asset",
+      scheduledAt: "2026-11-02T09:00:00.000Z",
+    },
+  ],
+});
+const campaignData = () => ({
+  title: "Synthetischer Herbst",
+  goal: "Dokumentierte Content-Planung",
+  audience: "Synthetische B2B-Zielgruppe",
+  startsAt: "2026-10-01T08:00:00.000Z",
+  endsAt: "2026-11-30T17:00:00.000Z",
+  ownerId: martin,
+});
+test("Hub: Kampagnen und Varianten bleiben nach Wiederladen zugeordnet; Konflikte werden abgewiesen", async () => {
+  const c = await hub.saveCampaign(martin, campaignData());
+  const content = await hub.saveContent(nora, social(nora, c.id));
+  const saved = await db.marketingContent.findUniqueOrThrow({
+    where: { id: content.id },
+    include: { versions: true, campaign: true },
+  });
+  assert.equal(saved.campaign?.title, c.title);
+  assert.equal(saved.versions.length, 1);
+  assert.deepEqual(saved.versions[0].payload, social(nora, c.id));
+  await hub.saveCampaign(
+    nora,
+    { ...campaignData(), title: "Geändert" },
+    c.id,
+    1,
+  );
+  await assert.rejects(
+    hub.saveCampaign(martin, campaignData(), c.id, 1),
+    /geändert/,
+  );
+  assert.equal(
+    (await db.marketingContent.findUniqueOrThrow({ where: { id: content.id } }))
+      .version,
+    1,
+  );
+});
+test("Hub: Berechtigungen gelten für Schreiben, Freigabe, Export und Veröffentlichung", async () => {
+  const content = await hub.saveContent(martin, social(martin));
+  await assert.rejects(
+    hub.saveCampaign("missing", campaignData()),
+    /Berechtigung/,
+  );
+  await assert.rejects(
+    hub.saveContent(martin, social("missing")),
+    /Berechtigung/,
+  );
+  await assert.rejects(
+    hub.reviewContent("missing", content.id, 1, "APPROVED", true),
+    /Berechtigung/,
+  );
+  await assert.rejects(
+    exportNewsletter("missing", content.id, 1),
+    /Berechtigung/,
+  );
+  await assert.rejects(
+    hub.recordPublication(
+      "missing",
+      content.id,
+      1,
+      "LINKEDIN",
+      new Date().toISOString(),
+      "",
+    ),
+    /Berechtigung/,
+  );
+  await db.user.update({ where: { id: nora }, data: { active: false } });
+  await assert.rejects(hub.saveContent(nora, social(martin)), /Berechtigung/);
+  await db.user.update({ where: { id: nora }, data: { active: true } });
+});
+test("Hub: Freigabe dokumentiert Person/Version/Hash; Text-, Medien-, Zielgruppenänderungen invalidieren", async () => {
+  for (const changed of [
+    { ...social(martin), title: "Neuer Titel" },
+    { ...social(martin), audience: "Neue Zielgruppe" },
+    {
+      ...social(martin),
+      variants: [
+        {
+          ...social(martin).variants[0],
+          mediaUrl: "https://example.test/new.jpg",
+        },
+      ],
+    },
+    {
+      ...social(martin),
+      variants: [{ ...social(martin).variants[0], text: "Geänderter Text" }],
+    },
+  ]) {
+    const content = await hub.saveContent(martin, social(martin));
+    await assert.rejects(
+      hub.reviewContent(nora, content.id, 1, "APPROVED", false),
+      /prüfen/,
+    );
+    await hub.reviewContent(nora, content.id, 1, "PENDING", false);
+    assert.equal(
+      (
+        await db.marketingContent.findUniqueOrThrow({
+          where: { id: content.id },
+        })
+      ).status,
+      "IN_REVIEW",
+    );
+    await hub.reviewContent(nora, content.id, 1, "APPROVED", true);
+    const approval = await db.marketingApproval.findFirstOrThrow({
+      where: { contentId: content.id, status: "APPROVED" },
+    });
+    assert.equal(approval.userId, nora);
+    assert.equal(approval.version, 1);
+    assert.ok(approval.hash);
+    assert.ok(approval.createdAt);
+    await hub.saveContent(martin, changed, content.id, 1);
+    assert.equal(
+      (
+        await db.marketingApproval.findUniqueOrThrow({
+          where: { id: approval.id },
+        })
+      ).status,
+      "INVALIDATED",
+    );
+    assert.equal(
+      (
+        await db.marketingContent.findUniqueOrThrow({
+          where: { id: content.id },
+        })
+      ).status,
+      "DRAFT",
+    );
+    await assert.rejects(
+      hub.recordPublication(
+        nora,
+        content.id,
+        2,
+        "LINKEDIN",
+        new Date().toISOString(),
+        "",
+      ),
+      /freigegeben/,
+    );
+    assert.equal(
+      await db.marketingVersion.count({ where: { contentId: content.id } }),
+      2,
+    );
+  }
+});
+test("Hub: Parallele Bearbeitung erzeugt nur eine nächste Version", async () => {
+  const content = await hub.saveContent(martin, social(martin));
+  const outcomes = await Promise.allSettled([
+    hub.saveContent(martin, social(martin), content.id, 1),
+    hub.saveContent(nora, social(nora), content.id, 1),
+  ]);
+  assert.equal(outcomes.filter((x) => x.status === "fulfilled").length, 1);
+  assert.equal(
+    await db.marketingVersion.count({ where: { contentId: content.id } }),
+    2,
+  );
+});
+test("Hub: geplante Termine veröffentlichen nichts; manuelle Nachweise sind versionsgebunden und eindeutig", async () => {
+  const content = await hub.saveContent(martin, social(martin));
+  assert.equal(
+    await db.manualPublication.count({ where: { contentId: content.id } }),
+    0,
+  );
+  await hub.reviewContent(nora, content.id, 1, "APPROVED", true);
+  await assert.rejects(
+    hub.recordPublication(
+      nora,
+      content.id,
+      1,
+      "LINKEDIN",
+      "2099-01-01T00:00:00Z",
+      "",
+    ),
+    /Zukunft/,
+  );
+  await assert.rejects(
+    hub.recordPublication(
+      nora,
+      content.id,
+      1,
+      "FACEBOOK",
+      new Date().toISOString(),
+      "",
+    ),
+    /Kanäle/,
+  );
+  const outcomes = await Promise.allSettled(
+    [1, 2].map(() =>
+      hub.recordPublication(
+        nora,
+        content.id,
+        1,
+        "LINKEDIN",
+        new Date().toISOString(),
+        "https://example.test/published",
+      ),
+    ),
+  );
+  assert.equal(outcomes.filter((x) => x.status === "fulfilled").length, 1);
+  assert.equal(
+    (await db.marketingContent.findUniqueOrThrow({ where: { id: content.id } }))
+      .status,
+    "DONE",
+  );
+  await hub.saveContent(martin, social(martin), content.id, 1);
+  const records = await db.manualPublication.findMany({
+    where: { contentId: content.id },
+  });
+  assert.equal(records.length, 1);
+  assert.equal(records[0].version, 1);
+});
+test("Hub: Newsletter-Export benötigt aktuelle Freigabe und protokolliert keine Übertragung", async () => {
+  const newsletter = {
+    ...social(martin),
+    kind: "NEWSLETTER",
+    variants: [],
+    subject: "Synthetischer Newsletter",
+    preheader: "Vorschau",
+    body: "Synthetischer Text",
+    audience: "Synthetische Liste mit separat dokumentierter Einwilligung",
+  };
+  const content = await hub.saveContent(martin, newsletter);
+  await assert.rejects(exportNewsletter(nora, content.id, 1), /freigegeben/);
+  await hub.reviewContent(nora, content.id, 1, "APPROVED", true);
+  const result = await exportNewsletter(nora, content.id, 1);
+  assert.equal(result.transferred, false);
+  assert.equal(result.sent, false);
+  assert.equal(result.version, 1);
+  assert.ok(result.html.includes("*|UNSUB|*"));
+  assert.equal(
+    await db.newsletterExport.count({ where: { contentId: content.id } }),
+    1,
+  );
+  const before = await db.delivery.count();
+  await hub.completeContent(nora, content.id, 1);
+  assert.equal(await db.delivery.count(), before);
+  await hub.saveContent(
+    martin,
+    { ...newsletter, audience: "Anderes Empfängersegment" },
+    content.id,
+    1,
+  );
+  await assert.rejects(exportNewsletter(nora, content.id, 2), /freigegeben/);
+});
+test("Hub: Akquise-Planung bewahrt bestehende Nachricht und Freigabe; Kalender liefert alle Kanäle", async () => {
+  const { c, d } = await prepared("hub-plan");
+  const campaign = await hub.saveCampaign(martin, campaignData());
+  const before = await db.delivery.count();
+  await hub.planDraft(
+    nora,
+    d.id,
+    1,
+    campaign.id,
+    martin,
+    "2026-11-05T10:00:00Z",
+  );
+  const draft = await db.draft.findUniqueOrThrow({
+    where: { id: d.id },
+    include: { approvals: true, versions: true },
+  });
+  assert.equal(draft.version, 1);
+  assert.equal(draft.versions.length, 1);
+  assert.ok(draft.approvals.some((a) => a.status === "APPROVED"));
+  assert.equal(draft.campaignId, campaign.id);
+  assert.equal(draft.scheduledAt?.toISOString(), "2026-11-05T10:00:00.000Z");
+  assert.equal(await db.delivery.count(), before);
+  await assert.rejects(
+    hub.planDraft(nora, d.id, 1, null, null, null),
+    /geändert/,
+  );
+  const { hubState } = await import("../../lib/hub/api");
+  const state = await hubState();
+  assert.ok(
+    state.drafts.some(
+      (x) => x.contactId === c.id && x.campaignId === campaign.id,
+    ),
+  );
+  assert.ok(state.contents.some((x) => x.kind === "SOCIAL"));
+  assert.ok(state.contents.some((x) => x.kind === "NEWSLETTER"));
+  assert.equal(state.integrations.mailchimp, "NOT_CONNECTED");
+});
