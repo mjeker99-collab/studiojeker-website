@@ -1,3 +1,8 @@
+import {
+  importNewsletters,
+  duplicateNewsletter,
+  duplicateInput,
+} from "./newsletter-library";
 import { marketingConnections } from "./integrations";
 import { z } from "zod";
 import { db } from "../db";
@@ -57,6 +62,12 @@ export async function hubMutation(
   body: unknown,
 ) {
   const id = path[2];
+  if (path.join("/") === "hub/newsletter/import") {
+    z.object({}).strict().parse(body);
+    return importNewsletters(actor);
+  }
+  if (path[1] === "newsletter-duplicate" && path.length === 3)
+    return duplicateNewsletter(actor, id, duplicateInput.parse(body).version);
   if (path[1] === "campaigns" && path.length === 2)
     return saveCampaign(actor, body);
   if (path[1] === "contents" && path.length === 2)

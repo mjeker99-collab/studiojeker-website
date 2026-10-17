@@ -21,7 +21,7 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "same-origin" },
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'${development ? " ws: wss:" : ""}; object-src 'none'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'`,
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'${development ? " ws: wss:" : ""}; object-src 'none'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'`,
           },
         ],
       },

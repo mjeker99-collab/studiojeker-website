@@ -1,3 +1,4 @@
+import { newsletterText } from "./newsletter-template";
 import { validateStudio } from "../studio/validate";
 import { createHash } from "node:crypto";
 import { db } from "../db";
@@ -57,6 +58,8 @@ export async function saveContent(
   expectedVersion?: number,
 ) {
   const payload = contentInput.parse(raw);
+  if (payload.newsletter)
+    payload.body = newsletterText(payload.newsletter).trim();
   return db.$transaction((tx) =>
     saveContentInTx(tx, actor, payload, id, expectedVersion),
   );

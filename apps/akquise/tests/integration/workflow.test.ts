@@ -1141,3 +1141,49 @@ test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und e
       ).length > 100,
     );
 });
+
+test("Newsletter import is idempotent; copies and edits cannot reuse approval", async () => {
+  const { importNewsletters, duplicateNewsletter } =
+    await import("../../lib/hub/newsletter-library");
+  const first = await importNewsletters(martin);
+  assert.equal(first.imported, 3);
+  assert.equal((await importNewsletters(nora)).imported, 0);
+  const original = await db.marketingContent.findUniqueOrThrow({
+    where: { id: first.ids[1] },
+    include: { versions: true },
+  });
+  const snapshot = studioContentInput.parse(original.versions[0].payload);
+  assert.equal(snapshot.newsletter!.templateId, "newsletter-02");
+  assert.equal(original.status, "DRAFT");
+  await assert.rejects(exportNewsletter(martin, original.id, 1));
+  await hub.reviewContent(martin, original.id, 1, "APPROVED", true);
+  const exported = await exportNewsletter(martin, original.id, 1);
+  assert.ok(exported.html.includes("Gute Inhalte"));
+  assert.ok(exported.html.includes("*|UNSUB|*"));
+  const copy = await duplicateNewsletter(nora, original.id, 1);
+  assert.equal(copy.status, "DRAFT");
+  assert.equal(copy.ownerId, nora);
+  assert.equal(copy.scheduledAt, null);
+  await assert.rejects(exportNewsletter(nora, copy.id, 1));
+  const fields = { ...snapshot.newsletter!.fields };
+  const textKey = Object.keys(fields).find((k) =>
+    k.startsWith("hero_headline.text"),
+  )!;
+  fields[textKey] = "Geänderte Headline";
+  await hub.saveContent(
+    martin,
+    { ...snapshot, newsletter: { ...snapshot.newsletter, fields } },
+    original.id,
+    1,
+  );
+  await assert.rejects(exportNewsletter(martin, original.id, 1));
+  await assert.rejects(exportNewsletter(martin, original.id, 2));
+  await assert.rejects(duplicateNewsletter(martin, original.id, 1));
+  assert.equal((await importNewsletters(martin)).imported, 0);
+  const saved = await db.marketingVersion.findUniqueOrThrow({
+    where: { contentId_version: { contentId: original.id, version: 2 } },
+  });
+  assert.ok(
+    studioContentInput.parse(saved.payload).body.includes("Geänderte Headline"),
+  );
+});

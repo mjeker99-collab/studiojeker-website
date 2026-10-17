@@ -49,3 +49,74 @@ test("Newsletter benötigt eine explizite Zielgruppe; keine versteckten Eingabef
     false,
   );
 });
+
+test("Original-Newsletter bleiben ohne Änderungen bytegleich, inklusive Outlook und Footer", async () => {
+  const { newsletterLibrary, newsletterDefaults, renderNewsletter } =
+    await import("../lib/hub/newsletter-template");
+  for (const template of newsletterLibrary) {
+    const subject = template.slots.find((s) => s.special === "subject")!.value;
+    assert.equal(
+      renderNewsletter({
+        subject,
+        preheader: template.preheader,
+        newsletter: newsletterDefaults(template.id),
+      }),
+      template.html,
+    );
+  }
+});
+test("Newsletter-Slots begrenzen Änderungen auf Inhalt und schützen Links/HTML", async () => {
+  const {
+    newsletterLibrary,
+    newsletterDefaults,
+    renderNewsletter,
+    newsletterSnapshot,
+    previewDocument,
+  } = await import("../lib/hub/newsletter-template");
+  const template = newsletterLibrary[1];
+  const snapshot = newsletterDefaults(template.id);
+  const slot = template.slots.find((s) => !s.special && s.kind === "text")!;
+  snapshot.fields[slot.key] = '<script>alert(1)</script> & "Text"';
+  const result = renderNewsletter({
+    subject: template.slots.find((s) => s.special === "subject")!.value,
+    preheader: template.preheader,
+    newsletter: snapshot,
+  });
+  assert.equal(
+    result,
+    template.html.slice(0, slot.start) +
+      "&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;Text&quot;" +
+      template.html.slice(slot.end),
+  );
+  assert.ok(result.includes("*|UNSUB|*"));
+  assert.ok(result.includes("*|HTML:LIST_ADDRESS_HTML|*"));
+  assert.ok(!previewDocument(result).match(/<a\b[^>]*\shref=/));
+  assert.ok(previewDocument(result).includes("Content-Security-Policy"));
+  assert.equal(
+    newsletterSnapshot.safeParse({
+      ...snapshot,
+      fields: { ...snapshot.fields, injected: "evil" },
+    }).success,
+    false,
+  );
+  assert.equal(
+    newsletterSnapshot.safeParse({ ...snapshot, templateId: "unknown" })
+      .success,
+    false,
+  );
+  const link = template.slots.find((s) => s.kind === "link")!;
+  for (const url of [
+    "javascript:alert(1)",
+    "data:text/html,evil",
+    "https://user:pass@example.test",
+    "http://example.test",
+  ]) {
+    assert.equal(
+      newsletterSnapshot.safeParse({
+        ...snapshot,
+        fields: { ...snapshot.fields, [link.key]: url },
+      }).success,
+      false,
+    );
+  }
+});

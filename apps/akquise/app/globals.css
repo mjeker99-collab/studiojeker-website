@@ -1280,3 +1280,13 @@ pre {
 @media (max-width: 760px) {
   .sidebar > .app-brand { max-width: 260px; }
 }
+
+/* Newsletter editor reuses the Hub controls and approved email HTML. */
+.newsletter-fields details { border-top: 1px solid var(--border, #d9dfe3); padding: 16px 0; }
+.newsletter-fields summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.newsletter-fields label { margin-top: 14px; }
+.newsletter-frame-viewport { width: 100%; min-width: 0; background: #e9edf0; padding: 12px; box-sizing: border-box; }
+.newsletter-frame-viewport iframe { display: block; margin: 0 auto; border: 0; background: white; }
+.newsletter-preview { min-width: 0; }
+.newsletter-preview button[aria-pressed="true"] { border-color: #007a99; background: #e6f8fd; color: #14212a; }
+.newsletter-fields summary:focus-visible { outline: 2px solid #007a99; outline-offset: 3px; }
