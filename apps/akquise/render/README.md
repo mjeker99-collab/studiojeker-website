@@ -1,9 +1,16 @@
 # Render Frankfurt – vorbereitete Einrichtung
 
-Stand: 17.10.2026. Noch keine Ressourcen angelegt, kein Deployment, keine DNS-Änderung.
-Basis: PR #141 (`feat/akquise-render-frankfurt`), aufbauend auf #140 und #133.
-Zuerst #133, dann #140, #141 und anschliessend den Marketing-Hub-PR integrieren. Bis dahin den
-vollständigen gestapelten Branch verwenden; nicht den aktuellen main-Stand.
+Stand: 17.10.2026. Diese Arbeit hat keine Ressourcen angelegt und kein Deployment
+oder DNS geändert. Ob ein Service bereits ausserhalb dieser Arbeit angelegt wurde,
+ist ohne Render-Zugriff nicht bestätigt. Repository-Konfiguration ist kein Nachweis
+der tatsächlichen Service-Einstellungen; siehe [Bereitstellungsprüfung](DEPLOYMENT_REVIEW.md).
+
+PR #142 und #143 sind bereits in `feat/akquise-render-frankfurt` integriert.
+#133, #140 und #141 sind noch offen; #144 ergänzt das neue Plattformlogo und ist
+noch nicht im Render-Branch. Reihenfolge: #133 → #140 → #141 (enthält #142/#143).
+Für eine isolierte Bereitstellung enthält der bestehende Render-Branch den gesamten
+Hub-/Content-Studio-Stand. Ein Merge nach main ist dafür technisch nicht erforderlich;
+main enthält aktuell noch keine apps/akquise/package.json. Keine automatischen Merges.
 Die bestehende Website und ihre Deployment-Konfiguration bleiben unverändert.
 
 ## Architektur, App-Konten und Hostingverwaltung
@@ -18,9 +25,12 @@ Tage PITR benötigen, ist Pro optional ($25 pauschal, keine zusätzlichen Sitzge
 Der Blueprint verwendet für neue Ressourcen native Node.js 22, eine bezahlte
 Web-Instanz `0.5c-512mb` (0.5 CPU / 512 MB RAM) und bezahltes PostgreSQL 18
 `0.1c-256mb` (0.1 CPU / 256 MB RAM), beide Frankfurt. Ein GB Datenbankspeicher
-ist für den Einstieg mit zwei Personen und Text-/URL-Daten vorgesehen. Medien
-werden nicht hochgeladen, Videos nicht verarbeitet und nichts automatisch publiziert.
-Daher sind kein Worker, Redis, Cronjob oder persistenter App-Datenträger erforderlich.
+ist für Texte und Metadaten vorgesehen. Das Content-Studio speichert private
+Originalbilder, Schriftdateien und Exporte separat in S3-kompatiblem Objektspeicher;
+keine Bildbytes in PostgreSQL oder nur auf dem vergänglichen Render-Dateisystem.
+Es wird nichts automatisch publiziert. Bildverarbeitung erfolgt seriell. Ein Worker,
+Redis, Cronjob oder persistenter Render-App-Datenträger ist in V1 nicht eingerichtet.
+Das tatsächliche RAM-Verhalten mit eigenen Bildern muss vor Go-live beobachtet werden.
 Prisma nutzt drei Verbindungen pro Web-Instanz. Build und Migration laufen getrennt
 vom Webprozess. Kein kostenloses, ablaufendes PostgreSQL verwenden.
 
@@ -60,7 +70,10 @@ und nicht enthalten. Speicher-Autoscaling und Preview-Deployments sind aus.
 PITR ist bei **beiden bezahlten DB-Plänen** enthalten: Hobby drei Tage,
 Pro sieben Tage. Logische Exporte bleiben sieben Tage bei Render abrufbar.
 Regelmässig verschlüsselt extern sichern; Ziel und Verantwortlicher vor Go-live festlegen.
-Die neuen Social-/Newsletter-/Kalenderfunktionen brauchen keine zusätzlichen Dienste.
+Für Planung, Newsletter-Export und Kontakte genügt diese Infrastruktur. Eigene Bilder
+und Content-Studio-Exporte benötigen zusätzlich privaten Objektspeicher, auch ohne KI.
+OpenAI ist optional und darf zunächst nicht verbunden bleiben. Kostenannahmen für
+Speicher und KI stehen in [Content-Studio](../docs/CONTENT_STUDIO.md).
 
 Quellen (17.10.2026): [Preise](https://render.com/pricing),
 [Workspace-Berechtigungen](https://render.com/docs/platform-features-by-plan),
@@ -77,7 +90,9 @@ erst nach einer separaten Freigabe ausführen.** Auch Workspace-Upgrade nicht je
 1. Später einen Studiojeker-Workspace wählen, Hobby-Tarif und Rechnungsdaten prüfen. Einen Hosting-Administrator mit MFA festlegen.
    Nur bei zwei Hosting-Administratoren oder gewünschter 7-Tage-PITR Pro wählen.
 2. **New → Blueprint**, GitHub-Repository `mjeker99-collab/studiojeker-website`
-   verbinden. Den freigegebenen Branch mit allen drei PRs wählen. Blueprint-Pfad
+   verbinden. Den freigegebenen vollständigen Branch wählen, derzeit
+   `feat/akquise-render-frankfurt`. Dies ist die Sollkonfiguration, keine Aussage
+   über einen vorhandenen Service. Blueprint-Pfad
    **`apps/akquise/render.yaml`** angeben. Automatischen Blueprint-Sync deaktivieren,
    damit spätere Konfigurationsänderungen nur manuell übernommen werden.
 3. Vorschau kontrollieren: ausschliesslich diese zwei neuen Ressourcen, beide
@@ -108,6 +123,13 @@ Datenbankmigrationen nicht rückgängig. Region ist nach Erstellung nicht umstel
 ## Konten und Secrets
 
 Vollständige Render-Variablenreferenz: [`.env.example`](.env.example).
+Die Vorlage enthält jetzt auch sämtliche Content-Studio-Variablen. Für den Start
+`CONTENT_AI_ENABLED=false`, `OPENAI_API_KEY` nicht setzen. Für Upload, Layout und
+Bildexport die fünf `STUDIO_S3_*`-Werte des privaten Speichers konfigurieren;
+`STUDIO_LOCAL_ASSETS=false`. Ohne KI bleiben eigene Inhalte nutzbar. Ohne
+Objektspeicher können Texte/Kampagnen geplant, aber keine privaten Bilder in der
+Produktion dauerhaft hochgeladen werden. Beide Verbindungen sind unabhängig.
+
 Keine privaten Schlüssel im YAML, keine NEXT_PUBLIC-Secrets, keine Passwörter als
 CLI-Argument oder in Dateien. Render verwaltet das Datenbankpasswort. Ein separates
 Session-Secret ist nicht erforderlich: Sessions sind zufällige, gehashte DB-Tokens.
