@@ -83,6 +83,77 @@ const item = (kind = "TEXT") => ({
   url: kind === "TEXT" ? "" : "https://vimeo.com/12345",
   thumbnailAssetId: null,
 });
+test("Drive OAuth binds browser and live session, rejects replay and isolates connections", async () => {
+  const { beginDrive, completeDrive, stateHash, driveStatus, disconnectDrive } =
+    await import("../../lib/drive/service");
+  const names = [
+    "DRIVE_CLIENT_ID",
+    "DRIVE_CLIENT_SECRET",
+    "DRIVE_TOKEN_ENCRYPTION_KEY",
+  ] as const;
+  const previous = names.map((name) => process.env[name]);
+  process.env.DRIVE_CLIENT_ID = "synthetic-client";
+  process.env.DRIVE_CLIENT_SECRET = "synthetic-secret";
+  process.env.DRIVE_TOKEN_ENCRYPTION_KEY = "ab".repeat(32);
+  try {
+    const session = await db.session.create({
+      data: {
+        id: randomUUID(),
+        userId: martin,
+        expiresAt: new Date(Date.now() + 60000),
+      },
+    });
+    const auth = await beginDrive(martin, session.id);
+    assert.equal(
+      new URL(auth.url).searchParams.get("code_challenge_method"),
+      "S256",
+    );
+    await assert.rejects(
+      completeDrive(auth.state, "wrong-browser", null, true),
+    );
+    assert.ok(
+      await db.driveOAuthState.findUnique({
+        where: { id: stateHash(auth.state) },
+      }),
+    );
+    await assert.rejects(
+      completeDrive(auth.state, auth.state, null, true),
+      /nicht freigegeben/,
+    );
+    await assert.rejects(
+      completeDrive(auth.state, auth.state, null, true),
+      /abgelaufen/,
+    );
+    const expired = await beginDrive(martin, session.id);
+    await db.session.delete({ where: { id: session.id } });
+    await assert.rejects(
+      completeDrive(expired.state, expired.state, null, true),
+      /Sitzung/,
+    );
+    await db.driveConnection.create({
+      data: {
+        userId: martin,
+        email: "synthetic@example.test",
+        encryptedToken: "never-expose-this",
+      },
+    });
+    assert.ok(
+      !JSON.stringify(await driveStatus(martin)).includes("never-expose"),
+    );
+    assert.equal((await driveStatus(nora)).connection, null);
+    await disconnectDrive(martin);
+    assert.equal(
+      await db.driveOAuthState.count({ where: { userId: martin } }),
+      0,
+    );
+    assert.equal((await driveStatus(martin)).connection, null);
+  } finally {
+    names.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name];
+      else process.env[name] = previous[index];
+    });
+  }
+});
 test("Chat persists turns, isolates series and enforces single execution", async () => {
   const oldKey = process.env.OPENAI_API_KEY,
     oldFlag = process.env.CONTENT_AI_ENABLED;
@@ -150,11 +221,81 @@ test("Chat persists turns, isolates series and enforces single execution", async
     });
     await runJob(martin, second.id, provider);
     assert.equal(calls, 2);
+    const savedLocal = process.env.STUDIO_LOCAL_ASSETS;
+    process.env.STUDIO_LOCAL_ASSETS = "true";
+    try {
+      const bytes = await sharp({
+        create: { width: 12, height: 12, channels: 3, background: "cyan" },
+      })
+        .png()
+        .toBuffer();
+      const asset = await storeAsset(
+        martin,
+        bytes,
+        "chat-reference.png",
+        "ORIGINAL",
+        undefined,
+        store,
+      );
+      const imageRequest = {
+        ...request,
+        requestKey: randomUUID(),
+        referenceIds: [asset.id],
+      };
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, referenceTransfer: false }),
+        /ausdrücklich bestätigen/,
+      );
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, referenceIds: [randomUUID()] }),
+        /nicht zugänglich/,
+      );
+      await assert.rejects(
+        queueJob(martin, {
+          ...imageRequest,
+          referenceIds: [asset.id, asset.id],
+        }),
+        /Referenzen/,
+      );
+      const imageJob = await queueJob(martin, imageRequest);
+      await runJob(
+        martin,
+        imageJob.id,
+        {
+          ...provider,
+          async chat(_c, _m, _model, refs) {
+            assert.equal(refs?.length, 1);
+            assert.deepEqual(refs![0].bytes, bytes);
+            return {
+              reply: "Bild analysiert",
+              usage: {},
+              requestId: "synthetic-image",
+            };
+          },
+        },
+        store,
+      );
+      const entry = await db.libraryItem.findUniqueOrThrow({
+        where: { assetId: asset.id },
+      });
+      await archiveItem(martin, {
+        id: entry.id,
+        revision: entry.revision,
+        archived: true,
+      });
+      await assert.rejects(
+        queueJob(martin, { ...imageRequest, requestKey: randomUUID() }),
+        /nicht zugänglich/,
+      );
+    } finally {
+      if (savedLocal === undefined) delete process.env.STUDIO_LOCAL_ASSETS;
+      else process.env.STUDIO_LOCAL_ASSETS = savedLocal;
+    }
     const state = await studioState(nora);
     assert.equal(
       state.jobs.filter((j) => j.seriesId === s.id && j.status === "SUCCEEDED")
         .length,
-      2,
+      3,
     );
   } finally {
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
@@ -165,10 +306,14 @@ test("Chat persists turns, isolates series and enforces single execution", async
 });
 test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderungen", async () => {
   await assert.rejects(libraryState("missing"), /Berechtigung/);
+  const previousIds = new Set((await libraryState(nora)).items.map((i) => i.id));
   const saved = await saveLibraryItem(martin, item());
-  await saveLibraryItem(nora, item("VIDEO"));
+  const video = await saveLibraryItem(nora, item("VIDEO"));
   const state = await libraryState(nora);
-  assert.equal(state.items.length, 2);
+  assert.deepEqual(
+    new Set(state.items.filter((i) => !previousIds.has(i.id)).map((i) => i.id)),
+    new Set([saved.id, video.id]),
+  );
   assert.equal(state.items.find((i) => i.id === saved.id)?.text, item().text);
   await assert.rejects(
     saveLibraryItem(martin, { ...item("LINK"), url: "javascript:alert(1)" }),
@@ -179,6 +324,7 @@ test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderunge
   );
 });
 test("Bildprüfung, SHA-Dublette auch parallel, Dokumente, geschützter Zugriff und Archiv", async () => {
+  const previousPuts = puts;
   const b = await sharp({
     create: { width: 80, height: 60, channels: 3, background: "#124655" },
   })
@@ -189,7 +335,7 @@ test("Bildprüfung, SHA-Dublette auch parallel, Dokumente, geschützter Zugriff 
     storeAsset(nora, b, "SYNTHETISCH-Kopie.png", "ORIGINAL", undefined, store),
   ]);
   assert.equal(a.id, duplicate.id);
-  assert.equal(puts, 1);
+  assert.equal(puts - previousPuts, 1);
   assert.notEqual(a.reused, duplicate.reused);
   await assert.rejects(readAsset("missing", a.id, store), /Berechtigung/);
   assert.deepEqual((await readAsset(nora, a.id, store)).bytes, b);

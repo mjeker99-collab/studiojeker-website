@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import type { libraryState } from "@/lib/library/service";
 import type { BrandProfile } from "@/lib/library/input";
+import DriveConnection from "./DriveConnection";
 export type LibraryState = Awaited<ReturnType<typeof libraryState>>;
 export type LibraryEntry = LibraryState["items"][number];
 export async function libraryApi(path: string, body?: unknown) {
@@ -319,6 +320,7 @@ export default function Library() {
     return <p role="status">{error || "Bibliothek lädt …"}</p>;
   return (
     <div className="library">
+      {view === "library" && <DriveConnection />}
       <div className="section-head">
         <div>
           <p className="eyebrow">STUDIOONE / INHALTE</p>
