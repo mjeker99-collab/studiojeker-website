@@ -7,10 +7,16 @@ import { appOrigin, allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
 import { seal, unseal } from "./crypto";
 const scope = "https://www.googleapis.com/auth/drive.readonly";
-const folderMime = "application/vnd.google-apps.folder";
+import {
+  DriveFiles,
+  driveRequest,
+  driveId,
+  folderMime,
+  type DriveImage,
+} from "./files";
+export { driveId } from "./files";
 export const stateHash = (s: string) =>
   createHash("sha256").update(s).digest("hex");
-export const driveId = z.string().regex(/^[A-Za-z0-9_-]{1,200}$/);
 export function driveConfigured() {
   return !!(
     process.env.DRIVE_CLIENT_ID &&
@@ -204,24 +210,7 @@ async function driveFetch(
   path: string,
   params: Record<string, string>,
 ) {
-  const url = new URL(`https://www.googleapis.com/drive/v3/${path}`);
-  url.search = new URLSearchParams(params).toString();
-  let r;
-  try {
-    r = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(20000),
-      cache: "no-store",
-    });
-  } catch {
-    throw new PolicyError("Google Drive ist momentan nicht erreichbar.", 502);
-  }
-  if (!r.ok)
-    throw new PolicyError(
-      `Google Drive meldet HTTP ${r.status}. Freigabe und aktivierte Drive API prüfen.`,
-      502,
-    );
-  return r.json();
+  return (await driveRequest(token, path, params)).json();
 }
 export function parseFolder(value: string) {
   if (value.startsWith("https://")) {
@@ -258,15 +247,26 @@ const fileSchema = z.object({
   id: driveId,
   name: z.string(),
   mimeType: z.string(),
+  size: z.string().optional(),
 });
-export async function listDriveFiles(actor: string, pageToken?: string) {
+export async function listDriveFiles(
+  actor: string,
+  pageToken?: string,
+  folderId?: string,
+) {
   if (pageToken && pageToken.length > 2000)
     throw new PolicyError("Ungültige Seite.");
   const { token, connection } = await access(actor);
   if (!connection.folderId) return { files: [], nextPageToken: null };
+  const folder = folderId || connection.folderId;
+  const metadata = await new DriveFiles(token, connection.folderId).withinRoot(
+    folder,
+  );
+  if (metadata.mimeType !== folderMime)
+    throw new PolicyError("Kein Drive-Ordner.");
   const data = await driveFetch(token, "files", {
-    q: `'${driveId.parse(connection.folderId)}' in parents and trashed = false`,
-    fields: "nextPageToken,files(id,name,mimeType)",
+    q: `'${driveId.parse(folder)}' in parents and trashed = false`,
+    fields: "nextPageToken,files(id,name,mimeType,size)",
     pageSize: "50",
     orderBy: "folder,name",
     supportsAllDrives: "true",
@@ -286,4 +286,82 @@ export async function disconnectDrive(actor: string) {
     db.driveOAuthState.deleteMany({ where: { userId: actor } }),
   ]);
   return { ok: true };
+}
+
+export type DriveSelection = {
+  ownerId: string;
+  folderId: string;
+  connectionVersion: string;
+  files: DriveImage[];
+};
+export async function prepareDriveImages(
+  actor: string,
+  ids: string[],
+): Promise<DriveSelection> {
+  if (!ids.length || ids.length > 4 || new Set(ids).size !== ids.length)
+    throw new PolicyError(
+      "Ein bis vier unterschiedliche Drive-Bilder auswählen.",
+    );
+  const { token, connection } = await access(actor);
+  if (!connection.folderId)
+    throw new PolicyError(
+      "Zuerst einen Drive-Ordner in der Bibliothek auswählen.",
+    );
+  const reader = new DriveFiles(token, connection.folderId);
+  const files: DriveImage[] = [];
+  for (const id of ids) files.push(await reader.image(id));
+  return {
+    ownerId: actor,
+    folderId: connection.folderId,
+    connectionVersion: connection.updatedAt.toISOString(),
+    files,
+  };
+}
+export async function readDriveImages(
+  actor: string,
+  selection: DriveSelection,
+) {
+  if (selection.ownerId !== actor)
+    throw new PolicyError(
+      "Drive-Bilder können nur vom Auftraggeber übermittelt werden.",
+      403,
+    );
+  const { token, connection } = await access(actor);
+  const checkConnection = async () => {
+    await authorize(actor);
+    const current = await db.driveConnection.findUnique({
+      where: { userId: actor },
+    });
+    if (
+      !current ||
+      current.folderId !== selection.folderId ||
+      current.updatedAt.toISOString() !== selection.connectionVersion
+    )
+      throw new PolicyError(
+        "Drive-Verbindung oder Ordner wurde geändert. Bilder neu auswählen.",
+        409,
+      );
+  };
+  await checkConnection();
+  const reader = new DriveFiles(token, connection.folderId!);
+  const images = [];
+  for (const file of selection.files) images.push(await reader.readImage(file));
+  await checkConnection();
+  return images;
+}
+export async function driveImagePreview(actor: string, id: string) {
+  const { token, connection } = await access(actor);
+  if (!connection.folderId)
+    throw new PolicyError("Zuerst einen Drive-Ordner auswählen.");
+  const reader = new DriveFiles(token, connection.folderId);
+  const result = await reader.readImage(await reader.image(id), true);
+  const current = await db.driveConnection.findUnique({
+    where: { userId: actor },
+  });
+  if (
+    !current ||
+    current.updatedAt.getTime() !== connection.updatedAt.getTime()
+  )
+    throw new PolicyError("Drive-Verbindung wurde geändert.", 409);
+  return result;
 }

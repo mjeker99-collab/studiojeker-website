@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
 async function post(path: string, body: unknown) {
@@ -27,14 +28,15 @@ export default function StudioChat({
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [referenceIds, setReferenceIds] = useState<string[]>([]);
+  const [driveImages, setDriveImages] = useState<SelectedDriveImage[]>([]);
+  const referenceCount = referenceIds.length + driveImages.length;
   const [uploadRights, setUploadRights] = useState(false);
   const images = state.assets.filter((a) =>
     ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
   );
   const storageReady = state.config.storage !== "DISCONNECTED";
   async function uploadImage(file: File) {
-    if (busy || !uploadRights || !storageReady || referenceIds.length >= 4)
-      return;
+    if (busy || !uploadRights || !storageReady || referenceCount >= 4) return;
     setBusy(true);
     setError("");
     try {
@@ -98,6 +100,7 @@ export default function StudioChat({
         contentId: null,
         requestKey: crypto.randomUUID(),
         referenceIds,
+        driveReferenceIds: driveImages.map((file) => file.id),
         referenceRights: confirmed,
         referenceTransfer: confirmed,
         confirmedCosts: true,
@@ -140,6 +143,7 @@ export default function StudioChat({
               setSeriesId(e.target.value);
               setConfirmed(false);
               setReferenceIds([]);
+              setDriveImages([]);
               setError("");
             }}
           >
@@ -196,6 +200,7 @@ export default function StudioChat({
         {jobs.map((j) => {
           const input = j.input as {
             request?: { message?: string; referenceIds?: string[] };
+            driveSelection?: { files: SelectedDriveImage[] };
           };
           const result = j.result as { reply?: string } | null;
           return (
@@ -213,6 +218,14 @@ export default function StudioChat({
                         state.assets.find((a) => a.id === id)?.name ||
                         "Nicht mehr verfügbar",
                     )
+                    .join(", ")}
+                </p>
+              )}
+              {!!input.driveSelection?.files.length && (
+                <p className="muted">
+                  Drive-Bildreferenzen:{" "}
+                  {input.driveSelection.files
+                    .map((file) => file.name)
                     .join(", ")}
                 </p>
               )}
@@ -261,12 +274,22 @@ export default function StudioChat({
           disabled={busy}
           onChange={(e) => setMessage(e.target.value)}
         />
+        <p>Bildreferenzen: {referenceCount}/4</p>
+        <DriveImagePicker
+          selected={driveImages}
+          remaining={4 - referenceCount}
+          disabled={busy}
+          onChange={(files) => {
+            setDriveImages(files);
+            setConfirmed(false);
+          }}
+        />
         <fieldset disabled={busy || !storageReady}>
-          <legend>Bildreferenzen ({referenceIds.length}/4)</legend>
+          <legend>Bilder aus der Bibliothek</legend>
           {!storageReady && (
             <p>
-              Bildspeicher noch nicht eingerichtet. Textgespräche sind weiterhin
-              möglich.
+              Der Speicher für Uploads ist noch nicht eingerichtet. Bilder aus
+              Google Drive kannst du oben auswählen.
             </p>
           )}
           {images.length === 0 && <p>Noch keine Bilder in der Bibliothek.</p>}
@@ -275,9 +298,7 @@ export default function StudioChat({
               <input
                 type="checkbox"
                 checked={referenceIds.includes(a.id)}
-                disabled={
-                  !referenceIds.includes(a.id) && referenceIds.length >= 4
-                }
+                disabled={!referenceIds.includes(a.id) && referenceCount >= 4}
                 onChange={(e) => {
                   setReferenceIds(
                     e.target.checked
@@ -304,7 +325,7 @@ export default function StudioChat({
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              disabled={!uploadRights || referenceIds.length >= 4}
+              disabled={!uploadRights || referenceCount >= 4}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
@@ -321,7 +342,7 @@ export default function StudioChat({
             onChange={(e) => setConfirmed(e.target.checked)}
           />
           Ich bestätige die Nutzungsrechte und die Übermittlung von Gespräch,
-          Serienbriefing, Referenztexten und {referenceIds.length} ausgewählten
+          Serienbriefing, Referenztexten und {referenceCount} ausgewählten
           Bildern an OpenAI. Bildanalyse verursacht zusätzliche Eingabetokens.
           Budgetreservierung: USD {state.config.textReserve.toFixed(2)} pro
           Nachricht, kein garantierter Preis.

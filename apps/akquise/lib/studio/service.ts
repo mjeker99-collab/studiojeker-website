@@ -1,3 +1,9 @@
+import {
+  prepareDriveImages,
+  readDriveImages,
+  driveId,
+  type DriveSelection,
+} from "../drive/service";
 import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -236,6 +242,7 @@ const requestSchema = z
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
+    driveReferenceIds: z.array(driveId).max(4).default([]),
     referenceRights: z.boolean(),
     referenceTransfer: z.boolean(),
     confirmedCosts: z.literal(true),
@@ -253,6 +260,40 @@ export async function queueJob(actor: string, raw: unknown) {
     );
   if (data.kind === "IMAGE" && config.storage === "DISCONNECTED")
     throw new PolicyError("Privater Bildspeicher: Nicht verbunden.", 503);
+  if (data.driveReferenceIds.length && data.kind !== "CHAT")
+    throw new PolicyError("Drive-Bilder sind nur im GPT-Chat verfügbar.");
+  if (
+    data.referenceIds.length + data.driveReferenceIds.length > 4 ||
+    new Set(data.driveReferenceIds).size !== data.driveReferenceIds.length
+  )
+    throw new PolicyError(
+      "Maximal vier unterschiedliche Bildreferenzen auswählen.",
+    );
+  if (
+    data.driveReferenceIds.length &&
+    (!data.referenceRights || !data.referenceTransfer)
+  )
+    throw new PolicyError(
+      "Nutzungsrechte und Übermittlung ausdrücklich bestätigen.",
+    );
+  // Preserve idempotent retries even if Drive was subsequently disconnected.
+  const existing = await db.studioJob.findUnique({
+    where: { requestKey: data.requestKey },
+  });
+  if (existing) {
+    const old = existing.input as { request: unknown };
+    await db.$transaction((tx) => hubActor(tx, actor));
+    if (
+      existing.organizationId !== ORG ||
+      (data.driveReferenceIds.length > 0 && existing.userId !== actor) ||
+      digest(requestSchema.parse(old.request)) !== digest(data)
+    )
+      throw new PolicyError("Auftragsschlüssel bereits anders verwendet.", 409);
+    return existing;
+  }
+  const driveSelection = data.driveReferenceIds.length
+    ? await prepareDriveImages(actor, data.driveReferenceIds)
+    : undefined;
   return db.$transaction(async (tx) => {
     await hubActor(tx, actor);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"studio-jobs:" + ORG}))`;
@@ -263,6 +304,7 @@ export async function queueJob(actor: string, raw: unknown) {
       const prev = previous.input as Record<string, unknown>;
       if (
         previous.organizationId !== ORG ||
+        (data.driveReferenceIds.length > 0 && previous.userId !== actor) ||
         digest(requestSchema.parse(prev.request)) !== digest(data)
       )
         throw new PolicyError(
@@ -365,8 +407,23 @@ export async function queueJob(actor: string, raw: unknown) {
         "Referenz wurde archiviert. Neues Briefing erforderlich.",
         409,
       );
+    if (driveSelection) {
+      const connection = await tx.driveConnection.findUnique({
+        where: { userId: actor },
+      });
+      if (
+        !connection ||
+        connection.folderId !== driveSelection.folderId ||
+        connection.updatedAt.toISOString() !== driveSelection.connectionVersion
+      )
+        throw new PolicyError(
+          "Drive-Verbindung wurde geändert. Bilder neu auswählen.",
+          409,
+        );
+    }
     const input = {
       request: data,
+      ...(driveSelection ? { driveSelection } : {}),
       brief,
       selectedRules,
       references,
@@ -428,6 +485,7 @@ export async function queueJob(actor: string, raw: unknown) {
       model: j.model,
       reserveUsd,
       referenceIds: data.referenceIds,
+      driveReferenceIds: data.driveReferenceIds,
       referenceRights: data.referenceRights,
       referenceTransfer: data.referenceTransfer,
     });
@@ -447,6 +505,13 @@ export async function runJob(
       where: { id, organizationId: ORG },
     });
     if (!j) throw new PolicyError("Auftrag nicht zugänglich.", 403);
+    const request = (j.input as { request?: { driveReferenceIds?: string[] } })
+      .request;
+    if (request?.driveReferenceIds?.length && j.userId !== actor)
+      throw new PolicyError(
+        "Drive-Bilder können nur vom Auftraggeber übermittelt werden.",
+        403,
+      );
     if (j.status !== "QUEUED")
       throw new PolicyError(
         "Auftrag wurde bereits gestartet. Keine Wiederholung.",
@@ -475,7 +540,9 @@ export async function runJob(
     history?: { role: "user" | "assistant"; content: string }[];
     campaign?: unknown;
     contents?: unknown;
+    driveSelection?: DriveSelection;
   };
+  let providerStarted = false;
   try {
     let result: unknown, usage: unknown, requestId: string | null;
     if (job.kind === "CHAT") {
@@ -494,6 +561,17 @@ export async function runJob(
           throw new PolicyError("Ungültige Bildreferenz.");
         refs.push({ bytes: a.bytes, mime: a.asset.mime });
       }
+      if (input.request.driveReferenceIds?.length) {
+        if (
+          !input.driveSelection ||
+          input.driveSelection.ownerId !== job.userId
+        )
+          throw new PolicyError(
+            "Drive-Auswahl fehlt. Neuen Auftrag erstellen.",
+          );
+        refs.push(...(await readDriveImages(actor, input.driveSelection)));
+      }
+      providerStarted = true;
       const r = await provider.chat(
         {
           briefing: input.brief,
@@ -501,6 +579,10 @@ export async function runJob(
           contents: input.contents,
           rules: input.selectedRules,
           references: input.references,
+          driveImages: input.driveSelection?.files.map((file, i) => ({
+            imageNumber: input.request.referenceIds.length + i + 1,
+            name: file.name,
+          })),
         },
         [
           ...(input.history || []),
@@ -513,6 +595,7 @@ export async function runJob(
       usage = r.usage;
       requestId = r.requestId;
     } else if (job.kind === "TEXT") {
+      providerStarted = true;
       const r = await provider.text(
         briefingSchema.parse(input.brief),
         job.model,
@@ -534,6 +617,7 @@ export async function runJob(
         selectedRules: input.selectedRules,
         selectedTextReferences: input.references,
       });
+      providerStarted = true;
       const r = await provider.image(imageContext, job.model, refs);
       const a = await storeAsset(
         actor,
@@ -565,13 +649,15 @@ export async function runJob(
       },
     });
   } catch (e) {
-    const uncertain = !(e instanceof ProviderFailure) || e.uncertain;
+    const uncertain =
+      providerStarted && (!(e instanceof ProviderFailure) || e.uncertain);
     await db.studioJob.updateMany({
       where: { id, status: "RUNNING" },
       data: {
         status: uncertain ? "UNKNOWN" : "FAILED",
         error:
-          e instanceof ProviderFailure
+          e instanceof ProviderFailure ||
+          (!providerStarted && e instanceof PolicyError)
             ? e.message
             : "Verarbeitung fehlgeschlagen. Ergebnis/Kosten prüfen; keine automatische Wiederholung.",
         completedAt: new Date(),

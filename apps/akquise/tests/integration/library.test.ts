@@ -304,9 +304,234 @@ test("Chat persists turns, isolates series and enforces single execution", async
     else process.env.CONTENT_AI_ENABLED = oldFlag;
   }
 });
+test("Drive chat works without S3 and enforces consent, owner, connection and file version", async (t) => {
+  const { OAuth2Client } = await import("google-auth-library");
+  const { createHash } = await import("node:crypto");
+  const { seal } = await import("../../lib/drive/crypto");
+  const { listDriveFiles, disconnectDrive } =
+    await import("../../lib/drive/service");
+  const { studioConfig } = await import("../../lib/studio/config");
+  const names = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "DRIVE_CLIENT_ID",
+    "DRIVE_CLIENT_SECRET",
+    "DRIVE_TOKEN_ENCRYPTION_KEY",
+    "STUDIO_LOCAL_ASSETS",
+    "STUDIO_S3_ENDPOINT",
+  ] as const;
+  const old = names.map((name) => process.env[name]);
+  Object.assign(process.env, {
+    OPENAI_API_KEY: "synthetic",
+    CONTENT_AI_ENABLED: "true",
+    DRIVE_CLIENT_ID: "synthetic",
+    DRIVE_CLIENT_SECRET: "synthetic",
+    DRIVE_TOKEN_ENCRYPTION_KEY: "ab".repeat(32),
+    STUDIO_LOCAL_ASSETS: "false",
+  });
+  delete process.env.STUDIO_S3_ENDPOINT;
+  assert.equal(studioConfig().storage, "DISCONNECTED");
+  const bytes = await sharp({
+    create: { width: 12, height: 12, channels: 3, background: "cyan" },
+  })
+    .png()
+    .toBuffer();
+  let version = "1",
+    providerCalls = 0,
+    downloads = 0;
+  t.mock.method(OAuth2Client.prototype, "getAccessToken", async () => ({
+    token: "synthetic-token",
+  }));
+  t.mock.method(globalThis, "fetch", async (input: URL | string) => {
+    const u = new URL(input);
+    assert.equal(u.origin, "https://www.googleapis.com");
+    if (u.searchParams.get("alt") === "media") {
+      downloads++;
+      return new Response(new Uint8Array(bytes));
+    }
+    if (u.pathname.endsWith("/files")) {
+      assert.equal(
+        u.searchParams.get("q"),
+        "'nested' in parents and trashed = false",
+      );
+      return new Response(
+        JSON.stringify({
+          files: [
+            {
+              id: "photo",
+              name: "Nora.png",
+              mimeType: "image/png",
+              size: String(bytes.length),
+            },
+          ],
+        }),
+      );
+    }
+    const id = u.pathname.split("/").at(-1)!;
+    return new Response(
+      JSON.stringify(
+        id === "photo"
+          ? {
+              id,
+              name: "Nora.png",
+              mimeType: "image/png",
+              trashed: false,
+              parents: ["nested"],
+              size: String(bytes.length),
+              version,
+              md5Checksum: createHash("md5").update(bytes).digest("hex"),
+              capabilities: { canDownload: true },
+            }
+          : {
+              id,
+              name: id,
+              mimeType: "application/vnd.google-apps.folder",
+              trashed: false,
+              parents: id === "nested" ? ["root"] : [],
+            },
+      ),
+    );
+  });
+  try {
+    await db.driveConnection.create({
+      data: {
+        userId: martin,
+        email: "synthetic@example.test",
+        folderId: "root",
+        folderName: "Root",
+        encryptedToken: seal("synthetic-refresh", martin),
+      },
+    });
+    assert.equal(
+      (await listDriveFiles(martin, undefined, "nested")).files[0].id,
+      "photo",
+    );
+    await assert.rejects(
+      listDriveFiles(martin, undefined, "outside"),
+      /nicht im ausgewählten/,
+    );
+    const series = await createSeries(martin, {
+      title: "Drive Chat Test",
+      topic: "Test",
+      offer: "",
+      goal: "Test",
+      audience: "Test",
+      tone: "Deutsch",
+      channels: ["INSTAGRAM"],
+      count: 1,
+      formats: ["4:5"],
+      campaignId: null,
+      referenceAssetIds: [],
+    });
+    const request = {
+      seriesId: series.id,
+      kind: "CHAT",
+      message: "Beschreibe Nora",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [],
+      driveReferenceIds: ["photo"],
+      referenceRights: true,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    };
+    await assert.rejects(
+      queueJob(martin, { ...request, referenceTransfer: false }),
+      /ausdrücklich bestätigen/,
+    );
+    await assert.rejects(
+      queueJob(martin, { ...request, referenceRights: false }),
+      /ausdrücklich bestätigen/,
+    );
+    await assert.rejects(
+      queueJob(martin, { ...request, driveReferenceIds: ["photo", "photo"] }),
+      /vier unterschiedliche/,
+    );
+    await assert.rejects(
+      queueJob(martin, { ...request, referenceIds: ["1", "2", "3", "4"] }),
+      /vier unterschiedliche/,
+    );
+    await assert.rejects(
+      queueJob(martin, { ...request, kind: "TEXT" }),
+      /nur im GPT-Chat/,
+    );
+    await assert.rejects(
+      queueJob(nora, request),
+      /zuerst Google Drive verbinden/,
+    );
+    const provider = {
+      async text() {
+        throw new Error("unexpected text");
+      },
+      async image() {
+        throw new Error("unexpected image");
+      },
+      async chat(
+        _c: unknown,
+        _m: unknown,
+        _model: string,
+        refs?: { bytes: Buffer; mime: string }[],
+      ) {
+        providerCalls++;
+        assert.equal(refs?.length, 1);
+        assert.equal(refs![0].mime, "image/png");
+        assert.equal((await sharp(refs![0].bytes).metadata()).width, 12);
+        return { reply: "Ein Bild", usage: {}, requestId: "synthetic" };
+      },
+    };
+    const job = await queueJob(martin, request);
+    assert.equal(downloads, 0, "queue captures metadata, not bytes");
+    await assert.rejects(
+      runJob(nora, job.id, provider),
+      /nur vom Auftraggeber/,
+    );
+    await assert.rejects(queueJob(nora, request), /anders verwendet/);
+    await runJob(martin, job.id, provider);
+    assert.equal(providerCalls, 1);
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: job.id } })).status,
+      "SUCCEEDED",
+    );
+    const changed = await queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    version = "2";
+    await runJob(martin, changed.id, provider);
+    const failed = await db.studioJob.findUniqueOrThrow({
+      where: { id: changed.id },
+    });
+    assert.equal(failed.status, "FAILED");
+    assert.match(failed.error || "", /geändert/);
+    assert.equal(providerCalls, 1);
+    const disconnectedRequest = { ...request, requestKey: randomUUID() };
+    const disconnected = await queueJob(martin, disconnectedRequest);
+    await disconnectDrive(martin);
+    assert.equal(
+      (await queueJob(martin, disconnectedRequest)).id,
+      disconnected.id,
+    );
+    await runJob(martin, disconnected.id, provider);
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: disconnected.id } }))
+        .status,
+      "FAILED",
+    );
+    assert.equal(providerCalls, 1);
+    assert.equal(downloads, 1);
+  } finally {
+    await db.driveConnection.deleteMany({ where: { userId: martin } });
+    names.forEach((name, i) => {
+      if (old[i] === undefined) delete process.env[name];
+      else process.env[name] = old[i];
+    });
+  }
+});
 test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderungen", async () => {
   await assert.rejects(libraryState("missing"), /Berechtigung/);
-  const previousIds = new Set((await libraryState(nora)).items.map((i) => i.id));
+  const previousIds = new Set(
+    (await libraryState(nora)).items.map((i) => i.id),
+  );
   const saved = await saveLibraryItem(martin, item());
   const video = await saveLibraryItem(nora, item("VIDEO"));
   const state = await libraryState(nora);
