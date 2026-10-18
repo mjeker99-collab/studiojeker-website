@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import "./studio-chat.test";
+import "./drive-images.test";
 import assert from "node:assert/strict";
 import { briefingSchema, generatedPostSchema } from "../lib/studio/input";
 import { studioConfig, publicConfig, logoHash } from "../lib/studio/config";
