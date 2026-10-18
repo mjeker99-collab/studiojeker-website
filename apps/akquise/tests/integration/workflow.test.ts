@@ -27,8 +27,10 @@ const { execFileSync } = await import("node:child_process");
 // let the node:test runner finish a filtered suite and drop its schema early.
 const { dispatchApproved } = await import("../../lib/delivery");
 const hub = await import("../../lib/hub/workflow");
+const customers = await import("../../lib/customers");
 const { exportNewsletter } = await import("../../lib/hub/newsletter");
-const { transferNewsletter, mailchimpAudiences } = await import("../../lib/hub/mailchimp");
+const { transferNewsletter, mailchimpAudiences } =
+  await import("../../lib/hub/mailchimp");
 const studio = await import("../../lib/studio/service");
 const studioAssets = await import("../../lib/studio/assets");
 const studioRender = await import("../../lib/studio/render");
@@ -483,6 +485,48 @@ const campaignData = () => ({
   endsAt: "2026-11-30T17:00:00.000Z",
   ownerId: martin,
 });
+test("Kundenprofile bleiben intern und Kampagnen prüfen die Kundenzuordnung", async () => {
+  const input = {
+    name: "Synthetischer Kunde",
+    website: "https://example.test",
+    contactName: "Anna Muster",
+    contactEmail: "anna@example.test",
+    notes: "Interne Testnotiz",
+    status: "ACTIVE" as const,
+  };
+  await assert.rejects(
+    customers.saveCustomer("missing", input),
+    /Berechtigung/,
+  );
+  const customer = await customers.saveCustomer(martin, input);
+  assert.equal(
+    (await customers.customerState(nora)).find((x) => x.id === customer.id)
+      ?.name,
+    input.name,
+  );
+  const campaign = await hub.saveCampaign(nora, {
+    ...campaignData(),
+    customerId: customer.id,
+  });
+  assert.equal(campaign.customerId, customer.id);
+  await assert.rejects(
+    hub.saveCampaign(martin, { ...campaignData(), customerId: "fremd" }),
+    /Kunde nicht zugänglich/,
+  );
+  await customers.saveCustomer(
+    martin,
+    { revision: 1, data: { ...input, status: "INACTIVE" } },
+    customer.id,
+  );
+  await assert.rejects(
+    customers.saveCustomer(nora, { revision: 1, data: input }, customer.id),
+    /geändert/,
+  );
+  await assert.rejects(
+    hub.saveCampaign(nora, { ...campaignData(), customerId: customer.id }),
+    /Kunde nicht zugänglich/,
+  );
+});
 test("Hub: Kampagnen und Varianten bleiben nach Wiederladen zugeordnet; Konflikte werden abgewiesen", async () => {
   const c = await hub.saveCampaign(martin, campaignData());
   const content = await hub.saveContent(nora, social(nora, c.id));
@@ -719,30 +763,52 @@ test("Mailchimp: nur freigegebene Version als Entwurf, genau einmal und ohne Ver
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.MAILCHIMP_API_KEY;
   process.env.MAILCHIMP_API_KEY = "synthetic-secret-us21";
-  const calls: { method: string; path: string; body: Record<string, unknown> }[] = [];
+  const calls: {
+    method: string;
+    path: string;
+    body: Record<string, unknown>;
+  }[] = [];
   globalThis.fetch = async (input, init) => {
     const url = new URL(String(input));
     const body = init?.body ? JSON.parse(String(init.body)) : {};
     calls.push({ method: init?.method || "GET", path: url.pathname, body });
     assert.equal(url.hostname, "us21.api.mailchimp.com");
     if (url.pathname === "/3.0/lists" || url.pathname === "/3.0/lists/")
-      return Response.json({ lists: [{ id: "aud123", name: "Test Audience" }] });
+      return Response.json({
+        lists: [{ id: "aud123", name: "Test Audience" }],
+      });
     if (url.pathname === "/3.0/lists/aud123")
-      return Response.json({ id: "aud123", campaign_defaults: { from_name: "Studiojeker", from_email: "synthetic@example.test" } });
+      return Response.json({
+        id: "aud123",
+        campaign_defaults: {
+          from_name: "Studiojeker",
+          from_email: "synthetic@example.test",
+        },
+      });
     if (url.pathname === "/3.0/campaigns" && init?.method === "POST")
       return Response.json({ id: "remote123", web_id: 123 });
-    if (url.pathname === "/3.0/campaigns/remote123/content" && init?.method === "PUT")
+    if (
+      url.pathname === "/3.0/campaigns/remote123/content" &&
+      init?.method === "PUT"
+    )
       return Response.json({ html: body.html });
     throw new Error("Unexpected Mailchimp request");
   };
   try {
     const newsletter = {
-      ...social(martin), kind: "NEWSLETTER" as const, variants: [],
-      subject: "Synthetischer Newsletter", preheader: "Vorschau", body: "Synthetischer Text",
+      ...social(martin),
+      kind: "NEWSLETTER" as const,
+      variants: [],
+      subject: "Synthetischer Newsletter",
+      preheader: "Vorschau",
+      body: "Synthetischer Text",
       audience: "Separat geprüfte Testliste",
     };
     const content = await hub.saveContent(martin, newsletter);
-    await assert.rejects(transferNewsletter(nora, content.id, 1, "aud123"), /freigegeben/);
+    await assert.rejects(
+      transferNewsletter(nora, content.id, 1, "aud123"),
+      /freigegeben/,
+    );
     assert.equal(calls.filter((c) => c.method === "POST").length, 0);
     await hub.reviewContent(nora, content.id, 1, "APPROVED", true);
     assert.equal((await mailchimpAudiences(martin)).audiences[0].id, "aud123");
@@ -750,11 +816,20 @@ test("Mailchimp: nur freigegebene Version als Entwurf, genau einmal und ohne Ver
     assert.equal(result.sent, false);
     assert.equal(result.campaignId, "remote123");
     assert.equal(calls.filter((c) => c.method === "POST").length, 1);
-    assert.ok(String(calls.find((c) => c.method === "PUT")?.body.html).includes("*|UNSUB|*"));
+    assert.ok(
+      String(calls.find((c) => c.method === "PUT")?.body.html).includes(
+        "*|UNSUB|*",
+      ),
+    );
     assert.ok(!calls.some((c) => /send|schedule/.test(c.path)));
-    await assert.rejects(transferNewsletter(nora, content.id, 1, "aud123"), /bereits/);
+    await assert.rejects(
+      transferNewsletter(nora, content.id, 1, "aud123"),
+      /bereits/,
+    );
     assert.equal(calls.filter((c) => c.method === "POST").length, 1);
-    const transfer = await db.mailchimpTransfer.findUniqueOrThrow({ where: { contentId_version: { contentId: content.id, version: 1 } } });
+    const transfer = await db.mailchimpTransfer.findUniqueOrThrow({
+      where: { contentId_version: { contentId: content.id, version: 1 } },
+    });
     assert.equal(transfer.status, "DRAFT");
     assert.equal(transfer.remoteId, "remote123");
   } finally {

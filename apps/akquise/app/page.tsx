@@ -1,5 +1,6 @@
 "use client";
 import Hub from "./hub/Hub";
+import Customers from "./customers/Customers";
 import Image from "next/image";
 import Library from "./library/Library";
 import ContentStudio from "./studio/ContentStudio";
@@ -39,6 +40,7 @@ type State = {
 const nav = [
   "Übersicht",
   "Kontakte/Akquise",
+  "Kunden",
   "Kampagnen",
   "Social Media",
   "Content-Studio",
@@ -515,6 +517,7 @@ export default function App() {
             <Hub key={tab} section={tab} userId={data.user.id} />
           )}
           {tab === "Bibliothek" && <Library />}
+          {tab === "Kunden" && <Customers />}
           {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
           {tab === "Übersicht" && (
             <>

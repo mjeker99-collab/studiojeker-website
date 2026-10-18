@@ -32,6 +32,7 @@ const blank: Briefing = {
   count: 1,
   formats: ["1:1"],
   campaignId: null,
+  customerId: null,
   referenceAssetIds: [],
 };
 async function api(path: string, body?: unknown) {
@@ -416,6 +417,26 @@ export default function ContentStudio({ userId }: { userId: string }) {
               />
             </label>
             <label>
+              Kunde
+              <select
+                value={brief.customerId || ""}
+                onChange={(e) =>
+                  setBrief({
+                    ...brief,
+                    customerId: e.target.value || null,
+                    campaignId: null,
+                  })
+                }
+              >
+                <option value="">Intern / nicht zugeordnet</option>
+                {state.customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
               Kampagne
               <select
                 value={brief.campaignId || ""}
@@ -424,11 +445,13 @@ export default function ContentStudio({ userId }: { userId: string }) {
                 }
               >
                 <option value="">Ohne Kampagne</option>
-                {state.campaigns.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
+                {state.campaigns
+                  .filter((c) => c.customerId === brief.customerId)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
               </select>
             </label>
           </div>

@@ -128,7 +128,10 @@ export default function Hub({
   userId: string;
 }) {
   const [templateId, setTemplateId] = useState("master-v7");
-  const [mailchimp, setMailchimp] = useState<{ connected: boolean; audiences: { id: string; name: string }[] } | null>(null);
+  const [mailchimp, setMailchimp] = useState<{
+    connected: boolean;
+    audiences: { id: string; name: string }[];
+  } | null>(null);
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
@@ -141,6 +144,7 @@ export default function Hub({
     [read, setRead] = useState(false);
   const [campaign, setCampaign] = useState<Campaign | null>(null),
     [campaignForm, setCampaignForm] = useState<{
+      customerId: string | null;
       title: string;
       goal: string;
       audience: string;
@@ -182,14 +186,19 @@ export default function Hub({
   useEffect(() => {
     if (section !== "Newsletter" && section !== "Einstellungen") return;
     const controller = new AbortController();
-    fetch("/api/hub/mailchimp/audiences", { cache: "no-store", signal: controller.signal })
+    fetch("/api/hub/mailchimp/audiences", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then(async (r) => {
         const result = await r.json();
         if (!r.ok) throw new Error(result.error);
         setMailchimp(result);
         setMailchimpError("");
       })
-      .catch((e) => { if (e.name !== "AbortError") setMailchimpError(e.message); });
+      .catch((e) => {
+        if (e.name !== "AbortError") setMailchimpError(e.message);
+      });
     return () => controller.abort();
   }, [section]);
   async function act(fn: () => Promise<unknown>, message = "Gespeichert.") {
@@ -475,7 +484,8 @@ export default function Hub({
         </p>
       )}
       <p className="hub-connection">
-        Planung &amp; Freigabe · Veröffentlichungen nur nach gesonderter Prüfung.
+        Planung &amp; Freigabe · Veröffentlichungen nur nach gesonderter
+        Prüfung.
       </p>
       {section === "Social Media" && <SocialConnections userId={userId} />}
       {section === "Übersicht" && (
@@ -525,6 +535,7 @@ export default function Hub({
               onClick={() => {
                 setCampaign(null);
                 setCampaignForm({
+                  customerId: null,
                   title: "",
                   goal: "",
                   audience: "",
@@ -542,6 +553,11 @@ export default function Hub({
               <article className="panel padded" key={c.id}>
                 <p className="eyebrow">KAMPAGNE · {userName(c.ownerId)}</p>
                 <h2>{c.title}</h2>
+                <p>
+                  Kunde:{" "}
+                  {data.customers.find((x) => x.id === c.customerId)?.name ||
+                    "Intern / nicht zugeordnet"}
+                </p>
                 <p>{c.goal}</p>
                 <p>Zielgruppe: {c.audience}</p>
                 <p>
@@ -556,6 +572,7 @@ export default function Hub({
                   onClick={() => {
                     setCampaign(c);
                     setCampaignForm({
+                      customerId: c.customerId,
                       title: c.title,
                       goal: c.goal,
                       audience: c.audience,
@@ -612,6 +629,32 @@ export default function Hub({
               });
             }}
           >
+            <label>
+              Kunde
+              <select
+                value={campaignForm.customerId || ""}
+                onChange={(e) =>
+                  setCampaignForm({
+                    ...campaignForm,
+                    customerId: e.target.value || null,
+                  })
+                }
+              >
+                <option value="">Intern / nicht zugeordnet</option>
+                {data.customers.map((c) => (
+                  <option
+                    key={c.id}
+                    value={c.id}
+                    disabled={
+                      c.status !== "ACTIVE" && c.id !== campaign?.customerId
+                    }
+                  >
+                    {c.name}
+                    {c.status !== "ACTIVE" ? " (inaktiv)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label>
               Kampagnentitel
               <input
@@ -1148,33 +1191,67 @@ export default function Hub({
                     Newsletter. Zielgruppe, Absender, Einwilligungen und
                     Testsendung vor dem Versand in Mailchimp prüfen.
                   </p>
-                  {mailchimpError && <p role="alert">Verbindung: {mailchimpError}</p>}
-                  {mailchimp && !mailchimp.connected && <p>Mailchimp ist noch nicht konfiguriert.</p>}
+                  {mailchimpError && (
+                    <p role="alert">Verbindung: {mailchimpError}</p>
+                  )}
+                  {mailchimp && !mailchimp.connected && (
+                    <p>Mailchimp ist noch nicht konfiguriert.</p>
+                  )}
                   {!!mailchimp?.audiences.length && (
                     <label>
                       Mailchimp-Audience
-                      <select value={audienceId} onChange={(e) => setAudienceId(e.target.value)}>
+                      <select
+                        value={audienceId}
+                        onChange={(e) => setAudienceId(e.target.value)}
+                      >
                         <option value="">Audience wählen</option>
-                        {mailchimp.audiences.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        {mailchimp.audiences.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   )}
                   {editing.mailchimpTransfers.map((t) => (
                     <p key={t.id}>
-                      V{t.version}: {t.status === "DRAFT" ? "Entwurf übertragen" : "Übertragung ungeklärt – Mailchimp prüfen"}
+                      V{t.version}:{" "}
+                      {t.status === "DRAFT"
+                        ? "Entwurf übertragen"
+                        : "Übertragung ungeklärt – Mailchimp prüfen"}
                       {t.remoteId && ` · Kampagne ${t.remoteId}`}
                     </p>
                   ))}
                   {mailchimp?.connected && (
                     <button
                       type="button"
-                      disabled={busy || dirty || !audienceId || !["APPROVED", "DONE"].includes(editing.status) || editing.mailchimpTransfers.some((t) => t.version === editing.version)}
-                      onClick={() => act(async () => {
-                        const result = await post("mailchimp-transfer/" + editing.id, { version: editing.version, audienceId });
-                        setForm(null);
-                        if (result.url) window.open(result.url, "_blank", "noopener,noreferrer");
-                      }, "Entwurf an Mailchimp übertragen. Kein Versand ausgelöst.")}
-                    >Entwurf an Mailchimp übertragen</button>
+                      disabled={
+                        busy ||
+                        dirty ||
+                        !audienceId ||
+                        !["APPROVED", "DONE"].includes(editing.status) ||
+                        editing.mailchimpTransfers.some(
+                          (t) => t.version === editing.version,
+                        )
+                      }
+                      onClick={() =>
+                        act(async () => {
+                          const result = await post(
+                            "mailchimp-transfer/" + editing.id,
+                            { version: editing.version, audienceId },
+                          );
+                          setForm(null);
+                          if (result.url)
+                            window.open(
+                              result.url,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                        }, "Entwurf an Mailchimp übertragen. Kein Versand ausgelöst.")
+                      }
+                    >
+                      Entwurf an Mailchimp übertragen
+                    </button>
                   )}
                   <button
                     type="button"
@@ -1424,23 +1501,27 @@ export default function Hub({
       )}
       {section === "Einstellungen" && (
         <>
-        <SocialConnections userId={userId} />
-        <section className="panel padded">
-          <h2>Marketing-Verbindungen</h2>
-          <p>
-            Social-Media-Verbindungen werden oben angezeigt. Keine automatische Veröffentlichung.
-          </p>
-          <p>
-            Mailchimp: {mailchimpError || (mailchimp?.connected
-              ? `verbunden · ${mailchimp.audiences.length} Audiences sichtbar`
-              : "nicht konfiguriert")}. Freigegebene Newsletter können als
-            Entwurf übertragen werden. Kein Versand aus StudioONE.
-          </p>
-          <p>
-            Kalender: Europe/Zurich · Speicherung als UTC-Zeitpunkte. Medien
-            werden referenziert, nicht gehostet.
-          </p>
-        </section>
+          <SocialConnections userId={userId} />
+          <section className="panel padded">
+            <h2>Marketing-Verbindungen</h2>
+            <p>
+              Social-Media-Verbindungen werden oben angezeigt. Keine
+              automatische Veröffentlichung.
+            </p>
+            <p>
+              Mailchimp:{" "}
+              {mailchimpError ||
+                (mailchimp?.connected
+                  ? `verbunden · ${mailchimp.audiences.length} Audiences sichtbar`
+                  : "nicht konfiguriert")}
+              . Freigegebene Newsletter können als Entwurf übertragen werden.
+              Kein Versand aus StudioONE.
+            </p>
+            <p>
+              Kalender: Europe/Zurich · Speicherung als UTC-Zeitpunkte. Medien
+              werden referenziert, nicht gehostet.
+            </p>
+          </section>
         </>
       )}
     </div>

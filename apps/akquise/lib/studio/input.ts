@@ -29,6 +29,7 @@ export const briefingSchema = z
       .max(3)
       .refine((a) => new Set(a).size === a.length),
     campaignId: z.string().min(1).nullable(),
+    customerId: z.string().min(1).nullable().default(null),
     libraryReferenceIds: z.array(z.string().min(1)).max(4).optional(),
     brandRules: z
       .array(z.enum(["tone", "services", "audiences", "examples", "address"]))

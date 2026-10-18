@@ -29,74 +29,80 @@ const digest = (v: unknown) =>
   createHash("sha256").update(JSON.stringify(v)).digest("hex");
 export async function studioState(actor: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
-  const [series, assets, brand, jobs, campaigns, users] = await Promise.all([
-    db.studioSeries.findMany({
-      where: { organizationId: ORG },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      include: {
-        contents: {
-          orderBy: { createdAt: "asc" },
-          include: {
-            versions: { orderBy: { version: "desc" }, take: 1 },
-            approvals: {
-              orderBy: { createdAt: "desc" },
-              include: { user: { select: { name: true } } },
+  const [series, assets, brand, jobs, campaigns, users, customers] =
+    await Promise.all([
+      db.studioSeries.findMany({
+        where: { organizationId: ORG },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+          contents: {
+            orderBy: { createdAt: "asc" },
+            include: {
+              versions: { orderBy: { version: "desc" }, take: 1 },
+              approvals: {
+                orderBy: { createdAt: "desc" },
+                include: { user: { select: { name: true } } },
+              },
             },
           },
         },
-      },
-    }),
-    db.studioAsset.findMany({
-      where: {
-        organizationId: ORG,
-        deletedAt: null,
-        libraryItem: { is: { archivedAt: null } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 500,
-      select: {
-        id: true,
-        name: true,
-        mime: true,
-        size: true,
-        sha256: true,
-        kind: true,
-        width: true,
-        height: true,
-      },
-    }),
-    db.studioOrganization.findUniqueOrThrow({ where: { id: ORG } }),
-    db.studioJob.findMany({
-      where: { organizationId: ORG },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: {
-        id: true,
-        seriesId: true,
-        kind: true,
-        status: true,
-        model: true,
-        reserveUsd: true,
-        error: true,
-        usage: true,
-        createdAt: true,
-        startedAt: true,
-        completedAt: true,
-        providerRequestId: true,
-        result: true,
-        input: true,
-      },
-    }),
-    db.campaign.findMany({
-      where: { organizationId: ORG },
-      select: { id: true, title: true },
-    }),
-    db.user.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-    }),
-  ]);
+      }),
+      db.studioAsset.findMany({
+        where: {
+          organizationId: ORG,
+          deletedAt: null,
+          libraryItem: { is: { archivedAt: null } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 500,
+        select: {
+          id: true,
+          name: true,
+          mime: true,
+          size: true,
+          sha256: true,
+          kind: true,
+          width: true,
+          height: true,
+        },
+      }),
+      db.studioOrganization.findUniqueOrThrow({ where: { id: ORG } }),
+      db.studioJob.findMany({
+        where: { organizationId: ORG },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: {
+          id: true,
+          seriesId: true,
+          kind: true,
+          status: true,
+          model: true,
+          reserveUsd: true,
+          error: true,
+          usage: true,
+          createdAt: true,
+          startedAt: true,
+          completedAt: true,
+          providerRequestId: true,
+          result: true,
+          input: true,
+        },
+      }),
+      db.campaign.findMany({
+        where: { organizationId: ORG },
+        select: { id: true, title: true, customerId: true },
+      }),
+      db.user.findMany({
+        where: { active: true },
+        select: { id: true, name: true },
+      }),
+      db.customer.findMany({
+        where: { organizationId: ORG, status: "ACTIVE" },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
   return {
     series,
     assets,
@@ -104,6 +110,7 @@ export async function studioState(actor: string) {
     jobs,
     campaigns,
     users,
+    customers,
     config: publicConfig(),
   };
 }
@@ -115,10 +122,28 @@ export async function createSeries(actor: string, raw: unknown) {
       if (
         brief.campaignId &&
         !(await tx.campaign.findFirst({
-          where: { id: brief.campaignId, organizationId: ORG },
+          where: {
+            id: brief.campaignId,
+            organizationId: ORG,
+            customerId: brief.customerId,
+          },
         }))
       )
-        throw new PolicyError("Kampagne nicht zugänglich.", 403);
+        throw new PolicyError(
+          "Kampagne gehört nicht zum gewählten Kunden.",
+          403,
+        );
+      if (
+        brief.customerId &&
+        !(await tx.customer.findFirst({
+          where: {
+            id: brief.customerId,
+            organizationId: ORG,
+            status: "ACTIVE",
+          },
+        }))
+      )
+        throw new PolicyError("Kunde nicht zugänglich.", 403);
       if (
         (await tx.studioAsset.count({
           where: {
@@ -168,6 +193,7 @@ export async function createSeries(actor: string, raw: unknown) {
       const series = await tx.studioSeries.create({
         data: {
           title: brief.title,
+          customerId: brief.customerId,
           briefing: json(brief),
           ownerId: actor,
           organizationId: ORG,
