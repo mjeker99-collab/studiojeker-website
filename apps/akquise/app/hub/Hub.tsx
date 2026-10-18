@@ -9,6 +9,7 @@ import {
   newsletterText,
 } from "@/lib/hub/newsletter-template";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
+import SocialConnections from "./SocialConnections";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
@@ -474,9 +475,9 @@ export default function Hub({
         </p>
       )}
       <p className="hub-connection">
-        Planung & Freigabe · LinkedIn, Instagram, Facebook und Mailchimp:{" "}
-        <strong>nicht verbunden</strong>
+        Planung &amp; Freigabe · Veröffentlichungen nur nach gesonderter Prüfung.
       </p>
+      {section === "Social Media" && <SocialConnections userId={userId} />}
       {section === "Übersicht" && (
         <>
           <div className="metrics">
@@ -1422,11 +1423,12 @@ export default function Hub({
         </>
       )}
       {section === "Einstellungen" && (
+        <>
+        <SocialConnections userId={userId} />
         <section className="panel padded">
           <h2>Marketing-Verbindungen</h2>
           <p>
-            LinkedIn, Instagram, Facebook: nicht verbunden. Keine automatische
-            Veröffentlichung.
+            Social-Media-Verbindungen werden oben angezeigt. Keine automatische Veröffentlichung.
           </p>
           <p>
             Mailchimp: {mailchimpError || (mailchimp?.connected
@@ -1439,6 +1441,7 @@ export default function Hub({
             werden referenziert, nicht gehostet.
           </p>
         </section>
+        </>
       )}
     </div>
   );

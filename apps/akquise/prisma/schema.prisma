@@ -425,6 +425,28 @@ model DriveOAuthState {
   expiresAt DateTime
 }
 
+model SocialOAuthState {
+  id        String   @id
+  provider  String
+  userId    String
+  sessionId String
+  expiresAt DateTime
+}
+
+model SocialConnection {
+  id             String   @id @default(cuid())
+  provider       String
+  accountId      String
+  accountName    String
+  encryptedToken String
+  expiresAt      DateTime?
+  ownerId        String
+  updatedAt      DateTime @updatedAt
+
+  @@unique([provider, accountId])
+  @@index([ownerId, provider])
+}
+
 model LibraryItem {
   id               String             @id @default(cuid())
   organizationId   String             @default("studiojeker")
