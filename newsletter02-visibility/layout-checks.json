@@ -1,0 +1,23 @@
+[
+  {
+    "width": 700,
+    "overflow": false,
+    "images_loaded": true,
+    "geometry_diffs_outside_footer": 0,
+    "examples": []
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "images_loaded": true,
+    "geometry_diffs_outside_footer": 0,
+    "examples": []
+  },
+  {
+    "width": 320,
+    "overflow": false,
+    "images_loaded": true,
+    "geometry_diffs_outside_footer": 0,
+    "examples": []
+  }
+]
