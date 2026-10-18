@@ -18,45 +18,52 @@ import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
 const version = z.number().int().positive();
 export async function hubState() {
-  const [campaigns, contents, users, drafts, social] = await Promise.all([
-    db.campaign.findMany({
-      orderBy: { updatedAt: "desc" },
-      include: { _count: { select: { contents: true, drafts: true } } },
-    }),
-    db.marketingContent.findMany({
-      orderBy: { updatedAt: "desc" },
-      include: {
-        versions: { orderBy: { version: "desc" } },
-        approvals: {
-          orderBy: { createdAt: "desc" },
-          include: { user: { select: { name: true } } },
+  const [campaigns, contents, users, drafts, social, customers] =
+    await Promise.all([
+      db.campaign.findMany({
+        orderBy: { updatedAt: "desc" },
+        include: { _count: { select: { contents: true, drafts: true } } },
+      }),
+      db.marketingContent.findMany({
+        orderBy: { updatedAt: "desc" },
+        include: {
+          versions: { orderBy: { version: "desc" } },
+          approvals: {
+            orderBy: { createdAt: "desc" },
+            include: { user: { select: { name: true } } },
+          },
+          publications: true,
+          exports: { orderBy: { createdAt: "desc" } },
+          mailchimpTransfers: { orderBy: { createdAt: "desc" } },
         },
-        publications: true,
-        exports: { orderBy: { createdAt: "desc" } },
-        mailchimpTransfers: { orderBy: { createdAt: "desc" } },
-      },
-    }),
-    db.user.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-    }),
-    db.draft.findMany({
-      orderBy: { updatedAt: "desc" },
-      include: {
-        versions: { orderBy: { version: "desc" }, take: 1 },
-        approvals: { orderBy: { createdAt: "desc" } },
-        deliveries: true,
-      },
-    }),
-    db.socialConnection.findMany({
-      select: { provider: true, expiresAt: true },
-    }),
-  ]);
+      }),
+      db.user.findMany({
+        where: { active: true },
+        select: { id: true, name: true },
+      }),
+      db.draft.findMany({
+        orderBy: { updatedAt: "desc" },
+        include: {
+          versions: { orderBy: { version: "desc" }, take: 1 },
+          approvals: { orderBy: { createdAt: "desc" } },
+          deliveries: true,
+        },
+      }),
+      db.socialConnection.findMany({
+        select: { provider: true, expiresAt: true },
+      }),
+      db.customer.findMany({
+        where: { organizationId: "studiojeker" },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, status: true },
+      }),
+    ]);
   return {
     campaigns,
     contents,
     users,
     drafts,
+    customers,
     integrations: {
       linkedin: social.some(
         (c) =>

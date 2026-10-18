@@ -224,6 +224,8 @@ enum EditorialStatus {
 }
 
 model Campaign {
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
   organizationId String             @default("studiojeker")
   organization   StudioOrganization @relation(fields: [organizationId], references: [id])
   id             String             @id @default(cuid())
@@ -239,6 +241,8 @@ model Campaign {
   updatedAt      DateTime           @updatedAt
   contents       MarketingContent[]
   drafts         Draft[]
+
+  @@index([customerId])
 }
 
 model MarketingContent {
@@ -350,9 +354,32 @@ model StudioOrganization {
   drafts        Draft[]
   campaigns     Campaign[]
   contents      MarketingContent[]
+  customers     Customer[]
+}
+
+// Internal customer record. Customers are never User accounts and cannot sign in.
+model Customer {
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  name           String
+  website        String             @default("")
+  contactName    String             @default("")
+  contactEmail   String             @default("")
+  notes          String             @default("")
+  status         String             @default("ACTIVE")
+  revision       Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  campaigns      Campaign[]
+  series         StudioSeries[]
+
+  @@index([organizationId, name])
 }
 
 model StudioSeries {
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
   id             String             @id @default(cuid())
   organizationId String             @default("studiojeker")
   organization   StudioOrganization @relation(fields: [organizationId], references: [id])
@@ -362,6 +389,8 @@ model StudioSeries {
   createdAt      DateTime           @default(now())
   contents       MarketingContent[]
   jobs           StudioJob[]
+
+  @@index([customerId])
 }
 
 model StudioAsset {

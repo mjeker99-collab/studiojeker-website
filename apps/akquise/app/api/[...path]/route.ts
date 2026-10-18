@@ -30,6 +30,7 @@ import {
   audit,
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
+import { customerState, saveCustomer } from "@/lib/customers";
 import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
 import {
@@ -259,6 +260,10 @@ async function handler(
     }
     if (route === "hub/state" && req.method === "GET")
       return NextResponse.json(await hubState());
+    if (route === "customers/state" && req.method === "GET")
+      return NextResponse.json(await customerState(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "hub/mailchimp/audiences" && req.method === "GET")
       return NextResponse.json(await mailchimpAudiences(user.id), {
         headers: { "Cache-Control": "no-store" },
@@ -343,6 +348,10 @@ async function handler(
     if (Number(req.headers.get("content-length")) > 64000)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req);
+    if (route === "customers")
+      return NextResponse.json(await saveCustomer(user.id, body));
+    if (path[0] === "customers" && path.length === 2)
+      return NextResponse.json(await saveCustomer(user.id, body, path[1]));
     if (route === "library/item")
       return NextResponse.json(await saveLibraryItem(user.id, body));
     if (route === "library/archive")

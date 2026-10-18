@@ -76,6 +76,7 @@ export const contentInput = z
 export type ContentInput = z.infer<typeof contentInput>;
 export const campaignInput = z
   .object({
+    customerId: z.string().min(1).nullable().default(null),
     title: text(200).min(1),
     goal: text(3000).min(1),
     audience: text(2000).min(1),

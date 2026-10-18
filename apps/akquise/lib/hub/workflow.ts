@@ -56,6 +56,29 @@ export async function saveCampaign(
       const current = await tx.campaign.findUniqueOrThrow({ where: { id } });
       if (current.revision !== revision)
         throw new PolicyError("Kampagne wurde geändert. Neu laden.", 409);
+      if (
+        data.customerId &&
+        data.customerId !== current.customerId &&
+        !(await tx.customer.findFirst({
+          where: {
+            id: data.customerId,
+            organizationId: "studiojeker",
+            status: "ACTIVE",
+          },
+        }))
+      )
+        throw new PolicyError("Kunde nicht zugänglich.", 403);
+    } else if (
+      data.customerId &&
+      !(await tx.customer.findFirst({
+        where: {
+          id: data.customerId,
+          organizationId: "studiojeker",
+          status: "ACTIVE",
+        },
+      }))
+    ) {
+      throw new PolicyError("Kunde nicht zugänglich.", 403);
     }
     const c = id
       ? await tx.campaign.update({
