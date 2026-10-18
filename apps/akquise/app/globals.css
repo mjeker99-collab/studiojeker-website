@@ -143,6 +143,7 @@ small {
   inset: 0 auto 0 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   padding: 33px 20px;
 }
 .wordmark {
@@ -1046,3 +1047,326 @@ pre {
     scroll-behavior: auto !important;
   }
 }
+/* Marketing Hub extends the existing compact black/white/cyan workspace. */
+.hub {
+  min-width: 0;
+}
+.hub-connection {
+  font-size: 12px;
+  color: #4b5d63;
+  padding: 12px 0;
+}
+.hub-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+.hub-card {
+  margin: 0;
+  min-width: 0;
+}
+.hub-card h2 {
+  overflow-wrap: anywhere;
+}
+.hub-excerpt {
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hub-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.hub-editor {
+  margin: 20px 0;
+  scroll-margin-top: 20px;
+}
+.hub-editor .section-head {
+  padding: 0 0 18px;
+  gap: 12px;
+}
+.hub-variant {
+  border: 1px solid #b9c8cc;
+  padding: 16px;
+  margin: 18px 0;
+}
+.hub legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+.hub-preview {
+  background: #f3f5f5;
+  border-left: 4px solid #00838c;
+  padding: 20px;
+  margin: 24px 0;
+  overflow-wrap: anywhere;
+}
+.hub-preview article + article {
+  border-top: 1px solid #b9c8cc;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+.hub-media {
+  padding: 18px;
+  border: 1px dashed #7e979d;
+  background: #fff;
+}
+.hub a {
+  color: #006873;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.hub-calendar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 16px 0;
+}
+.hub-calendar-toolbar label {
+  margin: 0;
+}
+.hub-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid #c8cfd1;
+  border-left: 1px solid #c8cfd1;
+  margin-bottom: 24px;
+}
+.hub-weekday {
+  background: #151719;
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+.hub-day {
+  min-height: 120px;
+  border-right: 1px solid #c8cfd1;
+  border-bottom: 1px solid #c8cfd1;
+  padding: 7px;
+  background: white;
+  min-width: 0;
+}
+.hub-day.outside {
+  background: #e9eded;
+}
+.hub-day time {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.hub-event {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 7px;
+  font-size: 11px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: #e0f5f1;
+  color: #164f49;
+  margin-bottom: 6px;
+}
+.hub-event span,
+.hub-event small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+}
+.hub-agenda {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.hub-subnav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.date-error {
+  color: #9e3333;
+  display: block;
+}
+@media (max-width: 1100px) {
+  .hub-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hub-cards,
+  .hub-agenda {
+    grid-template-columns: 1fr;
+  }
+  .hub-day {
+    padding: 4px;
+    min-height: 105px;
+  }
+  .hub-event {
+    padding: 5px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .hub-calendar {
+    grid-template-columns: 1fr;
+  }
+  .hub-weekday,
+  .hub-day.outside {
+    display: none;
+  }
+  .hub-day {
+    min-height: 60px;
+  }
+  .hub-day time {
+    font-weight: 700;
+  }
+  .hub-filters {
+    grid-template-columns: 1fr;
+  }
+  .hub-editor .section-head {
+    flex-wrap: wrap;
+  }
+}
+
+/* Content-Studio: same compact internal design; fixed readable desktop editor. */
+.studio-workspace { min-width:0; }
+.studio-connections { display:flex; flex-wrap:wrap; gap:12px 24px; padding:14px 0; color:var(--muted,#aabcc2); font-size:13px; }
+.studio-columns { display:grid; grid-template-columns:minmax(190px,240px) minmax(0,1fr); gap:24px; align-items:start; margin-top:20px; }
+.studio-series { position:sticky; top:16px; max-height:80vh; overflow:auto; }
+.studio-series section { padding:12px 0; border-bottom:1px solid #344247; }
+.studio-series button { display:flex; flex-direction:column; align-items:flex-start; text-align:left; width:100%; margin:6px 0; gap:6px; overflow-wrap:anywhere; }
+.studio-series .studio-active { border-color:#00c8ff; color:#00c8ff; }
+.studio-editor { min-width:0; }
+.studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:20px; border:1px solid #344247; margin-bottom:20px; }
+.studio-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.studio-workspace label { display:block; margin:10px 0; }
+.studio-workspace label.check { display:flex; gap:10px; align-items:flex-start; }
+.studio-workspace input[type=checkbox] { width:20px; height:20px; flex:0 0 20px; }
+.studio-workspace fieldset { border:1px solid #344247; padding:14px; margin:16px 0; min-width:0; }
+.studio-workspace fieldset>.check { display:inline-flex; margin-right:20px; }
+.studio-workspace summary { cursor:pointer; padding:8px 0; }
+.studio-workspace pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:400px; overflow:auto; }
+.studio-preview img { display:block; width:100%; max-width:480px; max-height:640px; object-fit:contain; margin:14px auto; background:#000; }
+.studio-preview article { padding:12px 0; border-top:1px solid #344247; }
+.studio-jobs article { padding:16px; border:1px solid #344247; margin-top:12px; }
+.studio-workspace dd { margin:4px 0 12px; white-space:pre-wrap; }
+.studio-workspace .actions { flex-wrap:wrap; }
+@media(max-width:900px) { .studio-columns { grid-template-columns:1fr; } .studio-series { position:static; max-height:260px; } }
+@media(max-width:600px) { .studio-fields { grid-template-columns:1fr; } .studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:12px; } }
+
+/* User-supplied StudioONE app logo: exact original JPEG, no recolouring/cropping. */
+.app-brand {
+  width: 100%;
+  max-width: 360px;
+  background: #000;
+  line-height: 0;
+  letter-spacing: normal;
+}
+.app-brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sidebar > .app-brand {
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .sidebar > .app-brand { max-width: 260px; }
+}
+
+/* Library shares the internal hub controls and private asset routes. */
+.library-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:18px 0; }
+.library-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.library-card { background:#fff; color:#11191d; border:1px solid #cbd3d7; display:flex; flex-direction:column; gap:10px; text-align:left; padding:12px; min-width:0; overflow-wrap:anywhere; }
+.library-card img { width:100%; height:140px; object-fit:contain; background:#141c20; }
+.library-card span { font-size:13px; }
+.library-type { display:grid; place-items:center; height:110px; }
+.library-preview img { max-width:100%; width:360px; max-height:260px; object-fit:contain; background:white; }
+.library-picker { position:fixed; inset:0; z-index:100; background:#000b; padding:24px; overflow:auto; }
+.library-picker-inner { background:#10191d; color:white; max-width:1100px; margin:auto; padding:24px; border:1px solid #50616a; }
+.library label { display:block; margin:10px 0; }
+.library textarea { width:100%; }
+.library .panel { margin-bottom:22px; padding:20px; }
+.library h2 { font-size:20px; font-weight:600; margin-bottom:12px; }
+.library-card:hover { background:#e6f8fb; border-color:#00bcd0; }
+.library-picker-inner input,.library-picker-inner select { background:white; color:#11191d; }
+@media(max-width:600px){.library-grid{grid-template-columns:1fr 1fr;gap:8px}.library-picker{padding:8px}.library-picker-inner{padding:14px}.library-filters{grid-template-columns:1fr 1fr}}
+/* Newsletter editor reuses the Hub controls and approved email HTML. */
+.newsletter-fields details { border-top: 1px solid var(--border, #d9dfe3); padding: 16px 0; }
+.newsletter-fields summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.newsletter-fields label { margin-top: 14px; }
+.newsletter-frame-viewport { width: 100%; min-width: 0; background: #e9edf0; padding: 12px; box-sizing: border-box; }
+.newsletter-frame-viewport iframe { display: block; margin: 0 auto; border: 0; background: white; }
+.newsletter-preview { min-width: 0; }
+.newsletter-preview button[aria-pressed="true"] { border-color: #007a99; background: #e6f8fd; color: #14212a; }
+.newsletter-fields summary:focus-visible { outline: 2px solid #007a99; outline-offset: 3px; }
+
+/* Content conversations reuse the StudioONE form and colour system. */
+.studio-chat {
+  min-width: 0;
+  border: 1px solid #d9dfe2;
+  padding: clamp(16px, 3vw, 32px);
+  background: white;
+  margin-bottom: 24px;
+}
+.studio-chat-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+}
+.studio-chat-controls label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.studio-chat select,
+.studio-chat textarea {
+  width: 100%;
+  max-width: 100%;
+}
+.studio-chat-transcript {
+  max-height: 480px;
+  overflow: auto;
+  margin: 20px 0;
+}
+.studio-chat-transcript article {
+  border-bottom: 1px solid #d9dfe2;
+  padding: 12px 0;
+}
+.studio-chat-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.studio-chat-handoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.studio-chat-handoff a:focus-visible,
+.studio-chat-handoff button:focus-visible {
+  outline: 2px solid #007a99;
+  outline-offset: 3px;
+}
+.studio-chat form {
+  display: grid;
+  gap: 12px;
+}
+
+/* Drive references reuse the StudioONE controls and remain usable on touch screens. */
+.drive-picker { min-width: 0; }
+.drive-picker-row { display: flex; margin-block: 10px; overflow-wrap: anywhere; }
+.drive-picker-row button { text-align: left; white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.studio-workspace .drive-picker label.check { display: flex; margin-right: 0; min-height: 44px; align-items: center; }
+.drive-picker p { overflow-wrap: anywhere; }
+.drive-selected { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; }
+.drive-selected > div { min-width: 0; }
+.drive-selected img { width: 100%; max-width: 240px; height: 160px; object-fit: contain; }

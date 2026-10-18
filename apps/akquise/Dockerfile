@@ -9,11 +9,15 @@ FROM dependencies AS build
 COPY next.config.ts tsconfig.json next-env.d.ts postcss.config.mjs ./
 COPY app ./app
 COPY lib ./lib
+COPY templates ./templates
+COPY brand ./brand
 COPY prisma ./prisma
 RUN npx --no-install prisma generate && npm run build
 FROM dependencies AS operations
 COPY prisma ./prisma
 COPY lib ./lib
+COPY templates ./templates
+COPY brand ./brand
 COPY scripts/create-user.ts scripts/reset-password.ts scripts/data-inventory.ts ./scripts/
 RUN npx --no-install prisma generate
 ENV NODE_ENV=production

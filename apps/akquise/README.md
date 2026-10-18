@@ -107,3 +107,5 @@ Die konkret vorbereiteten Produktionswege (Docker Compose oder Standalone/system
 - Historische V1-Ergebnisse vom 15. Oktober sind weiterhin separat dokumentiert und keine Behauptung über neue Produktionsprüfungen.
 
 [Architektur](docs/ARCHITECTURE.md) · [Auslagerung ohne Datenverlust](docs/EXTRACTION.md) · [Produktionsbetrieb](docs/PRODUCTION.md)
+
+Bibliothek, Markenprofil, privater Speicher und erster Bilderimport: [Betriebsanleitung](docs/LIBRARY.md).

@@ -1,0 +1,1577 @@
+[
+  {
+    "id": "master-v7",
+    "name": "Master-Template · Relaunch",
+    "source": "mailchimp/reference/studiojeker-newsletter-v7.html",
+    "sha256": "c67f8a3498a2ec0917596d74a50eb8f699d53a9b90ea17c0ae483a6b07baeaf4",
+    "html": "<!DOCTYPE html>\n<html lang=\"de\" xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\"><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><meta name=\"x-apple-disable-message-reformatting\" /><meta name=\"format-detection\" content=\"telephone=no,address=no,email=no,date=no,url=no\" /><title>Studiojeker Newsletter</title>\n<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif!important;}</style><![endif]-->\n<style type=\"text/css\">\nbody,table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif;}\nbody {margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#ffffff;}\ntable,td {border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}\nimg {border:0;outline:none;display:block;-ms-interpolation-mode:bicubic;}\na:focus-visible {outline:2px solid #000000;outline-offset:3px;}\n@media only screen and (max-width:480px) {\n.sj-hero-desktop {display:none!important;} .sj-hero-mobile {display:block!important;}\n .sj-container {width:100%!important;max-width:100%!important;}\n .sj-section {padding-left:24px!important;padding-right:24px!important;}\n .sj-bleed {padding-left:24px!important;padding-right:24px!important;}\n .sj-stack {display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;}\n .sj-hero-heading {font-size:28px!important;line-height:30.24px!important;}\n .sj-heading {font-size:22px!important;line-height:25.3px!important;}\n .sj-bar {width:10px!important;}\n .sj-hero-text,.sj-contact-text {padding:22px!important;}\n .sj-ai-inner {padding:0 0 22px 0!important;}\n .sj-ai-photo {padding:0 0 16px 0!important;}\n .sj-ai-continuation {padding-top:12px!important;}\n .sj-pair {display:block!important;width:100%!important;max-width:100%!important;padding-bottom:16px!important;}\n .sj-pair:last-child {padding-bottom:0!important;}\n .sj-cards-section {padding-left:16px!important;padding-right:16px!important;}\n .sj-footer-layout,.sj-footer-layout>tbody,.sj-footer-layout>tbody>tr,.sj-footer-details {display:block!important;width:100%!important;box-sizing:border-box!important;}\n .sj-footer-links {padding-top:20px!important;text-align:left!important;}\n .sj-social-table {float:none!important;margin-left:0!important;margin-right:auto!important;}\n}\n</style></head><body id=\"body\" style=\"margin:0;padding:0;background-color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\">\n<div mc:edit=\"preheader\" style=\"display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;\">We Create Visibility. Neuigkeiten von Studiojeker — Content, Marketing und KI.</div>\n<center role=\"article\" aria-roledescription=\"email\" lang=\"de\" style=\"width:100%;background-color:#ffffff;\">\n<!--[if mso]><table role=\"presentation\" width=\"700\" align=\"center\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><![endif]-->\n<table role=\"presentation\" class=\"sj-container\" align=\"center\" width=\"700\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;max-width:700px;background-color:#ffffff;\"><tr><td class=\"sj-section\" style=\"padding:20px 24px 24px 24px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><div mc:edit=\"meta_left\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">STUDIOJEKER NEWSLETTER</div></td><td align=\"right\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"*|ARCHIVE|*\" target=\"_blank\" style=\"color:#6b6f74;text-decoration:underline;\">Im Browser anzeigen</a></td></tr><tr><td colspan=\"2\" style=\"padding:4px 0 0 0;\"><a href=\"https://www.studiojeker.ch/\" target=\"_blank\"><img mc:edit=\"header_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"160\" height=\"74\" alt=\"Studiojeker\" style=\"display:block;width:160px;height:74px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td style=\"padding:0;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-hero-text\" width=\"44%\" valign=\"middle\" style=\"width:44%;padding:22px 24px;vertical-align:middle;\"><div mc:edit=\"hero_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">STUDIOJEKER 2026</div><h1 class=\"sj-hero-heading\" mc:edit=\"hero_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:34.56px;font-weight:700;margin:0;color:#000000;\">1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.</h1></td><td class=\"sj-stack sj-hero-photo\" width=\"56%\" valign=\"middle\" style=\"width:56%;padding:0;vertical-align:middle;\"><a href=\"https://vimeo.com/1216347773\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Studiojeker Showreel auf Vimeo ansehen\" style=\"display:block;width:100%;border:0;text-decoration:none;font-size:0;line-height:0;\"><img class=\"sj-hero-desktop\" mc:edit=\"hero_image_desktop\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-desktop-play.jpg\" width=\"386\" height=\"290\" alt=\"Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--[if !mso]><!--><img class=\"sj-hero-mobile\" mc:edit=\"hero_image_mobile\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg\" width=\"386\" height=\"290\" alt=\"Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme\" style=\"display:none;mso-hide:all;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--<![endif]--></a></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 24px 0 24px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"intro_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Studiojeker entwickelt sich weiter.</h2><div mc:edit=\"intro_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Heute denken wir jedoch konsequent einen Schritt weiter. Denn guter Content allein reicht nicht. Er muss gesehen werden.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Deshalb verstehen wir uns als Visibility Partner unserer Kunden – von der ersten Idee über die Content-Produktion bis zur Distribution und laufenden Betreuung.</p></div><p mc:edit=\"intro_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;font-weight:700;margin:14px 0 0 0;\">WE CREATE VISIBILITY.</p><div mc:edit=\"intro_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Das neue Studiojeker entdecken</a></div></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-ai-inner\" style=\"padding:22px 24px;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-ai-photo\" width=\"48%\" valign=\"top\" style=\"width:48%;vertical-align:top;padding:0 22px 0 0;\"><img mc:edit=\"ai_image\" src=\"https://cdn.sanity.io/images/tgx6e6jg/production/64a906ed2ca0239a6f72f34846a8c16d3178fc6a-1344x752.png\" width=\"300\" height=\"168\" alt=\"Content Creation × AI – Motorradfahrer\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td><td class=\"sj-stack sj-ai-text\" width=\"52%\" valign=\"top\" style=\"width:52%;vertical-align:top;padding:0;\"><div mc:edit=\"ai_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">CONTENT CREATION × AI</div><h2 class=\"sj-heading\" mc:edit=\"ai_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Neue Möglichkeiten. Gleicher Anspruch an Qualität.</h2><div class=\"sj-copy\" mc:edit=\"ai_body_start\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir haben deshalb KI konsequent in unsere Produktionsprozesse integriert.</p></div></td></tr></table><div class=\"sj-ai-continuation sj-copy\" mc:edit=\"ai_body_continuation\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;padding-top:14px;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Wir nutzen sie für Konzeption und Storyboarding, Bild- und Videoproduktion, Bildbearbeitung, 3D-Visualisierung und Animation – gezielt dort, wo sie kreative Möglichkeiten erweitert, Prozesse beschleunigt oder Produktionen effizienter macht.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Dabei ersetzt KI für uns weder Kreativität noch Erfahrung. Sie erweitert unseren Werkzeugkasten.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Entscheidend ist nicht, wie ein Bild oder ein Film entsteht. Entscheidend ist das Resultat.</p></div><div mc:edit=\"ai_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/ki/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Studiojeker × KI entdecken</a></div></td><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 24px 0 24px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"services_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Content. Distribution. Visibility.</h2><div class=\"sj-copy\" mc:edit=\"services_body\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Mit unserem neuen Auftritt rücken wir auch Digital &amp; Social Media Marketing stärker ins Zentrum.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Denn wir möchten nicht nur Content für unsere Kunden produzieren. Wir möchten dafür sorgen, dass er die richtigen Menschen erreicht.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Dafür verbinden wir unsere vier Kompetenzbereiche:</p></div></td></tr><tr><td class=\"sj-cards-section\" style=\"padding:16px 16px 0 16px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" class=\"sj-grid\"><tr><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\"><img mc:edit=\"service_digital_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg\" width=\"151\" height=\"113\" alt=\"Digital &amp; Social Media Marketing\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_digital_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Digital &amp; Social Media Marketing</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\"><img mc:edit=\"service_business_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/business.jpg\" width=\"151\" height=\"113\" alt=\"Business Communication\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_business_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Business Communication</a></td></tr></table></td></tr></table></td><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\"><img mc:edit=\"service_product_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/product.jpg\" width=\"151\" height=\"113\" alt=\"Product Communication\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_product_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Product Communication</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\"><img mc:edit=\"service_architecture_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg\" width=\"151\" height=\"113\" alt=\"Architecture &amp; Real Estate\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_architecture_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Architecture &amp; Real Estate</a></td></tr></table></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-contact-text\" width=\"45%\" valign=\"middle\" style=\"width:45%;padding:22px 24px;vertical-align:middle;\"><div mc:edit=\"contact_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Von der einzelnen Produktion bis zur kontinuierlichen Content-Betreuung im Abo.</p></div><div style=\"padding-top:14px;\"><h2 class=\"sj-heading\" mc:edit=\"contact_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Willkommen beim neuen Studiojeker.</h2></div><div mc:edit=\"contact_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Neue Website entdecken</a></div></td><td class=\"sj-stack sj-contact-photo\" width=\"55%\" valign=\"middle\" style=\"width:55%;padding:0;vertical-align:middle;\"><img mc:edit=\"contact_image\" src=\"https://cdn.sanity.io/images/tgx6e6jg/production/deda31179cf7b34940743be1023a719709128520-1667x979.jpg\" width=\"380\" height=\"223\" alt=\"Studiojeker Filmproduktion – Rennfahrer\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section sj-footer\" style=\"padding:24px 24px 28px 24px;border-top:1px solid #c8ccd0;background-color:#ffffff;\"><table class=\"sj-footer-layout\" role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-footer-brand\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><a href=\"https://www.studiojeker.ch/\"><img mc:edit=\"footer_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"140\" height=\"65\" alt=\"Studiojeker\" style=\"display:block;width:140px;height:auto;border:0;\" /></a><div mc:edit=\"footer_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;margin-top:12px;color:#000000;\">WE CREATE VISIBILITY.</div></td><td class=\"sj-stack sj-footer-links\" rowspan=\"3\" width=\"50%\" valign=\"bottom\" align=\"right\" style=\"width:50%;vertical-align:bottom;text-align:right;padding-top:0;\"><div mc:edit=\"footer_nav\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"https://www.studiojeker.ch/\" style=\"color:#6b6f74;text-decoration:underline;\">Website</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/contact/\" style=\"color:#6b6f74;text-decoration:underline;\">Kontakt</a></div><div mc:edit=\"footer_legal\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:10px;\"><a href=\"https://www.studiojeker.ch/impressum/\" style=\"color:#6b6f74;text-decoration:underline;\">Impressum</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/datenschutz/\" style=\"color:#6b6f74;text-decoration:underline;\">Datenschutz</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/agb/\" style=\"color:#6b6f74;text-decoration:underline;\">AGB</a></div><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" align=\"right\" class=\"sj-social-table\" style=\"margin-top:12px;\"><tr><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.linkedin.com/company/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png\" width=\"24\" height=\"24\" alt=\"LinkedIn\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.instagram.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png\" width=\"24\" height=\"24\" alt=\"Instagram\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.facebook.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png\" width=\"24\" height=\"24\" alt=\"Facebook\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:20px;\"><div mc:edit=\"footer_company\">Studiojeker GmbH | Hauptstrasse 73 | CH-4528 Zuchwil</div><div style=\"margin-top:6px;\">*|HTML:LIST_ADDRESS_HTML|*</div></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:12px;\"><a href=\"*|UPDATE_PROFILE|*\" style=\"color:#6b6f74;text-decoration:underline;\">E-Mail-Einstellungen anpassen</a> &nbsp; | &nbsp; <a href=\"*|UNSUB|*\" style=\"color:#6b6f74;text-decoration:underline;\">Abmelden</a></td></tr></table></td></tr></table>\n<!--[if mso]></td></tr></table><![endif]-->\n</center></body></html>",
+    "slots": [
+      {
+        "key": "subject",
+        "region": "title",
+        "kind": "text",
+        "start": 368,
+        "end": 390,
+        "value": "Studiojeker Newsletter",
+        "special": "subject"
+      },
+      {
+        "key": "preheader",
+        "region": "preheader",
+        "kind": "text",
+        "start": 2845,
+        "end": 2923,
+        "value": "We Create Visibility. Neuigkeiten von Studiojeker — Content, Marketing und KI.",
+        "special": "preheader"
+      },
+      {
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "start": 3888,
+        "end": 3910,
+        "value": "STUDIOJEKER NEWSLETTER",
+        "special": null
+      },
+      {
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "start": 5623,
+        "end": 5708,
+        "value": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "start": 5841,
+        "end": 5869,
+        "value": "https://vimeo.com/1216347773",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 5925,
+        "end": 5963,
+        "value": "Studiojeker Showreel auf Vimeo ansehen",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6118,
+        "end": 6246,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-desktop-play.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6278,
+        "end": 6337,
+        "value": "Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6520,
+        "end": 6647,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6679,
+        "end": 6738,
+        "value": "Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme",
+        "special": null
+      },
+      {
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7183,
+        "end": 7218,
+        "value": "Studiojeker entwickelt sich weiter.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7512,
+        "end": 7692,
+        "value": "Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7830,
+        "end": 7908,
+        "value": "Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8046,
+        "end": 8166,
+        "value": "Heute denken wir jedoch konsequent einen Schritt weiter. Denn guter Content allein reicht nicht. Er muss gesehen werden.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8303,
+        "end": 8462,
+        "value": "Deshalb verstehen wir uns als Visibility Partner unserer Kunden – von der ersten Idee über die Content-Produktion bis zur Distribution und laufenden Betreuung.",
+        "special": null
+      },
+      {
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "start": 8848,
+        "end": 8875,
+        "value": "https://www.studiojeker.ch/",
+        "special": null
+      },
+      {
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 9060,
+        "end": 9092,
+        "value": "→ Das neue Studiojeker entdecken",
+        "special": null
+      },
+      {
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "start": 9735,
+        "end": 9837,
+        "value": "https://cdn.sanity.io/images/tgx6e6jg/production/64a906ed2ca0239a6f72f34846a8c16d3178fc6a-1344x752.png",
+        "special": null
+      },
+      {
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "start": 9869,
+        "end": 9907,
+        "value": "Content Creation × AI – Motorradfahrer",
+        "special": null
+      },
+      {
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10296,
+        "end": 10317,
+        "value": "CONTENT CREATION × AI",
+        "special": null
+      },
+      {
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10498,
+        "end": 10548,
+        "value": "Neue Möglichkeiten. Gleicher Anspruch an Qualität.",
+        "special": null
+      },
+      {
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10844,
+        "end": 11004,
+        "value": "Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir haben deshalb KI konsequent in unsere Produktionsprozesse integriert.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11367,
+        "end": 11607,
+        "value": "Wir nutzen sie für Konzeption und Storyboarding, Bild- und Videoproduktion, Bildbearbeitung, 3D-Visualisierung und Animation – gezielt dort, wo sie kreative Möglichkeiten erweitert, Prozesse beschleunigt oder Produktionen effizienter macht.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11745,
+        "end": 11841,
+        "value": "Dabei ersetzt KI für uns weder Kreativität noch Erfahrung. Sie erweitert unseren Werkzeugkasten.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11978,
+        "end": 12069,
+        "value": "Entscheidend ist nicht, wie ein Bild oder ein Film entsteht. Entscheidend ist das Resultat.",
+        "special": null
+      },
+      {
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "start": 12255,
+        "end": 12285,
+        "value": "https://www.studiojeker.ch/ki/",
+        "special": null
+      },
+      {
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 12470,
+        "end": 12498,
+        "value": "→ Studiojeker × KI entdecken",
+        "special": null
+      },
+      {
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 12963,
+        "end": 12997,
+        "value": "Content. Distribution. Visibility.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13294,
+        "end": 13394,
+        "value": "Mit unserem neuen Auftritt rücken wir auch Digital & Social Media Marketing stärker ins Zentrum.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13532,
+        "end": 13664,
+        "value": "Denn wir möchten nicht nur Content für unsere Kunden produzieren. Wir möchten dafür sorgen, dass er die richtigen Menschen erreicht.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13801,
+        "end": 13851,
+        "value": "Dafür verbinden wir unsere vier Kompetenzbereiche:",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 14696,
+        "end": 14750,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "start": 14810,
+        "end": 14943,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "start": 14975,
+        "end": 15011,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 15333,
+        "end": 15387,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "start": 15449,
+        "end": 15485,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 15797,
+        "end": 15856,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "start": 15917,
+        "end": 16024,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/business.jpg",
+        "special": null
+      },
+      {
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "start": 16056,
+        "end": 16078,
+        "value": "Business Communication",
+        "special": null
+      },
+      {
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 16401,
+        "end": 16460,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "start": 16522,
+        "end": 16544,
+        "value": "Business Communication",
+        "special": null
+      },
+      {
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 17132,
+        "end": 17190,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "start": 17250,
+        "end": 17356,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/product.jpg",
+        "special": null
+      },
+      {
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "start": 17388,
+        "end": 17409,
+        "value": "Product Communication",
+        "special": null
+      },
+      {
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 17731,
+        "end": 17789,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "start": 17851,
+        "end": 17872,
+        "value": "Product Communication",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 18184,
+        "end": 18233,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "start": 18298,
+        "end": 18409,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "start": 18441,
+        "end": 18471,
+        "value": "Architecture & Real Estate",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 18798,
+        "end": 18847,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "start": 18909,
+        "end": 18939,
+        "value": "Architecture & Real Estate",
+        "special": null
+      },
+      {
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20013,
+        "end": 20092,
+        "value": "Von der einzelnen Produktion bis zur kontinuierlichen Content-Betreuung im Abo.",
+        "special": null
+      },
+      {
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20313,
+        "end": 20347,
+        "value": "Willkommen beim neuen Studiojeker.",
+        "special": null
+      },
+      {
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "start": 20539,
+        "end": 20566,
+        "value": "https://www.studiojeker.ch/",
+        "special": null
+      },
+      {
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20751,
+        "end": 20775,
+        "value": "→ Neue Website entdecken",
+        "special": null
+      },
+      {
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "start": 20941,
+        "end": 21043,
+        "value": "https://cdn.sanity.io/images/tgx6e6jg/production/deda31179cf7b34940743be1023a719709128520-1667x979.jpg",
+        "special": null
+      },
+      {
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "start": 21075,
+        "end": 21114,
+        "value": "Studiojeker Filmproduktion – Rennfahrer",
+        "special": null
+      }
+    ],
+    "subject": "Studiojeker Newsletter",
+    "preheader": "We Create Visibility. Neuigkeiten von Studiojeker — Content, Marketing und KI.",
+    "note": ""
+  },
+  {
+    "id": "newsletter-02",
+    "name": "Newsletter 02 · Visibility",
+    "source": "mailchimp/studiojeker-newsletter-02-visibility.html",
+    "sha256": "34fe588de6ab45c728260c59bb41817679a8e199c063846676fa6507e342d6f1",
+    "html": "<!DOCTYPE html>\n<html lang=\"de\" xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\"><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><meta name=\"x-apple-disable-message-reformatting\" /><meta name=\"format-detection\" content=\"telephone=no,address=no,email=no,date=no,url=no\" /><title>Studiojeker Newsletter 02 – Visibility</title>\n<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif!important;}</style><![endif]-->\n<style type=\"text/css\">\nbody,table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif;}\nbody {margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#ffffff;}\ntable,td {border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}\nimg {border:0;outline:none;display:block;-ms-interpolation-mode:bicubic;}\na:focus-visible {outline:2px solid #000000;outline-offset:3px;}\n@media only screen and (max-width:480px) {\n.sj-hero-desktop {display:none!important;} .sj-hero-mobile {display:block!important;}\n .sj-container {width:100%!important;max-width:100%!important;}\n .sj-section {padding-left:24px!important;padding-right:24px!important;}\n .sj-bleed {padding-left:24px!important;padding-right:24px!important;}\n .sj-stack {display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;}\n .sj-hero-heading {font-size:28px!important;line-height:30.24px!important;}\n .sj-heading {font-size:22px!important;line-height:25.3px!important;}\n .sj-bar {width:10px!important;}\n .sj-hero-text,.sj-contact-text {padding:22px!important;}\n .sj-ai-inner {padding:0 0 22px 0!important;}\n .sj-ai-photo {padding:0 0 16px 0!important;}\n .sj-ai-continuation {padding-top:12px!important;}\n .sj-pair {display:block!important;width:100%!important;max-width:100%!important;padding-bottom:16px!important;}\n .sj-pair:last-child {padding-bottom:0!important;}\n .sj-cards-section {padding-left:16px!important;padding-right:16px!important;}\n .sj-footer-layout,.sj-footer-layout>tbody,.sj-footer-layout>tbody>tr,.sj-footer-details {display:block!important;width:100%!important;box-sizing:border-box!important;}\n .sj-footer-links {padding-top:20px!important;text-align:left!important;}\n .sj-social-table {float:none!important;margin-left:0!important;margin-right:auto!important;}\n}\n</style></head><body id=\"body\" style=\"margin:0;padding:0;background-color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\">\n<div mc:edit=\"preheader\" style=\"display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;\">Warum gute Bilder allein nicht genügen – und was Studiojeker heute anders macht.</div>\n<center role=\"article\" aria-roledescription=\"email\" lang=\"de\" style=\"width:100%;background-color:#ffffff;\">\n<!--[if mso]><table role=\"presentation\" width=\"700\" align=\"center\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><![endif]-->\n<table role=\"presentation\" class=\"sj-container\" align=\"center\" width=\"700\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;max-width:700px;background-color:#ffffff;\"><tr><td class=\"sj-section\" style=\"padding:20px 24px 24px 24px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><div mc:edit=\"meta_left\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">STUDIOJEKER NEWSLETTER NR. 2</div></td><td align=\"right\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"*|ARCHIVE|*\" target=\"_blank\" style=\"color:#6b6f74;text-decoration:underline;\">Im Browser anzeigen</a></td></tr><tr><td colspan=\"2\" style=\"padding:4px 0 0 0;\"><a href=\"https://www.studiojeker.ch/\" target=\"_blank\"><img mc:edit=\"header_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"160\" height=\"74\" alt=\"Studiojeker\" style=\"display:block;width:160px;height:74px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td style=\"padding:0;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-hero-text\" width=\"44%\" valign=\"middle\" style=\"width:44%;padding:22px 24px;vertical-align:middle;\"><div mc:edit=\"hero_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">WE CREATE VISIBILITY.</div><h1 class=\"sj-hero-heading\" mc:edit=\"hero_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:34.56px;font-weight:700;margin:0;color:#000000;\">Gute Inhalte verdienen Sichtbarkeit.</h1></td><td class=\"sj-stack sj-hero-photo\" width=\"56%\" valign=\"middle\" style=\"width:56%;padding:0;vertical-align:middle;\"><a href=\"https://www.studiojeker.ch/#home-showreel-title\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Studiojeker Showreel auf der Startseite ansehen\" style=\"display:block;width:100%;border:0;text-decoration:none;font-size:0;line-height:0;\"><img class=\"sj-hero-desktop\" mc:edit=\"hero_image_desktop\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-desktop-play.jpg\" width=\"386\" height=\"290\" alt=\"Studiojeker Showreel – Rennfahrer mit Helm\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--[if !mso]><!--><img class=\"sj-hero-mobile\" mc:edit=\"hero_image_mobile\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-mobile-play.jpg\" width=\"386\" height=\"290\" alt=\"Studiojeker Showreel – Rennfahrer mit Helm\" style=\"display:none;mso-hide:all;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--<![endif]--></a></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 24px 0 24px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"intro_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Von der Idee bis zur Sichtbarkeit</h2><div mc:edit=\"intro_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Ein starkes Foto. Ein überzeugender Film. Eine kreative Visualisierung.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">All das kann begeistern. Entscheidend ist aber, dass die richtigen Menschen diese Inhalte auch sehen.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Genau hier setzt die neue Ausrichtung von Studiojeker an.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Wir verbinden Marketingstrategie, Content-Produktion und digitale Distribution. Damit aus Bildern, Filmen und Geschichten eine Kommunikation entsteht, die Unternehmen langfristig sichtbar macht.</p></div><p mc:edit=\"intro_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;font-weight:700;margin:14px 0 0 0;\">WE CREATE VISIBILITY.</p><div mc:edit=\"intro_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Studiojeker entdecken</a></div></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-ai-inner\" style=\"padding:22px 24px;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-ai-photo\" width=\"48%\" valign=\"top\" style=\"width:48%;vertical-align:top;padding:0 22px 0 0;\"><img mc:edit=\"ai_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3fbe99d5f3aa7a6bb4b37b09f942df9fb7ef0d6f/mailchimp/assets/nora-jeker-visibility.jpg\" width=\"300\" height=\"168\" alt=\"Nora Jeker, Geschäftsführerin von Studiojeker\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td><td class=\"sj-stack sj-ai-text\" width=\"52%\" valign=\"top\" style=\"width:52%;vertical-align:top;padding:0;\"><div mc:edit=\"ai_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">STUDIOJEKER</div><h2 class=\"sj-heading\" mc:edit=\"ai_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Ein neuer Abschnitt für Studiojeker</h2><div class=\"sj-copy\" mc:edit=\"ai_body_start\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Mit Nora Jeker als Geschäftsführerin und Spezialistin für Digital Marketing stärken wir die strategische Beratung und die kontinuierliche Begleitung unserer Kunden.</p></div></td></tr></table><div class=\"sj-ai-continuation sj-copy\" mc:edit=\"ai_body_continuation\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;padding-top:14px;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Martin Jeker bringt seine langjährige Erfahrung in der visuellen Produktion, Projektleitung und im Einsatz neuer KI-Technologien ein.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Gemeinsam verbinden wir kreative Erfahrung mit digitalem Know-how.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Nora Jeker und das Studiojeker-Team</p></div><div mc:edit=\"ai_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/contact\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Persönliches Gespräch vereinbaren</a></div></td><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 24px 0 24px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"services_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Strategie. Content. Distribution.</h2><div class=\"sj-copy\" mc:edit=\"services_body\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Ob Social Media, Unternehmenskommunikation, Produktinszenierung oder Architektur:</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Wir denken die Wirkung unserer Inhalte von Anfang an mit.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Unsere vier Kompetenzbereiche:</p></div></td></tr><tr><td class=\"sj-cards-section\" style=\"padding:16px 16px 0 16px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" class=\"sj-grid\"><tr><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\"><img mc:edit=\"service_digital_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg\" width=\"151\" height=\"113\" alt=\"Digital &amp; Social Media Marketing\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_digital_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Digital &amp; Social Media Marketing</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\"><img mc:edit=\"service_business_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-business.jpg\" width=\"151\" height=\"113\" alt=\"Studiojeker Business Communication – Familie vor einem Helikopter\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_business_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Business Communication</a></td></tr></table></td></tr></table></td><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\"><img mc:edit=\"service_product_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg\" width=\"151\" height=\"113\" alt=\"Studiojeker Produktfotografie – Metallbauteile\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_product_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Product Communication</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\"><img mc:edit=\"service_architecture_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-architecture.jpg\" width=\"151\" height=\"113\" alt=\"Studiojeker Architekturvisualisierung – Wohnraum\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_architecture_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Architecture &amp; Real Estate</a></td></tr></table></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-contact-text\" width=\"45%\" valign=\"middle\" style=\"width:45%;padding:22px 24px;vertical-align:middle;\"><div mc:edit=\"contact_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Gerne zeigen wir Ihnen, wie sich Ihre Kommunikation gezielt weiterentwickeln lässt.</p></div><div style=\"padding-top:14px;\"><h2 class=\"sj-heading\" mc:edit=\"contact_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Was bedeutet Sichtbarkeit für Ihr Unternehmen?</h2></div><div mc:edit=\"contact_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/contact\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Persönliches Gespräch vereinbaren</a></div></td><td class=\"sj-stack sj-contact-photo\" width=\"55%\" valign=\"middle\" style=\"width:55%;padding:0;vertical-align:middle;\"><img mc:edit=\"contact_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/contact-business-portrait.jpg\" width=\"380\" height=\"223\" alt=\"Studiojeker Businessportrait – Mann im Anzug\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section sj-footer\" style=\"padding:24px 24px 28px 24px;border-top:1px solid #c8ccd0;background-color:#ffffff;\"><table class=\"sj-footer-layout\" role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-footer-brand\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><a href=\"https://www.studiojeker.ch/\"><img mc:edit=\"footer_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"140\" height=\"65\" alt=\"Studiojeker\" style=\"display:block;width:140px;height:auto;border:0;\" /></a><div mc:edit=\"footer_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;margin-top:12px;color:#000000;\">WE CREATE VISIBILITY.</div></td><td class=\"sj-stack sj-footer-links\" rowspan=\"3\" width=\"50%\" valign=\"bottom\" align=\"right\" style=\"width:50%;vertical-align:bottom;text-align:right;padding-top:0;\"><div mc:edit=\"footer_nav\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"https://www.studiojeker.ch/\" style=\"color:#6b6f74;text-decoration:underline;\">Website</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/contact/\" style=\"color:#6b6f74;text-decoration:underline;\">Kontakt</a></div><div mc:edit=\"footer_legal\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:10px;\"><a href=\"https://www.studiojeker.ch/impressum/\" style=\"color:#6b6f74;text-decoration:underline;\">Impressum</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/datenschutz/\" style=\"color:#6b6f74;text-decoration:underline;\">Datenschutz</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/agb/\" style=\"color:#6b6f74;text-decoration:underline;\">AGB</a></div><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" align=\"right\" class=\"sj-social-table\" style=\"margin-top:12px;\"><tr><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.linkedin.com/company/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png\" width=\"24\" height=\"24\" alt=\"LinkedIn\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.instagram.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png\" width=\"24\" height=\"24\" alt=\"Instagram\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.facebook.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png\" width=\"24\" height=\"24\" alt=\"Facebook\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:20px;\"><div mc:edit=\"footer_company\">Studiojeker GmbH | Hauptstrasse 73 | CH-4528 Zuchwil</div><div style=\"margin-top:6px;\">*|HTML:LIST_ADDRESS_HTML|*</div></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:12px;\"><a href=\"*|UPDATE_PROFILE|*\" style=\"color:#6b6f74;text-decoration:underline;\">E-Mail-Einstellungen anpassen</a> &nbsp; | &nbsp; <a href=\"*|UNSUB|*\" style=\"color:#6b6f74;text-decoration:underline;\">Abmelden</a></td></tr></table></td></tr></table>\n<!--[if mso]></td></tr></table><![endif]-->\n</center></body></html>\n",
+    "slots": [
+      {
+        "key": "subject",
+        "region": "title",
+        "kind": "text",
+        "start": 368,
+        "end": 406,
+        "value": "Studiojeker Newsletter 02 – Visibility",
+        "special": "subject"
+      },
+      {
+        "key": "preheader",
+        "region": "preheader",
+        "kind": "text",
+        "start": 2861,
+        "end": 2941,
+        "value": "Warum gute Bilder allein nicht genügen – und was Studiojeker heute anders macht.",
+        "special": "preheader"
+      },
+      {
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "start": 3906,
+        "end": 3934,
+        "value": "STUDIOJEKER NEWSLETTER NR. 2",
+        "special": null
+      },
+      {
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "start": 5652,
+        "end": 5688,
+        "value": "Gute Inhalte verdienen Sichtbarkeit.",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "start": 5821,
+        "end": 5868,
+        "value": "https://www.studiojeker.ch/#home-showreel-title",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 5924,
+        "end": 5971,
+        "value": "Studiojeker Showreel auf der Startseite ansehen",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6126,
+        "end": 6277,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-desktop-play.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6309,
+        "end": 6351,
+        "value": "Studiojeker Showreel – Rennfahrer mit Helm",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6534,
+        "end": 6684,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-mobile-play.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6716,
+        "end": 6758,
+        "value": "Studiojeker Showreel – Rennfahrer mit Helm",
+        "special": null
+      },
+      {
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7203,
+        "end": 7236,
+        "value": "Von der Idee bis zur Sichtbarkeit",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7530,
+        "end": 7601,
+        "value": "Ein starkes Foto. Ein überzeugender Film. Eine kreative Visualisierung.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7739,
+        "end": 7840,
+        "value": "All das kann begeistern. Entscheidend ist aber, dass die richtigen Menschen diese Inhalte auch sehen.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7978,
+        "end": 8035,
+        "value": "Genau hier setzt die neue Ausrichtung von Studiojeker an.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8172,
+        "end": 8366,
+        "value": "Wir verbinden Marketingstrategie, Content-Produktion und digitale Distribution. Damit aus Bildern, Filmen und Geschichten eine Kommunikation entsteht, die Unternehmen langfristig sichtbar macht.",
+        "special": null
+      },
+      {
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "start": 8752,
+        "end": 8779,
+        "value": "https://www.studiojeker.ch/",
+        "special": null
+      },
+      {
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8964,
+        "end": 8987,
+        "value": "→ Studiojeker entdecken",
+        "special": null
+      },
+      {
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "start": 9630,
+        "end": 9783,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3fbe99d5f3aa7a6bb4b37b09f942df9fb7ef0d6f/mailchimp/assets/nora-jeker-visibility.jpg",
+        "special": null
+      },
+      {
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "start": 9815,
+        "end": 9860,
+        "value": "Nora Jeker, Geschäftsführerin von Studiojeker",
+        "special": null
+      },
+      {
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10249,
+        "end": 10260,
+        "value": "STUDIOJEKER",
+        "special": null
+      },
+      {
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10441,
+        "end": 10476,
+        "value": "Ein neuer Abschnitt für Studiojeker",
+        "special": null
+      },
+      {
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10772,
+        "end": 10936,
+        "value": "Mit Nora Jeker als Geschäftsführerin und Spezialistin für Digital Marketing stärken wir die strategische Beratung und die kontinuierliche Begleitung unserer Kunden.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11299,
+        "end": 11432,
+        "value": "Martin Jeker bringt seine langjährige Erfahrung in der visuellen Produktion, Projektleitung und im Einsatz neuer KI-Technologien ein.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11570,
+        "end": 11636,
+        "value": "Gemeinsam verbinden wir kreative Erfahrung mit digitalem Know-how.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11773,
+        "end": 11808,
+        "value": "Nora Jeker und das Studiojeker-Team",
+        "special": null
+      },
+      {
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "start": 11994,
+        "end": 12028,
+        "value": "https://www.studiojeker.ch/contact",
+        "special": null
+      },
+      {
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 12213,
+        "end": 12248,
+        "value": "→ Persönliches Gespräch vereinbaren",
+        "special": null
+      },
+      {
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 12713,
+        "end": 12746,
+        "value": "Strategie. Content. Distribution.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13043,
+        "end": 13124,
+        "value": "Ob Social Media, Unternehmenskommunikation, Produktinszenierung oder Architektur:",
+        "special": null
+      },
+      {
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13262,
+        "end": 13319,
+        "value": "Wir denken die Wirkung unserer Inhalte von Anfang an mit.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13456,
+        "end": 13486,
+        "value": "Unsere vier Kompetenzbereiche:",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 14331,
+        "end": 14385,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "start": 14445,
+        "end": 14578,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "start": 14610,
+        "end": 14646,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 14968,
+        "end": 15022,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "start": 15084,
+        "end": 15120,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 15432,
+        "end": 15491,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "start": 15552,
+        "end": 15700,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-business.jpg",
+        "special": null
+      },
+      {
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "start": 15732,
+        "end": 15797,
+        "value": "Studiojeker Business Communication – Familie vor einem Helikopter",
+        "special": null
+      },
+      {
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 16120,
+        "end": 16179,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "start": 16241,
+        "end": 16263,
+        "value": "Business Communication",
+        "special": null
+      },
+      {
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 16851,
+        "end": 16909,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "start": 16969,
+        "end": 17116,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+        "special": null
+      },
+      {
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "start": 17148,
+        "end": 17194,
+        "value": "Studiojeker Produktfotografie – Metallbauteile",
+        "special": null
+      },
+      {
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 17516,
+        "end": 17574,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "start": 17636,
+        "end": 17657,
+        "value": "Product Communication",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 17969,
+        "end": 18018,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "start": 18083,
+        "end": 18235,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-architecture.jpg",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "start": 18267,
+        "end": 18315,
+        "value": "Studiojeker Architekturvisualisierung – Wohnraum",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 18642,
+        "end": 18691,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "start": 18753,
+        "end": 18783,
+        "value": "Architecture & Real Estate",
+        "special": null
+      },
+      {
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 19857,
+        "end": 19940,
+        "value": "Gerne zeigen wir Ihnen, wie sich Ihre Kommunikation gezielt weiterentwickeln lässt.",
+        "special": null
+      },
+      {
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20161,
+        "end": 20207,
+        "value": "Was bedeutet Sichtbarkeit für Ihr Unternehmen?",
+        "special": null
+      },
+      {
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "start": 20399,
+        "end": 20433,
+        "value": "https://www.studiojeker.ch/contact",
+        "special": null
+      },
+      {
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20618,
+        "end": 20653,
+        "value": "→ Persönliches Gespräch vereinbaren",
+        "special": null
+      },
+      {
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "start": 20819,
+        "end": 20976,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/contact-business-portrait.jpg",
+        "special": null
+      },
+      {
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "start": 21008,
+        "end": 21052,
+        "value": "Studiojeker Businessportrait – Mann im Anzug",
+        "special": null
+      }
+    ],
+    "subject": "Gute Inhalte verdienen Sichtbarkeit.",
+    "preheader": "Warum gute Bilder allein nicht genügen – und was Studiojeker heute anders macht.",
+    "note": ""
+  },
+  {
+    "id": "newsletter-03",
+    "name": "Newsletter 03 · Sichtbarkeit im Abo",
+    "source": "mailchimp/studiojeker-newsletter-03-content-abo.html",
+    "sha256": "3f167b3ffc5ea369a9aa3ada2f91c26761d4ac6c6732ba22d5e22e7ae65d85ce",
+    "html": "<!DOCTYPE html>\n<html lang=\"de\" xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\"><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><meta name=\"x-apple-disable-message-reformatting\" /><meta name=\"format-detection\" content=\"telephone=no,address=no,email=no,date=no,url=no\" /><title>Studiojeker Newsletter Nr. 3 – Sichtbarkeit im Abo</title>\n<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif!important;}</style><![endif]-->\n<style type=\"text/css\">\nbody,table,td,div,p,h1,h2,a,span {font-family:Arial,Helvetica,sans-serif;}\nbody {margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background:#ffffff;}\ntable,td {border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}\nimg {border:0;outline:none;display:block;-ms-interpolation-mode:bicubic;}\na:focus-visible {outline:2px solid #000000;outline-offset:3px;}\n@media only screen and (max-width:480px) {\n.sj-hero-desktop {display:none!important;} .sj-hero-mobile {display:block!important;}\n .sj-container {width:100%!important;max-width:100%!important;}\n .sj-section:not(.sj-footer) {padding-left:16px!important;padding-right:16px!important;}\n .sj-bleed {padding-left:0!important;padding-right:0!important;}\n .sj-stack {display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;}\n .sj-hero-heading {font-size:28px!important;line-height:30.24px!important;}\n .sj-heading {font-size:22px!important;line-height:25.3px!important;}\n .sj-bar {width:10px!important;}\n .sj-hero-text,.sj-contact-text {padding:22px 16px!important;}\n .sj-ai-inner {padding:0 0 22px 0!important;}\n .sj-ai-text,.sj-ai-inner > div {padding-left:16px!important;padding-right:16px!important;}\n .sj-ai-photo {padding:0 0 16px 0!important;}\n .sj-ai-continuation {padding-top:12px!important;}\n .sj-pair {display:block!important;width:100%!important;max-width:100%!important;padding-bottom:16px!important;}\n .sj-pair:last-child {padding-bottom:0!important;}\n .sj-cards-section {padding-left:8px!important;padding-right:8px!important;}\n .sj-footer-layout,.sj-footer-layout>tbody,.sj-footer-layout>tbody>tr,.sj-footer-details {display:block!important;width:100%!important;box-sizing:border-box!important;}\n .sj-footer-links {padding-top:20px!important;text-align:left!important;}\n .sj-social-table {float:none!important;margin-left:0!important;margin-right:auto!important;}\n}\n</style></head><body id=\"body\" style=\"margin:0;padding:0;background-color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\">\n<div mc:edit=\"preheader\" style=\"display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;\">Professioneller Content, regelmässig geplant, produziert und veröffentlicht.</div>\n<center role=\"article\" aria-roledescription=\"email\" lang=\"de\" style=\"width:100%;background-color:#ffffff;\">\n<!--[if mso]><table role=\"presentation\" width=\"700\" align=\"center\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td><![endif]-->\n<table role=\"presentation\" class=\"sj-container\" align=\"center\" width=\"700\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;max-width:700px;background-color:#ffffff;\"><tr><td class=\"sj-section\" style=\"padding:20px 20px 24px 20px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><div mc:edit=\"meta_left\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">STUDIOJEKER NEWSLETTER NR. 3 · 11. NOVEMBER 2026</div></td><td align=\"right\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"*|ARCHIVE|*\" target=\"_blank\" style=\"color:#6b6f74;text-decoration:underline;\">Im Browser anzeigen</a></td></tr><tr><td colspan=\"2\" style=\"padding:4px 0 0 0;\"><a href=\"https://www.studiojeker.ch/\" target=\"_blank\"><img mc:edit=\"header_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"160\" height=\"74\" alt=\"Studiojeker\" style=\"display:block;width:160px;height:74px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td style=\"padding:0;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-hero-text\" width=\"44%\" valign=\"middle\" style=\"width:44%;padding:22px 20px;vertical-align:middle;\"><div mc:edit=\"hero_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">WE CREATE VISIBILITY.</div><h1 class=\"sj-hero-heading\" mc:edit=\"hero_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:34.56px;font-weight:700;margin:0;color:#000000;\">Einmal auffallen ist gut. Sichtbar bleiben ist besser.</h1></td><td class=\"sj-stack sj-hero-photo\" width=\"56%\" valign=\"middle\" style=\"width:56%;padding:0;vertical-align:middle;\"><a href=\"https://www.studiojeker.ch/content-abo/\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Sichtbarkeit im Abo bei Studiojeker entdecken\" style=\"display:block;width:100%;border:0;text-decoration:none;font-size:0;line-height:0;\"><img class=\"sj-hero-desktop\" mc:edit=\"hero_image_desktop\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-desktop.jpg\" width=\"386\" height=\"290\" alt=\"Frau im blauen Mantel – Sichtbarkeit in Bewegung\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--[if !mso]><!--><img class=\"sj-hero-mobile\" mc:edit=\"hero_image_mobile\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-mobile.jpg\" width=\"386\" height=\"290\" alt=\"Frau im blauen Mantel – Sichtbarkeit in Bewegung\" style=\"display:none;mso-hide:all;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /><!--<![endif]--></a></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 20px 0 20px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"intro_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Sichtbarkeit im Abo</h2><div mc:edit=\"intro_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Ihre Produkte entwickeln sich. Ihr Unternehmen verändert sich. Neue Projekte entstehen.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Aber erfährt Ihre Zielgruppe auch davon?</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Ein einzelner Social-Media-Beitrag, ein Imagefilm oder ein professionelles Fotoshooting kann viel bewirken. Nachhaltige Sichtbarkeit entsteht jedoch durch regelmässige, relevante Kommunikation.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Mit unseren Content-Abos begleiten wir Unternehmen kontinuierlich – von der Planung über die Produktion bis zur Veröffentlichung.</p></div><p mc:edit=\"intro_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;font-weight:700;margin:14px 0 0 0;\">Ihr Content. Unsere Verantwortung.</p><div mc:edit=\"intro_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/content-abo/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Sichtbarkeit im Abo entdecken</a></div></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-ai-inner\" style=\"padding:22px 20px;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-ai-photo\" width=\"48%\" valign=\"top\" style=\"width:48%;vertical-align:top;padding:0 18px 0 0;\"><img mc:edit=\"ai_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/content-eye.jpg\" width=\"300\" height=\"168\" alt=\"Augenmotiv – Fokus auf kontinuierliche Sichtbarkeit\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td><td class=\"sj-stack sj-ai-text\" width=\"52%\" valign=\"top\" style=\"width:52%;vertical-align:top;padding:0;\"><div mc:edit=\"ai_eyebrow\" class=\"sj-eyebrow\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:12.65px;font-weight:700;color:#6b6f74;margin:0 0 12px 0;\">SICHTBARKEIT IM ABO</div><h2 class=\"sj-heading\" mc:edit=\"ai_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Professioneller Content. Planbar und effizient.</h2><div class=\"sj-copy\" mc:edit=\"ai_body_start\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Ob LinkedIn, Instagram, Facebook, Newsletter oder Website: Wir entwickeln Inhalte, die zusammenpassen und sich über mehrere Kanäle wirkungsvoll einsetzen lassen.</p></div></td></tr></table><div class=\"sj-ai-continuation sj-copy\" mc:edit=\"ai_body_continuation\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;padding-top:14px;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Dabei verbinden wir langjährige Produktionserfahrung mit Digital-Marketing-Kompetenz und modernen KI-Technologien.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Strategie: Themen, Botschaften und Redaktionsplanung. Content: Fotografie, Film, Animationen und Texte.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Distribution: Aufbereitung und Veröffentlichung auf den passenden Kanälen. Sie konzentrieren sich auf Ihr Kerngeschäft. Wir kümmern uns um Ihre Sichtbarkeit.</p></div><div mc:edit=\"ai_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/contact/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Persönliches Gespräch vereinbaren</a></div></td><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td></tr></table></td></tr><tr><td class=\"sj-section\" style=\"padding:28px 20px 0 20px;background-color:#ffffff;\"><h2 class=\"sj-heading\" mc:edit=\"services_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Nora Jeker</h2><div class=\"sj-copy\" mc:edit=\"services_body\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Ihre Ansprechpartnerin für digitale Sichtbarkeit.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 12px 0;\">Nora Jeker begleitet Sie als Geschäftsführerin und Spezialistin für Digital Marketing bei der Entwicklung Ihrer Content-Strategie und der Umsetzung Ihrer laufenden Kommunikation.</p><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Unsere Kompetenzbereiche für Ihre laufende Kommunikation:</p></div></td></tr><tr><td class=\"sj-cards-section\" style=\"padding:16px 12px 0 12px;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" class=\"sj-grid\"><tr><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\"><img mc:edit=\"service_digital_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg\" width=\"151\" height=\"113\" alt=\"Digital &amp; Social Media Marketing\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_digital_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/digital-marketing/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Digital &amp; Social Media Marketing</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\"><img mc:edit=\"service_business_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-business.jpg\" width=\"151\" height=\"113\" alt=\"Business Communication – Frau im schwarzen Anzug\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_business_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/business-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Business Communication</a></td></tr></table></td></tr></table></td><td class=\"sj-pair\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\"><img mc:edit=\"service_product_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg\" width=\"151\" height=\"113\" alt=\"Studiojeker Produktfotografie – Metallbauteile\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_product_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/product-communication/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Product Communication</a></td></tr></table></td><td class=\"sj-card\" width=\"50%\" valign=\"top\" style=\"width:50%;padding:0 8px;vertical-align:top;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\"><img mc:edit=\"service_architecture_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-architecture.jpg\" width=\"151\" height=\"113\" alt=\"Visuelles Cyan-Motiv in einer Berglandschaft\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></a></td></tr><tr><td class=\"sj-card-caption\" mc:edit=\"service_architecture_title\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;padding:10px 0 0 0;color:#000000;\"><a href=\"https://www.studiojeker.ch/services/architecture/\" target=\"_blank\" style=\"color:#000000;text-decoration:none;\">Architecture &amp; Real Estate</a></td></tr></table></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-bleed\" style=\"padding:28px 0 0 0;background-color:#ffffff;\"><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-bar\" width=\"10\" bgcolor=\"#00c8ff\" style=\"width:10px;min-width:10px;max-width:10px;background-color:#00c8ff;font-size:0;line-height:0;\">&nbsp;</td><td><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-contact-text\" width=\"45%\" valign=\"middle\" style=\"width:45%;padding:22px 20px;vertical-align:middle;\"><div mc:edit=\"contact_body\" class=\"sj-copy\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;\"><p style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:0 0 0px 0;\">Wir analysieren Ihren digitalen Auftritt und zeigen Ihnen in einem 30-minütigen Gespräch drei konkrete Möglichkeiten, Ihre Sichtbarkeit zu verbessern. Unverbindlich, individuell und persönlich mit Nora Jeker. Angebot gültig bis 30. November 2026, vorbehaltlich finaler Freigabe. Ein Gespräch pro Unternehmen nach Terminvereinbarung.</p></div><div style=\"padding-top:14px;\"><h2 class=\"sj-heading\" mc:edit=\"contact_headline\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:27.6px;font-weight:700;color:#000000;margin:0 0 14px 0;\">Ihre persönliche Visibility-Analyse. Kostenlos.</h2></div><div mc:edit=\"contact_cta\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21.75px;font-weight:400;color:#000000;margin:4px 0 0 0;\"><a class=\"sj-cta\" href=\"https://www.studiojeker.ch/contact/\" target=\"_blank\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;font-weight:700;color:#000000;text-decoration:none;display:inline-block;padding:12px 0;\">→ Kostenlose Visibility-Analyse anfragen</a></div></td><td class=\"sj-stack sj-contact-photo\" width=\"55%\" valign=\"middle\" style=\"width:55%;padding:0;vertical-align:middle;\"><img mc:edit=\"contact_image\" src=\"https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/nora-contact.jpg\" width=\"380\" height=\"223\" alt=\"Nora Jeker – Ihre Ansprechpartnerin für digitale Sichtbarkeit\" style=\"display:block;width:100%;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;\" /></td></tr></table></td></tr></table></td></tr><tr><td class=\"sj-section sj-footer\" style=\"padding:24px 24px 28px 24px;border-top:1px solid #c8ccd0;background-color:#ffffff;\"><table class=\"sj-footer-layout\" role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;\" ><tr><td class=\"sj-stack sj-footer-brand\" width=\"50%\" valign=\"top\" style=\"width:50%;vertical-align:top;\"><a href=\"https://www.studiojeker.ch/\"><img mc:edit=\"footer_logo\" src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png\" width=\"140\" height=\"65\" alt=\"Studiojeker\" style=\"display:block;width:140px;height:auto;border:0;\" /></a><div mc:edit=\"footer_claim\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;font-weight:700;margin-top:12px;color:#000000;\">WE CREATE VISIBILITY.</div></td><td class=\"sj-stack sj-footer-links\" rowspan=\"3\" width=\"50%\" valign=\"bottom\" align=\"right\" style=\"width:50%;vertical-align:bottom;text-align:right;padding-top:0;\"><div mc:edit=\"footer_nav\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;\"><a href=\"https://www.studiojeker.ch/\" style=\"color:#6b6f74;text-decoration:underline;\">Website</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/contact/\" style=\"color:#6b6f74;text-decoration:underline;\">Kontakt</a></div><div mc:edit=\"footer_legal\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:10px;\"><a href=\"https://www.studiojeker.ch/impressum/\" style=\"color:#6b6f74;text-decoration:underline;\">Impressum</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/datenschutz/\" style=\"color:#6b6f74;text-decoration:underline;\">Datenschutz</a> &nbsp; | &nbsp; <a href=\"https://www.studiojeker.ch/agb/\" style=\"color:#6b6f74;text-decoration:underline;\">AGB</a></div><table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" align=\"right\" class=\"sj-social-table\" style=\"margin-top:12px;\"><tr><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.linkedin.com/company/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png\" width=\"24\" height=\"24\" alt=\"LinkedIn\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.instagram.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png\" width=\"24\" height=\"24\" alt=\"Instagram\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td><td width=\"32\" style=\"width:32px;padding:0 8px 0 0;\"><a href=\"https://www.facebook.com/studiojeker/\" target=\"_blank\"><img src=\"https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png\" width=\"24\" height=\"24\" alt=\"Facebook\" style=\"display:block;width:24px;height:24px;border:0;\" /></a></td></tr></table></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:20px;\"><div mc:edit=\"footer_company\">Studiojeker GmbH | Hauptstrasse 73 | CH-4528 Zuchwil</div><div style=\"margin-top:6px;\">*|HTML:LIST_ADDRESS_HTML|*</div></td></tr><tr><td class=\"sj-footer-details\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15.95px;color:#6b6f74;padding-top:12px;\"><a href=\"*|UPDATE_PROFILE|*\" style=\"color:#6b6f74;text-decoration:underline;\">E-Mail-Einstellungen anpassen</a> &nbsp; | &nbsp; <a href=\"*|UNSUB|*\" style=\"color:#6b6f74;text-decoration:underline;\">Abmelden</a></td></tr></table></td></tr></table>\n<!--[if mso]></td></tr></table><![endif]-->\n</center></body></html>\n",
+    "slots": [
+      {
+        "key": "subject",
+        "region": "title",
+        "kind": "text",
+        "start": 368,
+        "end": 418,
+        "value": "Studiojeker Newsletter Nr. 3 – Sichtbarkeit im Abo",
+        "special": "subject"
+      },
+      {
+        "key": "preheader",
+        "region": "preheader",
+        "kind": "text",
+        "start": 2978,
+        "end": 3054,
+        "value": "Professioneller Content, regelmässig geplant, produziert und veröffentlicht.",
+        "special": "preheader"
+      },
+      {
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "start": 4019,
+        "end": 4067,
+        "value": "STUDIOJEKER NEWSLETTER NR. 3 · 11. NOVEMBER 2026",
+        "special": null
+      },
+      {
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "start": 5785,
+        "end": 5839,
+        "value": "Einmal auffallen ist gut. Sichtbar bleiben ist besser.",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "start": 5972,
+        "end": 6011,
+        "value": "https://www.studiojeker.ch/content-abo/",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6067,
+        "end": 6112,
+        "value": "Sichtbarkeit im Abo bei Studiojeker entdecken",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6267,
+        "end": 6424,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-desktop.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6456,
+        "end": 6504,
+        "value": "Frau im blauen Mantel – Sichtbarkeit in Bewegung",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "start": 6687,
+        "end": 6843,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-mobile.jpg",
+        "special": null
+      },
+      {
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "start": 6875,
+        "end": 6923,
+        "value": "Frau im blauen Mantel – Sichtbarkeit in Bewegung",
+        "special": null
+      },
+      {
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7368,
+        "end": 7387,
+        "value": "Sichtbarkeit im Abo",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7681,
+        "end": 7768,
+        "value": "Ihre Produkte entwickeln sich. Ihr Unternehmen verändert sich. Neue Projekte entstehen.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 7906,
+        "end": 7946,
+        "value": "Aber erfährt Ihre Zielgruppe auch davon?",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8084,
+        "end": 8277,
+        "value": "Ein einzelner Social-Media-Beitrag, ein Imagefilm oder ein professionelles Fotoshooting kann viel bewirken. Nachhaltige Sichtbarkeit entsteht jedoch durch regelmässige, relevante Kommunikation.",
+        "special": null
+      },
+      {
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 8414,
+        "end": 8543,
+        "value": "Mit unseren Content-Abos begleiten wir Unternehmen kontinuierlich – von der Planung über die Produktion bis zur Veröffentlichung.",
+        "special": null
+      },
+      {
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "start": 8942,
+        "end": 8981,
+        "value": "https://www.studiojeker.ch/content-abo/",
+        "special": null
+      },
+      {
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "start": 9166,
+        "end": 9197,
+        "value": "→ Sichtbarkeit im Abo entdecken",
+        "special": null
+      },
+      {
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "start": 9840,
+        "end": 9996,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/content-eye.jpg",
+        "special": null
+      },
+      {
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "start": 10028,
+        "end": 10079,
+        "value": "Augenmotiv – Fokus auf kontinuierliche Sichtbarkeit",
+        "special": null
+      },
+      {
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10468,
+        "end": 10487,
+        "value": "SICHTBARKEIT IM ABO",
+        "special": null
+      },
+      {
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 10668,
+        "end": 10715,
+        "value": "Professioneller Content. Planbar und effizient.",
+        "special": null
+      },
+      {
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11011,
+        "end": 11172,
+        "value": "Ob LinkedIn, Instagram, Facebook, Newsletter oder Website: Wir entwickeln Inhalte, die zusammenpassen und sich über mehrere Kanäle wirkungsvoll einsetzen lassen.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11535,
+        "end": 11649,
+        "value": "Dabei verbinden wir langjährige Produktionserfahrung mit Digital-Marketing-Kompetenz und modernen KI-Technologien.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 11787,
+        "end": 11890,
+        "value": "Strategie: Themen, Botschaften und Redaktionsplanung. Content: Fotografie, Film, Animationen und Texte.",
+        "special": null
+      },
+      {
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 12027,
+        "end": 12184,
+        "value": "Distribution: Aufbereitung und Veröffentlichung auf den passenden Kanälen. Sie konzentrieren sich auf Ihr Kerngeschäft. Wir kümmern uns um Ihre Sichtbarkeit.",
+        "special": null
+      },
+      {
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "start": 12370,
+        "end": 12405,
+        "value": "https://www.studiojeker.ch/contact/",
+        "special": null
+      },
+      {
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "start": 12590,
+        "end": 12625,
+        "value": "→ Persönliches Gespräch vereinbaren",
+        "special": null
+      },
+      {
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13090,
+        "end": 13100,
+        "value": "Nora Jeker",
+        "special": null
+      },
+      {
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13397,
+        "end": 13446,
+        "value": "Ihre Ansprechpartnerin für digitale Sichtbarkeit.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13584,
+        "end": 13762,
+        "value": "Nora Jeker begleitet Sie als Geschäftsführerin und Spezialistin für Digital Marketing bei der Entwicklung Ihrer Content-Strategie und der Umsetzung Ihrer laufenden Kommunikation.",
+        "special": null
+      },
+      {
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "start": 13899,
+        "end": 13956,
+        "value": "Unsere Kompetenzbereiche für Ihre laufende Kommunikation:",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 14801,
+        "end": 14855,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "start": 14915,
+        "end": 15048,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+        "special": null
+      },
+      {
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "start": 15080,
+        "end": 15116,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "start": 15438,
+        "end": 15492,
+        "value": "https://www.studiojeker.ch/services/digital-marketing/",
+        "special": null
+      },
+      {
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "start": 15554,
+        "end": 15590,
+        "value": "Digital & Social Media Marketing",
+        "special": null
+      },
+      {
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 15902,
+        "end": 15961,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "start": 16022,
+        "end": 16183,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-business.jpg",
+        "special": null
+      },
+      {
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "start": 16215,
+        "end": 16263,
+        "value": "Business Communication – Frau im schwarzen Anzug",
+        "special": null
+      },
+      {
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "start": 16586,
+        "end": 16645,
+        "value": "https://www.studiojeker.ch/services/business-communication/",
+        "special": null
+      },
+      {
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "start": 16707,
+        "end": 16729,
+        "value": "Business Communication",
+        "special": null
+      },
+      {
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 17317,
+        "end": 17375,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "start": 17435,
+        "end": 17582,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+        "special": null
+      },
+      {
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "start": 17614,
+        "end": 17660,
+        "value": "Studiojeker Produktfotografie – Metallbauteile",
+        "special": null
+      },
+      {
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "start": 17982,
+        "end": 18040,
+        "value": "https://www.studiojeker.ch/services/product-communication/",
+        "special": null
+      },
+      {
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "start": 18102,
+        "end": 18123,
+        "value": "Product Communication",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 18435,
+        "end": 18484,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "start": 18549,
+        "end": 18714,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-architecture.jpg",
+        "special": null
+      },
+      {
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "start": 18746,
+        "end": 18790,
+        "value": "Visuelles Cyan-Motiv in einer Berglandschaft",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "start": 19117,
+        "end": 19166,
+        "value": "https://www.studiojeker.ch/services/architecture/",
+        "special": null
+      },
+      {
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "start": 19228,
+        "end": 19258,
+        "value": "Architecture & Real Estate",
+        "special": null
+      },
+      {
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20332,
+        "end": 20664,
+        "value": "Wir analysieren Ihren digitalen Auftritt und zeigen Ihnen in einem 30-minütigen Gespräch drei konkrete Möglichkeiten, Ihre Sichtbarkeit zu verbessern. Unverbindlich, individuell und persönlich mit Nora Jeker. Angebot gültig bis 30. November 2026, vorbehaltlich finaler Freigabe. Ein Gespräch pro Unternehmen nach Terminvereinbarung.",
+        "special": null
+      },
+      {
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 20885,
+        "end": 20932,
+        "value": "Ihre persönliche Visibility-Analyse. Kostenlos.",
+        "special": null
+      },
+      {
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "start": 21124,
+        "end": 21159,
+        "value": "https://www.studiojeker.ch/contact/",
+        "special": null
+      },
+      {
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "start": 21344,
+        "end": 21384,
+        "value": "→ Kostenlose Visibility-Analyse anfragen",
+        "special": null
+      },
+      {
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "start": 21550,
+        "end": 21707,
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/nora-contact.jpg",
+        "special": null
+      },
+      {
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "start": 21739,
+        "end": 21800,
+        "value": "Nora Jeker – Ihre Ansprechpartnerin für digitale Sichtbarkeit",
+        "special": null
+      }
+    ],
+    "subject": "Sichtbarkeit im Abo. Damit Ihr Unternehmen präsent bleibt.",
+    "preheader": "Professioneller Content, regelmässig geplant, produziert und veröffentlicht.",
+    "note": "Angebotsbedingungen und Gültigkeit vor Versand prüfen und freigeben."
+  }
+]

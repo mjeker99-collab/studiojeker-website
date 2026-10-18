@@ -20,7 +20,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Dashboard", exact: true }),
+    page.getByRole("heading", { name: "Übersicht", exact: true }),
   ).toBeVisible();
 }
 test("API schützt Daten, Ursprung und externen Versand", async ({
@@ -81,10 +81,21 @@ for (const [name, width, height] of [
       "Versandhistorie",
       "Einstellungen",
     ]) {
-      await page
-        .getByRole("navigation")
-        .getByRole("button", { name: new RegExp(section) })
-        .click();
+      if (section !== "Einstellungen")
+        await page
+          .getByRole("navigation", { name: "Hauptnavigation" })
+          .getByRole("button", { name: /Kontakte/ })
+          .click();
+      if (section !== "Kontakte")
+        await page
+          .getByRole("navigation", {
+            name:
+              section === "Einstellungen"
+                ? "Hauptnavigation"
+                : "Akquise-Navigation",
+          })
+          .getByRole("button", { name: section, exact: true })
+          .click();
       await expect(
         page.getByRole("heading", { name: section, exact: true }),
       ).toBeVisible();
@@ -119,9 +130,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   expect(created.ok()).toBe(true);
   // Refresh the app snapshot after the synthetic fixture is created via the API.
   await page.reload();
-  await page.getByRole("heading", { name: "Dashboard", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Übersicht", exact: true }).waitFor();
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
@@ -150,7 +161,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await page.keyboard.press("Escape");
   await expect(editor).not.toBeVisible();
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
@@ -164,7 +175,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .click();
   await expect(dialog).not.toBeVisible();
   await page
-    .getByRole("navigation")
+    .getByRole("navigation", { name: "Akquise-Navigation" })
     .getByRole("button", { name: /E-Mail-Entwürfe/ })
     .click();
   await page
@@ -194,9 +205,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Als neue Version speichern" })
     .click();
   await expect(editor).not.toBeVisible();
-  await page
-    .getByRole("button", { name: /Überarbeitete synthetische Nachricht/ })
-    .click();
+  await page.locator(".draft-row").filter({ hasText: organisation }).click();
   await expect(editor.getByRole("heading")).toContainText("Version 2");
   await expect(editor.getByLabel(/Ich habe Empfänger/)).not.toBeChecked();
 });
