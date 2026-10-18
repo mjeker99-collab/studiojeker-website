@@ -27,7 +27,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
     },
   };
   const png = Buffer.from(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6XcAAAAASUVORK5CYII=",
+    "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAFUlEQVQYlWNg+P+fMGIYVcQw+IIAAEcUHvBhYS22AAAAAElFTkSuQmCC",
     "base64",
   );
   let submitted: Record<string, unknown> | undefined;
