@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/nora-cyan.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 172077
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/hero-desktop.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 283279
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/digital.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 36393
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/product.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 52363
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/architecture.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 80261
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/contact-blue.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 134544
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png",
+    "status": 200,
+    "content_type": "image/png",
+    "bytes": 300
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/business.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 60821
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png",
+    "status": 200,
+    "content_type": "image/png",
+    "bytes": 5712
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/476a19450a7ae47b1c067d1faed3b8b8eb7c2a48/mailchimp/visibility-update/assets/hero-mobile.jpg",
+    "status": 200,
+    "content_type": "image/jpeg",
+    "bytes": 182654
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png",
+    "status": 200,
+    "content_type": "image/png",
+    "bytes": 316
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png",
+    "status": 200,
+    "content_type": "image/png",
+    "bytes": 417
+  }
+]
