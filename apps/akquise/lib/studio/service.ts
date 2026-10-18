@@ -285,7 +285,7 @@ export async function queueJob(actor: string, raw: unknown) {
     await db.$transaction((tx) => hubActor(tx, actor));
     if (
       existing.organizationId !== ORG ||
-      existing.userId !== actor ||
+      (data.driveReferenceIds.length > 0 && existing.userId !== actor) ||
       digest(requestSchema.parse(old.request)) !== digest(data)
     )
       throw new PolicyError("Auftragsschlüssel bereits anders verwendet.", 409);
@@ -304,7 +304,7 @@ export async function queueJob(actor: string, raw: unknown) {
       const prev = previous.input as Record<string, unknown>;
       if (
         previous.organizationId !== ORG ||
-        previous.userId !== actor ||
+        (data.driveReferenceIds.length > 0 && previous.userId !== actor) ||
         digest(requestSchema.parse(prev.request)) !== digest(data)
       )
         throw new PolicyError(
