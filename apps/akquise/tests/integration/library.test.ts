@@ -202,9 +202,13 @@ test("Chat persists turns, isolates series and enforces single execution", async
         calls++;
         assert.equal(
           messages.at(-1)?.content,
-          calls === 1 ? "Eine Headline" : "Kürzer",
+          calls === 1
+            ? "Eine Headline"
+            : calls === 2
+              ? "Kürzer"
+              : "Produktionsauftrag Video: Eine kurze Animation",
         );
-        assert.equal(messages.length, calls === 1 ? 1 : 3);
+        assert.equal(messages.length, calls === 1 ? 1 : calls === 2 ? 3 : 5);
         return {
           reply: "Synthetische Antwort",
           usage: {},
@@ -221,6 +225,14 @@ test("Chat persists turns, isolates series and enforces single execution", async
     });
     await runJob(martin, second.id, provider);
     assert.equal(calls, 2);
+    const mediaJob = await queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+      message: "Eine kurze Animation",
+      mediaIntent: "VIDEO",
+    });
+    await runJob(martin, mediaJob.id, provider);
+    assert.equal(calls, 3);
     const savedLocal = process.env.STUDIO_LOCAL_ASSETS;
     process.env.STUDIO_LOCAL_ASSETS = "true";
     try {
@@ -306,7 +318,9 @@ test("Chat persists turns, isolates series and enforces single execution", async
 });
 test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderungen", async () => {
   await assert.rejects(libraryState("missing"), /Berechtigung/);
-  const previousIds = new Set((await libraryState(nora)).items.map((i) => i.id));
+  const previousIds = new Set(
+    (await libraryState(nora)).items.map((i) => i.id),
+  );
   const saved = await saveLibraryItem(martin, item());
   const video = await saveLibraryItem(nora, item("VIDEO"));
   const state = await libraryState(nora);

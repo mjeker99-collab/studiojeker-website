@@ -233,6 +233,7 @@ const requestSchema = z
     seriesId: z.string().min(1),
     kind: z.enum(["TEXT", "IMAGE", "CHAT"]),
     message: z.string().trim().min(1).max(4000).optional(),
+    mediaIntent: z.enum(["IMAGE", "VIDEO"]).optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -246,6 +247,8 @@ export async function queueJob(actor: string, raw: unknown) {
     config = studioConfig();
   if (data.kind === "CHAT" && !data.message)
     throw new PolicyError("Nachricht fehlt.");
+  if (data.kind !== "CHAT" && data.mediaIntent)
+    throw new PolicyError("Bild- und Videoaufträge gehören in den GPT-Dialog.");
   if (!config.connected)
     throw new PolicyError(
       "KI: Nicht verbunden. API-Schlüssel und CONTENT_AI_ENABLED serverseitig konfigurieren.",
@@ -504,7 +507,12 @@ export async function runJob(
         },
         [
           ...(input.history || []),
-          { role: "user", content: input.request.message! },
+          {
+            role: "user",
+            content: input.request.mediaIntent
+              ? `Produktionsauftrag ${input.request.mediaIntent === "IMAGE" ? "Bild" : "Video"}: ${input.request.message!}`
+              : input.request.message!,
+          },
         ],
         job.model,
         refs,

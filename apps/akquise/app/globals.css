@@ -1344,6 +1344,18 @@ pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.studio-chat-handoff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.studio-chat-handoff a:focus-visible,
+.studio-chat-handoff button:focus-visible {
+  outline: 2px solid #007a99;
+  outline-offset: 3px;
+}
 .studio-chat form {
   display: grid;
   gap: 12px;
