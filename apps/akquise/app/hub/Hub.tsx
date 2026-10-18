@@ -127,6 +127,9 @@ export default function Hub({
   userId: string;
 }) {
   const [templateId, setTemplateId] = useState("master-v7");
+  const [mailchimp, setMailchimp] = useState<{ connected: boolean; audiences: { id: string; name: string }[] } | null>(null);
+  const [mailchimpError, setMailchimpError] = useState("");
+  const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
   const [data, setData] = useState<HubState | null>(null);
   const [error, setError] = useState(""),
@@ -175,6 +178,19 @@ export default function Hub({
       });
     return () => controller.abort();
   }, []);
+  useEffect(() => {
+    if (section !== "Newsletter" && section !== "Einstellungen") return;
+    const controller = new AbortController();
+    fetch("/api/hub/mailchimp/audiences", { cache: "no-store", signal: controller.signal })
+      .then(async (r) => {
+        const result = await r.json();
+        if (!r.ok) throw new Error(result.error);
+        setMailchimp(result);
+        setMailchimpError("");
+      })
+      .catch((e) => { if (e.name !== "AbortError") setMailchimpError(e.message); });
+    return () => controller.abort();
+  }, [section]);
   async function act(fn: () => Promise<unknown>, message = "Gespeichert.") {
     setBusy(true);
     setError("");
@@ -754,9 +770,9 @@ export default function Hub({
           </div>
           {section === "Newsletter" && (
             <p>
-              Studiojeker-Vorlage · HTML und Text für manuelle
-              Mailchimp-Übernahme. Empfängerlisten und Einwilligungen werden
-              nicht exportiert.
+              Studiojeker-Vorlage · Freigegebene Newsletter können als
+              Mailchimp-Entwurf übertragen werden. Empfänger und Versand in
+              Mailchimp prüfen.
             </p>
           )}
           {filters}
@@ -1125,12 +1141,42 @@ export default function Hub({
               </div>
               {form.kind === "NEWSLETTER" && (
                 <section className="legal">
-                  <h3>Manueller Mailchimp-Export</h3>
+                  <h3>Mailchimp</h3>
                   <p>
-                    Nur freigegebene Versionen. Export ist keine Übertragung.
-                    Mailchimp ist nicht verbunden.
+                    Nur freigegebene Versionen. StudioONE versendet keine
+                    Newsletter. Zielgruppe, Absender, Einwilligungen und
+                    Testsendung vor dem Versand in Mailchimp prüfen.
                   </p>
+                  {mailchimpError && <p role="alert">Verbindung: {mailchimpError}</p>}
+                  {mailchimp && !mailchimp.connected && <p>Mailchimp ist noch nicht konfiguriert.</p>}
+                  {!!mailchimp?.audiences.length && (
+                    <label>
+                      Mailchimp-Audience
+                      <select value={audienceId} onChange={(e) => setAudienceId(e.target.value)}>
+                        <option value="">Audience wählen</option>
+                        {mailchimp.audiences.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  {editing.mailchimpTransfers.map((t) => (
+                    <p key={t.id}>
+                      V{t.version}: {t.status === "DRAFT" ? "Entwurf übertragen" : "Übertragung ungeklärt – Mailchimp prüfen"}
+                      {t.remoteId && ` · Kampagne ${t.remoteId}`}
+                    </p>
+                  ))}
+                  {mailchimp?.connected && (
+                    <button
+                      type="button"
+                      disabled={busy || dirty || !audienceId || !["APPROVED", "DONE"].includes(editing.status) || editing.mailchimpTransfers.some((t) => t.version === editing.version)}
+                      onClick={() => act(async () => {
+                        const result = await post("mailchimp-transfer/" + editing.id, { version: editing.version, audienceId });
+                        setForm(null);
+                        if (result.url) window.open(result.url, "_blank", "noopener,noreferrer");
+                      }, "Entwurf an Mailchimp übertragen. Kein Versand ausgelöst.")}
+                    >Entwurf an Mailchimp übertragen</button>
+                  )}
                   <button
+                    type="button"
                     disabled={
                       busy ||
                       dirty ||
@@ -1383,8 +1429,10 @@ export default function Hub({
             Veröffentlichung.
           </p>
           <p>
-            Mailchimp: nicht verbunden. Nur manuelle HTML-/Text-Exporte; keine
-            Empfängerübertragung.
+            Mailchimp: {mailchimpError || (mailchimp?.connected
+              ? `verbunden · ${mailchimp.audiences.length} Audiences sichtbar`
+              : "nicht konfiguriert")}. Freigegebene Newsletter können als
+            Entwurf übertragen werden. Kein Versand aus StudioONE.
           </p>
           <p>
             Kalender: Europe/Zurich · Speicherung als UTC-Zeitpunkte. Medien

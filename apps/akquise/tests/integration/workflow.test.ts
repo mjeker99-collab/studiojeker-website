@@ -28,6 +28,7 @@ const { execFileSync } = await import("node:child_process");
 const { dispatchApproved } = await import("../../lib/delivery");
 const hub = await import("../../lib/hub/workflow");
 const { exportNewsletter } = await import("../../lib/hub/newsletter");
+const { transferNewsletter, mailchimpAudiences } = await import("../../lib/hub/mailchimp");
 const studio = await import("../../lib/studio/service");
 const studioAssets = await import("../../lib/studio/assets");
 const studioRender = await import("../../lib/studio/render");
@@ -276,6 +277,53 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
       firstName: c.firstName,
       lastName: c.lastName,
     }),
+  );
+});
+
+test("Import verarbeitet eine Masterliste gebündelt und zählt beide Dublettenarten", async () => {
+  const rows = Array.from({ length: 64 }, (_, i) => ({
+    organisation: `Synthetische Importfirma ${i}`,
+    firstName: "Anna",
+    lastName: `Beispiel ${i}`,
+    email: `masterliste.${i}@example.test`,
+    confidence: "UNCONFIRMED" as const,
+    verifiedAt: "" as const,
+    newsletterConsent: false,
+    newsletterEvidence: "",
+    legalCategory: "UNASSESSED" as const,
+    publicAuthority: false,
+    industry: "",
+    region: "",
+    position: "",
+    website: "",
+    sourceUrl: "",
+    hook: "",
+    service: "",
+    owner: "",
+    notes: "",
+  }));
+  await saveContact(martin, {
+    ...input("existing-email"),
+    email: rows[0].email,
+  });
+  await saveContact(martin, {
+    ...input("existing-person"),
+    organisation: rows[1].organisation,
+    firstName: rows[1].firstName,
+    lastName: rows[1].lastName,
+  });
+  assert.deepEqual(await importContacts(martin, rows), {
+    imported: 62,
+    duplicates: 2,
+  });
+  assert.deepEqual(await importContacts(nora, rows), {
+    imported: 0,
+    duplicates: 64,
+  });
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { email: rows[0].email } }))
+      .status,
+    "VERIFIED",
   );
 });
 
@@ -666,6 +714,54 @@ test("Hub: Newsletter-Export benötigt aktuelle Freigabe und protokolliert keine
     1,
   );
   await assert.rejects(exportNewsletter(nora, content.id, 2), /freigegeben/);
+});
+test("Mailchimp: nur freigegebene Version als Entwurf, genau einmal und ohne Versand", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.MAILCHIMP_API_KEY;
+  process.env.MAILCHIMP_API_KEY = "synthetic-secret-us21";
+  const calls: { method: string; path: string; body: Record<string, unknown> }[] = [];
+  globalThis.fetch = async (input, init) => {
+    const url = new URL(String(input));
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    calls.push({ method: init?.method || "GET", path: url.pathname, body });
+    assert.equal(url.hostname, "us21.api.mailchimp.com");
+    if (url.pathname === "/3.0/lists" || url.pathname === "/3.0/lists/")
+      return Response.json({ lists: [{ id: "aud123", name: "Test Audience" }] });
+    if (url.pathname === "/3.0/lists/aud123")
+      return Response.json({ id: "aud123", campaign_defaults: { from_name: "Studiojeker", from_email: "synthetic@example.test" } });
+    if (url.pathname === "/3.0/campaigns" && init?.method === "POST")
+      return Response.json({ id: "remote123", web_id: 123 });
+    if (url.pathname === "/3.0/campaigns/remote123/content" && init?.method === "PUT")
+      return Response.json({ html: body.html });
+    throw new Error("Unexpected Mailchimp request");
+  };
+  try {
+    const newsletter = {
+      ...social(martin), kind: "NEWSLETTER" as const, variants: [],
+      subject: "Synthetischer Newsletter", preheader: "Vorschau", body: "Synthetischer Text",
+      audience: "Separat geprüfte Testliste",
+    };
+    const content = await hub.saveContent(martin, newsletter);
+    await assert.rejects(transferNewsletter(nora, content.id, 1, "aud123"), /freigegeben/);
+    assert.equal(calls.filter((c) => c.method === "POST").length, 0);
+    await hub.reviewContent(nora, content.id, 1, "APPROVED", true);
+    assert.equal((await mailchimpAudiences(martin)).audiences[0].id, "aud123");
+    const result = await transferNewsletter(martin, content.id, 1, "aud123");
+    assert.equal(result.sent, false);
+    assert.equal(result.campaignId, "remote123");
+    assert.equal(calls.filter((c) => c.method === "POST").length, 1);
+    assert.ok(String(calls.find((c) => c.method === "PUT")?.body.html).includes("*|UNSUB|*"));
+    assert.ok(!calls.some((c) => /send|schedule/.test(c.path)));
+    await assert.rejects(transferNewsletter(nora, content.id, 1, "aud123"), /bereits/);
+    assert.equal(calls.filter((c) => c.method === "POST").length, 1);
+    const transfer = await db.mailchimpTransfer.findUniqueOrThrow({ where: { contentId_version: { contentId: content.id, version: 1 } } });
+    assert.equal(transfer.status, "DRAFT");
+    assert.equal(transfer.remoteId, "remote123");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.MAILCHIMP_API_KEY;
+    else process.env.MAILCHIMP_API_KEY = originalKey;
+  }
 });
 test("Hub: Akquise-Planung bewahrt bestehende Nachricht und Freigabe; Kalender liefert alle Kanäle", async () => {
   const { c, d } = await prepared("hub-plan");

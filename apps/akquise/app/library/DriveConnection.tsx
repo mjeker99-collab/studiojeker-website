@@ -184,9 +184,9 @@ export default function DriveConnection() {
             </button>
           )}
           <p className="muted">
-            Die Dateien öffnen sich in Google Drive. Die Übernahme als
-            Bildreferenz im GPT-Chat und das Speichern generierter Medien in
-            Drive folgen separat.
+            Die Dateien öffnen sich in Google Drive. Im Content-Studio kannst du
+            Bilder aus diesem Ordner und seinen Unterordnern als GPT-Referenz
+            auswählen. Das Speichern generierter Medien in Drive folgt separat.
           </p>
         </>
       )}

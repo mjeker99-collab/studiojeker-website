@@ -235,9 +235,9 @@ export default function App() {
     setError("");
     setNotice("");
     try {
-      await fn();
+      const result = await fn();
       await refresh();
-      setNotice(success);
+      setNotice(typeof result === "string" ? result : success);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fehler");
     } finally {
@@ -700,9 +700,7 @@ export default function App() {
                         body.set("file", f);
                         action(async () => {
                           const r = await post("contacts/import", body);
-                          setNotice(
-                            `${r.imported} importiert, ${r.duplicates} Dubletten übersprungen.`,
-                          );
+                          return `${r.imported} importiert, ${r.duplicates} Dubletten übersprungen.`;
                         }, "Import abgeschlossen.");
                       }
                       e.target.value = "";

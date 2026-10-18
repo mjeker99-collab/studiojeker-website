@@ -30,6 +30,7 @@ import {
   audit,
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
+import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
 import {
   beginDrive,
@@ -37,6 +38,7 @@ import {
   disconnectDrive,
   driveStatus,
   listDriveFiles,
+  driveImagePreview,
 } from "@/lib/drive/service";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -123,9 +125,25 @@ async function handler(
         await listDriveFiles(
           user.id,
           req.nextUrl.searchParams.get("pageToken") || undefined,
+          req.nextUrl.searchParams.get("folderId") || undefined,
         ),
         { headers: { "Cache-Control": "no-store" } },
       );
+    if (
+      path[0] === "drive" &&
+      path[1] === "preview" &&
+      path.length === 3 &&
+      req.method === "GET"
+    ) {
+      const image = await driveImagePreview(user.id, path[2]);
+      return new NextResponse(new Uint8Array(image.bytes), {
+        headers: {
+          "Content-Type": image.mime,
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+        },
+      });
+    }
     if (route === "drive/connect" && req.method === "POST") {
       const session = (await cookies()).get(sessionCookieName())!.value;
       const auth = await beginDrive(user.id, tokenHash(session));
@@ -196,6 +214,10 @@ async function handler(
     }
     if (route === "hub/state" && req.method === "GET")
       return NextResponse.json(await hubState());
+    if (route === "hub/mailchimp/audiences" && req.method === "GET")
+      return NextResponse.json(await mailchimpAudiences(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
       const token = jar.get(sessionCookieName())?.value;

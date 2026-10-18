@@ -101,31 +101,26 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
-      const result = { imported: 0, duplicates: 0 };
-      for (const c of rows) {
-        const key = personKey(c.firstName, c.lastName, c.organisation);
-        const duplicate = await tx.contact.findFirst({
-          where: { OR: [{ email: c.email }, { personKey: key }] },
-        });
-        if (duplicate) {
-          result.duplicates++;
-          continue;
-        }
-        await tx.contact.create({
-          data: {
-            ...c,
-            publicAuthority:
-              c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
-            verifiedAt: null,
-            confidence: "UNCONFIRMED",
-            status: "NEW",
-            newsletterConsent: false,
-            newsletterEvidence: "",
-            personKey: key,
-          },
-        });
-        result.imported++;
-      }
+      // One bulk insert avoids two sequential database round trips per contact.
+      // Both identity columns are unique; existing contacts remain untouched.
+      const created = await tx.contact.createMany({
+        data: rows.map((c) => ({
+          ...c,
+          publicAuthority:
+            c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
+          verifiedAt: null,
+          confidence: "UNCONFIRMED" as const,
+          status: "NEW" as const,
+          newsletterConsent: false,
+          newsletterEvidence: "",
+          personKey: personKey(c.firstName, c.lastName, c.organisation),
+        })),
+        skipDuplicates: true,
+      });
+      const result = {
+        imported: created.count,
+        duplicates: rows.length - created.count,
+      };
       await audit(tx, userId, "CONTACT_IMPORT", "import", result);
       return result;
     },
