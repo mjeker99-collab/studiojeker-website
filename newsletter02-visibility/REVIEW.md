@@ -32,3 +32,9 @@ Quellvergleich zum vorherigen Stand: ausschliesslich neue CTA-Region und Nora-SR
 ## Korrektur: Bildlinks nach Branch-Löschung
 
 Nach dem Merge von PR #157 wurde der Arbeitsbranch gelöscht. Die acht darauf referenzierenden Bildadressen lieferten danach HTTP 404. Alle acht SRC-Adressen in Versanddatei und Browser-Vorschau sind deshalb auf den unveränderlichen, bereits vorhandenen Asset-Commit 476a19450a7ae47b1c067d1faed3b8b8eb7c2a48 umgestellt. Diese Links hängen weder vom Arbeitsbranch noch von dessen Namen ab. Inhalte, Layout und Bilddateien ändern sich nicht. Ein normalisierter Vergleich bestätigt ausschliesslich den Austausch des Ref-Segments in den acht Bild-SRC-Werten.
+
+## Höheres Nora-Bild nach Screenshot-Korrektur
+
+Nur Noras Foto erhält einen höheren Zuschnitt aus demselben Original: 1200×1000 (6:5) statt 1200×675 (16:9). Die vorhandene Bildbreite und sämtliche Spalten, Styles, Texte, CTA-Links und übrigen Bilder bleiben unverändert. HTML-Höhenattribut passend von 168 auf 250 bei unveränderter Referenzbreite 300 gesetzt; Anzeige weiterhin proportional mit height:auto. Alter Export bleibt erhalten. Neuer Bildlink ist auf den unveränderlichen Asset-Commit 7361ce0ff0f8d302c29c23ac7cc3ef5a15a6fbc4 fixiert.
+
+Bei 600 px Breite sinkt die leere Fläche unter Nora von 68.64 auf 4.14 px; bei der schmaleren Desktop-Ansicht mit 550 px von 82.14 auf 24.14 px. Bei 700 px endet die Bildzelle bündig mit dem Bild. Bei Mobile bleibt der bestehende 16-px-Abstand zum folgenden Text erhalten. Renderings bei 700/600/550/390/320 px, alle Bilder geladen, keine Verzerrungen oder horizontalen Überläufe. Desktop 700/550 und Mobile 390 tatsächlich visuell kontrolliert. nora-tall-checks.json enthält Messwerte. Quellvergleich bestätigt ausschliesslich die neue Nora-SRC und das dazugehörige HTML-Höhenattribut.

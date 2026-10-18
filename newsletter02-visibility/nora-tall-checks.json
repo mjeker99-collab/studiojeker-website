@@ -1,0 +1,97 @@
+[
+  {
+    "width": 700,
+    "before": {
+      "imageWidth": 286.15625,
+      "imageHeight": 160.953125,
+      "whitespaceBelowImage": 19.890625,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    },
+    "after": {
+      "imageWidth": 286.15625,
+      "imageHeight": 238.453125,
+      "whitespaceBelowImage": 0,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    }
+  },
+  {
+    "width": 600,
+    "before": {
+      "imageWidth": 238.15625,
+      "imageHeight": 133.953125,
+      "whitespaceBelowImage": 68.640625,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    },
+    "after": {
+      "imageWidth": 238.15625,
+      "imageHeight": 198.453125,
+      "whitespaceBelowImage": 4.140625,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    }
+  },
+  {
+    "width": 550,
+    "before": {
+      "imageWidth": 214.15625,
+      "imageHeight": 120.453125,
+      "whitespaceBelowImage": 82.140625,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    },
+    "after": {
+      "imageWidth": 214.15625,
+      "imageHeight": 178.453125,
+      "whitespaceBelowImage": 24.140625,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    }
+  },
+  {
+    "width": 390,
+    "before": {
+      "imageWidth": 332,
+      "imageHeight": 186.75,
+      "whitespaceBelowImage": 16,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    },
+    "after": {
+      "imageWidth": 332,
+      "imageHeight": 276.65625,
+      "whitespaceBelowImage": 16,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    }
+  },
+  {
+    "width": 320,
+    "before": {
+      "imageWidth": 262,
+      "imageHeight": 147.375,
+      "whitespaceBelowImage": 16,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    },
+    "after": {
+      "imageWidth": 262,
+      "imageHeight": 218.328125,
+      "whitespaceBelowImage": 16,
+      "overflow": false,
+      "allImagesLoaded": true,
+      "font": "Arial, Helvetica, sans-serif"
+    }
+  }
+]
