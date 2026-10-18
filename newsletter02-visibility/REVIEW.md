@@ -20,3 +20,11 @@ Ausgangsbasis: origin/main ace2c4d, Newsletter 02 aus dem bereits gemergten PR #
 ## Prüfgrenzen
 
 Keine verbundene Mailchimp-/Litmus-/Email-on-Acid-Rendering-Umgebung. Echte kampagnen-/empfängergebundene Auflösung von Archiv, Profileinstellungen und Abmeldung erfordert eine Mailchimp-Testsendung; diese ist nicht erfolgt. Website-Lint/Typecheck/Build nicht erneut ausgeführt: Änderungen ausschliesslich an eigenständigem E-Mail-HTML und dessen Bild-/Vorschauartefakten, keine Website-Codeänderung. Kein Versand, kein Merge, keine produktive Websiteänderung.
+
+## Nachtrag: Showreel-Textlink und neues Nora-Foto
+
+Gemäss nachgereichter markierter Vorschau vom 18.10. wurde im bestehenden Weissraum unter der Hero-Headline der Link „→ Video abspielen“ ergänzt. Er führt wie das unveränderte Herobild auf https://www.studiojeker.ch/#home-showreel-title. Gestaltung identisch zu den vorhandenen CTA-Links. Neue eindeutige Bearbeitungsregion `hero_video_cta`.
+
+Noras neue Anlage „Foto 4.jpg“ (1254×1254) ist bytegleich als assets/nora-cyan-original.jpg archiviert und rein mechanisch, ohne generative Bearbeitung, auf das bisherige 16:9-Format zugeschnitten: assets/nora-cyan.jpg, 1200×675. Gesicht und Cyan-Papier bleiben klar erkennbar. Das vorherige Porträt und alle übrigen Assets bleiben erhalten.
+
+Quellvergleich zum vorherigen Stand: ausschliesslich neue CTA-Region und Nora-SRC/ALT geändert. Chromium bei 700/390/320 px ohne Überlauf und mit vollständig geladenen Bildern. Hero-Bildmasse und Kompetenzkarten exakt unverändert. Desktop-Gesamthöhe bleibt 2035.53125 px; Mobile wächst durch den ausdrücklich gewünschten Textlink um 58 px. Beide Renderings tatsächlich visuell kontrolliert. followup-checks.json enthält den Vorher-/Nachher-Vergleich. Kein Merge, keine Websiteänderung.
