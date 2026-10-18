@@ -28,3 +28,7 @@ Gemäss nachgereichter markierter Vorschau vom 18.10. wurde im bestehenden Weiss
 Noras neue Anlage „Foto 4.jpg“ (1254×1254) ist bytegleich als assets/nora-cyan-original.jpg archiviert und rein mechanisch, ohne generative Bearbeitung, auf das bisherige 16:9-Format zugeschnitten: assets/nora-cyan.jpg, 1200×675. Gesicht und Cyan-Papier bleiben klar erkennbar. Das vorherige Porträt und alle übrigen Assets bleiben erhalten.
 
 Quellvergleich zum vorherigen Stand: ausschliesslich neue CTA-Region und Nora-SRC/ALT geändert. Chromium bei 700/390/320 px ohne Überlauf und mit vollständig geladenen Bildern. Hero-Bildmasse und Kompetenzkarten exakt unverändert. Desktop-Gesamthöhe bleibt 2035.53125 px; Mobile wächst durch den ausdrücklich gewünschten Textlink um 58 px. Beide Renderings tatsächlich visuell kontrolliert. followup-checks.json enthält den Vorher-/Nachher-Vergleich. Kein Merge, keine Websiteänderung.
+
+## Korrektur: Bildlinks nach Branch-Löschung
+
+Nach dem Merge von PR #157 wurde der Arbeitsbranch gelöscht. Die acht darauf referenzierenden Bildadressen lieferten danach HTTP 404. Alle acht SRC-Adressen in Versanddatei und Browser-Vorschau sind deshalb auf den unveränderlichen, bereits vorhandenen Asset-Commit 476a19450a7ae47b1c067d1faed3b8b8eb7c2a48 umgestellt. Diese Links hängen weder vom Arbeitsbranch noch von dessen Namen ab. Inhalte, Layout und Bilddateien ändern sich nicht. Ein normalisierter Vergleich bestätigt ausschliesslich den Austausch des Ref-Segments in den acht Bild-SRC-Werten.
