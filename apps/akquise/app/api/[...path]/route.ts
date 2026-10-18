@@ -33,6 +33,11 @@ import { hubState, hubMutation } from "@/lib/hub/api";
 import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
 import {
+  begin as beginSocial,
+  disconnect as disconnectSocial,
+  status as socialStatus,
+} from "@/lib/social/service";
+import {
   beginDrive,
   chooseDriveFolder,
   disconnectDrive,
@@ -116,6 +121,46 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "social/status" && req.method === "GET")
+      return NextResponse.json(await socialStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (
+      path[0] === "social" &&
+      path[1] === "connect" &&
+      path.length === 3 &&
+      req.method === "POST"
+    ) {
+      const provider = path[2];
+      if (provider !== "meta" && provider !== "linkedin")
+        throw new PolicyError("Unbekannter Anbieter.", 404);
+      const session = (await cookies()).get(sessionCookieName())!.value;
+      const auth = await beginSocial(user.id, tokenHash(session), provider);
+      const response = NextResponse.json(
+        { url: auth.url },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+      response.cookies.set(`studio-social-${provider}`, auth.state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: `/api/social/${provider}`,
+        maxAge: 600,
+      });
+      return response;
+    }
+    if (route === "social/disconnect" && req.method === "POST") {
+      const input = z
+        .object({
+          provider: z.enum(["FACEBOOK", "INSTAGRAM", "LINKEDIN"]),
+          accountId: z.string().min(1).max(200),
+        })
+        .strict()
+        .parse(await jsonBody(req));
+      return NextResponse.json(
+        await disconnectSocial(user.id, input.provider, input.accountId),
+      );
+    }
     if (route === "drive/status" && req.method === "GET")
       return NextResponse.json(await driveStatus(user.id), {
         headers: { "Cache-Control": "no-store" },

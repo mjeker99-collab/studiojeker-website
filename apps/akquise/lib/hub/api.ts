@@ -3,7 +3,6 @@ import {
   duplicateNewsletter,
   duplicateInput,
 } from "./newsletter-library";
-import { marketingConnections } from "./integrations";
 import { transferNewsletter } from "./mailchimp";
 import { z } from "zod";
 import { db } from "../db";
@@ -19,7 +18,7 @@ import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
 const version = z.number().int().positive();
 export async function hubState() {
-  const [campaigns, contents, users, drafts] = await Promise.all([
+  const [campaigns, contents, users, drafts, social] = await Promise.all([
     db.campaign.findMany({
       orderBy: { updatedAt: "desc" },
       include: { _count: { select: { contents: true, drafts: true } } },
@@ -49,6 +48,9 @@ export async function hubState() {
         deliveries: true,
       },
     }),
+    db.socialConnection.findMany({
+      select: { provider: true, expiresAt: true },
+    }),
   ]);
   return {
     campaigns,
@@ -56,7 +58,27 @@ export async function hubState() {
     users,
     drafts,
     integrations: {
-      ...marketingConnections,
+      linkedin: social.some(
+        (c) =>
+          c.provider === "LINKEDIN" &&
+          (!c.expiresAt || c.expiresAt > new Date()),
+      )
+        ? "MEMBER_CONNECTED"
+        : "NOT_CONNECTED",
+      instagram: social.some(
+        (c) =>
+          c.provider === "INSTAGRAM" &&
+          (!c.expiresAt || c.expiresAt > new Date()),
+      )
+        ? "CONNECTED"
+        : "NOT_CONNECTED",
+      facebook: social.some(
+        (c) =>
+          c.provider === "FACEBOOK" &&
+          (!c.expiresAt || c.expiresAt > new Date()),
+      )
+        ? "CONNECTED"
+        : "NOT_CONNECTED",
       mailchimp: process.env.MAILCHIMP_API_KEY ? "CONFIGURED" : "NOT_CONNECTED",
     },
   };
@@ -74,7 +96,10 @@ export async function hubMutation(
   if (path[1] === "newsletter-duplicate" && path.length === 3)
     return duplicateNewsletter(actor, id, duplicateInput.parse(body).version);
   if (path[1] === "mailchimp-transfer" && path.length === 3) {
-    const d = z.object({ version, audienceId: z.string().min(1).max(64) }).strict().parse(body);
+    const d = z
+      .object({ version, audienceId: z.string().min(1).max(64) })
+      .strict()
+      .parse(body);
     return transferNewsletter(actor, id, d.version, d.audienceId);
   }
   if (path[1] === "campaigns" && path.length === 2)
