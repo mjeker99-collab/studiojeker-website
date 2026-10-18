@@ -306,10 +306,14 @@ test("Chat persists turns, isolates series and enforces single execution", async
 });
 test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderungen", async () => {
   await assert.rejects(libraryState("missing"), /Berechtigung/);
+  const previousIds = new Set((await libraryState(nora)).items.map((i) => i.id));
   const saved = await saveLibraryItem(martin, item());
-  await saveLibraryItem(nora, item("VIDEO"));
+  const video = await saveLibraryItem(nora, item("VIDEO"));
   const state = await libraryState(nora);
-  assert.equal(state.items.length, 2);
+  assert.deepEqual(
+    new Set(state.items.filter((i) => !previousIds.has(i.id)).map((i) => i.id)),
+    new Set([saved.id, video.id]),
+  );
   assert.equal(state.items.find((i) => i.id === saved.id)?.text, item().text);
   await assert.rejects(
     saveLibraryItem(martin, { ...item("LINK"), url: "javascript:alert(1)" }),
@@ -320,6 +324,7 @@ test("Text/Links ohne Speicher, Rechte, Persistenz und konkurrierende Änderunge
   );
 });
 test("Bildprüfung, SHA-Dublette auch parallel, Dokumente, geschützter Zugriff und Archiv", async () => {
+  const previousPuts = puts;
   const b = await sharp({
     create: { width: 80, height: 60, channels: 3, background: "#124655" },
   })
@@ -330,7 +335,7 @@ test("Bildprüfung, SHA-Dublette auch parallel, Dokumente, geschützter Zugriff 
     storeAsset(nora, b, "SYNTHETISCH-Kopie.png", "ORIGINAL", undefined, store),
   ]);
   assert.equal(a.id, duplicate.id);
-  assert.equal(puts, 1);
+  assert.equal(puts - previousPuts, 1);
   assert.notEqual(a.reused, duplicate.reused);
   await assert.rejects(readAsset("missing", a.id, store), /Berechtigung/);
   assert.deepEqual((await readAsset(nora, a.id, store)).bytes, b);
