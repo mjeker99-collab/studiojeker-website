@@ -21,7 +21,8 @@
     "user:reset": "tsx --env-file-if-exists=.env scripts/reset-password.ts",
     "data:inventory": "tsx --env-file-if-exists=.env scripts/data-inventory.ts",
     "release:package": "node scripts/package-release.mjs",
-    "storage:check": "tsx --env-file-if-exists=.env scripts/check-storage.ts"
+    "storage:check": "tsx --env-file-if-exists=.env scripts/check-storage.ts",
+    "smtp:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-smtp.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",

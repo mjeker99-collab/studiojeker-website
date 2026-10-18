@@ -25,16 +25,40 @@ test("explicit canonical origin overrides generated hostname", () => {
     "https://akquise.studiojeker.ch",
   );
 });
-test("SMTP remains locked despite changed dashboard settings", () => {
+const smtp = () => ({
+  ...environment(),
+  MAIL_MODE: "test",
+  ENABLE_EMAIL_SENDING: "true",
+  SMTP_CONFIGURATION_CONFIRMED: "true",
+  SMTP_HOST: "jovinus.metanet.ch",
+  SMTP_PORT: "587",
+  SMTP_SECURE: "false",
+  SMTP_USER: "njeker@studiojeker.ch",
+  SMTP_PASSWORD: "synthetic-not-a-real-secret",
+  MAIL_FROM: "njeker@studiojeker.ch",
+  TEST_MAIL_RECIPIENTS: "nora@studiojeker.ch",
+});
+test("Render accepts only a fully configured Metanet test or production mode", () => {
+  assert.equal(configureRender(smtp()).MAIL_MODE, "test");
+  assert.equal(
+    configureRender({ ...smtp(), MAIL_MODE: "production" }).MAIL_MODE,
+    "production",
+  );
   for (const patch of [
-    { MAIL_MODE: "production" },
-    { MAIL_MODE: "test" },
     { MAIL_MODE: "local" },
     { ENABLE_EMAIL_SENDING: "true" },
     { SMTP_CONFIGURATION_CONFIRMED: "true" },
-    { SMTP_PASSWORD: "synthetic-not-a-real-secret" },
   ])
     assert.throws(() => configureRender({ ...environment(), ...patch }));
+  for (const patch of [
+    { SMTP_PASSWORD: "" },
+    { SMTP_HOST: "other.example.org" },
+    { SMTP_SECURE: "" },
+    { SMTP_PORT: "" },
+    { MAIL_FROM: "other@studiojeker.ch" },
+    { TEST_MAIL_RECIPIENTS: "external@example.org" },
+  ])
+    assert.throws(() => configureRender({ ...smtp(), ...patch }));
 });
 test("missing/HTTP origins, demo accounts and weak DB credentials fail closed", () => {
   for (const patch of [
