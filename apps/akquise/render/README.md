@@ -210,14 +210,14 @@ Entwürfe, Freigaben, Audit und Sperrlisten prüfen. RPO innerhalb PITR-Fenster,
 RTO erst nach gemessenem Restore-Test zusagen.
 [Render-Backup-Dokumentation](https://render.com/docs/postgresql-backups).
 
-## E-Mail bleibt aus
+## Metanet SMTP
 
-Der Render-Launcher verweigert Start, Migration und Kontoprovisionierung, wenn
-MAIL_MODE nicht disabled ist, einer der beiden SMTP-Schalter nicht false ist
-oder ein SMTP-Passwort hinterlegt wurde. Kein SMTP-Transport wird hier aktiviert.
-Bestehende Freigabe-, Sperrlisten-, Rechtsprüfungs- und Doppelsendeschutzlogik
-bleibt erhalten. Für späteren Versand wäre ein eigener geprüfter Code-Change
-erforderlich; jetzt keine SMTP-Verbindungsprüfung und keine Test-E-Mail.
+Die Einrichtung und der interne Verbindungstest stehen in
+[METANET_SMTP.md](METANET_SMTP.md). Der Blueprint startet weiterhin mit
+`MAIL_MODE=disabled` und beiden Versand-Schaltern auf `false`. Der Launcher
+akzeptiert einen vollständig konfigurierten Test- oder Produktionsmodus.
+Nachrichten benötigen weiterhin eine konkrete Freigabe, rechtliche Prüfung und
+eine separate Bestätigung in StudioONE. Es gibt keinen automatischen Versand.
 
 ## Prüfung und verbleibende Freigaben
 
@@ -228,4 +228,4 @@ ohne Render-Zugang ist kein providerseitiger Dry-run erfolgt.
 Es fehlen noch: freigegebener Workspace/Billing, tatsächliche Login-Adressen,
 individuelle Passwörter bei Provisionierung, Backup-Ziel/Verantwortlicher,
 Datenübernahmeentscheidung und anschliessende Inbetriebnahme-Freigabe.
-SMTP-Secrets werden für diesen Stand ausdrücklich nicht benötigt.
+SMTP-Secrets werden erst beim bewussten Einrichten des internen Tests benötigt.

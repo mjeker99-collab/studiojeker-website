@@ -39,6 +39,14 @@ services:
         value: jovinus.metanet.ch
       - key: SMTP_USER
         value: njeker@studiojeker.ch
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: TEST_MAIL_RECIPIENTS
+        sync: false
       - key: MAIL_FROM
         value: njeker@studiojeker.ch
       - key: MAILCHIMP_API_KEY

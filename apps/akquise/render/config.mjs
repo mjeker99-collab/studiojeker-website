@@ -4,16 +4,18 @@ import { appOrigin, validateProduction } from "../lib/config.mjs";
 export function configureRender(env = process.env) {
   env.NODE_ENV = "production";
   env.APP_URL ||= env.RENDER_EXTERNAL_URL;
+  if (!["disabled", "test", "production"].includes(env.MAIL_MODE))
+    throw new Error("Render benötigt einen expliziten Versandmodus.");
   if (
-    env.MAIL_MODE !== "disabled" ||
-    env.ENABLE_EMAIL_SENDING !== "false" ||
-    env.SMTP_CONFIGURATION_CONFIRMED !== "false"
+    env.MAIL_MODE === "disabled" &&
+    (env.ENABLE_EMAIL_SENDING !== "false" ||
+      env.SMTP_CONFIGURATION_CONFIRMED !== "false")
   )
     throw new Error(
-      "Render V1 erlaubt ausschliesslich deaktivierten E-Mail-Versand.",
+      "Deaktivierter Render-Versand benötigt beide Schalter auf false.",
     );
-  if (env.SMTP_PASSWORD)
-    throw new Error("Render V1 darf kein SMTP-Passwort enthalten.");
+  // validateProduction checks every SMTP field before the process can start.
+  // Explicit test/production modes remain subject to message-level approvals.
   validateProduction(env);
   env.APP_URL = appOrigin(env);
   return env;
