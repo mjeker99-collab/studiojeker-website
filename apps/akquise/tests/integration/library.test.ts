@@ -307,7 +307,7 @@ test("Chat persists turns, isolates series and enforces single execution", async
     assert.equal(
       state.jobs.filter((j) => j.seriesId === s.id && j.status === "SUCCEEDED")
         .length,
-      3,
+      4,
     );
   } finally {
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
