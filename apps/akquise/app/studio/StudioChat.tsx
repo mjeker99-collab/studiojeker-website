@@ -24,6 +24,9 @@ export default function StudioChat({
   const [seriesId, setSeriesId] = useState("");
   const [campaignId, setCampaignId] = useState("");
   const [message, setMessage] = useState("");
+  const [mediaIntent, setMediaIntent] = useState<"TEXT" | "IMAGE" | "VIDEO">(
+    "TEXT",
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -31,6 +34,7 @@ export default function StudioChat({
   const [driveImages, setDriveImages] = useState<SelectedDriveImage[]>([]);
   const referenceCount = referenceIds.length + driveImages.length;
   const [uploadRights, setUploadRights] = useState(false);
+  const [copiedJob, setCopiedJob] = useState("");
   const images = state.assets.filter((a) =>
     ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
   );
@@ -97,6 +101,7 @@ export default function StudioChat({
         seriesId: id,
         kind: "CHAT",
         message: message.trim(),
+        ...(mediaIntent !== "TEXT" ? { mediaIntent } : {}),
         contentId: null,
         requestKey: crypto.randomUUID(),
         referenceIds,
@@ -126,12 +131,51 @@ export default function StudioChat({
       setBusy(false);
     }
   }
+  async function copyForChatGPT(job: (typeof jobs)[number]) {
+    const input = job.input as {
+      request?: {
+        message?: string;
+        mediaIntent?: "IMAGE" | "VIDEO";
+        referenceIds?: string[];
+      };
+      driveSelection?: { files: SelectedDriveImage[] };
+    };
+    const result = job.result as { reply?: string } | null;
+    if (!input.request?.mediaIntent || !result?.reply) return;
+    const type = input.request.mediaIntent === "IMAGE" ? "Bild" : "Video";
+    const referenceNames = [
+      ...(input.request.referenceIds || []).map(
+        (id) =>
+          state.assets.find((asset) => asset.id === id)?.name || "Bildreferenz",
+      ),
+      ...(input.driveSelection?.files || []).map((file) => file.name),
+    ];
+    const handoff = [
+      `Bitte erstelle ein ${type} für Studiojeker. Entscheide selbst, welches deiner verfügbaren Werkzeuge und Modelle (gegebenenfalls Higgsfield) dafür geeignet ist. Prüfe vor einer kostenpflichtigen Generierung die Credits und frage mich nach der Freigabe. Behaupte keine Ausführung, bevor ein Ergebnis vorliegt.`,
+      `Mein ursprünglicher Auftrag: ${input.request.message}`,
+      `Ausgearbeitetes Briefing aus StudioONE:\n${result.reply}`,
+      ...(referenceNames.length
+        ? [
+            `Die Bildreferenzen (${referenceNames.join(", ")}) füge ich in ChatGPT erneut als Dateien hinzu; sie wurden nicht mit diesem Text übertragen.`,
+          ]
+        : []),
+    ].join("\n\n");
+    try {
+      await navigator.clipboard.writeText(handoff);
+      setCopiedJob(job.id);
+      setError("");
+    } catch {
+      setError(
+        "Kopieren fehlgeschlagen. Bitte den Auftrag und die GPT-Antwort manuell übernehmen.",
+      );
+    }
+  }
   return (
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Mit GPT entwickeln</h2>
       <p>
-        Beschreibe deine Idee. Entwickle Texte, Bildideen und Animationsprompts
-        im Gespräch.
+        Beschreibe deine Idee oder bereite einen Bild- oder Videoauftrag mit GPT
+        vor.
       </p>
       <div className="studio-chat-controls">
         <label>
@@ -199,14 +243,23 @@ export default function StudioChat({
         )}
         {jobs.map((j) => {
           const input = j.input as {
-            request?: { message?: string; referenceIds?: string[] };
+            request?: {
+              message?: string;
+              mediaIntent?: "IMAGE" | "VIDEO";
+              referenceIds?: string[];
+            };
             driveSelection?: { files: SelectedDriveImage[] };
           };
           const result = j.result as { reply?: string } | null;
           return (
             <article key={j.id}>
               <p>
-                <strong>Du</strong>
+                <strong>
+                  Du
+                  {input.request?.mediaIntent
+                    ? ` · ${input.request.mediaIntent === "IMAGE" ? "Bildauftrag" : "Videoauftrag"}`
+                    : ""}
+                </strong>
               </p>
               <p className="studio-chat-message">{input.request?.message}</p>
               {!!input.request?.referenceIds?.length && (
@@ -241,16 +294,40 @@ export default function StudioChat({
                       ? "Antwort wird erstellt …"
                       : "Keine Antwort verfügbar.")}
               </p>
+              {j.status === "SUCCEEDED" &&
+                input.request?.mediaIntent &&
+                result?.reply && (
+                  <div className="studio-chat-handoff">
+                    <button
+                      type="button"
+                      onClick={() => void copyForChatGPT(j)}
+                    >
+                      Auftrag für ChatGPT kopieren
+                    </button>
+                    <a
+                      href="https://chatgpt.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      ChatGPT öffnen ↗
+                    </a>
+                    {copiedJob === j.id && (
+                      <span role="status">Kopiert. In ChatGPT einfügen.</span>
+                    )}
+                  </div>
+                )}
             </article>
           );
         })}
       </div>
       <p className="muted">
-        Bild- und Videoausführung über Higgsfield: noch nicht verbunden. Dieser
-        Chat erstellt Texte und Prompts. Die letzten 12 erfolgreichen
-        Gesprächsrunden werden als Textkontext verwendet. Nur die aktuell
-        ausgewählten Bilder werden übermittelt. Die Bildauswahl bleibt für
-        weitere Nachrichten dieses Gesprächs bestehen, bis du sie entfernst.
+        GPT in StudioONE bereitet Bild- und Videoaufträge vor. Zur Ausführung
+        den Auftrag kopieren und in ChatGPT mit deiner Higgsfield-Verbindung
+        einfügen. Ergebnisse werden noch nicht automatisch in StudioONE
+        übernommen. Die letzten 12 erfolgreichen Gesprächsrunden werden als
+        Textkontext verwendet. Nur die aktuell ausgewählten Bilder werden
+        übermittelt. Die Bildauswahl bleibt für weitere Nachrichten dieses
+        Gesprächs bestehen, bis du sie entfernst.
       </p>
       {!state.config.connected && (
         <p>
@@ -265,6 +342,20 @@ export default function StudioChat({
           void send();
         }}
       >
+        <label htmlFor="studio-chat-intent">Auftrag</label>
+        <select
+          id="studio-chat-intent"
+          value={mediaIntent}
+          disabled={busy}
+          onChange={(e) => {
+            setMediaIntent(e.target.value as "TEXT" | "IMAGE" | "VIDEO");
+            setConfirmed(false);
+          }}
+        >
+          <option value="TEXT">Gespräch / Text</option>
+          <option value="IMAGE">Bild erstellen</option>
+          <option value="VIDEO">Video erstellen</option>
+        </select>
         <label htmlFor="studio-chat-message">Deine Nachricht</label>
         <textarea
           id="studio-chat-message"
@@ -352,7 +443,11 @@ export default function StudioChat({
             busy || !confirmed || !message.trim() || !state.config.connected
           }
         >
-          {busy ? "GPT antwortet …" : "An GPT senden"}
+          {busy
+            ? "GPT antwortet …"
+            : mediaIntent === "TEXT"
+              ? "An GPT senden"
+              : "Auftrag mit GPT vorbereiten"}
         </button>
       </form>
     </section>

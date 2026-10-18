@@ -6,13 +6,15 @@ Bis zu vier ausdrücklich ausgewählte Bibliotheksbilder werden an der aktuellen
 
 Der Dialog verwendet die vorhandenen StudioJob-Datensätze (kind CHAT). Keine Datenbankmigration. Aufträge durchlaufen dieselben serverseitigen Rollen-, Budget-, Tageslimit- und Einmalstart-Prüfungen wie andere KI-Aufträge. Antworten erscheinen im Gespräch und werden nicht automatisch als freigegebene Inhalte übernommen.
 
+Bild- und Videoaufträge lassen sich im GPT-Dialog ausdrücklich markieren. GPT formuliert ein Produktionsbriefing; nach erfolgreicher Antwort kann der Nutzer einen Übergabetext kopieren und ChatGPT öffnen. Dort wählt GPT mit den im eigenen ChatGPT-Konto verfügbaren Werkzeugen gegebenenfalls Higgsfield und holt vor kostenpflichtiger Generierung die Freigabe ein. Ausgewählte Bildreferenzen aus StudioONE werden **nicht** mit dem Text kopiert und müssen in ChatGPT erneut angehängt werden. Keine automatische Auftragserteilung, Generierung oder Rückübertragung in die StudioONE-Bibliothek.
+
 ## Aktivierung
 
 Vorhandene serverseitige Konfiguration: OPENAI_API_KEY, CONTENT_AI_ENABLED=true, CONTENT_TEXT_MODEL. Das Modell muss für den verwendeten API-Account verfügbar sein. Die Budgetreservierung ist kein garantierter Preis. Keine Schlüssel im Browser oder Repository hinterlegen.
 
 ## Noch offen
 
-Der Chat analysiert ausgewählte Bilder und formuliert Texte, Ideen und Produktionsprompts. Er führt noch keine Bild- oder Videowerkzeuge aus. Für die vollständige dialogbasierte Produktion fehlen werkzeuggestützte Aufträge mit Vorschau, Freigabe und Rückgabe ins Gespräch.
+Der Chat analysiert ausgewählte Bilder und formuliert Texte, Ideen und Produktionsprompts. Er führt noch keine Bild- oder Videowerkzeuge aus. Für die vollständige dialogbasierte Produktion innerhalb von StudioONE fehlen OAuth-Verbindung, werkzeuggestützte Aufträge mit Vorschau, Freigabe und Rückgabe ins Gespräch.
 
 Am 17.10.2026 wurde StudioONE über den veröffentlichten Dynamic-Registration-Endpunkt registriert. Öffentliche Client-ID: B7qdeQzsJZwc4HOB. Callback: https://studiojeker-akquise.onrender.com/api/studio/higgsfield/callback. Dies bestätigt nur die Registrierung, KEINE Kontoverbindung. Callback, PKCE/State, verschlüsselte Tokenspeicherung, Erneuerung und Generierungsadapter sind noch zu implementieren. Keine bestehenden ChatGPT-Tokens übernehmen.
 
