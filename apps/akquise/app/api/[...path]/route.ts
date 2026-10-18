@@ -30,6 +30,7 @@ import {
   audit,
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
+import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
 import {
   beginDrive,
@@ -196,6 +197,10 @@ async function handler(
     }
     if (route === "hub/state" && req.method === "GET")
       return NextResponse.json(await hubState());
+    if (route === "hub/mailchimp/audiences" && req.method === "GET")
+      return NextResponse.json(await mailchimpAudiences(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
       const token = jar.get(sessionCookieName())?.value;
