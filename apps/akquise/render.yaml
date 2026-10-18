@@ -41,6 +41,8 @@ services:
         value: njeker@studiojeker.ch
       - key: MAIL_FROM
         value: njeker@studiojeker.ch
+      - key: MAILCHIMP_API_KEY
+        sync: false
       - key: DATABASE_CONNECTION_LIMIT
         value: "3"
       - key: CONTENT_AI_ENABLED

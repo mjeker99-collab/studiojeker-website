@@ -4,6 +4,7 @@ import {
   duplicateInput,
 } from "./newsletter-library";
 import { marketingConnections } from "./integrations";
+import { transferNewsletter } from "./mailchimp";
 import { z } from "zod";
 import { db } from "../db";
 import {
@@ -33,6 +34,7 @@ export async function hubState() {
         },
         publications: true,
         exports: { orderBy: { createdAt: "desc" } },
+        mailchimpTransfers: { orderBy: { createdAt: "desc" } },
       },
     }),
     db.user.findMany({
@@ -53,7 +55,10 @@ export async function hubState() {
     contents,
     users,
     drafts,
-    integrations: marketingConnections,
+    integrations: {
+      ...marketingConnections,
+      mailchimp: process.env.MAILCHIMP_API_KEY ? "CONFIGURED" : "NOT_CONNECTED",
+    },
   };
 }
 export async function hubMutation(
@@ -68,6 +73,10 @@ export async function hubMutation(
   }
   if (path[1] === "newsletter-duplicate" && path.length === 3)
     return duplicateNewsletter(actor, id, duplicateInput.parse(body).version);
+  if (path[1] === "mailchimp-transfer" && path.length === 3) {
+    const d = z.object({ version, audienceId: z.string().min(1).max(64) }).strict().parse(body);
+    return transferNewsletter(actor, id, d.version, d.audienceId);
+  }
   if (path[1] === "campaigns" && path.length === 2)
     return saveCampaign(actor, body);
   if (path[1] === "contents" && path.length === 2)

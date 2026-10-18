@@ -262,6 +262,7 @@ model MarketingContent {
   approvals      MarketingApproval[]
   publications   ManualPublication[]
   exports        NewsletterExport[]
+  mailchimpTransfers MailchimpTransfer[]
 
   @@index([campaignId, scheduledAt])
 }
@@ -313,6 +314,25 @@ model NewsletterExport {
   userId    String
   format    String           @default("HTML_AND_TEXT")
   createdAt DateTime         @default(now())
+}
+
+// A version can be transferred once. UNKNOWN requires manual reconciliation
+// because a timed-out create request may have succeeded remotely.
+model MailchimpTransfer {
+  id         String           @id @default(cuid())
+  contentId  String
+  content    MarketingContent @relation(fields: [contentId], references: [id])
+  version    Int
+  hash       String
+  audienceId String
+  userId     String
+  status     String           @default("PENDING")
+  remoteId   String?
+  webId      Int?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([contentId, version])
 }
 
 // Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.
