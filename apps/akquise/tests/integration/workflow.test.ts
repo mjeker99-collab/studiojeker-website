@@ -280,6 +280,53 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
   );
 });
 
+test("Import verarbeitet eine Masterliste gebündelt und zählt beide Dublettenarten", async () => {
+  const rows = Array.from({ length: 64 }, (_, i) => ({
+    organisation: `Synthetische Importfirma ${i}`,
+    firstName: "Anna",
+    lastName: `Beispiel ${i}`,
+    email: `masterliste.${i}@example.test`,
+    confidence: "UNCONFIRMED" as const,
+    verifiedAt: "" as const,
+    newsletterConsent: false,
+    newsletterEvidence: "",
+    legalCategory: "UNASSESSED" as const,
+    publicAuthority: false,
+    industry: "",
+    region: "",
+    position: "",
+    website: "",
+    sourceUrl: "",
+    hook: "",
+    service: "",
+    owner: "",
+    notes: "",
+  }));
+  await saveContact(martin, {
+    ...input("existing-email"),
+    email: rows[0].email,
+  });
+  await saveContact(martin, {
+    ...input("existing-person"),
+    organisation: rows[1].organisation,
+    firstName: rows[1].firstName,
+    lastName: rows[1].lastName,
+  });
+  assert.deepEqual(await importContacts(martin, rows), {
+    imported: 62,
+    duplicates: 2,
+  });
+  assert.deepEqual(await importContacts(nora, rows), {
+    imported: 0,
+    duplicates: 64,
+  });
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { email: rows[0].email } }))
+      .status,
+    "VERIFIED",
+  );
+});
+
 async function withMockSmtp(
   mode: "test" | "production",
   run: () => Promise<void>,
