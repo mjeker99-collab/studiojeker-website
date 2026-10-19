@@ -2,7 +2,7 @@
 
 ## Bedienung
 
-Website & CMS öffnet das bestehende Studio (Projekt `tgx6e6jg`, Dataset `production`). Der Editor wird in einem eigenen Tab geöffnet. Der gehostete Studio-Endpunkt leitet zum Sanity Dashboard weiter und erlaubt keine Fremd-Frames (am 18.10.2026 geprüft). Sanity verwendet die persönliche Sanity-Anmeldung; StudioONE-Zugang erteilt keine Sanity-Berechtigung. Die zentrale Übersicht und der Import bleiben in StudioONE; dies ist keine lokal eingebettete Kopie des Sanity Editors.
+Website öffnet das bestehende Studio (Projekt `tgx6e6jg`, Dataset `production`). Der Editor wird in einem eigenen Tab geöffnet. Der gehostete Studio-Endpunkt leitet zum Sanity Dashboard weiter und erlaubt keine Fremd-Frames (am 18.10.2026 geprüft). Sanity verwendet die persönliche Sanity-Anmeldung; StudioONE-Zugang erteilt keine Sanity-Berechtigung. Website enthält ausschliesslich Website-Zugänge und lädt keine Newsletter-Daten. Die Newsletter-Übersicht und der Import sind ausschliesslich unter Newsletter in StudioONE; dies ist keine lokal eingebettete Kopie des Sanity Editors.
 
 Die Website bleibt über bestehende Schemas und den bisherigen Deploymentweg bearbeitbar. StudioONE veröffentlicht keine Website-Builds. In Sanity kommt der Bereich Newsletter mit den drei vorhandenen Layouts hinzu. Titel, Betreff, Vorschautext, Zielgruppe, Texte, Bilder und Links sind bearbeitbar. Logo, HTML-Struktur, geschützte Fusszeile und Mailchimp-Platzhalter bleiben im bewährten Renderer. Ein gewähltes Sanity-Bild hat Vorrang vor einer URL; für eine externe URL das ausgewählte Bild entfernen. Sanity-Bilder verwenden derzeit das Original, nicht den Hotspot-Ausschnitt.
 
@@ -39,3 +39,7 @@ Die bestehende CSP bleibt unverändert; API-Aufrufe gehen serverseitig zum festg
 - Datenbanktest für Berechtigung, veraltete Revisionen, konkurrierende Importe und neue Entwürfe ergänzt. Lokal nicht ausgeführt: PostgreSQL kann nicht als Root initialisiert werden und diese Laufzeit bildet keine andere Benutzer-ID ab.
 - Browserprüfung für Desktop/iPad/Mobil, Barrierefreiheit, Importstatus und Verbindungsfehler ergänzt. Lokal nicht ausgeführt: kein Chromium installiert, Browserdownload liefert kein gültiges Archiv.
 - Persönlicher Sanity-Login, echte redaktionelle Importprobe und E-Mail-Client-Prüfung bleiben nach Bereitstellung offen. Keine Produktionsinhalte verändert und kein Versand ausgelöst.
+
+## Diagnose der Bereitstellung
+
+Der Sanity-Workflow `.github/workflows/deploy-sanity-studio.yml` läuft automatisch nur bei Änderungen unter `studio/**` auf `main`. Der StudioONE-Branch `feat/akquise-production-readiness` enthält die Newsletter-Schemas; ein Render-Deployment dieses Branches aktualisiert den Sanity-Editor nicht. Fehlt dort Newsletter, den Workflow manuell mit diesem Branch ausführen (mit vorhandenem `SANITY_AUTH_TOKEN`) oder die Sanity-Änderungen samt `apps/akquise/templates/newsletter-cms.json` gezielt nach main übernehmen. Danach die Editor-Ansicht und eine Testausgabe prüfen. Eine leere Importliste allein beweist kein fehlendes Schema.

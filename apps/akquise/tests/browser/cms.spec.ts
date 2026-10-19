@@ -6,6 +6,7 @@ test("CMS overview, responsive controls, import status and provider failure", as
 }) => {
   let imported = false;
   let failed = false;
+  let cmsRequests = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/state")
@@ -34,7 +35,8 @@ test("CMS overview, responsive controls, import status and provider failure", as
           integrations: {},
         },
       });
-    if (path === "/api/cms/state")
+    if (path === "/api/cms/state") {
+      cmsRequests++;
       return route.fulfill(
         failed
           ? {
@@ -56,6 +58,7 @@ test("CMS overview, responsive controls, import status and provider failure", as
               },
             },
       );
+    }
     if (path === "/api/cms/import") {
       expect(route.request().postDataJSON()).toEqual({
         id: "synthetic",
@@ -70,7 +73,25 @@ test("CMS overview, responsive controls, import status and provider failure", as
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Website & CMS/ })
+    .getByRole("button", { name: /Website/ })
+    .click();
+  const website = page.getByRole("region", { name: "Website-Verwaltung" });
+  await expect(
+    website.getByRole("heading", { name: "Website-Inhalte verwalten" }),
+  ).toBeVisible();
+  await expect(
+    website.getByRole("link", { name: "Website bearbeiten ↗" }),
+  ).toHaveAttribute("target", "_blank");
+  await expect(
+    website.getByRole("button", { name: "Als neuen Entwurf übernehmen" }),
+  ).toHaveCount(0);
+  expect(cmsRequests).toBe(0);
+  expect(
+    (await new AxeBuilder({ page }).include(".cms-panel").analyze()).violations,
+  ).toEqual([]);
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Newsletter/ })
     .click();
   const panel = page.getByRole("region", { name: "Sanity-Verwaltung" });
   await expect(
@@ -99,7 +120,7 @@ test("CMS overview, responsive controls, import status and provider failure", as
     .click();
   await expect(panel.getByRole("status")).toContainText("bereits übernommen");
   await expect(
-    panel.getByRole("link", { name: "Website in Sanity bearbeiten ↗" }),
+    panel.getByRole("link", { name: "Newsletter in Sanity bearbeiten ↗" }),
   ).toHaveAttribute("target", "_blank");
   failed = true;
   await panel

@@ -5,13 +5,9 @@ import type { cmsState } from "@/lib/cms/service";
 type State = Awaited<ReturnType<typeof cmsState>>;
 const studio = "https://studiojeker.sanity.studio/structure";
 export default function Cms({
-  openNewsletters,
   onImported,
-  compact = false,
 }: {
-  openNewsletters?: () => void;
   onImported?: () => Promise<void>;
-  compact?: boolean;
 }) {
   const [data, setData] = useState<State | null>(null);
   const [error, setError] = useState("");
@@ -70,27 +66,9 @@ export default function Cms({
   }
   return (
     <section className="panel cms-panel" aria-label="Sanity-Verwaltung">
-      <h2>{compact ? "Newsletter aus Sanity" : "Website & CMS"}</h2>
-      <p>
-        {compact
-          ? "Vorlagen in Sanity bearbeiten und bereitgestellte Ausgaben als Entwurf übernehmen."
-          : "Website und Newsletter mit euren bestehenden Sanity-Inhalten verwalten."}
-      </p>
+      <h2>Newsletter aus Sanity</h2>
+      <p>Ausgaben in Sanity bearbeiten und hier als Entwurf übernehmen.</p>
       <div className="actions">
-        {!compact && (
-          <>
-            <a href={studio} target="_blank" rel="noopener noreferrer">
-              Website in Sanity bearbeiten ↗
-            </a>
-            <a
-              href="https://studiojeker.ch"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Website ansehen ↗
-            </a>
-          </>
-        )}
         <a
           href={studio + "/newsletter"}
           target="_blank"
@@ -99,12 +77,6 @@ export default function Cms({
           Newsletter in Sanity bearbeiten ↗
         </a>
       </div>
-      {!compact && (
-        <p className="muted">
-          Sanity verwendet eure persönliche Sanity-Anmeldung. Website-Änderungen
-          werden über den bestehenden Website-Deploymentweg sichtbar.
-        </p>
-      )}
       <h3>In Sanity bereitgestellte Newsletter</h3>
       <p>
         In Sanity mit «Publish» bereitstellen. Danach hier übernehmen, unter
@@ -114,11 +86,6 @@ export default function Cms({
         <button className="secondary" disabled={busy} onClick={refresh}>
           Sanity-Liste aktualisieren
         </button>
-        {openNewsletters && (
-          <button className="secondary" onClick={openNewsletters}>
-            StudioONE-Newsletter öffnen
-          </button>
-        )}
       </div>
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
