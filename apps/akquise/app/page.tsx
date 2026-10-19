@@ -889,6 +889,32 @@ export default function App() {
                     Bestehende Dubletten werden übersprungen. Keine
                     Statusübernahme, keine Versandwarteschlange.
                   </p>
+                  <h3>Interne Testmail</h3>
+                  <p>
+                    Sendet einen neutralen Verbindungstest ausschliesslich an
+                    njeker@studiojeker.ch. Es wird kein Akquisekontakt
+                    freigegeben.
+                  </p>
+                  <button
+                    disabled={
+                      busy || data.mailMode !== "test" || !data.externalSending
+                    }
+                    onClick={() =>
+                      action(async () => {
+                        const result = await post("smtp/test", {
+                          confirmed: true,
+                          requestId: crypto.randomUUID(),
+                        });
+                        return result.message;
+                      })
+                    }
+                  >
+                    Testmail an njeker@studiojeker.ch senden
+                  </button>
+                  <p className="muted">
+                    Benötigt den internen SMTP-Testmodus. Höchstens ein Test pro
+                    Minute.
+                  </p>
                   <h3>Berechtigte Konten</h3>
                   {data.users.map((u) => (
                     <p key={u.id}>{u.name} · Verwaltung & Freigabe</p>

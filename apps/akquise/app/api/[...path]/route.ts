@@ -1,4 +1,5 @@
 import { conceptState, conceptMutation } from "@/lib/concepts/service";
+import { sendInternalSmtpTest } from "@/lib/smtp-test";
 import { conceptInput } from "@/lib/concepts/input";
 import { conceptDocx, conceptHtml } from "@/lib/concepts/export";
 import { cmsState, importSanityNewsletter } from "@/lib/cms/service";
@@ -421,6 +422,8 @@ async function handler(
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
+    if (route === "smtp/test")
+      return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "concepts")
       return NextResponse.json(await conceptMutation(user.id, path, body));
     if (route === "customers")
