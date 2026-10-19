@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import {
   verifiedContact,
   legalAllowed,
@@ -149,4 +150,76 @@ test("XLSX akzeptiert Text und blockiert Formeln", async () => {
     parseImport(Buffer.from(await book.xlsx.writeBuffer()), "test.xlsx"),
     /Formeln/,
   );
+});
+
+test("Masterliste mit mehreren Blättern und x:-Namespace importiert nur Kontakte", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("Masterkontakte");
+  sheet.addRow([
+    "Person",
+    "Funktion",
+    "Organisation",
+    "Ort",
+    "Direkte E-Mail",
+    "Prüfstatus",
+    "Prüfdatum",
+    "Priorität",
+    "Kontaktrolle",
+    "Kontaktstrategie",
+    "Studiojeker-Anknüpfungspunkt",
+    "Quellen-URL",
+    "Newsletter-Einwilligung",
+    "Akquise-Status",
+    "E-Mail-Betreff",
+    "E-Mail-Entwurf",
+  ]);
+  sheet.addRow([
+    "Anna Beispiel",
+    "Leitung",
+    "Beispiel AG",
+    "Solothurn",
+    "anna@example.test",
+    "Aktuell offiziell",
+    "2026-10-15",
+    "A",
+    "Leitung",
+    "Erstkontakt",
+    "Synthetischer Anknüpfungspunkt",
+    "https://example.test/quelle",
+    "Nicht belegt",
+    "Nicht kontaktiert",
+    "Betreff",
+    "Entwurf",
+  ]);
+  sheet.addRow(["Ohne E-Mail", "", "Zweite AG", "Solothurn"]);
+  book.addWorksheet("Übersicht").addRow(["Nur Übersicht"]);
+  const zip = await JSZip.loadAsync(await book.xlsx.writeBuffer());
+  for (const name of Object.keys(zip.files)) {
+    if (!name.startsWith("xl/") || !name.endsWith(".xml")) continue;
+    const xml = await zip.file(name)!.async("string");
+    if (
+      !xml.includes(
+        'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+      )
+    )
+      continue;
+    zip.file(
+      name,
+      xml
+        .replace(/<(\/?)([A-Za-z][\w.-]*)(?=[\s/>])/g, "<$1x:$2")
+        .replaceAll(
+          'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+          'xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+        ),
+    );
+  }
+  const rows = await parseImport(
+    await zip.generateAsync({ type: "nodebuffer" }),
+    "master.xlsx",
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].email, "anna@example.test");
+  assert.equal(rows[0].newsletterConsent, false);
+  assert.equal(rows[0].confidence, "UNCONFIRMED");
+  assert.match(rows[0].notes, /Nicht belegt/);
 });
