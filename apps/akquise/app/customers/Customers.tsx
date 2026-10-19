@@ -1,5 +1,11 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
+import {
+  customerKnowledgeSchema,
+  emptyKnowledge,
+  knowledgeFields,
+  type CustomerKnowledge,
+} from "@/lib/customer-knowledge";
 
 type Customer = {
   id: string;
@@ -8,13 +14,20 @@ type Customer = {
   contactName: string;
   contactEmail: string;
   notes: string;
+  knowledge: CustomerKnowledge;
   status: "ACTIVE" | "INACTIVE";
   revision: number;
   _count: { campaigns: number; series: number };
 };
 type Form = Pick<
   Customer,
-  "name" | "website" | "contactName" | "contactEmail" | "notes" | "status"
+  | "name"
+  | "website"
+  | "contactName"
+  | "contactEmail"
+  | "notes"
+  | "status"
+  | "knowledge"
 >;
 const blank: Form = {
   name: "",
@@ -23,6 +36,7 @@ const blank: Form = {
   contactEmail: "",
   notes: "",
   status: "ACTIVE",
+  knowledge: { ...emptyKnowledge },
 };
 
 export default function Customers() {
@@ -175,6 +189,32 @@ export default function Customers() {
               <option value="INACTIVE">Inaktiv</option>
             </select>
           </label>
+          <fieldset disabled={busy} style={{ minWidth: 0 }}>
+            <legend>Unternehmenswissen für die KI</legend>
+            <p>
+              Diese Angaben werden im Konzeptgespräch nach deiner
+              Übermittlungsbestätigung verwendet. Fehlende Angaben bleiben
+              offen. Gestaltungsregeln beschreiben Vorgaben; sie ersetzen keine
+              Logo- oder Schriftdateien.
+            </p>
+            {knowledgeFields.map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <textarea
+                  aria-label={label}
+                  rows={3}
+                  maxLength={2000}
+                  value={form.knowledge[key]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      knowledge: { ...form.knowledge, [key]: e.target.value },
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </fieldset>
           <button disabled={busy}>Speichern</button>{" "}
           <button
             type="button"
@@ -219,6 +259,7 @@ export default function Customers() {
                   contactEmail: c.contactEmail,
                   notes: c.notes,
                   status: c.status,
+                  knowledge: customerKnowledgeSchema.parse(c.knowledge ?? {}),
                 });
               }}
             >

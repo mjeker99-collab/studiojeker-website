@@ -6,6 +6,7 @@ import {
 } from "../drive/service";
 import { campaignConcept } from "../concepts/service";
 import { conceptInput } from "../concepts/input";
+import { customerKnowledgeContext } from "../customer-knowledge";
 import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -386,16 +387,31 @@ export async function queueJob(actor: string, raw: unknown) {
     const conceptPayload = series.concept
       ? conceptInput.parse(series.concept.versions[0].payload)
       : null;
+    const conceptCustomer = conceptPayload?.customerId
+      ? await tx.customer.findFirst({
+          where: {
+            id: conceptPayload.customerId,
+            organizationId: ORG,
+            status: "ACTIVE",
+          },
+          select: {
+            name: true,
+            website: true,
+            notes: true,
+            revision: true,
+            knowledge: true,
+          },
+        })
+      : null;
+    if (conceptPayload?.customerId && !conceptCustomer)
+      throw new PolicyError("Kunde nicht zugänglich oder inaktiv.", 403);
     const strategy = conceptPayload
       ? {
           mode: "STRATEGY",
           version: series.concept!.version,
           document: conceptPayload,
-          customer: conceptPayload.customerId
-            ? await tx.customer.findFirst({
-                where: { id: conceptPayload.customerId, organizationId: ORG },
-                select: { name: true, website: true, notes: true },
-              })
+          customer: conceptCustomer
+            ? customerKnowledgeContext(conceptCustomer)
             : { name: "Studiojeker" },
         }
       : undefined;

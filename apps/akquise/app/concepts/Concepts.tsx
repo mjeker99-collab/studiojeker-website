@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { agencyStarters } from "@/lib/concepts/agency";
 import {
   chapters,
   emptyConcept,
@@ -238,8 +239,34 @@ export default function Concepts({
               <h2 id="concept-chat-title">Mit GPT konzipieren</h2>
               <p>
                 GPT fragt nach, prüft Annahmen und entwickelt mit dir einzelne
-                Kapitel.
+                Kapitel. Hinterlege Angebote, Zielgruppen und Markenregeln im
+                Kundenprofil, damit GPT das passende Unternehmenswissen erhält.
               </p>
+              <div
+                className="studio-chat-controls"
+                aria-label="Einstieg in die Konzeptarbeit"
+              >
+                {agencyStarters.map((starter) => (
+                  <button
+                    key={starter.label}
+                    type="button"
+                    className="secondary"
+                    disabled={busy || pending}
+                    onClick={() => {
+                      if (
+                        message.trim() &&
+                        !window.confirm(
+                          "Ungesendete Nachricht durch den gewählten Einstieg ersetzen?",
+                        )
+                      )
+                        return;
+                      setMessage(starter.message);
+                    }}
+                  >
+                    {starter.label}
+                  </button>
+                ))}
+              </div>
               <div
                 className="studio-chat-transcript"
                 role="log"
@@ -359,6 +386,7 @@ export default function Concepts({
                 <label>
                   Deine Nachricht
                   <textarea
+                    aria-label="Deine Nachricht"
                     rows={5}
                     maxLength={4000}
                     value={message}
@@ -373,9 +401,10 @@ export default function Concepts({
                     disabled={busy}
                     onChange={(e) => setConsent(e.target.checked)}
                   />
-                  Konzept, Kundenname, Website, Kundennotizen und Gespräch an
-                  OpenAI übermitteln. Budgetreservierung: USD{" "}
-                  {index.config.textReserve.toFixed(2)} pro Nachricht.
+                  Konzept, Kundenname, Website, Kundennotizen,
+                  Unternehmenswissen und Gespräch an OpenAI übermitteln.
+                  Budgetreservierung: USD {index.config.textReserve.toFixed(2)}{" "}
+                  pro Nachricht.
                 </label>
                 {(!doc || dirty) && (
                   <p>
@@ -503,6 +532,7 @@ export default function Concepts({
                     <label key={key}>
                       {title}
                       <textarea
+                        aria-label={title}
                         rows={5}
                         maxLength={4000}
                         value={form[key]}

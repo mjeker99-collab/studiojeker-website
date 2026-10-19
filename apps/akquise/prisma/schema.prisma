@@ -361,6 +361,7 @@ model StudioOrganization {
 
 // Internal customer record. Customers are never User accounts and cannot sign in.
 model Customer {
+  knowledge      Json               @default("{}")
   id             String             @id @default(cuid())
   organizationId String             @default("studiojeker")
   organization   StudioOrganization @relation(fields: [organizationId], references: [id])
