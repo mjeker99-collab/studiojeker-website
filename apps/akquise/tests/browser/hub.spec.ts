@@ -197,9 +197,11 @@ test("Newsletter: Freigegebene Version exportieren, ohne Übertragung oder Versa
   expect((await download).suggestedFilename()).toMatch(
     /newsletter-.*\.(html|txt)$/,
   );
-  await expect(page.getByRole("status")).toContainText(
-    "Nichts an Mailchimp übertragen",
-  );
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Nichts an Mailchimp übertragen" }),
+  ).toContainText("Nichts an Mailchimp übertragen");
   const state = await (await page.request.get("/api/hub/state")).json();
   expect(state.integrations.mailchimp).toBe("NOT_CONNECTED");
   expect(

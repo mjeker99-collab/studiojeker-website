@@ -23,9 +23,11 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await page
     .getByRole("button", { name: "Bestehende Ausgaben importieren" })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "Vorhandene Newsletter übernommen",
-  );
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Vorhandene Newsletter übernommen" }),
+  ).toContainText("Vorhandene Newsletter übernommen");
   const source = page.locator("article[data-content-id]").filter({
     has: page.getByRole("heading", {
       name: "Newsletter 02 · Visibility",
@@ -49,7 +51,9 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await editor
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("Version gespeichert");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Version gespeichert" }),
+  ).toContainText("Version gespeichert");
   const iframe = editor.frameLocator(
     'iframe[title="Newsletter HTML-Vorschau"]',
   );
