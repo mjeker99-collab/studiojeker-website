@@ -580,7 +580,11 @@ export default function Concepts({
                       {current.handoffCampaignId ? (
                         <>
                           <p>Diese Version wurde bereits übernommen.</p>
-                          <button className="secondary" onClick={openCampaigns}>
+                          <button
+                            className="secondary"
+                            disabled={busy || dirty}
+                            onClick={openCampaigns}
+                          >
                             Kampagnen öffnen
                           </button>
                         </>

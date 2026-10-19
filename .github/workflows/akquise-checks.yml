@@ -59,6 +59,14 @@ jobs:
             sleep 1
           done
           npm run test:browser
+      - name: Save synthetic concept previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: concept-previews
+          path: apps/akquise/.local/concept-screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Build production images (do not run or publish)
         run: |
           docker build --target runtime -t akquise-runtime-check .

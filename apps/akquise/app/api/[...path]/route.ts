@@ -86,9 +86,9 @@ async function boundedBody(req: NextRequest, max: number) {
   }
   return Buffer.concat(chunks);
 }
-async function jsonBody(req: NextRequest) {
+async function jsonBody(req: NextRequest, max = 64000) {
   try {
-    return JSON.parse((await boundedBody(req, 64000)).toString("utf8"));
+    return JSON.parse((await boundedBody(req, max)).toString("utf8"));
   } catch (e) {
     if (e instanceof PolicyError) throw e;
     throw new PolicyError("Ungültiges JSON.");
@@ -417,9 +417,10 @@ async function handler(
       const rows = await readSheetContacts();
       return NextResponse.json(await importContacts(user.id, rows));
     }
-    if (Number(req.headers.get("content-length")) > 64000)
+    const maxJsonBytes = path[0] === "concepts" ? 256000 : 64000;
+    if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
-    const body: unknown = await jsonBody(req);
+    const body: unknown = await jsonBody(req, maxJsonBytes);
     if (path[0] === "concepts")
       return NextResponse.json(await conceptMutation(user.id, path, body));
     if (route === "customers")
