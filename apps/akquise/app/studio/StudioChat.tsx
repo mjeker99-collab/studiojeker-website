@@ -17,13 +17,15 @@ async function post(path: string, body: unknown) {
 export default function StudioChat({
   state,
   refresh,
+  initialRequest,
 }: {
   state: State;
   refresh: () => Promise<void>;
+  initialRequest?: { seriesId: string; message: string };
 }) {
-  const [seriesId, setSeriesId] = useState("");
+  const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialRequest?.message || "");
   const [mediaIntent, setMediaIntent] = useState<"TEXT" | "IMAGE" | "VIDEO">(
     "TEXT",
   );

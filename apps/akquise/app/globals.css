@@ -1086,6 +1086,8 @@ pre {
   margin: 20px 0;
   scroll-margin-top: 20px;
 }
+.graphics-editor { border-top: 1px solid #b9c8cc; margin: 20px 0; padding-top: 16px; min-width: 0; }
+.graphics-description { display: block; font-weight: normal; margin-top: 6px; }
 .hub-editor .section-head {
   padding: 0 0 18px;
   gap: 12px;

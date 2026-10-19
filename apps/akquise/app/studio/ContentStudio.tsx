@@ -1,5 +1,6 @@
 "use client";
 import StudioChat from "./StudioChat";
+import GraphicsEditor from "./GraphicsEditor";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
 import {
   LibraryPicker,
@@ -78,6 +79,11 @@ export default function ContentStudio({ userId }: { userId: string }) {
     [format, setFormat] = useState<StudioFormat>("1:1"),
     [encoding, setEncoding] = useState<"png" | "jpg">("png");
   const [picking, setPicking] = useState<"motif" | "reference" | null>(null);
+  const [designRequest, setDesignRequest] = useState<{
+    id: number;
+    seriesId: string;
+    message: string;
+  }>();
   const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
     editing &&
@@ -228,7 +234,12 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
-      <StudioChat state={state} refresh={() => refresh()} />
+      <StudioChat
+        key={designRequest?.id || 0}
+        state={state}
+        refresh={() => refresh()}
+        initialRequest={designRequest}
+      />
       {picking && (
         <LibraryPicker
           imagesOnly={picking === "motif"}
@@ -1050,6 +1061,25 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   </label>
                 ))}
               </div>
+              <GraphicsEditor
+                snapshot={snapshot}
+                assets={imageAssets}
+                onChange={studio}
+                onAdvice={(message) => {
+                  if (
+                    !window.confirm(
+                      "Gestaltungsberatung im KI-Chat vorbereiten? Eine dort noch nicht gesendete Nachricht und deren Bildauswahl werden ersetzt.",
+                    )
+                  )
+                    return;
+                  setDesignRequest({ id: Date.now(), seriesId, message });
+                  setTimeout(
+                    () =>
+                      document.getElementById("studio-chat-message")?.focus(),
+                    0,
+                  );
+                }}
+              />
               <fieldset>
                 <legend>Ebenen und Formate</legend>
                 {(

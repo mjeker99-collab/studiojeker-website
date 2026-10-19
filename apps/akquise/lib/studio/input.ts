@@ -1,5 +1,6 @@
 import { brandInput } from "../library/input";
 import { z } from "zod";
+import { graphicsSchema } from "./graphics";
 export const ORG = "studiojeker";
 export const studioChannels = ["LINKEDIN", "INSTAGRAM", "FACEBOOK"] as const;
 export const formats = ["1:1", "4:5", "9:16"] as const;
@@ -62,6 +63,7 @@ export const studioSnapshot = z
     showLogo: z.boolean(),
     showClaim: z.boolean(),
     showHeadline: z.boolean(),
+    graphics: graphicsSchema.optional(),
     source: z.enum(["OWN", "AI"]),
   })
   .strict();

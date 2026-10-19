@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { mkdirSync, readFileSync } from "node:fs";
 import sharp from "sharp";
+import AxeBuilder from "@axe-core/playwright";
 test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entwertung", async ({
   page,
 }) => {
@@ -97,6 +98,15 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByLabel("Eigenes oder generiertes Motiv")
     .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
+  const graphics = page.getByRole("region", {
+    name: "Grafikstudio",
+    exact: true,
+  });
+  await graphics.getByRole("button", { name: /^Statement/ }).click();
+  await graphics.getByLabel("Logo · Links (%)", { exact: true }).fill("61");
+  await graphics
+    .getByLabel("Logo für diese Grafik")
+    .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
@@ -119,6 +129,12 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await expect(
     page.getByRole("textbox", { name: "Headline", exact: true }),
   ).toHaveValue("TESTINHALT – Sichtbarkeit planen");
+  await expect(
+    graphics.getByLabel("Logo · Links (%)", { exact: true }),
+  ).toHaveValue("61");
+  await expect(graphics.getByLabel("Textfläche beginnt bei (%)")).toHaveValue(
+    "45",
+  );
   await expect(
     page.getByRole("button", { name: "Ideen & Kanaltexte erstellen" }),
   ).toBeDisabled();
@@ -184,4 +200,16 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
       fullPage: true,
     });
   }
+  expect(
+    (await new AxeBuilder({ page }).include(".graphics-editor").analyze())
+      .violations,
+  ).toEqual([]);
+  page.once("dialog", (dialog) => dialog.accept());
+  await graphics
+    .getByRole("button", { name: "Gestaltung mit KI besprechen" })
+    .click();
+  await expect(page.locator("#studio-chat-message")).toHaveValue(
+    /Berate mich zur Gestaltung/,
+  );
+  await expect(page.locator("#studio-chat-message")).toHaveValue(/Fotoposter/);
 });
