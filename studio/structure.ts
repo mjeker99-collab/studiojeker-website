@@ -1,3 +1,4 @@
+import { newsletterTypes } from "./schemaTypes/newsletter";
 import type { StructureBuilder, StructureResolver } from "sanity/structure";
 
 /**
@@ -90,10 +91,7 @@ function singletonListItem(
     .title(item.title)
     .id(item.type)
     .child(
-      S.document()
-        .schemaType(item.type)
-        .documentId(item.id)
-        .title(item.title),
+      S.document().schemaType(item.type).documentId(item.id).title(item.title),
     );
 }
 
@@ -119,6 +117,21 @@ export const structure: StructureResolver = (S) =>
       S.documentTypeListItem("client").title("Clients / Logos"),
       S.divider(),
       singletonListItem(S, SINGLETON_DOCS.globalSettings),
+      S.divider(),
+      S.listItem()
+        .id("newsletter")
+        .title("Newsletter")
+        .child(
+          S.list()
+            .title("Newsletter-Vorlagen")
+            .items(
+              newsletterTypes.map((type) =>
+                S.documentTypeListItem(type.name).title(
+                  type.title || type.name,
+                ),
+              ),
+            ),
+        ),
     ]);
 
 /** Hide singleton types from the generic “Create new” document menu. */

@@ -1,3 +1,4 @@
+import { newsletterTypes } from "./newsletter";
 import type { SchemaTypeDefinition } from "sanity";
 import { abo } from "./abo";
 import { about } from "./about";
@@ -28,6 +29,7 @@ import {
  * Homepage, About, Contact, Content Abo and KI/AI are wired to Next.js for DE and EN.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
+  ...newsletterTypes,
   localizedString,
   localizedText,
   editorialColor,
