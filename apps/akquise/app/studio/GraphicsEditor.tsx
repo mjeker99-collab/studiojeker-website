@@ -38,8 +38,8 @@ export default function GraphicsEditor({
       <h3>Grafikstudio · bearbeitbare Vorlagen</h3>
       <p>
         Wähle eine Vorlage und passe Text und Logo getrennt an. Motiv,
-        Bildausschnitt und Schrift wählst du oben. Speichere deine Version und
-        rendere die Vorschau zur Kontrolle.
+        Bildausschnitt wählst du im Fotostudio, die Schrift direkt hier darüber.
+        Speichere deine Version und rendere die Vorschau zur Kontrolle.
       </p>
       <div className="studio-fields">
         {graphicsPresets.map((p) => (

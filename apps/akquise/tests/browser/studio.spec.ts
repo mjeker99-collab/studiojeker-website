@@ -89,6 +89,23 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
       exact: true,
     }),
   ).toBeVisible();
+  const workspaces = page.getByRole("region", {
+    name: "Arbeitsbereiche im Content-Studio",
+  });
+  for (const title of ["Grafikstudio", "Fotostudio", "Filmstudio"]) {
+    await workspaces.getByRole("link", { name: `${title} öffnen` }).click();
+    await expect(
+      page.getByRole("region", { name: title, exact: true }),
+    ).toBeVisible();
+  }
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("button", { name: "Drehbuch mit KI vorbereiten" })
+    .click();
+  await expect(page.locator("#studio-chat-message")).toHaveValue(
+    /Drehbuch mit Einstieg/,
+  );
+  await expect(page.locator("#studio-chat-intent")).toHaveValue("TEXT");
   await page
     .getByRole("textbox", { name: "Headline", exact: true })
     .fill("TESTINHALT – Sichtbarkeit planen");
@@ -98,6 +115,11 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByLabel("Eigenes oder generiertes Motiv")
     .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
+  await workspaces.getByRole("link", { name: "Fotostudio öffnen" }).click();
+  await workspaces.getByRole("link", { name: "Grafikstudio öffnen" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Headline", exact: true }),
+  ).toHaveValue("TESTINHALT – Sichtbarkeit planen");
   const graphics = page.getByRole("region", {
     name: "Grafikstudio",
     exact: true,
@@ -201,8 +223,14 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     });
   }
   expect(
-    (await new AxeBuilder({ page }).include(".graphics-editor").analyze())
-      .violations,
+    (
+      await new AxeBuilder({ page })
+        .include(".graphics-editor")
+        .include(".studio-workspaces")
+        .include("#filmstudio")
+        .include("#fotostudio")
+        .analyze()
+    ).violations,
   ).toEqual([]);
   page.once("dialog", (dialog) => dialog.accept());
   await graphics

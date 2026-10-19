@@ -1396,3 +1396,7 @@ pre {
 .concept-exports a { color:#00708c; text-decoration:underline; padding:8px 0; }
 .concept-history { margin-top:24px; overflow-wrap:anywhere; }
 @media(max-width:1100px) { .concept-columns { grid-template-columns:minmax(0, 1fr); } }
+
+.studio-workspaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; }
+.studio-workspaces article { border: 1px solid #b9c8cc; padding: 16px; min-width: 0; }
+.studio-substudio { scroll-margin-top: 24px; border-top: 1px solid #b9c8cc; padding-top: 16px; margin-top: 20px; min-width: 0; }
