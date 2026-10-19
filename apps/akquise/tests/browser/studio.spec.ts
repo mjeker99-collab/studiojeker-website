@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { mkdirSync, readFileSync } from "node:fs";
 import sharp from "sharp";
+import AxeBuilder from "@axe-core/playwright";
 test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entwertung", async ({
   page,
 }) => {
@@ -88,6 +89,23 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
       exact: true,
     }),
   ).toBeVisible();
+  const workspaces = page.getByRole("region", {
+    name: "Arbeitsbereiche im Content-Studio",
+  });
+  for (const title of ["Grafikstudio", "Fotostudio", "Filmstudio"]) {
+    await workspaces.getByRole("link", { name: `${title} öffnen` }).click();
+    await expect(
+      page.getByRole("region", { name: title, exact: true }),
+    ).toBeVisible();
+  }
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("button", { name: "Drehbuch mit KI vorbereiten" })
+    .click();
+  await expect(page.locator("#studio-chat-message")).toHaveValue(
+    /Drehbuch mit Einstieg/,
+  );
+  await expect(page.locator("#studio-chat-intent")).toHaveValue("TEXT");
   await page
     .getByRole("textbox", { name: "Headline", exact: true })
     .fill("TESTINHALT – Sichtbarkeit planen");
@@ -96,6 +114,20 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     .fill("Synthetische geometrische Formen, keine reale Referenz");
   await page
     .getByLabel("Eigenes oder generiertes Motiv")
+    .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
+  await workspaces.getByRole("link", { name: "Fotostudio öffnen" }).click();
+  await workspaces.getByRole("link", { name: "Grafikstudio öffnen" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Headline", exact: true }),
+  ).toHaveValue("TESTINHALT – Sichtbarkeit planen");
+  const graphics = page.getByRole("region", {
+    name: "Grafikstudio",
+    exact: true,
+  });
+  await graphics.getByRole("button", { name: /^Statement/ }).click();
+  await graphics.getByLabel("Logo · Links (%)", { exact: true }).fill("61");
+  await graphics
+    .getByLabel("Logo für diese Grafik")
     .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
@@ -119,6 +151,12 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await expect(
     page.getByRole("textbox", { name: "Headline", exact: true }),
   ).toHaveValue("TESTINHALT – Sichtbarkeit planen");
+  await expect(
+    graphics.getByLabel("Logo · Links (%)", { exact: true }),
+  ).toHaveValue("61");
+  await expect(graphics.getByLabel("Textfläche beginnt bei (%)")).toHaveValue(
+    "45",
+  );
   await expect(
     page.getByRole("button", { name: "Ideen & Kanaltexte erstellen" }),
   ).toBeDisabled();
@@ -184,4 +222,22 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
       fullPage: true,
     });
   }
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include(".graphics-editor")
+        .include(".studio-workspaces")
+        .include("#filmstudio")
+        .include("#fotostudio")
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  page.once("dialog", (dialog) => dialog.accept());
+  await graphics
+    .getByRole("button", { name: "Gestaltung mit KI besprechen" })
+    .click();
+  await expect(page.locator("#studio-chat-message")).toHaveValue(
+    /Berate mich zur Gestaltung/,
+  );
+  await expect(page.locator("#studio-chat-message")).toHaveValue(/Fotoposter/);
 });

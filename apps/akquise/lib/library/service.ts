@@ -61,6 +61,7 @@ export async function libraryState(actor: string) {
                     motifAssetId?: string;
                     fontAssetId?: string;
                     brandProfile?: { logoAssetId?: string };
+                    graphics?: { logoAssetId?: string };
                   };
                 }
               ).studio;
@@ -70,6 +71,7 @@ export async function libraryState(actor: string) {
                   s?.motifAssetId,
                   s?.fontAssetId,
                   s?.brandProfile?.logoAssetId,
+                  s?.graphics?.logoAssetId,
                 ].includes(i.assetId)
               );
             })

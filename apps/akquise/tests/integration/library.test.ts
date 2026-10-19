@@ -4,6 +4,14 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 import sharp from "sharp";
+import { readFileSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import {
+  graphicsPresets,
+  presetGraphics,
+  graphicsBox,
+} from "../../lib/studio/graphics";
+import { dimensions } from "../../lib/studio/input";
 const url = new URL(process.env.DATABASE_URL || "");
 if (!["localhost", "127.0.0.1"].includes(url.hostname))
   throw new Error("Nur isolierte lokale Testdatenbank erlaubt.");
@@ -850,4 +858,156 @@ test("Kampagnenzuordnung, fremde Markenassets und beschädigte Dateien werden si
   assert.throws(() => objectStore(), /Nicht verbunden/);
   if (oldLocal === undefined) delete process.env.STUDIO_LOCAL_ASSETS;
   else process.env.STUDIO_LOCAL_ASSETS = oldLocal;
+});
+
+test("Grafikstudio rendert jede Vorlage und Format mit Originalschrift und separatem Logo", async () => {
+  const motif = await storeAsset(
+    martin,
+    await sharp({
+      create: { width: 1200, height: 900, channels: 3, background: "#123456" },
+    })
+      .png()
+      .toBuffer(),
+    "Grafik-Testmotiv.png",
+    "ORIGINAL",
+    undefined,
+    store,
+  );
+  const logo = await storeAsset(
+    martin,
+    await sharp({
+      create: { width: 240, height: 60, channels: 4, background: "#ff0000" },
+    })
+      .png()
+      .toBuffer(),
+    "Grafik-Testlogo.png",
+    "ORIGINAL",
+    undefined,
+    store,
+  );
+  // Linux CI fixture font only; never shipped or substituted for customer fonts.
+  const font = await storeAsset(
+    martin,
+    readFileSync("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    "Testschrift.ttf",
+    "FONT",
+    undefined,
+    store,
+  );
+  const series = await createSeries(martin, {
+    title: "Grafikprüfung",
+    topic: "Test",
+    offer: "",
+    goal: "Test",
+    audience: "Intern",
+    tone: "Sachlich",
+    channels: ["LINKEDIN"],
+    count: 1,
+    formats: ["1:1", "4:5", "9:16"],
+    campaignId: null,
+    referenceAssetIds: [],
+  });
+  const content = await db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: series.id },
+    include: { versions: true },
+  });
+  const payload = contentInput.parse(content.versions[0].payload);
+  const snapshot = {
+    ...payload.studio!,
+    motifAssetId: motif.id,
+    motifSha256: motif.sha256,
+    fontAssetId: font.id,
+    fontSha256: font.sha256,
+    headline: "Synthetische Grafik",
+    showHeadline: true,
+    showClaim: false,
+    showLogo: true,
+  };
+  for (const preset of graphicsPresets) {
+    const graphics = {
+      ...presetGraphics(preset.id),
+      logoAssetId: logo.id,
+      logoSha256: logo.sha256,
+    };
+    for (const format of ["1:1", "4:5", "9:16"] as const) {
+      const bytes = await renderLayout(
+        martin,
+        { ...snapshot, template: preset.template, graphics },
+        format,
+        "png",
+        store,
+      );
+      const [width, height] = dimensions[format];
+      const meta = await sharp(bytes).metadata();
+      assert.equal(meta.width, width);
+      assert.equal(meta.height, height);
+      await mkdir(".local/graphics-previews", { recursive: true });
+      await writeFile(
+        `.local/graphics-previews/${preset.id}-${format.replace(":", "x")}.png`,
+        bytes,
+      );
+      const box = graphicsBox(graphics, "logo", width, height);
+      const pixel = await sharp(bytes)
+        .extract({ left: box.left + 2, top: box.top + 2, width: 1, height: 1 })
+        .removeAlpha()
+        .raw()
+        .toBuffer();
+      assert.deepEqual(
+        [...pixel],
+        [255, 0, 0],
+        "Original-Logofarbe an eigener Position",
+      );
+    }
+  }
+  const graphics = {
+    ...presetGraphics("statement"),
+    logoAssetId: logo.id,
+    logoSha256: logo.sha256,
+  };
+  payload.studio = { ...snapshot, graphics };
+  await saveContent(martin, payload, content.id, 1);
+  assert.ok(
+    (await libraryState(martin)).items
+      .find((i) => i.assetId === logo.id)
+      ?.usage.some((u) => u.id === content.id && u.version === 2),
+  );
+  await reviewContent(nora, content.id, 2, "APPROVED", true);
+  payload.studio.graphics = { ...graphics, logoX: 60 };
+  await saveContent(martin, payload, content.id, 2);
+  await assert.rejects(
+    exportContent(martin, content.id, 3, "1:1", "png", false, store),
+  );
+  await assert.rejects(
+    saveContent(
+      martin,
+      {
+        ...payload,
+        studio: {
+          ...payload.studio,
+          graphics: { ...graphics, logoSha256: "0".repeat(64) },
+        },
+      },
+      content.id,
+      3,
+    ),
+    /Datei oder Version/,
+  );
+  await assert.rejects(
+    renderLayout(
+      martin,
+      { ...snapshot, graphics, fontAssetId: null, fontSha256: "" },
+      "1:1",
+      "png",
+      store,
+    ),
+    /Original-Schriftdatei fehlt/,
+  );
+  const jpg = await renderLayout(
+    martin,
+    { ...snapshot, graphics },
+    "1:1",
+    "jpg",
+    store,
+  );
+  assert.equal((await sharp(jpg).metadata()).format, "jpeg");
 });

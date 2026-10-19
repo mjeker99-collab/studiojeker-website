@@ -7,6 +7,35 @@ import { studioConfig, publicConfig, logoHash } from "../lib/studio/config";
 import { objectStore } from "../lib/studio/storage";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import {
+  graphicsSchema,
+  graphicsPresets,
+  presetGraphics,
+  graphicsBox,
+} from "../lib/studio/graphics";
+import { dimensions } from "../lib/studio/input";
+test("Grafikebenen bleiben in jedem Format innerhalb der Fläche und weisen unzulässige Eingaben ab", () => {
+  for (const preset of graphicsPresets) {
+    const g = presetGraphics(preset.id);
+    for (const [w, h] of Object.values(dimensions)) {
+      for (const layer of ["headline", "logo"] as const) {
+        const box = graphicsBox(g, layer, w, h);
+        assert.ok(box.width > 0 && box.height > 0);
+        assert.ok(box.left + box.width <= w && box.top + box.height <= h);
+      }
+    }
+  }
+  const g = presetGraphics("editorial");
+  for (const invalid of [
+    { headlineX: 99 },
+    { logoY: 99 },
+    { fontSize: 300 },
+    { align: "<script>" },
+    { logoAssetId: "other", logoSha256: "" },
+    { injected: true },
+  ])
+    assert.equal(graphicsSchema.safeParse({ ...g, ...invalid }).success, false);
+});
 const brief = {
   title: "Synthetischer Test",
   topic: "Fotografie",

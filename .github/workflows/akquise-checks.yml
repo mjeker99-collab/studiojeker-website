@@ -71,3 +71,13 @@ jobs:
         run: |
           docker build --target runtime -t akquise-runtime-check .
           docker build --target operations -t akquise-operations-check .
+      - name: Save synthetic graphics previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphics-previews
+          path: |
+            apps/akquise/.local/graphics-previews/
+            apps/akquise/.local/hub-screenshots/studio*.png
+          if-no-files-found: ignore
+          retention-days: 7

@@ -18,6 +18,7 @@ import {
   type StudioSnapshot,
 } from "./input";
 import type { ObjectStore } from "./storage";
+import { graphicsBox, graphicsSchema } from "./graphics";
 export function fontFamily(bytes: Buffer): string {
   // Read the actual SFNT name table; no invented family or fallback font.
   const count = bytes.readUInt16BE(4);
@@ -66,12 +67,14 @@ export async function renderLayout(
   if (asset.sha256 !== s.motifSha256)
     throw new PolicyError("Motiv-Prüfsumme stimmt nicht überein.", 409);
   const [width, height] = dimensions[format];
+  const g = s.graphics ? graphicsSchema.parse(s.graphics) : undefined;
+  const panelFraction = g ? g.panelTop / 100 : 0.7;
   const normalized = await sharp(bytes, { limitInputPixels: 20_000_000 })
     .rotate()
     .toBuffer();
   const m = await sharp(normalized).metadata();
   const imageHeight =
-    s.template === "PANEL" ? Math.round(height * 0.7) : height;
+    s.template === "PANEL" ? Math.round(height * panelFraction) : height;
   const scale = Math.max(width / m.width!, imageHeight / m.height!) * s.zoom;
   const rw = Math.ceil(m.width! * scale),
     rh = Math.ceil(m.height! * scale);
@@ -87,7 +90,7 @@ export async function renderLayout(
     .toBuffer();
   const overlays: OverlayOptions[] = [{ input: background, left: 0, top: 0 }];
   const panelY =
-    s.template === "PANEL" ? imageHeight : Math.round(height * 0.7);
+    s.template === "PANEL" ? imageHeight : Math.round(height * panelFraction);
   if (s.template === "PHOTO")
     overlays.push({
       input: Buffer.from(
@@ -137,15 +140,28 @@ export async function renderLayout(
     process.env.XDG_CACHE_HOME ||= join(tmpdir(), "studio-fontconfig-cache");
     await mkdir(process.env.XDG_CACHE_HOME, { recursive: true, mode: 0o700 });
     if (s.showHeadline && s.headline) {
-      const availableHeight = height - panelY - 180;
+      const box = g
+        ? graphicsBox(g, "headline", width, height)
+        : {
+            left: 48,
+            top: panelY + 30,
+            width: width - 96,
+            height: height - panelY - 180,
+          };
+      const availableHeight = box.height;
       let text: Buffer | undefined;
-      for (let size = 64; size >= 32; size -= 4) {
+      for (
+        let size = g?.fontSize || 64;
+        size >= (g ? 24 : 32);
+        size -= g ? 1 : 4
+      ) {
         const candidate = await sharp({
           text: {
             text: `<span foreground="${s.brandProfile?.colors.white || "#ffffff"}">${escape(s.headline)}</span>`,
             font: `${family} ${size}`,
             fontfile: fontPath,
-            width: width - 96,
+            width: box.width,
+            align: g?.align || "left",
             rgba: true,
             wrap: "word-char",
           },
@@ -161,7 +177,7 @@ export async function renderLayout(
         throw new PolicyError(
           "Headline passt nicht in diese Vorlage. Bitte kürzen.",
         );
-      overlays.push({ input: text, left: 48, top: panelY + 30 });
+      overlays.push({ input: text, left: box.left, top: box.top });
     }
     if (
       s.showClaim &&
@@ -172,23 +188,35 @@ export async function renderLayout(
           text: `<span foreground="${s.brandProfile?.colors.cyan || "#00c8ff"}">${escape(s.brandProfile ? s.brandProfile.claim : "We create visibility")}</span>`,
           font: `${family} 28`,
           fontfile: fontPath,
+          ...(g
+            ? { width: Math.round(width * 0.62), wrap: "word-char" as const }
+            : {}),
           rgba: true,
         },
       })
         .png()
         .toBuffer();
-      overlays.push({ input: text, left: 48, top: height - 54 });
+      if (g && (await sharp(text).metadata()).height! > 54)
+        throw new PolicyError(
+          "Claim passt nicht in die Fusszeile. Bitte kürzen oder ausblenden.",
+        );
+      overlays.push({ input: text, left: 48, top: height - (g ? 64 : 54) });
     }
   }
   if (s.showLogo) {
     // Exact original SVG bytes; preserve its aspect ratio and colours.
-    const originalLogo = s.brandProfile?.logoAssetId
-      ? await readAsset(actor, s.brandProfile.logoAssetId, store)
-      : null;
-    if (originalLogo && originalLogo.asset.sha256 !== s.brandLogoSha256)
+    const logoId = g?.logoAssetId || s.brandProfile?.logoAssetId;
+    const logoSha = g?.logoAssetId ? g.logoSha256 : s.brandLogoSha256;
+    const originalLogo = logoId ? await readAsset(actor, logoId, store) : null;
+    if (originalLogo && originalLogo.asset.sha256 !== logoSha)
       throw new PolicyError("Markenlogo-Prüfsumme stimmt nicht überein.", 409);
+    const box = g ? graphicsBox(g, "logo", width, height) : null;
     const logo = await sharp(originalLogo?.bytes || logoBytes())
-      .resize({ width: 220 })
+      .resize(
+        box
+          ? { width: box.width, height: box.height, fit: "inside" }
+          : { width: 220 },
+      )
       .png()
       .toBuffer();
     const lm = await sharp(logo).metadata();
@@ -202,15 +230,16 @@ export async function renderLayout(
     })
       .png()
       .toBuffer();
-    overlays.push({
-      input: plate,
-      left: width - 220 - 52,
-      top: height - lm.height! - 36,
-    });
+    if (!box)
+      overlays.push({
+        input: plate,
+        left: width - 220 - 52,
+        top: height - lm.height! - 36,
+      });
     overlays.push({
       input: logo,
-      left: width - 220 - 40,
-      top: height - lm.height! - 24,
+      left: box ? box.left : width - 220 - 40,
+      top: box ? box.top : height - lm.height! - 24,
     });
   }
   const image = sharp({

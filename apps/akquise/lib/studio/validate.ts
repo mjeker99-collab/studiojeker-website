@@ -26,6 +26,7 @@ export async function validateStudio(tx: Tx, s: StudioSnapshot) {
   for (const [id, hash, font] of [
     [s.motifAssetId, s.motifSha256, false],
     [s.fontAssetId, s.fontSha256, true],
+    [s.graphics?.logoAssetId, s.graphics?.logoSha256, false],
   ] as const) {
     if (!id) {
       if (hash) throw new PolicyError("Asset-Prüfsumme ohne Datei.");

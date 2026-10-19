@@ -1,5 +1,6 @@
 "use client";
 import StudioChat from "./StudioChat";
+import GraphicsEditor from "./GraphicsEditor";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
 import {
   LibraryPicker,
@@ -78,6 +79,11 @@ export default function ContentStudio({ userId }: { userId: string }) {
     [format, setFormat] = useState<StudioFormat>("1:1"),
     [encoding, setEncoding] = useState<"png" | "jpg">("png");
   const [picking, setPicking] = useState<"motif" | "reference" | null>(null);
+  const [designRequest, setDesignRequest] = useState<{
+    id: number;
+    seriesId: string;
+    message: string;
+  }>();
   const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
     editing &&
@@ -162,6 +168,23 @@ export default function ContentStudio({ userId }: { userId: string }) {
     setRead(false);
     setPreview("");
   }
+  function prepareAdvice(message: string) {
+    if (
+      !window.confirm(
+        "KI-Beratung vorbereiten? Eine dort noch nicht gesendete Nachricht und deren Bildauswahl werden ersetzt.",
+      )
+    )
+      return;
+    setDesignRequest({
+      id: Date.now(),
+      seriesId,
+      message: message.slice(0, 4000),
+    });
+    setTimeout(
+      () => document.getElementById("studio-chat-message")?.focus(),
+      0,
+    );
+  }
   function studio(data: Partial<StudioSnapshot>) {
     if (form?.studio) update({ studio: { ...form.studio, ...data } });
   }
@@ -228,7 +251,48 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
-      <StudioChat state={state} refresh={() => refresh()} />
+      <section aria-label="Arbeitsbereiche im Content-Studio">
+        <h2>Ein Content-Studio. Drei Arbeitsbereiche.</h2>
+        <p>
+          Gemeinsames Briefing, KI-Dialog, Versionen und Freigaben für deine
+          Inhalte.
+        </p>
+        <div className="studio-workspaces">
+          {[
+            [
+              "grafikstudio",
+              "Grafikstudio",
+              "Vorlagen, Texte und Logos gestalten. PNG/JPG exportieren.",
+            ],
+            [
+              "fotostudio",
+              "Fotostudio",
+              "Motive auswählen, Bildausschnitte anpassen und Bildideen mit KI entwickeln.",
+            ],
+            [
+              "filmstudio",
+              "Filmstudio",
+              "Drehbuch, Szenen und Schnittplan mit KI vorbereiten. Videoschnitt folgt.",
+            ],
+          ].map(([id, title, description]) => (
+            <article key={id}>
+              <h3>{title}</h3>
+              <p>{description}</p>
+              {editing ? (
+                <a href={`#${id}`}>{title} öffnen</a>
+              ) : (
+                <p>Serie öffnen oder neues Briefing anlegen.</p>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+      <StudioChat
+        key={designRequest?.id || 0}
+        state={state}
+        refresh={() => refresh()}
+        initialRequest={designRequest}
+      />
       {picking && (
         <LibraryPicker
           imagesOnly={picking === "motif"}
@@ -935,161 +999,247 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   </div>
                 </fieldset>
               ))}
-              <h3>Motiv und reproduzierbares Layout</h3>
-              <div className="studio-fields">
-                <div>
-                  <button type="button" onClick={() => setPicking("motif")}>
-                    Aus Bibliothek wählen · Motiv
-                  </button>
-                </div>
-                <label>
-                  Eigenes oder generiertes Motiv
-                  <select
-                    value={snapshot.motifAssetId || ""}
-                    onChange={(e) => {
-                      const a = state.assets.find(
-                        (a) => a.id === e.target.value,
-                      );
-                      if (!a) return;
-                      update({
-                        studio: {
-                          ...snapshot,
-                          motifAssetId: a.id,
-                          motifSha256: a.sha256,
-                          source: a.kind === "MOTIF" ? "AI" : "OWN",
-                        },
-                        variants: form.variants.map((v) => ({
-                          ...v,
-                          mediaType: "IMAGE",
-                          mediaUrl: "",
-                          mediaReference: `Studio-Asset ${a.id} · ${a.sha256}`,
-                        })),
-                      });
-                    }}
-                  >
-                    <option value="">Motiv wählen</option>
-                    {imageAssets.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Layoutvorlage · V1 zur Freigabe
-                  <select
-                    value={snapshot.template}
-                    onChange={(e) =>
-                      studio({
-                        template: e.target.value as StudioSnapshot["template"],
-                      })
-                    }
-                  >
-                    <option value="PANEL">
-                      Fotografie / schwarzes Textfeld
-                    </option>
-                    <option value="PHOTO">
-                      Fotografie / transparente Textfläche
-                    </option>
-                  </select>
-                </label>
-                <label>
-                  Freigegebene Schriftdatei
-                  <select
-                    value={snapshot.fontAssetId || ""}
-                    onChange={(e) => {
-                      const a = state.assets.find(
-                        (a) => a.id === e.target.value,
-                      );
-                      studio({
-                        fontAssetId: a?.id || null,
-                        fontSha256: a?.sha256 || "",
-                      });
-                    }}
-                  >
-                    <option value="">
-                      Nicht vorhanden · Textebene gesperrt
-                    </option>
-                    {state.assets
-                      .filter((a) => a.kind === "FONT")
-                      .map((a) => (
+              <section
+                id="fotostudio"
+                aria-label="Fotostudio"
+                className="studio-substudio"
+                tabIndex={-1}
+              >
+                <h3>Fotostudio</h3>
+                <p>
+                  Wähle ein Original oder KI-Motiv. Ausschnitt und Vergrösserung
+                  werden mit dem Beitrag gespeichert und für das Grafiklayout
+                  verwendet. Der Export «Reines Motiv» liefert das Motiv ohne
+                  Layout und ohne diesen Zuschnitt.
+                </p>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() =>
+                    prepareAdvice(
+                      `Hilf mir bei der Fotogestaltung dieses Beitrags. Entwickle Bildideen und einen konkreten Bearbeitungsplan. Behaupte nicht, das Bild gesehen oder bearbeitet zu haben. Bildreferenzen wähle ich im Chat separat aus.\nTitel: ${form.title}\nBildidee: ${snapshot.imageIdea}\nHeadline: ${snapshot.headline}`,
+                    )
+                  }
+                >
+                  Fotogestaltung mit KI besprechen
+                </button>
+                <div className="studio-fields">
+                  <div>
+                    <button type="button" onClick={() => setPicking("motif")}>
+                      Aus Bibliothek wählen · Motiv
+                    </button>
+                  </div>
+                  <label>
+                    Eigenes oder generiertes Motiv
+                    <select
+                      value={snapshot.motifAssetId || ""}
+                      onChange={(e) => {
+                        const a = state.assets.find(
+                          (a) => a.id === e.target.value,
+                        );
+                        if (!a) return;
+                        update({
+                          studio: {
+                            ...snapshot,
+                            motifAssetId: a.id,
+                            motifSha256: a.sha256,
+                            source: a.kind === "MOTIF" ? "AI" : "OWN",
+                          },
+                          variants: form.variants.map((v) => ({
+                            ...v,
+                            mediaType: "IMAGE",
+                            mediaUrl: "",
+                            mediaReference: `Studio-Asset ${a.id} · ${a.sha256}`,
+                          })),
+                        });
+                      }}
+                    >
+                      <option value="">Motiv wählen</option>
+                      {imageAssets.map((a) => (
                         <option key={a.id} value={a.id}>
                           {a.name}
                         </option>
                       ))}
-                  </select>
-                </label>
-              </div>
-              {!snapshot.fontAssetId && (
-                <p className="notice">
-                  Original-Schriftdatei fehlt. Keine Ersatzschrift im
-                  Bildexport. Headline und Claim lassen sich erst mit
-                  freigegebener TTF/OTF rendern.
-                </p>
-              )}
-              <div className="studio-fields">
-                {(
-                  [
-                    ["cropX", "Bildausschnitt horizontal", 0, 1, 0.01],
-                    ["cropY", "Bildausschnitt vertikal", 0, 1, 0.01],
-                    ["zoom", "Vergrösserung", 1, 3, 0.05],
-                  ] as const
-                ).map(([key, label, min, max, step]) => (
-                  <label key={key}>
-                    {label}
-                    <input
-                      type="range"
-                      min={min}
-                      max={max}
-                      step={step}
-                      value={snapshot[key]}
-                      onChange={(e) =>
-                        studio({ [key]: Number(e.target.value) })
-                      }
-                    />
+                    </select>
                   </label>
-                ))}
-              </div>
-              <fieldset>
-                <legend>Ebenen und Formate</legend>
-                {(
-                  [
-                    ["showLogo", "Original-Logo"],
-                    ["showHeadline", "Headline"],
+                </div>
+                <div className="studio-fields">
+                  {(
                     [
-                      "showClaim",
-                      snapshot.brandProfile
-                        ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
-                        : "We create visibility",
-                    ],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label className="check" key={key}>
-                    <input
-                      type="checkbox"
-                      checked={snapshot[key]}
-                      onChange={(e) => studio({ [key]: e.target.checked })}
-                    />
-                    {label}
-                  </label>
-                ))}
-                {formats.map((f) => (
-                  <label className="check" key={f}>
-                    <input
-                      type="checkbox"
-                      checked={snapshot.formats.includes(f)}
+                      ["cropX", "Bildausschnitt horizontal", 0, 1, 0.01],
+                      ["cropY", "Bildausschnitt vertikal", 0, 1, 0.01],
+                      ["zoom", "Vergrösserung", 1, 3, 0.05],
+                    ] as const
+                  ).map(([key, label, min, max, step]) => (
+                    <label key={key}>
+                      {label}
+                      <input
+                        type="range"
+                        min={min}
+                        max={max}
+                        step={step}
+                        value={snapshot[key]}
+                        onChange={(e) =>
+                          studio({ [key]: Number(e.target.value) })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              </section>
+              <div id="grafikstudio" className="studio-substudio" tabIndex={-1}>
+                <div className="studio-fields">
+                  <label>
+                    Layoutvorlage · V1 zur Freigabe
+                    <select
+                      value={snapshot.template}
                       onChange={(e) =>
                         studio({
-                          formats: e.target.checked
-                            ? [...snapshot.formats, f]
-                            : snapshot.formats.filter((x) => x !== f),
+                          template: e.target
+                            .value as StudioSnapshot["template"],
                         })
                       }
-                    />
-                    {f}
+                    >
+                      <option value="PANEL">
+                        Fotografie / schwarzes Textfeld
+                      </option>
+                      <option value="PHOTO">
+                        Fotografie / transparente Textfläche
+                      </option>
+                    </select>
                   </label>
-                ))}
-              </fieldset>
+                  <label>
+                    Freigegebene Schriftdatei
+                    <select
+                      value={snapshot.fontAssetId || ""}
+                      onChange={(e) => {
+                        const a = state.assets.find(
+                          (a) => a.id === e.target.value,
+                        );
+                        studio({
+                          fontAssetId: a?.id || null,
+                          fontSha256: a?.sha256 || "",
+                        });
+                      }}
+                    >
+                      <option value="">
+                        Nicht vorhanden · Textebene gesperrt
+                      </option>
+                      {state.assets
+                        .filter((a) => a.kind === "FONT")
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                </div>
+                {!snapshot.fontAssetId && (
+                  <p className="notice">
+                    Original-Schriftdatei fehlt. Keine Ersatzschrift im
+                    Bildexport. Headline und Claim lassen sich erst mit
+                    freigegebener TTF/OTF rendern.
+                  </p>
+                )}
+                <GraphicsEditor
+                  snapshot={snapshot}
+                  assets={imageAssets}
+                  onChange={studio}
+                  onAdvice={prepareAdvice}
+                />
+                <fieldset>
+                  <legend>Ebenen und Formate</legend>
+                  {(
+                    [
+                      ["showLogo", "Original-Logo"],
+                      ["showHeadline", "Headline"],
+                      [
+                        "showClaim",
+                        snapshot.brandProfile
+                          ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
+                          : "We create visibility",
+                      ],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label className="check" key={key}>
+                      <input
+                        type="checkbox"
+                        checked={snapshot[key]}
+                        onChange={(e) => studio({ [key]: e.target.checked })}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                  {formats.map((f) => (
+                    <label className="check" key={f}>
+                      <input
+                        type="checkbox"
+                        checked={snapshot.formats.includes(f)}
+                        onChange={(e) =>
+                          studio({
+                            formats: e.target.checked
+                              ? [...snapshot.formats, f]
+                              : snapshot.formats.filter((x) => x !== f),
+                          })
+                        }
+                      />
+                      {f}
+                    </label>
+                  ))}
+                </fieldset>
+              </div>
+              <section
+                id="filmstudio"
+                aria-label="Filmstudio"
+                className="studio-substudio"
+                tabIndex={-1}
+              >
+                <h3>Filmstudio · Planung mit KI</h3>
+                <p>
+                  Entwickle aus dem gemeinsamen Briefing ein Drehbuch, eine
+                  Szenenliste oder einen Schnittplan. Die Antwort bleibt im
+                  KI-Gespräch der Serie gespeichert.
+                </p>
+                <p>
+                  Videoschnitt, Untertitel im Film und Video-Rendering sind noch
+                  nicht angebunden. Es wird hier keine Videodatei erzeugt oder
+                  verändert.
+                </p>
+                <div className="actions">
+                  {[
+                    [
+                      "Drehbuch mit KI vorbereiten",
+                      "ein Drehbuch mit Einstieg, Kernbotschaft, Sprechertext und Handlungsaufforderung",
+                    ],
+                    [
+                      "Szenenliste mit KI vorbereiten",
+                      "eine Szenenliste mit Dauer, Motiv, Kameraeinstellung und benötigtem Material",
+                    ],
+                    [
+                      "Schnittplan mit KI vorbereiten",
+                      "einen Schnittplan mit Rhythmus, Übergängen, Texteinblendungen und Untertitelentwurf",
+                    ],
+                  ].map(([label, task]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className="secondary"
+                      onClick={() =>
+                        prepareAdvice(
+                          `Erarbeite ${task} für diesen Beitrag. Frage zuerst nach fehlenden Angaben zu Filmlänge, Kanal und vorhandenem Material. Liefere einen Textentwurf, keine Videogenerierung. Verlinkte Videos wurden nicht analysiert.\nTitel: ${form.title}\nHeadline: ${snapshot.headline}\nBildidee: ${snapshot.imageIdea}`,
+                        )
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p>
+                  Der Klick bereitet eine Nachricht vor. Prüfe sie im KI-Dialog
+                  und sende sie bewusst ab.
+                </p>
+              </section>
               <button disabled={busy || !dirty}>Version speichern</button>
             </form>
             <section className="studio-preview" aria-label="Layoutvorschau">
