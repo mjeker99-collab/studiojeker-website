@@ -4,10 +4,26 @@ import { browserCredentials } from "./credentials";
 import { chapters } from "../../lib/concepts/input";
 import { mkdir } from "node:fs/promises";
 
+test.afterEach(async ({ page }, info) => {
+  if (info.status !== info.expectedStatus) {
+    console.error(
+      "Concept failure page:",
+      await page.locator("body").innerText(),
+    );
+    await mkdir(".local/concept-screenshots", { recursive: true });
+    await page.screenshot({
+      path: ".local/concept-screenshots/failure.png",
+      fullPage: true,
+    });
+  }
+});
 test("Concept editor persists, approves, exports and hands off on desktop, iPad and phone", async ({
   page,
 }) => {
   test.setTimeout(90000);
+  page.on("pageerror", (error) =>
+    console.error("Concept page error:", error.message),
+  );
   const credentials = browserCredentials();
   await page.goto("/");
   await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
@@ -41,11 +57,9 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Strategie & Konzepte/ })
     .click();
-  await editor
-    .getByLabel("Konzept auswählen")
-    .selectOption({
-      label: "Synthetisches Kommunikationskonzept · V1 · Entwurf",
-    });
+  await editor.getByLabel("Konzept auswählen").selectOption({
+    label: "Synthetisches Kommunikationskonzept · V1 · Entwurf",
+  });
   await expect(
     editor.getByLabel("Briefing & Ausgangslage", { exact: true }),
   ).toHaveValue(/Geprüfter Testinhalt/);

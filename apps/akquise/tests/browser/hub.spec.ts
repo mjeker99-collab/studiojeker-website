@@ -142,7 +142,9 @@ test("Social: Kanalvarianten speichern, wiederladen und nach Änderung erneut fr
   await page
     .getByRole("button", { name: "Version freigeben", exact: true })
     .click();
-  await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+  await expect(page.locator('.notice[role="status"]')).toHaveText(
+    "Gespeichert.",
+  );
   await page
     .locator(`[data-content-id="${socialId}"]`)
     .getByRole("button", { name: /Inhalt öffnen/ })
@@ -197,7 +199,7 @@ test("Newsletter: Freigegebene Version exportieren, ohne Übertragung oder Versa
   expect((await download).suggestedFilename()).toMatch(
     /newsletter-.*\.(html|txt)$/,
   );
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator('.notice[role="status"]')).toContainText(
     "Nichts an Mailchimp übertragen",
   );
   const state = await (await page.request.get("/api/hub/state")).json();
@@ -231,7 +233,9 @@ test("Kampagne lässt sich über das Formular erstellen und wieder laden", async
   await page
     .getByRole("button", { name: "Kampagne speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toHaveText("Gespeichert.");
+  await expect(page.locator('.notice[role="status"]')).toHaveText(
+    "Gespeichert.",
+  );
   await page.reload();
   await go(page, "Kampagnen");
   await expect(
