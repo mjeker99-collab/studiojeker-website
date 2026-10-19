@@ -4,6 +4,8 @@ import {
   driveId,
   type DriveSelection,
 } from "../drive/service";
+import { campaignConcept } from "../concepts/service";
+import { conceptInput } from "../concepts/input";
 import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -32,7 +34,7 @@ export async function studioState(actor: string) {
   const [series, assets, brand, jobs, campaigns, users, customers] =
     await Promise.all([
       db.studioSeries.findMany({
-        where: { organizationId: ORG },
+        where: { organizationId: ORG, concept: { is: null } },
         orderBy: { createdAt: "desc" },
         take: 100,
         include: {
@@ -69,7 +71,7 @@ export async function studioState(actor: string) {
       }),
       db.studioOrganization.findUniqueOrThrow({ where: { id: ORG } }),
       db.studioJob.findMany({
-        where: { organizationId: ORG },
+        where: { organizationId: ORG, series: { concept: { is: null } } },
         orderBy: { createdAt: "desc" },
         take: 100,
         select: {
@@ -265,6 +267,7 @@ const requestSchema = z
     seriesId: z.string().min(1),
     kind: z.enum(["TEXT", "IMAGE", "CHAT"]),
     message: z.string().trim().min(1).max(4000).optional(),
+    conceptVersion: z.number().int().positive().optional(),
     mediaIntent: z.enum(["IMAGE", "VIDEO"]).optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
@@ -342,9 +345,18 @@ export async function queueJob(actor: string, raw: unknown) {
         );
       return previous;
     }
+    const conceptLink = await tx.strategyConcept.findUnique({
+      where: { seriesId: data.seriesId },
+      select: { id: true },
+    });
+    if (conceptLink)
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"concept:" + conceptLink.id}))`;
     const series = await tx.studioSeries.findFirst({
       where: { id: data.seriesId, organizationId: ORG },
       include: {
+        concept: {
+          include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        },
         contents: {
           orderBy: { createdAt: "asc" },
           include: { versions: { orderBy: { version: "desc" }, take: 1 } },
@@ -352,6 +364,41 @@ export async function queueJob(actor: string, raw: unknown) {
       },
     });
     if (!series) throw new PolicyError("Serie nicht zugänglich.", 403);
+    if (
+      series.concept &&
+      (data.kind !== "CHAT" ||
+        data.mediaIntent ||
+        data.referenceIds.length ||
+        data.driveReferenceIds.length)
+    )
+      throw new PolicyError(
+        "Konzepte verwenden ausschliesslich den Textdialog.",
+      );
+    if (
+      series.concept &&
+      (data.conceptVersion !== series.concept.version ||
+        !data.referenceTransfer)
+    )
+      throw new PolicyError(
+        "Aktuelle Konzeptversion und Übermittlung bestätigen.",
+        409,
+      );
+    const conceptPayload = series.concept
+      ? conceptInput.parse(series.concept.versions[0].payload)
+      : null;
+    const strategy = conceptPayload
+      ? {
+          mode: "STRATEGY",
+          version: series.concept!.version,
+          document: conceptPayload,
+          customer: conceptPayload.customerId
+            ? await tx.customer.findFirst({
+                where: { id: conceptPayload.customerId, organizationId: ORG },
+                select: { name: true, website: true, notes: true },
+              })
+            : { name: "Studiojeker" },
+        }
+      : undefined;
     const brief = briefingSchema.parse(series.briefing);
     const content = series.contents.find((c) => c.id === data.contentId);
     if (
@@ -416,9 +463,9 @@ export async function queueJob(actor: string, raw: unknown) {
         "Ein Auftrag wartet oder läuft bereits. Zuerst prüfen.",
         409,
       );
-    const firstSnapshot = contentInput.parse(
-      series.contents[0].versions[0].payload,
-    ).studio;
+    const firstSnapshot = series.contents[0]
+      ? contentInput.parse(series.contents[0].versions[0].payload).studio
+      : undefined;
     const profile = firstSnapshot?.brandProfile;
     const selectedRules = Object.fromEntries(
       (brief.brandRules || []).map((key) => [key, profile?.[key] || "Offen"]),
@@ -451,6 +498,8 @@ export async function queueJob(actor: string, raw: unknown) {
         );
     }
     const input = {
+      strategy,
+      campaignStrategy: await campaignConcept(tx, brief.campaignId),
       request: data,
       ...(driveSelection ? { driveSelection } : {}),
       brief,
@@ -570,6 +619,8 @@ export async function runJob(
     campaign?: unknown;
     contents?: unknown;
     driveSelection?: DriveSelection;
+    strategy?: unknown;
+    campaignStrategy?: unknown;
   };
   let providerStarted = false;
   try {
@@ -603,6 +654,8 @@ export async function runJob(
       providerStarted = true;
       const r = await provider.chat(
         {
+          strategy: input.strategy,
+          campaignStrategy: input.campaignStrategy,
           briefing: input.brief,
           campaign: input.campaign,
           contents: input.contents,
@@ -633,7 +686,11 @@ export async function runJob(
       const r = await provider.text(
         briefingSchema.parse(input.brief),
         job.model,
-        { rules: input.selectedRules, references: input.references },
+        {
+          rules: input.selectedRules,
+          references: input.references,
+          campaignStrategy: input.campaignStrategy,
+        },
       );
       result = { posts: r.posts };
       usage = r.usage;

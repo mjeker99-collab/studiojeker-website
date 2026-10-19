@@ -3,6 +3,7 @@ import {
   duplicateNewsletter,
   duplicateInput,
 } from "./newsletter-library";
+import { conceptInput } from "../concepts/input";
 import { transferNewsletter } from "./mailchimp";
 import { z } from "zod";
 import { db } from "../db";
@@ -58,8 +59,27 @@ export async function hubState() {
         select: { id: true, name: true, status: true },
       }),
     ]);
+  const conceptVersions = await db.strategyVersion.findMany({
+    where: {
+      handoffCampaignId: { in: campaigns.map((c) => c.id) },
+      approvedAt: { not: null },
+      concept: { organizationId: "studiojeker" },
+    },
+  });
   return {
-    campaigns,
+    campaigns: campaigns.map((c) => {
+      const version = conceptVersions.find(
+        (v) =>
+          v.handoffCampaignId === c.id &&
+          conceptInput.parse(v.payload).customerId === c.customerId,
+      );
+      return {
+        ...c,
+        conceptBriefing: version
+          ? { conceptId: version.conceptId, version: version.version }
+          : null,
+      };
+    }),
     contents,
     users,
     drafts,
