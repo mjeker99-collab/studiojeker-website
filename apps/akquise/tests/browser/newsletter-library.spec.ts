@@ -123,6 +123,7 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
       exact: true,
     }),
   });
+  await expect(copy.getByText("Freigegeben", { exact: true })).toBeVisible();
   await copy.getByRole("button", { name: /Inhalt öffnen/ }).click();
   const download = page.waitForEvent("download");
   await editor.getByRole("button", { name: "HTML & Text exportieren" }).click();
