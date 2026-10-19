@@ -13,6 +13,8 @@ import {
 import { parseImport, validateRows } from "../lib/import";
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
+import type { Contact } from "@prisma/client";
+import { generateDraft, importedDraft } from "../lib/generation";
 const base = {
   email: "anna.muster@example.test",
   confidence: "VERIFIED",
@@ -21,6 +23,100 @@ const base = {
   hook: "Dokumentierte Recherche.",
   status: "VERIFIED",
 };
+const architectureBody = `Guten Tag Frau Muster
+
+Studiojeker unterstützt Architekturbüros mit 3D-Visualisierungen, Architekturfotografie und Projektfilmen.
+
+Wäre ein kurzer Austausch interessant?
+
+Freundliche Grüsse
+Nora Jeker
+Studiojeker
+studiojeker.ch`;
+const architectureNotes = `Originalname: Anna Muster
+Prüfstatus: Persönliche Adresse und Rolle auf offizieller Website veröffentlicht
+Prüfdatum: 01.01.2026
+Newsletter-Einwilligung: Keine Einwilligung dokumentiert
+Akquise-Status: ENTWURF – NICHT VERSENDEN
+Betreff: Architektur und Projekte sichtbar machen
+E-Mail-Entwurf: ${architectureBody}
+Herkunft: Recherche 01.01.2026
+Hinweise: Vor Versand erneut prüfen; keine Newsletter-Einwilligung.`;
+const architectureContact = {
+  ...base,
+  organisation: "Beispiel Architekten AG",
+  firstName: "Anna",
+  lastName: "Muster",
+  industry: "",
+  service: "",
+  notes: architectureNotes,
+} as Contact;
+
+test("Bestehender importierter Mailtext hat Vorrang und enthält keine internen Metadaten", async () => {
+  const generated = await generateDraft(architectureContact, {
+    async generate() {
+      throw new Error("Importierten Text nicht neu generieren");
+    },
+  });
+  assert.deepEqual(generated, {
+    subject: "Architektur und Projekte sichtbar machen",
+    body: architectureBody,
+  });
+  assert.doesNotMatch(
+    generated.body,
+    /Herkunft:|Hinweise:|Prüfstatus:|Akquise-Status:/,
+  );
+  assert.equal(architectureContact.notes, architectureNotes);
+});
+test("Beide Masterlisten-Betreffnamen und Windows-Zeilenumbrüche bleiben lesbar", () => {
+  const notes = architectureNotes
+    .replace("Betreff:", "E-Mail-Betreff:")
+    .replaceAll("\n", "\r\n");
+  assert.equal(importedDraft(notes)?.body, architectureBody);
+  assert.equal(
+    importedDraft(`Betreff: Architektur\nE-Mail-Entwurf:\n${architectureBody}`)
+      ?.body,
+    architectureBody,
+  );
+  assert.equal(importedDraft("Nur eine interne Recherche-Notiz."), null);
+});
+test("Unvollständige oder mehrdeutige importierte Entwürfe werden nicht still ersetzt", () => {
+  for (const notes of [
+    "Betreff: Architektur",
+    "E-Mail-Entwurf: Text",
+    "Betreff: \nE-Mail-Entwurf: Text",
+    "Betreff: Architektur\nE-Mail-Entwurf:\nHinweise: Intern",
+    architectureNotes + "\nBetreff: Zweiter Betreff",
+    architectureNotes + "\nE-Mail-Entwurf: Zweiter Text",
+    `Betreff: ${"x".repeat(251)}\nE-Mail-Entwurf: Text`,
+  ])
+    assert.throws(() => importedDraft(notes), /Importierter Mailentwurf/);
+});
+test("Auch importierte Mailtexte umgehen keine Kontaktprüfung", async () => {
+  await assert.rejects(
+    generateDraft({ ...architectureContact, confidence: "UNCONFIRMED" }),
+  );
+  await assert.rejects(
+    generateDraft({ ...architectureContact, status: "DO_NOT_CONTACT" }),
+  );
+});
+test("Lokale Vorlage erkennt Architekten bei leerer Branche im Organisationsnamen", async () => {
+  const generated = await generateDraft({ ...architectureContact, notes: "" });
+  assert.match(generated.subject, /Architekturvisualisierungen/);
+  assert.doesNotMatch(generated.body, /Businessfotografie/);
+  const explicit = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    service: "Projektfilmen",
+  });
+  assert.match(explicit.body, /Projektfilmen/);
+  const industry = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    industry: "Industrie",
+  });
+  assert.match(industry.body, /Businessfotografie/);
+});
 test("Kontakte ohne Adresse bleiben für Entwurf und Freigabe gesperrt", () => {
   assert.throws(() => verifiedContact({ ...base, email: "" }));
 });
@@ -84,6 +180,10 @@ test("Drive-Masterliste übernimmt alle Personen, auch ohne oder mit gemeinsamer
   );
   assert.match(rows[0].notes, /Herkunft: Drive/);
   assert.match(rows[0].notes, /E-Mail-Entwurf: Entwurf/);
+  assert.deepEqual(await generateDraft({ ...rows[8], ...base } as Contact), {
+    subject: "Betreff",
+    body: "Entwurf",
+  });
   sheet.getCell("A2").value = { formula: "1+1", result: 2 };
   await assert.rejects(
     parseImport(Buffer.from(await book.xlsx.writeBuffer()), "drive.xlsx"),
@@ -292,4 +392,8 @@ test("Masterliste mit mehreren Blättern und x:-Namespace importiert nur Kontakt
   assert.equal(rows[0].newsletterConsent, false);
   assert.equal(rows[0].confidence, "UNCONFIRMED");
   assert.match(rows[0].notes, /Nicht belegt/);
+  assert.deepEqual(await generateDraft({ ...rows[0], ...base } as Contact), {
+    subject: "Betreff",
+    body: "Entwurf",
+  });
 });

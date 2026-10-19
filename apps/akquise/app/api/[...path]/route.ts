@@ -393,7 +393,7 @@ async function handler(
         mailMode: readMailConfig().mode,
         smtpPort: readMailConfig().port || null,
         smtpSecure: readMailConfig().secure,
-        generator: "Lokale Vorlage · KI-Schnittstelle vorbereitet",
+        generator: "Importierter Mailtext, sonst lokale Vorlage",
       });
     }
     if (req.method !== "POST") throw new PolicyError("Nicht gefunden.", 404);
