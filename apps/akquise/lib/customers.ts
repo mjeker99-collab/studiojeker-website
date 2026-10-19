@@ -4,6 +4,7 @@ import { hubActor } from "./hub/workflow";
 import { PolicyError } from "./policy";
 import { ORG } from "./studio/input";
 import { audit } from "./workflow";
+import { customerKnowledgeSchema } from "./customer-knowledge";
 
 const customerInput = z
   .object({
@@ -23,6 +24,8 @@ const customerInput = z
     contactEmail: z.union([z.literal(""), z.email().max(254)]),
     notes: z.string().trim().max(5000),
     status: z.enum(["ACTIVE", "INACTIVE"]),
+    // Older clients may omit the field; keep existing knowledge on updates.
+    knowledge: customerKnowledgeSchema.optional(),
   })
   .strict();
 

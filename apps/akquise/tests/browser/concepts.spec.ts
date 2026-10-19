@@ -22,6 +22,15 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     editor.getByRole("heading", { name: "Mit GPT konzipieren" }),
   ).toBeVisible();
   await editor
+    .getByRole("button", { name: "Kampagne planen", exact: true })
+    .click();
+  await expect(
+    editor.getByLabel("Deine Nachricht", { exact: true }),
+  ).toHaveValue(/Zeitraum und Budget/);
+  await expect(
+    editor.getByRole("button", { name: "An GPT senden", exact: true }),
+  ).toBeDisabled();
+  await editor
     .getByLabel("Titel", { exact: true })
     .fill("Synthetisches Kommunikationskonzept");
   for (const [, title] of chapters)
@@ -41,11 +50,9 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Strategie & Konzepte/ })
     .click();
-  await editor
-    .getByLabel("Konzept auswählen")
-    .selectOption({
-      label: "Synthetisches Kommunikationskonzept · V1 · Entwurf",
-    });
+  await editor.getByLabel("Konzept auswählen").selectOption({
+    label: "Synthetisches Kommunikationskonzept · V1 · Entwurf",
+  });
   await expect(
     editor.getByLabel("Briefing & Ausgangslage", { exact: true }),
   ).toHaveValue(/Geprüfter Testinhalt/);

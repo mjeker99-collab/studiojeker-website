@@ -4,6 +4,31 @@ import JSZip from "jszip";
 import { conceptInput, emptyConcept, chapters } from "../lib/concepts/input";
 import { conceptDocx, conceptHtml } from "../lib/concepts/export";
 import { openAIProvider } from "../lib/studio/provider";
+import {
+  customerKnowledgeSchema,
+  customerKnowledgeContext,
+} from "../lib/customer-knowledge";
+
+test("Company knowledge is bounded, backwards compatible and snapshots only selected fields", () => {
+  const knowledge = customerKnowledgeSchema.parse({ offers: "Umbauten" });
+  assert.equal(knowledge.voice, "");
+  assert.throws(() =>
+    customerKnowledgeSchema.parse({ offers: "x".repeat(2001) }),
+  );
+  assert.throws(() => customerKnowledgeSchema.parse({ approved: true }));
+  const customer = {
+    name: "Test AG",
+    website: "",
+    notes: "",
+    revision: 4,
+    knowledge,
+  };
+  const snapshot = customerKnowledgeContext(customer);
+  customer.knowledge.offers = "Verändert";
+  customer.revision = 5;
+  assert.equal(snapshot.knowledge.offers, "Umbauten");
+  assert.equal(snapshot.revision, 4);
+});
 
 test("Concept input is bounded and strict; unknown fields cannot grant approval", () => {
   assert.throws(() =>
@@ -52,6 +77,8 @@ test("Strategy dialog uses strategic instructions and current concept, no resear
       assert.match(body.instructions, /Vorrang vor älteren/);
       assert.match(body.instructions, /Kundenkontext/);
       assert.match(body.instructions, /Architekturbüro/);
+      assert.match(body.instructions, /Inhouse-Agentur/);
+      assert.match(body.instructions, /Leere Profilfelder bedeuten unbekannt/);
       assert.equal(body.tools, undefined);
       assert.equal(body.store, false);
       return new Response(

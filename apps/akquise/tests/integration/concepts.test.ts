@@ -11,6 +11,7 @@ url.searchParams.set("schema", schema);
 process.env.DATABASE_URL = url.toString();
 const { db } = await import("../../lib/db");
 const concepts = await import("../../lib/concepts/service");
+const { saveCustomer } = await import("../../lib/customers");
 const studio = await import("../../lib/studio/service");
 const { emptyConcept, chapters } = await import("../../lib/concepts/input");
 const complete = {
@@ -139,6 +140,7 @@ test("Strategy chat uses budgeted jobs, revision checks, saved transcript and se
     data: {
       name: "Synthetisches Büro",
       notes: "Kundenspezifische Positionierung",
+      knowledge: { offers: "Architekturfotografie", voice: "Sachlich" },
     },
   });
   const doc = await concepts.saveConcept(actor, {
@@ -167,14 +169,49 @@ test("Strategy chat uses budgeted jobs, revision checks, saved transcript and se
   await assert.rejects(studio.queueJob(actor, { ...input, kind: "TEXT" }));
   const job = await studio.queueJob(actor, input);
   assert.equal((await studio.queueJob(actor, input)).id, job.id);
+  await saveCustomer(
+    actor,
+    {
+      revision: customer.revision,
+      data: {
+        name: customer.name,
+        website: "",
+        notes: customer.notes,
+        contactName: "",
+        contactEmail: "",
+        status: "ACTIVE",
+      },
+    },
+    customer.id,
+  );
+  const retained = await db.customer.findUniqueOrThrow({
+    where: { id: customer.id },
+  });
+  assert.deepEqual(retained.knowledge, customer.knowledge);
+  await db.customer.update({
+    where: { id: customer.id },
+    data: { knowledge: { offers: "Spätere Änderung" } },
+  });
   let calls = 0;
   await studio.runJob(actor, job.id, {
     chat: async (context) => {
       calls++;
       const data = context as {
-        strategy: { customer: { name: string }; version: number };
+        strategy: {
+          customer: {
+            name: string;
+            revision: number;
+            knowledge: { offers: string };
+          };
+          version: number;
+        };
       };
       assert.equal(data.strategy.customer.name, customer.name);
+      assert.equal(
+        data.strategy.customer.knowledge.offers,
+        "Architekturfotografie",
+      );
+      assert.equal(data.strategy.customer.revision, customer.revision);
       assert.equal(data.strategy.version, 1);
       return { reply: "Gezielte Rückfrage", usage: {}, requestId: "synthetic" };
     },
