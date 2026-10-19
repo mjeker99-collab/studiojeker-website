@@ -359,6 +359,7 @@ export default function Concepts({
                 <label>
                   Deine Nachricht
                   <textarea
+                    aria-label="Deine Nachricht"
                     rows={5}
                     maxLength={4000}
                     value={message}
@@ -503,6 +504,7 @@ export default function Concepts({
                     <label key={key}>
                       {title}
                       <textarea
+                        aria-label={title}
                         rows={5}
                         maxLength={4000}
                         value={form[key]}

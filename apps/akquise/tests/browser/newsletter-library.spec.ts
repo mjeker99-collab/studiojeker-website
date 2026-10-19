@@ -23,7 +23,7 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await page
     .getByRole("button", { name: "Bestehende Ausgaben importieren" })
     .click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator('.notice[role="status"]')).toContainText(
     "Vorhandene Newsletter übernommen",
   );
   const source = page.locator("article[data-content-id]").filter({
@@ -49,7 +49,9 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await editor
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("Version gespeichert");
+  await expect(page.locator('.notice[role="status"]')).toContainText(
+    "Version gespeichert",
+  );
   const iframe = editor.frameLocator(
     'iframe[title="Newsletter HTML-Vorschau"]',
   );
