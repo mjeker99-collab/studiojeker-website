@@ -28,7 +28,15 @@ bleiben bei Mailchimp. Ein SMTP-Konto allein aktiviert keinen Versand.
    ausführen. Das prüft TLS und Anmeldung, sendet keine Nachricht und
    verändert keine Versanddatensätze. Erfolg zeigt nur die SMTP-Verbindung,
    nicht Zustellung oder Domain-Authentifizierung.
-5. In StudioONE unter **Einstellungen** muss „Interner SMTP-Testmodus“
+5. Unter **Einstellungen → Verbindungen & Sicherheit → Interne Testmail** kann
+   «Testmail an njeker@studiojeker.ch senden» einen neutralen Zustellungstest
+   auslösen. Dafür muss der interne Testmodus aktiv sein und diese Adresse in
+   `TEST_MAIL_RECIPIENTS` stehen. Empfänger und Inhalt sind serverseitig festgelegt.
+   Es wird kein Akquisekontakt oder Entwurf freigegeben. Das Audit-Protokoll zeigt
+   `SMTP_TEST_STARTED`, danach `SMTP_TEST_ACCEPTED` oder `SMTP_TEST_UNCERTAIN`.
+   SMTP-Annahme ist noch keine bestätigte Zustellung: Posteingang/Spam prüfen.
+   Eine Anfrage wird nicht automatisch wiederholt; höchstens ein neuer Test pro Minute.
+6. Für einen anschliessenden Test eines Akquiseentwurfs muss unter **Einstellungen** „Interner SMTP-Testmodus“
    erscheinen. Einen verifizierten Kontakt mit aktueller rechtlicher Prüfung
    und freigegebener Nachrichtenversion auswählen, den Versand ausdrücklich
    bestätigen und ausschliesslich an die feste interne Liste umleiten lassen.

@@ -15,6 +15,156 @@ import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
 import { generateDraft, importedDraft } from "../lib/generation";
+import { sendInternalSmtpTest } from "../lib/smtp-test";
+import type { PrismaClient } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+
+test("Separate SMTP-Testmail bindet Empfänger, bestätigt Versand und verhindert Wiederholung", async () => {
+  const env = {
+    MAIL_MODE: "test",
+    ENABLE_EMAIL_SENDING: "true",
+    SMTP_CONFIGURATION_CONFIRMED: "true",
+    SMTP_HOST: "jovinus.metanet.ch",
+    SMTP_USER: "njeker@studiojeker.ch",
+    MAIL_FROM: "njeker@studiojeker.ch",
+    SMTP_PASSWORD: "synthetic-test-only",
+    SMTP_PORT: "465",
+    SMTP_SECURE: "true",
+    TEST_MAIL_RECIPIENTS: "njeker@studiojeker.ch",
+    NODE_ENV: "test",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(env).map((k) => [k, process.env[k]]),
+  );
+  Object.assign(process.env, env);
+  type Entry = { action: string; entityId: string; createdAt?: Date };
+  const records: Entry[] = [];
+  let active = true;
+  const audit = {
+    async findFirst({
+      where,
+    }: {
+      where: { action: string; entityId?: string; createdAt?: { gte: Date } };
+    }) {
+      return (
+        records.find(
+          (r) =>
+            r.action === where.action &&
+            (!where.entityId || r.entityId === where.entityId) &&
+            (!where.createdAt || r.createdAt! >= where.createdAt.gte),
+        ) ?? null
+      );
+    },
+    async create({ data }: { data: Entry }) {
+      records.push({ ...data, createdAt: new Date() });
+      return data;
+    },
+  };
+  const tx = {
+    audit,
+    user: {
+      async findFirst() {
+        return active
+          ? { name: "Martin Jeker", email: "martin@example.test", active: true }
+          : null;
+      },
+    },
+    async $executeRaw() {},
+  };
+  const client = {
+    audit,
+    async $transaction(fn: (value: typeof tx) => Promise<void>) {
+      return fn(tx);
+    },
+  } as unknown as PrismaClient;
+  let sends = 0;
+  const sender: import("../lib/mail").SmtpSender = async (message) => {
+    sends++;
+    assert.deepEqual(message.envelopeRecipients, ["njeker@studiojeker.ch"]);
+    assert.equal(message.recipient, "njeker@studiojeker.ch");
+    assert.equal(message.test, true);
+    assert.match(message.body, /interne Testmail/);
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_STARTED");
+    return { accepted: ["njeker@studiojeker.ch"], rejected: [] };
+  };
+  const request = { requestId: randomUUID(), confirmed: true };
+  try {
+    for (const mode of ["disabled", "production"]) {
+      process.env.MAIL_MODE = mode;
+      await assert.rejects(
+        sendInternalSmtpTest("martin", request, sender, client),
+      );
+    }
+    process.env.MAIL_MODE = "test";
+    process.env.TEST_MAIL_RECIPIENTS = "other@studiojeker.ch";
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+    );
+    process.env.TEST_MAIL_RECIPIENTS = env.TEST_MAIL_RECIPIENTS;
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, confirmed: false },
+        sender,
+        client,
+      ),
+    );
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, recipient: "outside@example.test" },
+        sender,
+        client,
+      ),
+    );
+    active = false;
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+    );
+    active = true;
+    assert.equal(sends, 0);
+    await sendInternalSmtpTest("martin", request, sender, client);
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_ACCEPTED");
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+      /bereits gestartet/,
+    );
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, requestId: randomUUID() },
+        sender,
+        client,
+      ),
+      /Minute/,
+    );
+    assert.equal(sends, 1);
+    records.length = 0;
+    const failed = { ...request, requestId: randomUUID() };
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        failed,
+        async () => {
+          throw new Error("secret must not escape");
+        },
+        client,
+      ),
+      /nicht bestätigt/,
+    );
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_UNCERTAIN");
+    await assert.rejects(
+      sendInternalSmtpTest("martin", failed, sender, client),
+      /bereits gestartet/,
+    );
+    assert.equal(sends, 1);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
 const base = {
   email: "anna.muster@example.test",
   confidence: "VERIFIED",
