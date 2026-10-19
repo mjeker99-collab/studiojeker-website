@@ -1,6 +1,7 @@
 "use client";
 import Hub from "./hub/Hub";
 import Cms from "./cms/Cms";
+import Concepts from "./concepts/Concepts";
 import Customers from "./customers/Customers";
 import Image from "next/image";
 import Library from "./library/Library";
@@ -42,6 +43,7 @@ const nav = [
   "Übersicht",
   "Kontakte/Akquise",
   "Kunden",
+  "Strategie & Konzepte",
   "Kampagnen",
   "Social Media",
   "Content-Studio",
@@ -123,6 +125,7 @@ function AppLogo() {
 export default function App() {
   const [data, setData] = useState<State | null>(null),
     [loaded, setLoaded] = useState(false),
+    [conceptDirty, setConceptDirty] = useState(false),
     [tab, setTab] = useState("Übersicht"),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -412,6 +415,11 @@ export default function App() {
                   : ""
               }
               onClick={() => {
+                if (
+                  conceptDirty &&
+                  !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
+                )
+                  return;
                 setTab(n === "Kontakte/Akquise" ? "Kontakte" : n);
                 setNotice("");
                 setError("");
@@ -523,6 +531,12 @@ export default function App() {
           )}
           {tab === "Bibliothek" && <Library />}
           {tab === "Kunden" && <Customers />}
+          {tab === "Strategie & Konzepte" && (
+            <Concepts
+              onDirtyChange={setConceptDirty}
+              openCampaigns={() => setTab("Kampagnen")}
+            />
+          )}
           {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
           {tab === "Übersicht" && (
             <>

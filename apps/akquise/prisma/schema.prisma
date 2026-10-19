@@ -379,7 +379,35 @@ model Customer {
   @@index([organizationId, name])
 }
 
+// Concepts keep immutable content versions; approval is tied to a version.
+model StrategyConcept {
+  id String @id @default(cuid())
+  organizationId String @default("studiojeker")
+  seriesId String @unique
+  series StudioSeries @relation(fields: [seriesId], references: [id])
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions StrategyVersion[]
+  @@index([organizationId, updatedAt])
+}
+
+model StrategyVersion {
+  id String @id @default(cuid())
+  conceptId String
+  concept StrategyConcept @relation(fields: [conceptId], references: [id])
+  version Int
+  payload Json
+  createdBy String
+  createdAt DateTime @default(now())
+  approvedBy String?
+  approvedAt DateTime?
+  handoffCampaignId String? @unique
+  @@unique([conceptId, version])
+}
+
 model StudioSeries {
+  concept StrategyConcept?
   customerId     String?
   customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
   id             String             @id @default(cuid())

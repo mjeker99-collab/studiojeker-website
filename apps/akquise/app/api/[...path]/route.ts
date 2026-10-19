@@ -1,3 +1,6 @@
+import { conceptState, conceptMutation } from "@/lib/concepts/service";
+import { conceptInput } from "@/lib/concepts/input";
+import { conceptDocx, conceptHtml } from "@/lib/concepts/export";
 import { cmsState, importSanityNewsletter } from "@/lib/cms/service";
 import {
   libraryState,
@@ -123,10 +126,74 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (path[0] === "concepts" && req.method === "GET") {
+      if (path.length === 1)
+        return NextResponse.json(await conceptState(user.id), {
+          headers: { "Cache-Control": "no-store" },
+        });
+      if (path.length === 2)
+        return NextResponse.json(await conceptState(user.id, path[1]), {
+          headers: { "Cache-Control": "no-store" },
+        });
+      if (path.length === 3 && ["docx", "print"].includes(path[2])) {
+        const state = await conceptState(user.id, path[1]);
+        if (!("versions" in state))
+          throw new PolicyError("Konzept fehlt.", 404);
+        const version = Number(req.nextUrl.searchParams.get("version"));
+        const snapshot = state.versions.find((v) => v.version === version);
+        if (!snapshot) throw new PolicyError("Version nicht gefunden.", 404);
+        const payload = conceptInput.parse(snapshot.payload);
+        const customer = payload.customerId
+          ? await db.customer.findFirst({
+              where: { id: payload.customerId, organizationId: "studiojeker" },
+              select: { name: true },
+            })
+          : null;
+        const approver = snapshot.approvedBy
+          ? await db.user.findUnique({
+              where: { id: snapshot.approvedBy },
+              select: { name: true },
+            })
+          : null;
+        const meta = {
+          version,
+          customer: customer?.name || "Studiojeker",
+          status: snapshot.approvedAt ? "Freigegeben" : "Entwurf",
+          author: approver?.name || "",
+        };
+        const headers = {
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+        };
+        if (path[2] === "print")
+          return new NextResponse(conceptHtml(payload, meta), {
+            headers: {
+              ...headers,
+              "Content-Type": "text/html; charset=utf-8",
+              "Content-Security-Policy":
+                "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'self'",
+            },
+          });
+        return new NextResponse(
+          new Uint8Array(await conceptDocx(payload, meta)),
+          {
+            headers: {
+              ...headers,
+              "Content-Type":
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "Content-Disposition": `attachment; filename="konzept-v${version}.docx"`,
+            },
+          },
+        );
+      }
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
     if (route === "cms/state" && req.method === "GET")
       return NextResponse.json(await cmsState(user.id));
     if (route === "cms/import" && req.method === "POST")
-      return NextResponse.json(await importSanityNewsletter(user.id, await jsonBody(req)));
+      return NextResponse.json(
+        await importSanityNewsletter(user.id, await jsonBody(req)),
+      );
     if (route === "social/status" && req.method === "GET")
       return NextResponse.json(await socialStatus(user.id), {
         headers: { "Cache-Control": "no-store" },
@@ -353,6 +420,8 @@ async function handler(
     if (Number(req.headers.get("content-length")) > 64000)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req);
+    if (path[0] === "concepts")
+      return NextResponse.json(await conceptMutation(user.id, path, body));
     if (route === "customers")
       return NextResponse.json(await saveCustomer(user.id, body));
     if (path[0] === "customers" && path.length === 2)

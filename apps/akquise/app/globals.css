@@ -1375,3 +1375,19 @@ pre {
 .cms-panel { min-width: 0; }
 .cms-document { padding: 20px 0; border-top: 1px solid #d6dadd; overflow-wrap: anywhere; }
 .cms-panel .actions { flex-wrap: wrap; gap: 12px; }
+
+/* Concept workspace follows the existing StudioONE controls and typography. */
+.concept-columns { display:grid; grid-template-columns:minmax(0, 0.9fr) minmax(0, 1.1fr); gap:24px; align-items:start; margin-top:24px; }
+.concepts, .concept-document { min-width:0; }
+.concept-document { background:white; border:1px solid #d9dfe2; padding:clamp(16px, 3vw, 32px); }
+.concept-document fieldset { border:0; margin:0; padding:0; min-width:0; }
+.concepts label { display:block; margin:14px 0; }
+.concepts input:not([type=checkbox]), .concepts textarea, .concepts select { width:100%; max-width:100%; }
+.concepts .check { display:flex; gap:10px; align-items:flex-start; }
+.concepts .check input { flex-shrink:0; margin-top:4px; }
+.concepts .studio-chat-transcript { max-height:560px; }
+.concepts .studio-chat-transcript button { margin:6px 0; }
+.concept-exports { margin-top:24px; }
+.concept-exports a { color:#00708c; text-decoration:underline; padding:8px 0; }
+.concept-history { margin-top:24px; overflow-wrap:anywhere; }
+@media(max-width:1100px) { .concept-columns { grid-template-columns:minmax(0, 1fr); } }

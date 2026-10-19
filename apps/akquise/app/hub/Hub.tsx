@@ -561,6 +561,18 @@ export default function Hub({
                 </p>
                 <p>{c.goal}</p>
                 <p>Zielgruppe: {c.audience}</p>
+                {c.conceptBriefing && (
+                  <p>
+                    <a
+                      href={`/api/concepts/${c.conceptBriefing.conceptId}/print?version=${c.conceptBriefing.version}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Freigegebenes Konzeptbriefing · Version{" "}
+                      {c.conceptBriefing.version}
+                    </a>
+                  </p>
+                )}
                 <p>
                   {displayTime(c.startsAt)} – {displayTime(c.endsAt)}
                 </p>
