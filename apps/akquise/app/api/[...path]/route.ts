@@ -1,3 +1,4 @@
+import { cmsState, importSanityNewsletter } from "@/lib/cms/service";
 import {
   libraryState,
   saveLibraryItem,
@@ -122,6 +123,10 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "cms/state" && req.method === "GET")
+      return NextResponse.json(await cmsState(user.id));
+    if (route === "cms/import" && req.method === "POST")
+      return NextResponse.json(await importSanityNewsletter(user.id, await jsonBody(req)));
     if (route === "social/status" && req.method === "GET")
       return NextResponse.json(await socialStatus(user.id), {
         headers: { "Cache-Control": "no-store" },

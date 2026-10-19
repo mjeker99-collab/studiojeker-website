@@ -1,5 +1,6 @@
 "use client";
 import Hub from "./hub/Hub";
+import Cms from "./cms/Cms";
 import Customers from "./customers/Customers";
 import Image from "next/image";
 import Library from "./library/Library";
@@ -46,6 +47,7 @@ const nav = [
   "Content-Studio",
   "Bibliothek",
   "Newsletter",
+  "Website & CMS",
   "Kalender",
   "Einstellungen",
 ];
@@ -516,6 +518,7 @@ export default function App() {
           ].includes(tab) && (
             <Hub key={tab} section={tab} userId={data.user.id} />
           )}
+          {tab === "Website & CMS" && <Cms openNewsletters={() => setTab("Newsletter")} />}
           {tab === "Bibliothek" && <Library />}
           {tab === "Kunden" && <Customers />}
           {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}

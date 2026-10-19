@@ -8,6 +8,7 @@ import {
   newsletterDefaults,
   newsletterText,
 } from "@/lib/hub/newsletter-template";
+import Cms from "../cms/Cms";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
 import { useEffect, useState } from "react";
@@ -728,6 +729,7 @@ export default function Hub({
           </form>
         </section>
       )}
+      {section === "Newsletter" && <Cms compact onImported={refresh} />}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (

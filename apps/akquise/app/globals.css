@@ -1370,3 +1370,8 @@ pre {
 .drive-selected { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; }
 .drive-selected > div { min-width: 0; }
 .drive-selected img { width: 100%; max-width: 240px; height: 160px; object-fit: contain; }
+
+/* CMS uses the existing StudioONE panel and control styles. */
+.cms-panel { min-width: 0; }
+.cms-document { padding: 20px 0; border-top: 1px solid #d6dadd; overflow-wrap: anywhere; }
+.cms-panel .actions { flex-wrap: wrap; gap: 12px; }
