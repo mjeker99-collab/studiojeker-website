@@ -9,7 +9,7 @@ import {
   messageHash,
   normalizeEmail,
 } from "./policy";
-import { generateDraft } from "./generation";
+import { generateDraft, importedDraft } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { randomUUID } from "node:crypto";
 import { allowedAccount } from "./config.mjs";
@@ -153,7 +153,7 @@ export async function newDraft(userId: string, contactId: string) {
     });
     await audit(tx, userId, "DRAFT_CREATED", draft.id, {
       version: 1,
-      provider: "local-template",
+      provider: importedDraft(c.notes) ? "imported-notes" : "local-template",
     });
     return draft;
   });
