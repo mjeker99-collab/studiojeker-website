@@ -518,7 +518,9 @@ export default function App() {
           ].includes(tab) && (
             <Hub key={tab} section={tab} userId={data.user.id} />
           )}
-          {tab === "Website & CMS" && <Cms openNewsletters={() => setTab("Newsletter")} />}
+          {tab === "Website & CMS" && (
+            <Cms openNewsletters={() => setTab("Newsletter")} />
+          )}
           {tab === "Bibliothek" && <Library />}
           {tab === "Kunden" && <Customers />}
           {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
@@ -706,7 +708,7 @@ export default function App() {
                         body.set("file", f);
                         action(async () => {
                           const r = await post("contacts/import", body);
-                          return `${r.imported} importiert, ${r.duplicates} Dubletten übersprungen.`;
+                          return `${r.imported} importiert, ${r.duplicates} bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
                         }, "Import abgeschlossen.");
                       }
                       e.target.value = "";
@@ -1005,7 +1007,6 @@ export default function App() {
                         "organisation",
                         "firstName",
                         "lastName",
-                        "email",
                       ].includes(key)}
                       onChange={(e) =>
                         setForm({ ...form, [key]: e.target.value })

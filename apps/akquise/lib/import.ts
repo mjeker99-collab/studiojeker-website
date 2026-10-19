@@ -21,7 +21,10 @@ export const contactInput = z
     firstName: z.string().trim().min(1).max(100),
     lastName: z.string().trim().min(1).max(100),
     position: text,
-    email: z.string().trim().email().max(254).transform(normalizeEmail),
+    email: z
+      .union([z.literal(""), z.string().trim().email().max(254)])
+      .default("")
+      .transform(normalizeEmail),
     website: url,
     sourceUrl: url,
     verifiedAt: z.union([z.literal(""), z.string().datetime()]).optional(),
@@ -82,6 +85,23 @@ const masterHeaders = [
   "E-Mail-Betreff",
   "E-Mail-Entwurf",
 ];
+const driveHeaders = [
+  "Person",
+  "Funktion",
+  "Organisation",
+  "Ort",
+  "E-Mail",
+  "Prüfstatus",
+  "Prüfdatum",
+  "Priorität",
+  "Quellen-URL",
+  "Newsletter-Einwilligung",
+  "Akquise-Status",
+  "Betreff",
+  "E-Mail-Entwurf",
+  "Herkunft",
+  "Hinweise",
+];
 
 // Some valid exports prefix spreadsheet XML elements with x:. ExcelJS 4.4
 // does not recognize those elements and throws while reading workbook.sheets.
@@ -114,39 +134,48 @@ async function compatibleXlsx(buffer: Buffer) {
 }
 
 function masterRows(sheet: ExcelJS.Worksheet): Record<string, unknown>[] {
-  const headers = masterHeaders.map((_, i) =>
+  const expected = sheet.name === "Kontakte" ? driveHeaders : masterHeaders;
+  const headers = expected.map((_, i) =>
     sheet
       .getRow(1)
       .getCell(i + 1)
       .text.trim(),
   );
   if (
-    headers.some((header, i) => header !== masterHeaders[i]) ||
-    sheet.columnCount !== masterHeaders.length
+    headers.some((header, i) => header !== expected[i]) ||
+    sheet.getRow(1).cellCount > expected.length
   )
     throw new PolicyError("Masterliste hat nicht die erwarteten Spalten.");
   const rows: Record<string, unknown>[] = [];
   sheet.eachRow((row, index) => {
     if (index === 1) return;
-    const values = masterHeaders.map((_, i) => {
+    const values = expected.map((_, i) => {
       const cell = row.getCell(i + 1);
       if (
         cell.type !== ExcelJS.ValueType.String &&
-        cell.type !== ExcelJS.ValueType.Null
+        cell.type !== ExcelJS.ValueType.Null &&
+        cell.type !== ExcelJS.ValueType.Hyperlink &&
+        cell.type !== ExcelJS.ValueType.Date
       )
         throw new PolicyError(
           `Zeile ${index}: Nur Textzellen, keine Formeln oder Links.`,
         );
-      return cell.text.trim();
+      return cell.value instanceof Date
+        ? cell.value.toISOString().slice(0, 10)
+        : cell.text.trim();
     });
-    if (!values[4]) return; // Masterliste also contains research without an email address.
+    if (!values.some(Boolean)) return;
+    const drive = expected === driveHeaders;
     const person = values[0].replace(/^(Dr\.|Prof\.)\s+/i, "").split(/\s+/);
     const originalName = values[0];
     const notes = [
       `Originalname: ${originalName}`,
-      ...[5, 6, 7, 8, 9, 12, 13, 14, 15]
+      ...(drive
+        ? [5, 6, 7, 9, 10, 11, 12, 13, 14]
+        : [5, 6, 7, 8, 9, 12, 13, 14, 15]
+      )
         .filter((i) => values[i])
-        .map((i) => `${masterHeaders[i]}: ${values[i]}`),
+        .map((i) => `${expected[i]}: ${values[i]}`),
     ].join("\n");
     rows.push({
       organisation: values[2],
@@ -155,8 +184,8 @@ function masterRows(sheet: ExcelJS.Worksheet): Record<string, unknown>[] {
       lastName: person.slice(1).join(" "),
       position: values[1],
       email: values[4],
-      sourceUrl: values[11],
-      hook: values[10],
+      sourceUrl: values[drive ? 8 : 11],
+      hook: drive ? "" : values[10],
       notes,
     });
   });
@@ -196,7 +225,10 @@ export async function parseImport(buffer: Buffer, filename: string) {
       throw new PolicyError("XLSX-Datei konnte nicht gelesen werden.");
     }
     const master = book.worksheets.find(
-      (sheet) => sheet.name === "Masterkontakte",
+      (sheet) =>
+        sheet.name === "Masterkontakte" ||
+        (sheet.name === "Kontakte" &&
+          sheet.getCell("A1").text.trim() === "Person"),
     );
     if (master) {
       if (master.rowCount > 501 || master.columnCount > 30)
@@ -237,8 +269,7 @@ export async function parseImport(buffer: Buffer, filename: string) {
 export function validateRows(rows: Record<string, unknown>[]) {
   if (!rows.length || rows.length > 500)
     throw new PolicyError("Import benötigt 1 bis 500 Kontakte.");
-  const emails = new Set<string>(),
-    people = new Set<string>();
+  const people = new Set<string>();
   return rows.map((row, index) => {
     for (const [key, value] of Object.entries(row)) {
       if (!columns.includes(key))
@@ -255,9 +286,8 @@ export function validateRows(rows: Record<string, unknown>[]) {
       );
     const c = parsed.data;
     const key = personKey(c.firstName, c.lastName, c.organisation);
-    if (emails.has(c.email) || people.has(key))
+    if (people.has(key))
       throw new PolicyError(`Zeile ${index + 2}: Dublette im Import.`);
-    emails.add(c.email);
     people.add(key);
     return c;
   });
