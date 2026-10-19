@@ -741,7 +741,7 @@ export default function Hub({
           </form>
         </section>
       )}
-      {section === "Newsletter" && <Cms compact onImported={refresh} />}
+      {section === "Newsletter" && <Cms onImported={refresh} />}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
