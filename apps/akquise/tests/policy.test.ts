@@ -21,6 +21,75 @@ const base = {
   hook: "Dokumentierte Recherche.",
   status: "VERIFIED",
 };
+test("Kontakte ohne Adresse bleiben für Entwurf und Freigabe gesperrt", () => {
+  assert.throws(() => verifiedContact({ ...base, email: "" }));
+});
+
+test("Drive-Masterliste übernimmt alle Personen, auch ohne oder mit gemeinsamer Adresse", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("Kontakte");
+  sheet.addRow([
+    "Person",
+    "Funktion",
+    "Organisation",
+    "Ort",
+    "E-Mail",
+    "Prüfstatus",
+    "Prüfdatum",
+    "Priorität",
+    "Quellen-URL",
+    "Newsletter-Einwilligung",
+    "Akquise-Status",
+    "Betreff",
+    "E-Mail-Entwurf",
+    "Herkunft",
+    "Hinweise",
+  ]);
+  for (let i = 0; i < 179; i++) {
+    sheet.addRow([
+      `Anna Person${i}`,
+      "Leitung",
+      "Test AG",
+      "Bern",
+      i < 8 ? "" : i < 11 ? "shared@example.test" : `p${i}@example.test`,
+      "Aktuell offiziell",
+      "2026-10-19",
+      "A",
+      "https://example.test",
+      "Ja",
+      "Freigegeben",
+      "Betreff",
+      "Entwurf",
+      "Drive",
+      "Notiz",
+    ]);
+  }
+  book.addWorksheet("Mailverwaltung").addRow(["Nicht importieren"]);
+  sheet.getCell("I2").value = {
+    text: "https://example.test",
+    hyperlink: "https://example.test",
+  };
+  const rows = await parseImport(
+    Buffer.from(await book.xlsx.writeBuffer()),
+    "drive.xlsx",
+  );
+  assert.equal(rows.length, 179);
+  assert.equal(rows.filter((r) => !r.email).length, 8);
+  assert.equal(
+    new Set(rows.filter((r) => r.email).map((r) => r.email)).size,
+    169,
+  );
+  assert.ok(
+    rows.every((r) => !r.newsletterConsent && r.confidence === "UNCONFIRMED"),
+  );
+  assert.match(rows[0].notes, /Herkunft: Drive/);
+  assert.match(rows[0].notes, /E-Mail-Entwurf: Entwurf/);
+  sheet.getCell("A2").value = { formula: "1+1", result: 2 };
+  await assert.rejects(
+    parseImport(Buffer.from(await book.xlsx.writeBuffer()), "drive.xlsx"),
+    /Formeln/,
+  );
+});
 test("Nur individuell verifizierte Kontakte sind freigabefähig", () => {
   assert.doesNotThrow(() => verifiedContact(base));
   for (const confidence of ["UNCONFIRMED", "ESTIMATED", "GENERAL"])
@@ -217,7 +286,8 @@ test("Masterliste mit mehreren Blättern und x:-Namespace importiert nur Kontakt
     await zip.generateAsync({ type: "nodebuffer" }),
     "master.xlsx",
   );
-  assert.equal(rows.length, 1);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].email, "");
   assert.equal(rows[0].email, "anna@example.test");
   assert.equal(rows[0].newsletterConsent, false);
   assert.equal(rows[0].confidence, "UNCONFIRMED");

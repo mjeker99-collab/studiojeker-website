@@ -102,7 +102,7 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
     async (tx) => {
       await actor(tx, userId);
       // One bulk insert avoids two sequential database round trips per contact.
-      // Both identity columns are unique; existing contacts remain untouched.
+      // Person identity is unique; shared or missing mailboxes are permitted.
       const created = await tx.contact.createMany({
         data: rows.map((c) => ({
           ...c,

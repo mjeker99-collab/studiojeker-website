@@ -29,6 +29,7 @@ export function verifiedContact(c: {
   if (c.status === "DO_NOT_CONTACT")
     throw new PolicyError("Kontakt ist gesperrt.");
   if (
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) ||
     c.confidence !== "VERIFIED" ||
     !c.verifiedAt ||
     !c.sourceUrl ||

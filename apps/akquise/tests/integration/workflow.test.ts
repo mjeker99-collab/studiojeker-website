@@ -265,7 +265,7 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
     imported: 0,
     duplicates: 1,
   });
-  const c = await db.contact.findUniqueOrThrow({
+  const c = await db.contact.findFirstOrThrow({
     where: { email: rows[0].email },
   });
   assert.equal(c.status, "NEW");
@@ -282,7 +282,7 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
   );
 });
 
-test("Import verarbeitet eine Masterliste gebündelt und zählt beide Dublettenarten", async () => {
+test("Import erkennt Personen wieder und erhält gemeinsam genutzte Adressen", async () => {
   const rows = Array.from({ length: 64 }, (_, i) => ({
     organisation: `Synthetische Importfirma ${i}`,
     firstName: "Anna",
@@ -315,18 +315,38 @@ test("Import verarbeitet eine Masterliste gebündelt und zählt beide Dublettena
     lastName: rows[1].lastName,
   });
   assert.deepEqual(await importContacts(martin, rows), {
-    imported: 62,
-    duplicates: 2,
+    imported: 63,
+    duplicates: 1,
   });
   assert.deepEqual(await importContacts(nora, rows), {
     imported: 0,
     duplicates: 64,
   });
   assert.equal(
-    (await db.contact.findUniqueOrThrow({ where: { email: rows[0].email } }))
-      .status,
+    (
+      await db.contact.findFirstOrThrow({
+        where: { email: rows[0].email, status: "VERIFIED" },
+      })
+    ).status,
     "VERIFIED",
   );
+  const missing = rows.slice(0, 2).map((r, i) => ({
+    ...r,
+    organisation: `Ohne Adresse ${i}`,
+    email: "",
+  }));
+  assert.deepEqual(await importContacts(martin, missing), {
+    imported: 2,
+    duplicates: 0,
+  });
+  assert.deepEqual(await importContacts(nora, missing), {
+    imported: 0,
+    duplicates: 2,
+  });
+  const incomplete = await db.contact.findFirstOrThrow({
+    where: { organisation: "Ohne Adresse 0" },
+  });
+  await assert.rejects(newDraft(martin, incomplete.id));
 });
 
 async function withMockSmtp(

@@ -55,7 +55,7 @@ try {
   ]) {
     const email = `${first.toLowerCase()}.${last.toLowerCase()}@${org.split(" ")[1].toLowerCase()}.example.test`;
     await db.contact.upsert({
-      where: { email },
+      where: { personKey: personKey(first, last, org) },
       update: {},
       create: {
         organisation: org,
