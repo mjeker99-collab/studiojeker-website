@@ -25,6 +25,7 @@ import {
   signatureAssets,
 } from "../lib/mail-signature";
 import { signatureAttachments } from "../lib/mail-signature-assets";
+import sharp from "sharp";
 
 test("Nora-Signatur ersetzt bekannte Textsignatur und erhält Nachricht und Widerspruchshinweis", () => {
   const body =
@@ -61,12 +62,19 @@ test("Signaturbilder und HTML sind Bestandteil der Freigabe und des lokalen MIME
   const attachments = await signatureAttachments();
   assert.equal(attachments.length, 2);
   for (const [index, asset] of attachments.entries()) {
-    assert.equal(
-      createHash("sha256").update(asset.content).digest("hex"),
-      signatureAssets[index].sha256,
+    const dimensions = await sharp(asset.content).metadata();
+    assert.equal(dimensions.width, signatureAssets[index].width);
+    assert.equal(dimensions.height, signatureAssets[index].height);
+    assert.ok(
+      asset.content.length < 30000,
+      "Keine grossen Originalbilder im Versand",
     );
     assert.equal(asset.contentDisposition, "inline");
   }
+  const html = signedMessage("Test").html;
+  assert.match(html, /alt="Studiojeker" width="180" height="83"/);
+  assert.match(html, /alt="Nora Jeker" width="160" height="90"/);
+  assert.match(html, /<font face="Arial,Helvetica,sans-serif" size="3"/);
   const oldHash = createHash("sha256")
     .update(JSON.stringify(["anna@example.test", "Test", "Text"]))
     .digest("hex");
