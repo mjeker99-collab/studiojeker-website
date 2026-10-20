@@ -7,7 +7,7 @@ import {
   libraryApi,
   type LibraryEntry,
 } from "../library/Library";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { contentInput, type ContentInput } from "@/lib/hub/input";
 import {
   briefingSchema,
@@ -83,6 +83,9 @@ export default function ContentStudio({ userId }: { userId: string }) {
     id: number;
     seriesId: string;
     message: string;
+    intent?: "EDIT";
+    sourceAssetId?: string;
+    contentId?: string;
   }>();
   const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
@@ -91,9 +94,23 @@ export default function ContentStudio({ userId }: { userId: string }) {
     JSON.stringify(form) !==
       JSON.stringify(contentInput.parse(editing.versions[0].payload))
   );
-  async function refresh(selectId?: string, selectSeries?: string) {
+  const editorState = useRef({ dirty, id: editing?.id });
+  useLayoutEffect(() => {
+    editorState.current = { dirty, id: editing?.id };
+  }, [dirty, editing?.id]);
+  async function refresh(
+    selectId?: string,
+    selectSeries?: string,
+    preserveEditor = false,
+  ) {
     const s: State = await api("studio/state");
     setState(s);
+    if (preserveEditor) {
+      // Read current state after the request: an AI job can take a minute,
+      // during which the user may edit or select another contribution.
+      if (editorState.current.dirty) return;
+      selectId = editorState.current.id;
+    }
     if (selectId || selectSeries) {
       const series = s.series.find((x) =>
         selectSeries
@@ -168,7 +185,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
     setRead(false);
     setPreview("");
   }
-  function prepareAdvice(message: string) {
+  function prepareAdvice(message: string, intent?: "EDIT") {
     if (
       !window.confirm(
         "KI-Beratung vorbereiten? Eine dort noch nicht gesendete Nachricht und deren Bildauswahl werden ersetzt.",
@@ -179,6 +196,13 @@ export default function ContentStudio({ userId }: { userId: string }) {
       id: Date.now(),
       seriesId,
       message: message.slice(0, 4000),
+      intent,
+      ...(intent
+        ? {
+            sourceAssetId: form?.studio?.motifAssetId || undefined,
+            contentId: editing?.id,
+          }
+        : {}),
     });
     setTimeout(
       () => document.getElementById("studio-chat-message")?.focus(),
@@ -290,8 +314,9 @@ export default function ContentStudio({ userId }: { userId: string }) {
       <StudioChat
         key={designRequest?.id || 0}
         state={state}
-        refresh={() => refresh()}
+        refresh={() => refresh(undefined, undefined, true)}
         initialRequest={designRequest}
+        hasUnsavedContent={dirty}
       />
       {picking && (
         <LibraryPicker
@@ -1017,11 +1042,12 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   className="secondary"
                   onClick={() =>
                     prepareAdvice(
-                      `Hilf mir bei der Fotogestaltung dieses Beitrags. Entwickle Bildideen und einen konkreten Bearbeitungsplan. Behaupte nicht, das Bild gesehen oder bearbeitet zu haben. Bildreferenzen wähle ich im Chat separat aus.\nTitel: ${form.title}\nBildidee: ${snapshot.imageIdea}\nHeadline: ${snapshot.headline}`,
+                      "Optimiere dieses Bild: Helle die Schatten behutsam auf und verbessere die natürliche Bildwirkung. Bewahre Motiv und Details.",
+                      "EDIT",
                     )
                   }
                 >
-                  Fotogestaltung mit KI besprechen
+                  Bild direkt mit KI bearbeiten
                 </button>
                 <div className="studio-fields">
                   <div>

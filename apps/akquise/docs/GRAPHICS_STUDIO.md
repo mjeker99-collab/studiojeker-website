@@ -16,6 +16,6 @@ Erste Ausbaustufe: feste bearbeitbare Vorlagen mit numerischen Positionsfeldern,
 
 Die Übersicht führt direkt zu Grafikstudio, Fotostudio und Filmstudio im geöffneten Beitrag. Ohne Beitrag verweist sie auf Serie/Briefing. Sprunglinks erhalten ungespeicherte Eingaben. Alle Bereiche verwenden denselben Beitrag und Versions-/Freigabeablauf; keine neuen Hauptmenüpunkte.
 
-Fotostudio: Motivauswahl aus Bibliothek, vorhandene Bildgenerierung, Ausschnitt und Zoom für das Layout, KI-Beratung als vorbereiteter Textauftrag. Der reine Motivexport bleibt unverändert (kein Zuschnitt). Noch kein Retuscheeditor.
+Fotostudio: Motivauswahl aus Bibliothek, vorhandene Bildgenerierung, Ausschnitt und Zoom für das Layout sowie direkte generative Bildbearbeitung. «Bild direkt mit KI bearbeiten» übernimmt das Motiv in den Dialog. Dort können auch Bilder vom Gerät und aus Drive ausgewählt werden. Ablauf und Grenzen: [PHOTO_EDITING.md](PHOTO_EDITING.md). Der reine Motivexport bleibt unverändert (kein Zuschnitt).
 
 Filmstudio: Drehbuch, Szenenliste und Schnittplan als vorbereitete Nachrichten im bestehenden Serienchat. Erst nach Bestätigung und bewusstem Senden entsteht ein KI-Auftrag. Antworten bleiben im Gespräch gespeichert. Noch kein Videoschnitt, Untertitel-Rendering oder Videoexport; die Oberfläche benennt diese Grenze. Kein Video wird automatisch analysiert.

@@ -1289,6 +1289,145 @@ test("Studio: keine API-Schlüssel, deduplizierte Aufträge, Fehler und Wiederau
   }
 });
 
+test("Photo edit: selected source, separate result, explicit version adoption and stale version protection", async () => {
+  const names = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "CONTENT_DAILY_REQUEST_LIMIT",
+    "CONTENT_DAILY_BUDGET_USD",
+    "STUDIO_LOCAL_ASSETS",
+  ];
+  const old = names.map((k) => process.env[k]);
+  Object.assign(process.env, {
+    OPENAI_API_KEY: "synthetic",
+    CONTENT_AI_ENABLED: "true",
+    CONTENT_DAILY_REQUEST_LIMIT: "1000",
+    CONTENT_DAILY_BUDGET_USD: "1000",
+    STUDIO_LOCAL_ASSETS: "true",
+  });
+  try {
+    const { randomUUID } = await import("node:crypto");
+    const source = await testMotif();
+    const original = await studioAssets.readAsset(martin, source.id, testStore);
+    const s = await studio.createSeries(martin, studioBrief());
+    const request = {
+      seriesId: s.id,
+      kind: "IMAGE",
+      photoEdit: true,
+      message: "Schatten aufhellen",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [source.id],
+      referenceRights: true,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    };
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceIds: [] }),
+      /genau ein/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, {
+        ...request,
+        referenceIds: [source.id, source.id],
+      }),
+      /genau ein/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceIds: ["foreign-asset"] }),
+      /nicht zugänglich/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceTransfer: false }),
+      /ausdrücklich/,
+    );
+    const j = await studio.queueJob(martin, request);
+    assert.equal(j.reserveUsd, 0.25);
+    assert.equal((await studio.queueJob(martin, request)).id, j.id);
+    const edited = await sharp(original.bytes)
+      .modulate({ brightness: 1.3 })
+      .png()
+      .toBuffer();
+    let calls = 0;
+    const provider: import("../../lib/studio/provider").AIProvider = {
+      async text() {
+        throw new Error("No text call");
+      },
+      async image(prompt, _model, refs, options) {
+        calls++;
+        assert.equal(prompt, request.message);
+        assert.equal(options?.edit, true);
+        assert.equal(refs.length, 1);
+        assert.deepEqual(refs[0].bytes, original.bytes);
+        return { bytes: edited, requestId: "synthetic-photo", usage: {} };
+      },
+    };
+    await studio.runJob(martin, j.id, provider, testStore);
+    const done = await db.studioJob.findUniqueOrThrow({ where: { id: j.id } });
+    assert.equal(done.status, "SUCCEEDED");
+    const result = done.result as { assetId: string; sourceAssetIds: string[] };
+    assert.notEqual(result.assetId, source.id);
+    assert.deepEqual(result.sourceAssetIds, [source.id]);
+    assert.deepEqual(
+      (await studioAssets.readAsset(martin, source.id, testStore)).bytes,
+      original.bytes,
+    );
+    assert.equal((await studioContent(s.id)).version, 1);
+    await studio.applyJob(martin, j.id);
+    const c = await studioContent(s.id);
+    assert.equal(c.version, 2);
+    assert.equal(
+      studioContentInput.parse(c.versions[0].payload).studio?.motifAssetId,
+      result.assetId,
+    );
+    await assert.rejects(
+      studio.runJob(martin, j.id, provider, testStore),
+      /bereits gestartet/,
+    );
+    await assert.rejects(studio.applyJob(martin, j.id), /noch nicht/);
+    const stale = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await studio.runJob(martin, stale.id, provider, testStore);
+    const p = studioContentInput.parse(c.versions[0].payload);
+    await hub.saveContent(
+      martin,
+      { ...p, title: "Manuell verändert" },
+      c.id,
+      c.version,
+    );
+    await assert.rejects(
+      studio.applyJob(martin, stale.id),
+      /seit Auftrag geändert/,
+    );
+    const archived = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await db.libraryItem.updateMany({
+      where: { assetId: source.id },
+      data: { archivedAt: new Date() },
+    });
+    await studio.runJob(martin, archived.id, provider, testStore);
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: archived.id } }))
+        .status,
+      "FAILED",
+    );
+    assert.equal(calls, 2);
+    await db.libraryItem.updateMany({
+      where: { assetId: source.id },
+      data: { archivedAt: null },
+    });
+  } finally {
+    names.forEach((k, i) => {
+      if (old[i] === undefined) delete process.env[k];
+      else process.env[k] = old[i];
+    });
+  }
+});
+
 test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und escaped Text", async (t) => {
   const { readFileSync, existsSync } = await import("node:fs");
   const path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
