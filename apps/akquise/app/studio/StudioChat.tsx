@@ -51,6 +51,10 @@ export default function StudioChat({
   const referenceLimit = editingImage ? 1 : 4;
   const [uploadRights, setUploadRights] = useState(false);
   const [copiedJob, setCopiedJob] = useState("");
+  const [replyToJobId, setReplyToJobId] = useState("");
+  const replyToJob = state.jobs.find((job) => job.id === replyToJobId);
+  const replyToText = (replyToJob?.result as { reply?: string } | undefined)
+    ?.reply;
   const images = state.assets.filter((a) =>
     ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
   );
@@ -101,6 +105,21 @@ export default function StudioChat({
     )
     .slice()
     .reverse();
+  function continueFrom(job: (typeof jobs)[number], execute: boolean) {
+    const input = job.input as {
+      request?: { referenceIds?: string[]; contentId?: string | null };
+      driveSelection?: { files: SelectedDriveImage[] };
+    };
+    setReplyToJobId(job.id);
+    setMediaIntent(execute ? "EDIT" : "TEXT");
+    setReferenceIds(input.request?.referenceIds || []);
+    setDriveImages(input.driveSelection?.files || []);
+    setContentId(input.request?.contentId || "");
+    setMessage(execute ? "Bitte so ausführen." : "");
+    setConfirmed(false);
+    setError("");
+    document.getElementById("studio-chat-message")?.focus();
+  }
   async function send() {
     if (busy || !message.trim() || !confirmed || !state.config.connected)
       return;
@@ -137,6 +156,7 @@ export default function StudioChat({
         seriesId: id,
         kind: editingImage ? "IMAGE" : "CHAT",
         message: message.trim(),
+        ...(replyToJobId ? { replyToJobId } : {}),
         ...(editingImage
           ? { photoEdit: true }
           : mediaIntent !== "TEXT"
@@ -156,6 +176,7 @@ export default function StudioChat({
       });
       queued = true;
       setMessage("");
+      setReplyToJobId("");
       setConfirmed(false);
       await post(`run/${job.id}`, { confirmedCosts: true });
     } catch (e) {
@@ -247,6 +268,7 @@ export default function StudioChat({
               setDriveImages([]);
               setError("");
               setContentId("");
+              setReplyToJobId("");
             }}
           >
             <option value="">Neues Gespräch</option>
@@ -302,6 +324,7 @@ export default function StudioChat({
         {jobs.map((j) => {
           const input = j.input as {
             editTargetId?: string;
+            replyTo?: { reply: string };
             request?: {
               message?: string;
               mediaIntent?: "IMAGE" | "VIDEO";
@@ -315,6 +338,11 @@ export default function StudioChat({
             assetId?: string;
             sourceAssetIds?: string[];
           } | null;
+          const canExecuteImage =
+            input.request?.mediaIntent !== "VIDEO" &&
+            (input.request?.referenceIds?.length || 0) +
+              (input.driveSelection?.files.length || 0) ===
+              1;
           return (
             <article key={j.id}>
               <p>
@@ -328,6 +356,12 @@ export default function StudioChat({
                 </strong>
               </p>
               <p className="studio-chat-message">{input.request?.message}</p>
+              {input.replyTo && (
+                <details>
+                  <summary>Bezug: ausgewählter GPT-Vorschlag</summary>
+                  <p className="studio-chat-message">{input.replyTo.reply}</p>
+                </details>
+              )}
               {!!input.request?.referenceIds?.length && (
                 <p className="muted">
                   Bildreferenzen:{" "}
@@ -362,6 +396,31 @@ export default function StudioChat({
                         ? "Antwort wird erstellt …"
                         : "Keine Antwort verfügbar.")}
               </p>
+              {j.status === "SUCCEEDED" &&
+                j.kind === "CHAT" &&
+                result?.reply && (
+                  <div className="actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => continueFrom(j, false)}
+                    >
+                      Darauf antworten
+                    </button>
+                    {canExecuteImage && (
+                      <button
+                        type="button"
+                        disabled={
+                          busy || !storageReady || !state.config.connected
+                        }
+                        onClick={() => continueFrom(j, true)}
+                      >
+                        Vorschlag am Bild ausführen
+                      </button>
+                    )}
+                  </div>
+                )}
               {result?.assetId && input.request?.photoEdit && (
                 <div className="studio-photo-result">
                   <div className="studio-fields">
@@ -412,6 +471,8 @@ export default function StudioChat({
                         setContentId(input.editTargetId || "");
                         setDriveImages([]);
                         setMediaIntent("EDIT");
+                        setReplyToJobId("");
+                        setMessage("");
                         setConfirmed(false);
                         document.getElementById("studio-chat-message")?.focus();
                       }}
@@ -429,6 +490,7 @@ export default function StudioChat({
               )}
               {j.status === "SUCCEEDED" &&
                 input.request?.mediaIntent &&
+                !canExecuteImage &&
                 result?.reply && (
                   <div className="studio-chat-handoff">
                     <button
@@ -474,6 +536,38 @@ export default function StudioChat({
           void send();
         }}
       >
+        <h3>
+          {replyToJobId
+            ? "Mit diesem Vorschlag weiterarbeiten"
+            : "Deine nächste Nachricht"}
+        </h3>
+        {replyToText && (
+          <div
+            role="group"
+            className="studio-chat-reply"
+            aria-label="Ausgewählter GPT-Vorschlag"
+          >
+            <p>
+              <strong>
+                {editingImage
+                  ? "Diesen Vorschlag am ausgewählten Bild ausführen"
+                  : "Deine Antwort bezieht sich auf diesen Vorschlag"}
+              </strong>
+            </p>
+            <p className="studio-chat-message">{replyToText}</p>
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy}
+              onClick={() => {
+                setReplyToJobId("");
+                setConfirmed(false);
+              }}
+            >
+              Bezug entfernen
+            </button>
+          </div>
+        )}
         <label htmlFor="studio-chat-intent">Auftrag</label>
         <select
           id="studio-chat-intent"
@@ -484,6 +578,7 @@ export default function StudioChat({
               e.target.value as "TEXT" | "IMAGE" | "VIDEO" | "EDIT",
             );
             setConfirmed(false);
+            setReplyToJobId("");
           }}
         >
           <option value="TEXT">Gespräch / Text</option>
@@ -495,8 +590,8 @@ export default function StudioChat({
           <p>
             Wähle genau ein Ausgangsbild und beschreibe die gewünschte Änderung.
             Zum Beispiel: «Schatten aufhellen und den Hund hervorheben». Nur
-            Bild und Anweisung werden für diese Bearbeitung übermittelt. Frühere
-            Chatnachrichten werden nicht verwendet.
+            Bild, Anweisung und gegebenenfalls der oben ausgewählte Vorschlag
+            werden für diese Bearbeitung übermittelt.
           </p>
         )}
         {editingImage && !!seriesId && (
@@ -530,6 +625,11 @@ export default function StudioChat({
           value={message}
           maxLength={4000}
           rows={4}
+          placeholder={
+            replyToJobId
+              ? "Zum Beispiel: Bitte etwas heller und mit weniger Vignette."
+              : "Was möchtest du erstellen oder ändern?"
+          }
           disabled={busy}
           onChange={(e) => {
             setMessage(e.target.value);
@@ -637,9 +737,11 @@ export default function StudioChat({
           {editingImage ? (
             <>
               Ich bestätige die Nutzungsrechte, die Übermittlung des
-              ausgewählten Bildes und meiner Anweisung an OpenAI sowie die
-              kostenpflichtige Bearbeitung. Budgetreservierung: USD{" "}
-              {state.config.imageReserve.toFixed(2)}, kein garantierter Preis.
+              ausgewählten Bildes, meiner Anweisung
+              {replyToJobId ? " und des ausgewählten GPT-Vorschlags" : ""} an
+              OpenAI sowie die kostenpflichtige Bearbeitung. Budgetreservierung:
+              USD {state.config.imageReserve.toFixed(2)}, kein garantierter
+              Preis.
             </>
           ) : (
             <>
@@ -666,7 +768,9 @@ export default function StudioChat({
               ? "Bild wird bearbeitet …"
               : "GPT antwortet …"
             : editingImage
-              ? "Bild jetzt bearbeiten"
+              ? replyToJobId
+                ? "Vorschlag jetzt am Bild ausführen"
+                : "Bild jetzt bearbeiten"
               : mediaIntent === "TEXT"
                 ? "An GPT senden"
                 : "Auftrag mit GPT vorbereiten"}

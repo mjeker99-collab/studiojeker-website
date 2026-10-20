@@ -23,7 +23,25 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   const state = {
     series: [{ id: "photos", title: "Fototest", contents: [] }],
     assets: [asset("bibliothek")],
-    jobs: [] as Record<string, unknown>[],
+    jobs: [
+      {
+        id: "proposal-job",
+        seriesId: "photos",
+        kind: "CHAT",
+        status: "SUCCEEDED",
+        model: "synthetic",
+        createdAt: new Date().toISOString(),
+        input: {
+          request: {
+            message: "Wie kann ich das Foto verbessern?",
+            referenceIds: ["bibliothek"],
+          },
+        },
+        result: {
+          reply: "Schatten aufhellen und eine dezente Vignette ergänzen.",
+        },
+      },
+    ] as Record<string, unknown>[],
     campaigns: [],
     customers: [],
     users: [user],
@@ -116,7 +134,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
       state.jobs[0] = {
         ...state.jobs[0],
         status: "SUCCEEDED",
-        result: { assetId: "ergebnis", sourceAssetIds: ["geraet"] },
+        result: { assetId: "ergebnis", sourceAssetIds: ["bibliothek"] },
       };
       return route.fulfill({ json: { ok: true } });
     }
@@ -137,6 +155,23 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     .click();
   const chat = page.locator(".studio-chat");
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("photos");
+  await chat
+    .getByRole("button", { name: "Darauf antworten", exact: true })
+    .click();
+  await expect(chat.getByLabel("Auftrag", { exact: true })).toHaveValue("TEXT");
+  await expect(
+    chat.getByRole("group", { name: "Ausgewählter GPT-Vorschlag" }),
+  ).toContainText("Schatten aufhellen");
+  await expect(
+    chat.getByLabel("Deine Nachricht", { exact: true }),
+  ).toBeFocused();
+  expect(runs).toBe(0);
+  await chat
+    .getByRole("button", { name: "Bezug entfernen", exact: true })
+    .click();
+  await chat
+    .getByRole("checkbox", { name: "bibliothek.png", exact: true })
+    .uncheck();
   await chat.getByLabel("Auftrag", { exact: true }).selectOption("EDIT");
   await chat
     .getByLabel("Deine Nachricht", { exact: true })
@@ -173,14 +208,28 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await expect(chat.getByAltText("Ausgewählt: geraet.png")).toBeVisible();
   await expect(submit).toBeDisabled();
   await chat
+    .getByRole("button", { name: "Vorschlag am Bild ausführen", exact: true })
+    .click();
+  await expect(chat.getByAltText("Ausgewählt: bibliothek.png")).toBeVisible();
+  await expect(chat.getByLabel("Deine Nachricht", { exact: true })).toHaveValue(
+    "Bitte so ausführen.",
+  );
+  const execute = chat.getByRole("button", {
+    name: "Vorschlag jetzt am Bild ausführen",
+    exact: true,
+  });
+  await expect(execute).toBeDisabled();
+  expect(runs).toBe(0);
+  await chat
     .getByRole("checkbox", { name: /kostenpflichtige Bearbeitung/ })
     .check();
-  await submit.click();
+  await execute.click();
   await expect(chat.getByAltText("Ergebnis der Bildbearbeitung")).toBeVisible();
   expect(submitted.kind).toBe("IMAGE");
   expect(submitted.photoEdit).toBe(true);
-  expect(submitted.message).toBe("Schatten aufhellen");
-  expect(submitted.referenceIds).toEqual(["geraet"]);
+  expect(submitted.message).toBe("Bitte so ausführen.");
+  expect(submitted.replyToJobId).toBe("proposal-job");
+  expect(submitted.referenceIds).toEqual(["bibliothek"]);
   expect(submitted.driveReferenceIds).toEqual([]);
   expect(runs).toBe(1);
   expect(applied).toBe(0);
