@@ -24,6 +24,116 @@ async function signIn(page: import("@playwright/test").Page) {
   ).toBeVisible();
 }
 for (const width of [390, 768, 1440]) {
+  test(`Prüfdaten gemeinsam übernehmen ${width}px: Vorschau, Bestätigung und Einzelresultate`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await signIn(page);
+    const suffix = `${width}-${Date.now()}`;
+    const organisation = `Synthetische Sammelprüfung ${suffix}`;
+    const created = await page.request.post("/api/contacts", {
+      headers: { Origin: "http://localhost:3100" },
+      data: {
+        organisation,
+        firstName: "Anna",
+        lastName: "Muster",
+        email: `batch.${suffix}@example.test`,
+        sourceUrl: "https://example.test/team",
+        notes:
+          "Prüfstatus: Persönliche Adresse verifiziert\nPrüfdatum: 01.01.2026\nBetreff: Persönliche Projektbilder\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nDokumentiertes synthetisches Projekt in Burgdorf.\n\nFreundliche Grüsse\nNora Jeker",
+      },
+    });
+    expect(created.ok()).toBe(true);
+    const c = await created.json();
+    const incomplete = await page.request.post("/api/contacts", {
+      headers: { Origin: "http://localhost:3100" },
+      data: {
+        organisation: organisation + " Lücke",
+        firstName: "Eva",
+        lastName: "Muster",
+        email: `gap.${suffix}@example.test`,
+      },
+    });
+    expect(incomplete.ok()).toBe(true);
+    await page.reload();
+    await page
+      .getByRole("heading", { name: "Übersicht", exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
+    await page
+      .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
+      .check();
+    const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });
+    await panel
+      .getByRole("button", { name: "Prüfdaten aus Notizen prüfen" })
+      .click();
+    await expect(
+      panel.getByText(
+        "1 Kontakte mit vollständigem Übernahmevorschlag · 1 mit offenen Angaben.",
+      ),
+    ).toBeVisible();
+    await expect(panel.getByText(/Verifikationsdatum fehlt/)).toBeVisible();
+    await panel
+      .getByRole("button", { name: "Alle vollständigen Vorschläge auswählen" })
+      .click();
+    const apply = panel.getByRole("button", {
+      name: "1 bestätigte Prüfdaten übernehmen",
+    });
+    await expect(apply).toBeDisabled();
+    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+    expect(
+      (await new AxeBuilder({ page }).include(".contact-preparation").analyze())
+        .violations,
+    ).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await apply.click();
+    await expect(panel.getByRole("status")).toContainText(
+      "Prüfdaten übernommen",
+    );
+    await expect(
+      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
+    ).toBeEnabled();
+    await panel
+      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
+      .click();
+    await expect(panel.getByRole("status")).toContainText(
+      "1 erfolgreich · 1 noch zu bearbeiten",
+    );
+    await expect(
+      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
+    ).toBeEnabled();
+    await panel
+      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
+      .click();
+    await expect(panel.getByRole("status")).toContainText(
+      "1 erfolgreich · 1 noch zu bearbeiten",
+    );
+    const state = await (await page.request.get("/api/state")).json();
+    expect(
+      state.contacts.find((contact: { id: string }) => contact.id === c.id)
+        .newsletterConsent,
+    ).toBe(false);
+    expect(
+      state.drafts.filter(
+        (draft: { contactId: string }) => draft.contactId === c.id,
+      ),
+    ).toHaveLength(1);
+    expect(
+      (
+        await page.request.post("/api/contacts/preparation/preview", {
+          headers: { Origin: "https://example.test" },
+          data: { ids: [c.id] },
+        })
+      ).status(),
+    ).toBe(403);
+  });
+}
+for (const width of [390, 768, 1440]) {
   test(`Täglicher Versand ${width}px: pausiert, bedienbar und ohne Überlauf`, async ({
     page,
     request,

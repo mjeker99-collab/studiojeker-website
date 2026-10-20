@@ -27,36 +27,44 @@ export const messageHash = (recipient: string, subject: string, body: string) =>
       ]),
     )
     .digest("hex");
-export function verifiedContact(c: {
-  email: string;
-  confidence: string;
-  verifiedAt: Date | null;
-  sourceUrl: string;
-  hook: string;
-  status: string;
-}) {
-  if (c.status === "DO_NOT_CONTACT")
-    throw new PolicyError("Kontakt ist gesperrt.");
-  if (
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) ||
-    c.confidence !== "VERIFIED" ||
-    !c.verifiedAt ||
-    !c.sourceUrl ||
-    !c.hook.trim()
-  )
-    throw new PolicyError(
-      "Geprüfte Adresse, Quelle, Verifikationsdatum und Anknüpfungspunkt erforderlich.",
-    );
+export function verificationIssues(
+  c: {
+    email: string;
+    confidence: string;
+    verifiedAt: Date | null;
+    sourceUrl: string;
+    hook: string;
+    status: string;
+  },
+  now = new Date(),
+) {
+  const issues: string[] = [];
+  if (c.status === "DO_NOT_CONTACT") issues.push("Kontakt ist gesperrt.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
+    issues.push("Gültige E-Mail-Adresse fehlt.");
+  if (c.confidence !== "VERIFIED")
+    issues.push("Persönliche Adresse noch nicht als verifiziert bestätigt.");
+  if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
+  if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
+  if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");
   if (
     /^(info|kontakt|contact|office|admin|hello|mail|sales|support|marketing|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
       c.email,
     )
   )
-    throw new PolicyError(
-      "Allgemeine E-Mail-Adressen sind nicht freigabefähig.",
+    issues.push("Allgemeine E-Mail-Adressen sind nicht freigabefähig.");
+  if (
+    c.verifiedAt &&
+    (Number.isNaN(c.verifiedAt.getTime()) || c.verifiedAt > now)
+  )
+    issues.push(
+      "Verifikation darf nicht ungültig sein oder in der Zukunft liegen.",
     );
-  if (c.verifiedAt > new Date())
-    throw new PolicyError("Verifikation darf nicht in der Zukunft liegen.");
+  return issues;
+}
+export function verifiedContact(c: Parameters<typeof verificationIssues>[0]) {
+  const issues = verificationIssues(c);
+  if (issues.length) throw new PolicyError(issues.join(" "));
 }
 // Enabling a variable alone never permits SMTP: configuration and mode must agree.
 export function assertExternalSendingAllowed(): void {
