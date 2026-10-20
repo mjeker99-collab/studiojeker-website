@@ -1,4 +1,5 @@
 "use client";
+import { signedMessage } from "../lib/mail-signature";
 import Hub from "./hub/Hub";
 import Website from "./cms/Website";
 import Concepts from "./concepts/Concepts";
@@ -22,7 +23,7 @@ type C = Omit<Contact, "verifiedAt" | "createdAt" | "updatedAt"> & {
   legalReviews: LegalReview[];
 };
 type D = Draft & {
-  versions: DraftVersion[];
+  versions: (DraftVersion & { signatureCurrent: boolean })[];
   approvals: (Approval & { user: { name: string } })[];
 };
 type State = {
@@ -278,7 +279,8 @@ export default function App() {
     setDispatchConfirm(false);
   }
   const dirty = draft
-    ? message.recipient !== draft.versions[0].recipient ||
+    ? !draft.versions[0].signatureCurrent ||
+      message.recipient !== draft.versions[0].recipient ||
       message.subject !== draft.versions[0].subject ||
       message.body !== draft.versions[0].body
     : false;
@@ -1331,6 +1333,29 @@ export default function App() {
                 Als neue Version speichern
               </button>
             </form>
+            <section
+              aria-label="Mailvorschau mit Signatur"
+              style={{ marginTop: 24 }}
+            >
+              <h3>Mailvorschau mit Signatur</h3>
+              <div
+                style={{
+                  padding: 16,
+                  border: "1px solid #c8cfd1",
+                  background: "#fff",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: signedMessage(message.body, true).html,
+                }}
+              />
+            </section>
+            {!draft.versions[0].signatureCurrent && (
+              <p className="warning">
+                Die neue Signatur ist noch nicht Bestandteil dieser
+                gespeicherten Version. Bitte als neue Version speichern und
+                erneut prüfen.
+              </p>
+            )}
             <label className="check read-check">
               <input
                 type="checkbox"
@@ -1339,7 +1364,7 @@ export default function App() {
                 onChange={(e) => setRead(e.target.checked)}
               />
               Ich habe Empfänger, Betreff und die vollständige Nachricht dieser
-              Version gelesen und geprüft.
+              Version einschliesslich Signatur gelesen und geprüft.
             </label>
             {dirty && (
               <p className="warning">

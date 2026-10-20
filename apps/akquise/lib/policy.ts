@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
+import { signedMessage, signatureAssets } from "./mail-signature";
 export class PolicyError extends Error {
   constructor(
     message: string,
@@ -16,7 +17,15 @@ export const personKey = (first: string, last: string, org: string) =>
     .join("|");
 export const messageHash = (recipient: string, subject: string, body: string) =>
   createHash("sha256")
-    .update(JSON.stringify([recipient, subject, body]))
+    .update(
+      JSON.stringify([
+        recipient,
+        subject,
+        body,
+        signedMessage(body),
+        signatureAssets,
+      ]),
+    )
     .digest("hex");
 export function verifiedContact(c: {
   email: string;

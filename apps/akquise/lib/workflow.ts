@@ -231,6 +231,11 @@ export async function reviewDraft(
         throw new PolicyError("Adresse auf Sperrliste.");
     }
     if (decision === "APPROVED") {
+      if (v.hash !== messageHash(v.recipient, v.subject, v.body))
+        throw new PolicyError(
+          "Signatur geändert. Nachricht als neue Version speichern und erneut prüfen.",
+          409,
+        );
       if (!read) throw new PolicyError("Vollständiges Lesen bestätigen.");
       const legal = await tx.legalReview.findFirst({
         where: { contactId: d.contactId },
