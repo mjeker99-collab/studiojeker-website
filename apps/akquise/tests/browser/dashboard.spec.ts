@@ -23,6 +23,46 @@ async function signIn(page: import("@playwright/test").Page) {
     page.getByRole("heading", { name: "Übersicht", exact: true }),
   ).toBeVisible();
 }
+for (const width of [390, 768, 1440]) {
+  test(`Täglicher Versand ${width}px: pausiert, bedienbar und ohne Überlauf`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await signIn(page);
+    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page
+      .getByRole("button", { name: "Versandhistorie", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Täglicher Mailversand" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
+      "25",
+    );
+    await expect(
+      page.getByRole("button", { name: "Automatik starten / aktualisieren" }),
+    ).toBeDisabled();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const results = await new AxeBuilder({ page })
+      .include('[aria-labelledby="mail-schedule-title"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+    expect((await request.post("/api/internal/mail-tick")).status()).toBe(401);
+    expect(
+      (
+        await request.post("/api/mail-schedule/pause", {
+          headers: { Origin: "https://example.test" },
+          data: {},
+        })
+      ).status(),
+    ).toBe(403);
+  });
+}
 test("API schützt Daten, Ursprung und externen Versand", async ({
   request,
 }) => {

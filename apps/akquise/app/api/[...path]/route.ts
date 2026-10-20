@@ -14,6 +14,10 @@ import { studioMutation } from "@/lib/studio/api";
 import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
 import { logoBytes } from "@/lib/studio/config";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  mailScheduleState,
+  mailScheduleMutation,
+} from "../../../lib/mail-schedule";
 import { cookies } from "next/headers";
 import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
@@ -127,6 +131,10 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "mail-schedule" && req.method === "GET")
+      return NextResponse.json(await mailScheduleState(), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (path[0] === "concepts" && req.method === "GET") {
       if (path.length === 1)
         return NextResponse.json(await conceptState(user.id), {
@@ -429,6 +437,10 @@ async function handler(
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
+    if (path[0] === "mail-schedule" && path.length === 2)
+      return NextResponse.json(
+        await mailScheduleMutation(user.id, path[1], body),
+      );
     if (route === "smtp/test")
       return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "concepts")

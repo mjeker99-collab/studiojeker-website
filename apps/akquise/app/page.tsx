@@ -1,5 +1,6 @@
 "use client";
 import { signedMessage } from "../lib/mail-signature";
+import MailSchedule from "./MailSchedule";
 import Hub from "./hub/Hub";
 import Website from "./cms/Website";
 import Concepts from "./concepts/Concepts";
@@ -801,6 +802,15 @@ export default function App() {
                 )}
               </div>
             </section>
+          )}
+          {tab === "Versandhistorie" && (
+            <MailSchedule
+              drafts={data.drafts}
+              openDraft={(id) => {
+                const d = data.drafts.find((d) => d.id === id);
+                if (d) openDraft(d);
+              }}
+            />
           )}
           {tab === "Versandhistorie" && (
             <section className="panel">
