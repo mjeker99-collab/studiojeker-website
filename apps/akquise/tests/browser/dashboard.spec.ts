@@ -246,7 +246,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .click();
   await expect(editor).not.toBeVisible();
   await page.locator(".draft-row").filter({ hasText: organisation }).click();
-  await expect(editor.getByRole("heading")).toContainText("Version 2");
+  await expect(editor.getByRole("heading", { level: 2 })).toContainText(
+    "Version 2",
+  );
   await expect(editor.getByLabel(/Ich habe Empfänger/)).not.toBeChecked();
 });
 test("Dashboard und Kontaktformular bestehen WCAG-AA-Automatikprüfung", async ({
