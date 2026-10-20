@@ -22,6 +22,8 @@ const {
   importContacts,
 } = await import("../../lib/workflow");
 const { parseImport } = await import("../../lib/import");
+const { prepareContacts } =
+  await import("../../lib/contact-preparation-service");
 const { execFileSync } = await import("node:child_process");
 // Load all modules before registering hooks/tests: late top-level awaits can
 // let the node:test runner finish a filtered suite and drop its schema early.
@@ -109,6 +111,84 @@ test("Berechtigungen: unbekannte und deaktivierte Benutzer sind blockiert", asyn
   await db.user.update({ where: { id: martin }, data: { active: false } });
   await assert.rejects(saveContact(martin, input("inactive")), /Berechtigung/);
   await db.user.update({ where: { id: martin }, data: { active: true } });
+});
+test("Sammelübernahme bestätigt vorhandene Daten, erhält Einwilligungsstatus und meldet Teilergebnisse", async () => {
+  const c = await saveContact(martin, {
+    ...input("batch-notes"),
+    confidence: "UNCONFIRMED",
+    verifiedAt: "",
+    hook: "",
+    notes:
+      "Prüfstatus: Persönliche Adresse verifiziert\nPrüfdatum: 01.01.2026\nBetreff: Projektbilder\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nDokumentiertes synthetisches Projekt.\n\nFreundliche Grüsse\nNora Jeker",
+  });
+  const incomplete = await saveContact(martin, {
+    ...input("batch-gap"),
+    confidence: "UNCONFIRMED",
+    verifiedAt: "",
+    hook: "",
+  });
+  const preview = await prepareContacts(martin, "preview", {
+    ids: [c.id, incomplete.id],
+  });
+  assert.ok(preview.contacts);
+  assert.equal(preview.contacts[0].ready, true);
+  assert.equal(preview.contacts[1].ready, false);
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).confidence,
+    "UNCONFIRMED",
+  );
+  await assert.rejects(
+    prepareContacts(martin, "apply", {
+      confirmed: false,
+      contacts: [{ id: c.id, revision: c.revision }],
+    }),
+  );
+  const result = await prepareContacts(martin, "apply", {
+    confirmed: true,
+    contacts: [
+      { id: c.id, revision: c.revision },
+      { id: incomplete.id, revision: incomplete.revision },
+    ],
+  });
+  assert.ok(result.results);
+  assert.deepEqual(
+    result.results.map((r) => r.ok),
+    [true, false],
+  );
+  const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+  assert.equal(saved.confidence, "VERIFIED");
+  assert.equal(saved.revision, c.revision + 1);
+  assert.equal(saved.newsletterConsent, false);
+  assert.equal(saved.legalCategory, "UNASSESSED");
+  assert.equal(await db.legalReview.count({ where: { contactId: c.id } }), 0);
+  assert.equal(await db.approval.count({ where: { contactId: c.id } }), 0);
+  const stale = await prepareContacts(martin, "apply", {
+    confirmed: true,
+    contacts: [{ id: c.id, revision: c.revision }],
+  });
+  assert.ok(stale.results);
+  assert.equal(stale.results[0].ok, false);
+  const batch = await prepareContacts(martin, "drafts", {
+    ids: [incomplete.id, c.id],
+  });
+  assert.ok(batch.results);
+  assert.deepEqual(
+    batch.results.map((r) => r.ok),
+    [false, true],
+  );
+  await Promise.all([
+    prepareContacts(martin, "drafts", { ids: [c.id] }),
+    prepareContacts(martin, "drafts", { ids: [c.id] }),
+  ]);
+  assert.equal(await db.draft.count({ where: { contactId: c.id } }), 1);
+  await suppress(martin, saved.email, "Synthetische Sperre");
+  const blocked = await prepareContacts(martin, "preview", { ids: [c.id] });
+  assert.ok(blocked.contacts);
+  assert.equal(blocked.contacts[0].ready, false);
+  await assert.rejects(
+    prepareContacts("unbekannt", "preview", { ids: [c.id] }),
+    /Berechtigung/,
+  );
 });
 test("Individuelle Anmeldung und persistente Login-Sperre", async () => {
   const ok = await login("martin@example.test", "synthetisch-martin-123");

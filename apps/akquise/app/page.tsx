@@ -1,6 +1,7 @@
 "use client";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
+import ContactPreparation from "./ContactPreparation";
 import Hub from "./hub/Hub";
 import Website from "./cms/Website";
 import Concepts from "./concepts/Concepts";
@@ -735,31 +736,28 @@ export default function App() {
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
                 Importe erhalten keine Versandfreigabe.
               </div>
+              {selected.length > 0 && (
+                <ContactPreparation
+                  key={selected.join(",")}
+                  ids={selected}
+                  contacts={data.contacts}
+                  refresh={refresh}
+                  begin={() => {
+                    setError("");
+                    setNotice("");
+                  }}
+                  openContact={(id) => {
+                    const c = data.contacts.find((c) => c.id === id);
+                    if (c) openContact(c);
+                  }}
+                />
+              )}
               <ContactTable
                 contacts={contacts}
                 selected={selected}
                 setSelected={setSelected}
                 open={openContact}
               />
-              {selected.length > 0 && (
-                <div className="bulk">
-                  <button
-                    disabled={busy}
-                    onClick={() =>
-                      action(async () => {
-                        for (const id of selected)
-                          await post("drafts", { contactId: id });
-                        setSelected([]);
-                      }, "Lokale Entwürfe erstellt. Jeder Entwurf muss einzeln gelesen und freigegeben werden.")
-                    }
-                  >
-                    Entwürfe für Auswahl vorbereiten
-                  </button>
-                  <span>
-                    Nur für verifizierte Kontakte. Keine Sammelfreigabe.
-                  </span>
-                </div>
-              )}
             </section>
           )}
           {["E-Mail-Entwürfe", "Freigaben"].includes(tab) && (

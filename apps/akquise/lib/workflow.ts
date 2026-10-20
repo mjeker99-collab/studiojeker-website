@@ -127,7 +127,11 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
     { timeout: 20000 },
   );
 }
-export async function newDraft(userId: string, contactId: string) {
+export async function newDraft(
+  userId: string,
+  contactId: string,
+  reuseCurrent = false,
+) {
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "contact:" + contactId);
@@ -135,6 +139,23 @@ export async function newDraft(userId: string, contactId: string) {
     if (await tx.suppression.findUnique({ where: { email: c.email } }))
       throw new PolicyError("Adresse auf Sperrliste.");
     const generated = await generateDraft(c);
+    if (reuseCurrent) {
+      const drafts = await tx.draft.findMany({
+        where: { contactId },
+        include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        orderBy: { createdAt: "desc" },
+      });
+      const current = drafts.find((d) => {
+        const v = d.versions[0];
+        return (
+          v?.contactRevision === c.revision &&
+          v.version === d.version &&
+          v.recipient === c.email &&
+          v.hash === messageHash(v.recipient, v.subject, v.body)
+        );
+      });
+      if (current) return current;
+    }
     const draft = await tx.draft.create({ data: { contactId } });
     await tx.draftVersion.create({
       data: {

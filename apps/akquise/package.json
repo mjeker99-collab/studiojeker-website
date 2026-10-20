@@ -8,7 +8,7 @@
     "start": "node scripts/start-production.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx tests/config.test.ts && node --import tsx tests/policy.test.ts && node render/config.test.mjs && node --import tsx tests/hub.test.ts && node --import tsx tests/studio.test.ts && node --import tsx tests/library.test.ts && node --import tsx tests/browser-credentials.test.ts && node --import tsx tests/cms.test.ts && node --import tsx tests/concepts.test.ts && node --import tsx tests/mail-clock.test.ts",
+    "test": "node --import tsx tests/config.test.ts && node --import tsx tests/policy.test.ts && node render/config.test.mjs && node --import tsx tests/hub.test.ts && node --import tsx tests/studio.test.ts && node --import tsx tests/library.test.ts && node --import tsx tests/browser-credentials.test.ts && node --import tsx tests/cms.test.ts && node --import tsx tests/concepts.test.ts && node --import tsx tests/mail-clock.test.ts && node --import tsx tests/contact-preparation.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
