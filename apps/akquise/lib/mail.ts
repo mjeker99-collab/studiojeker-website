@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import { assertExternalSendingAllowed } from "./policy";
 import { readMailConfig } from "./config.mjs";
+import { signedMessage } from "./mail-signature";
+import { signatureAttachments } from "./mail-signature-assets";
 export function createMetanetTransport() {
   assertExternalSendingAllowed();
   const config = readMailConfig();
@@ -39,7 +41,8 @@ export const smtpSender: SmtpSender = async (message) => {
       subject: message.test
         ? `[INTERNER TEST] ${message.subject}`
         : message.subject,
-      text: message.body,
+      ...signedMessage(message.body),
+      attachments: await signatureAttachments(),
       messageId: message.messageId,
       envelope: {
         from: "njeker@studiojeker.ch",
@@ -69,7 +72,8 @@ export async function renderLocalMessage(message: {
     from: "Nora Jeker <njeker@studiojeker.ch>",
     to: message.recipient,
     subject: message.subject,
-    text: message.body,
+    ...signedMessage(message.body),
+    attachments: await signatureAttachments(),
     messageId: message.messageId,
   });
   if (!Buffer.isBuffer(result.message))

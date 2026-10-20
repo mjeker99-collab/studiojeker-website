@@ -19,7 +19,7 @@ import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { login, requireUser, tokenHash } from "@/lib/auth";
-import { PolicyError } from "@/lib/policy";
+import { PolicyError, messageHash } from "@/lib/policy";
 import { appOrigin, sessionCookieName, readMailConfig } from "@/lib/config.mjs";
 import { dispatchApproved } from "@/lib/delivery";
 import { parseImport } from "@/lib/import";
@@ -385,7 +385,14 @@ async function handler(
       return NextResponse.json({
         user: { id: user.id, name: user.name },
         contacts,
-        drafts,
+        drafts: drafts.map((d) => ({
+          ...d,
+          versions: d.versions.map((v) => ({
+            ...v,
+            signatureCurrent:
+              v.hash === messageHash(v.recipient, v.subject, v.body),
+          })),
+        })),
         deliveries,
         suppressions,
         audits,

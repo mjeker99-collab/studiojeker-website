@@ -18,6 +18,72 @@ import { generateDraft, importedDraft } from "../lib/generation";
 import { sendInternalSmtpTest } from "../lib/smtp-test";
 import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+import {
+  signedMessage,
+  signatureParts,
+  signatureAssets,
+} from "../lib/mail-signature";
+import { signatureAttachments } from "../lib/mail-signature-assets";
+
+test("Nora-Signatur ersetzt bekannte Textsignatur und erhält Nachricht und Widerspruchshinweis", () => {
+  const body =
+    "Guten Tag\n\nIhre Architektur.\n\nFreundliche Grüsse\nNora Jeker\nStudiojeker – We create visibility\nstudiojeker.ch\n\nFalls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.";
+  const signed = signedMessage(body);
+  assert.equal((signed.text.match(/Nora Jeker/g) || []).length, 1);
+  assert.match(signed.text, /Ihre Architektur/);
+  assert.match(signed.text, /\+41 78 601 78 85/);
+  assert.match(signed.text, /Hauptstrasse 73\nCH-4528 Zuchwil/);
+  assert.ok(
+    signed.text.endsWith(
+      "Falls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.",
+    ),
+  );
+  assert.match(signed.html, /cid:nora-jeker@signature/);
+  assert.match(signed.html, /cid:studiojeker-logo@signature/);
+  assert.match(signedMessage(body, true).html, /\/brand\/mail\/nora.jpg/);
+  assert.deepEqual(signatureParts("Eigener Text\nPS: Zusatz"), {
+    before: "Eigener Text\nPS: Zusatz",
+    after: "",
+  });
+  assert.match(
+    signedMessage("<img src=x onerror=alert(1)> & Text").html,
+    /&lt;img/,
+  );
+  assert.doesNotMatch(
+    signedMessage("<script>alert(1)</script>").html,
+    /<script>/,
+  );
+  assert.match(signedMessage("Grüsse\nAndere Person").text, /Andere Person/);
+});
+
+test("Signaturbilder und HTML sind Bestandteil der Freigabe und des lokalen MIME", async () => {
+  const attachments = await signatureAttachments();
+  assert.equal(attachments.length, 2);
+  for (const [index, asset] of attachments.entries()) {
+    assert.equal(
+      createHash("sha256").update(asset.content).digest("hex"),
+      signatureAssets[index].sha256,
+    );
+    assert.equal(asset.contentDisposition, "inline");
+  }
+  const oldHash = createHash("sha256")
+    .update(JSON.stringify(["anna@example.test", "Test", "Text"]))
+    .digest("hex");
+  assert.notEqual(messageHash("anna@example.test", "Test", "Text"), oldHash);
+  const mime = await renderLocalMessage({
+    recipient: "anna@example.test",
+    subject: "Test",
+    body: "Guten Tag",
+    messageId: "<signature@example.test>",
+  });
+  assert.match(mime, /multipart\/alternative/);
+  assert.match(mime, /Content-Type: text\/plain/);
+  assert.match(mime, /Content-Type: text\/html/);
+  assert.match(mime, /Content-ID: <nora-jeker@signature>/);
+  assert.match(mime, /Content-ID: <studiojeker-logo@signature>/);
+  assert.match(mime, /Content-Disposition: inline/);
+});
 
 test("Separate SMTP-Testmail bindet Empfänger, bestätigt Versand und verhindert Wiederholung", async () => {
   const env = {
