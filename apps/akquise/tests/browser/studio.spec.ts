@@ -232,6 +232,41 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
         .analyze()
     ).violations,
   ).toEqual([]);
+  // A late chat refresh must preserve edits made while the request is in flight.
+  let release!: () => void;
+  let fetched!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const received = new Promise<void>((resolve) => {
+    fetched = resolve;
+  });
+  await page.route(
+    "**/api/studio/state",
+    async (route) => {
+      const response = await route.fetch();
+      fetched();
+      await gate;
+      await route.fulfill({ response });
+    },
+    { times: 1 },
+  );
+  await page
+    .locator(".studio-chat")
+    .getByRole("button", { name: "Status aktualisieren", exact: true })
+    .click();
+  await received;
+  await page
+    .getByRole("textbox", { name: "Headline", exact: true })
+    .fill("Ungespeicherte Änderung während Aktualisierung");
+  const refreshed = page.waitForResponse((r) =>
+    r.url().endsWith("/api/studio/state"),
+  );
+  release();
+  await refreshed;
+  await expect(
+    page.getByRole("textbox", { name: "Headline", exact: true }),
+  ).toHaveValue("Ungespeicherte Änderung während Aktualisierung");
   page.once("dialog", (dialog) => dialog.accept());
   await graphics
     .getByRole("button", { name: "Gestaltung mit KI besprechen" })

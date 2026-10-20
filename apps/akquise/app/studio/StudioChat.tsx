@@ -301,6 +301,7 @@ export default function StudioChat({
         )}
         {jobs.map((j) => {
           const input = j.input as {
+            editTargetId?: string;
             request?: {
               message?: string;
               mediaIntent?: "IMAGE" | "VIDEO";
@@ -408,6 +409,7 @@ export default function StudioChat({
                       disabled={busy}
                       onClick={() => {
                         setReferenceIds([result.assetId!]);
+                        setContentId(input.editTargetId || "");
                         setDriveImages([]);
                         setMediaIntent("EDIT");
                         setConfirmed(false);
