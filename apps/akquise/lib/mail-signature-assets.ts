@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { signatureAssets } from "./mail-signature";
+import sharp from "sharp";
 
 export async function signatureAttachments() {
   return Promise.all(
@@ -15,7 +16,12 @@ export async function signatureAttachments() {
         );
       return {
         filename: asset.file,
-        content,
+        // Intrinsic size is the fallback when a mail client strips HTML sizing
+        // during forwarding. Never attach the full-resolution originals.
+        content: await sharp(content)
+          .rotate()
+          .resize({ width: asset.width, withoutEnlargement: true })
+          .toBuffer(),
         contentType: asset.type,
         cid: asset.cid,
         contentDisposition: "inline" as const,
