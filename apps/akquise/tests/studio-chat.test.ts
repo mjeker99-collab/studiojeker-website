@@ -2,6 +2,41 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { openAIProvider, ProviderFailure } from "../lib/studio/provider";
 
+test("Direct photo edit sends original bytes and instruction, retains aspect choice and never falls back to text", async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
+    calls++;
+    assert.equal(url, "https://api.openai.com/v1/images/edits");
+    const form = init.body as FormData;
+    assert.equal(form.get("model"), "gpt-image-1.5");
+    assert.equal(form.get("size"), "auto");
+    assert.equal(form.get("input_fidelity"), "high");
+    assert.match(String(form.get("prompt")), /Schatten aufhellen/);
+    assert.doesNotMatch(String(form.get("prompt")), /KEINE Schrift/);
+    const file = form.getAll("image[]")[0] as File;
+    assert.equal(file.type, "image/jpeg");
+    assert.equal(file.name, "reference-0.jpg");
+    assert.equal(await file.text(), "original bytes");
+    return new Response(
+      JSON.stringify({
+        data: [{ b64_json: Buffer.from("edited").toString("base64") }],
+      }),
+    );
+  });
+  const result = await openAIProvider.image(
+    "Schatten aufhellen",
+    "gpt-image-1.5",
+    [{ bytes: Buffer.from("original bytes"), mime: "image/jpeg" }],
+    { edit: true },
+  );
+  assert.equal(result.bytes.toString(), "edited");
+  await assert.rejects(
+    openAIProvider.image("Edit", "gpt-image-1.5", [], { edit: true }),
+    /genau ein/,
+  );
+  assert.equal(calls, 1);
+});
+
 test("Chat attaches selected image bytes only to the current user turn", async () => {
   const original = globalThis.fetch;
   try {

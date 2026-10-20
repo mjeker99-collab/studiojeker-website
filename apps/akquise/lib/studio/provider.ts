@@ -32,6 +32,7 @@ export interface AIProvider {
     prompt: string,
     model: string,
     refs: { bytes: Buffer; mime: string }[],
+    options?: { edit: boolean },
   ): Promise<{ bytes: Buffer; requestId: string | null; usage: unknown }>;
 }
 async function api(path: string, body: BodyInit, json: boolean) {
@@ -188,21 +189,31 @@ export const openAIProvider: AIProvider = {
       );
     }
   },
-  async image(prompt, model, refs) {
-    const instruction = `Fotografisches Motiv für Studiojeker. ${prompt}\nKEINE Schrift, Buchstaben, Headline, Logos, Marken oder Wasserzeichen. Personenidentität nicht garantieren.`;
+  async image(prompt, model, refs, options) {
+    if (options?.edit && refs.length !== 1)
+      throw new ProviderFailure(
+        false,
+        "Für die Bildbearbeitung genau ein Ausgangsbild wählen.",
+      );
+    const instruction = options?.edit
+      ? `Bearbeite das beigefügte Original gemäss diesem Auftrag: ${prompt}\nBewahre Motiv, Identität, Komposition, vorhandene Beschriftungen und Logos soweit möglich. Verändere nur die gewünschten Aspekte. Liefere das bearbeitete Bild.`
+      : `Fotografisches Motiv für Studiojeker. ${prompt}\nKEINE Schrift, Buchstaben, Headline, Logos, Marken oder Wasserzeichen. Personenidentität nicht garantieren.`;
     let result;
     if (refs.length) {
       const form = new FormData();
       form.set("model", model);
       form.set("prompt", instruction);
-      form.set("size", "1024x1024");
+      form.set("size", options?.edit ? "auto" : "1024x1024");
       form.set("quality", "medium");
+      form.set("output_format", "png");
+      if (options?.edit && ["gpt-image-1", "gpt-image-1.5"].includes(model))
+        form.set("input_fidelity", "high");
       form.set("n", "1");
       refs.forEach((r, i) =>
         form.append(
           "image[]",
           new Blob([new Uint8Array(r.bytes)], { type: r.mime }),
-          `reference-${i}.png`,
+          `reference-${i}.${r.mime === "image/jpeg" ? "jpg" : r.mime === "image/webp" ? "webp" : "png"}`,
         ),
       );
       result = await api("images/edits", form, false);

@@ -83,6 +83,9 @@ export default function ContentStudio({ userId }: { userId: string }) {
     id: number;
     seriesId: string;
     message: string;
+    intent?: "EDIT";
+    sourceAssetId?: string;
+    contentId?: string;
   }>();
   const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
@@ -168,7 +171,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
     setRead(false);
     setPreview("");
   }
-  function prepareAdvice(message: string) {
+  function prepareAdvice(message: string, intent?: "EDIT") {
     if (
       !window.confirm(
         "KI-Beratung vorbereiten? Eine dort noch nicht gesendete Nachricht und deren Bildauswahl werden ersetzt.",
@@ -179,6 +182,13 @@ export default function ContentStudio({ userId }: { userId: string }) {
       id: Date.now(),
       seriesId,
       message: message.slice(0, 4000),
+      intent,
+      ...(intent
+        ? {
+            sourceAssetId: form?.studio?.motifAssetId || undefined,
+            contentId: editing?.id,
+          }
+        : {}),
     });
     setTimeout(
       () => document.getElementById("studio-chat-message")?.focus(),
@@ -290,8 +300,9 @@ export default function ContentStudio({ userId }: { userId: string }) {
       <StudioChat
         key={designRequest?.id || 0}
         state={state}
-        refresh={() => refresh()}
+        refresh={() => refresh(dirty ? undefined : editing?.id)}
         initialRequest={designRequest}
+        hasUnsavedContent={dirty}
       />
       {picking && (
         <LibraryPicker
@@ -1017,11 +1028,12 @@ export default function ContentStudio({ userId }: { userId: string }) {
                   className="secondary"
                   onClick={() =>
                     prepareAdvice(
-                      `Hilf mir bei der Fotogestaltung dieses Beitrags. Entwickle Bildideen und einen konkreten Bearbeitungsplan. Behaupte nicht, das Bild gesehen oder bearbeitet zu haben. Bildreferenzen wähle ich im Chat separat aus.\nTitel: ${form.title}\nBildidee: ${snapshot.imageIdea}\nHeadline: ${snapshot.headline}`,
+                      "Optimiere dieses Bild: Helle die Schatten behutsam auf und verbessere die natürliche Bildwirkung. Bewahre Motiv und Details.",
+                      "EDIT",
                     )
                   }
                 >
-                  Fotogestaltung mit KI besprechen
+                  Bild direkt mit KI bearbeiten
                 </button>
                 <div className="studio-fields">
                   <div>
