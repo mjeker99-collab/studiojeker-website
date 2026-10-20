@@ -10,12 +10,13 @@ import {
 } from "./policy";
 import { smtpSender, type SmtpSender } from "./mail";
 import { audit } from "./workflow";
+import { insideMailWindow, mailDayStart } from "./mail-clock";
 type Tx = Prisma.TransactionClient;
 async function locks(tx: Tx, contactId: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('delivery-global'))`;
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"contact:" + contactId}))`;
 }
-async function checked(
+export async function checked(
   tx: Tx,
   userId: string,
   draftId: string,
@@ -61,6 +62,7 @@ export async function dispatchApproved(
   draftId: string,
   version: number,
   sender: SmtpSender = smtpSender,
+  queueId?: string,
 ) {
   const config = readMailConfig();
   if (!config.smtpAllowed)
@@ -70,7 +72,48 @@ export async function dispatchApproved(
   const claim = await db.$transaction(
     async (tx) => {
       await locks(tx, initial.contactId);
+      const now = new Date();
+      let schedule;
+      if (queueId) {
+        schedule = await tx.mailSchedule.findUniqueOrThrow({
+          where: { id: "studiojeker" },
+        });
+        const item = await tx.mailQueueItem.findUniqueOrThrow({
+          where: { id: queueId },
+        });
+        if (
+          !schedule.enabled ||
+          mode !== "PRODUCTION" ||
+          !insideMailWindow(schedule, now) ||
+          item.status !== "QUEUED" ||
+          item.draftId !== draftId ||
+          item.version !== version ||
+          item.userId !== userId ||
+          (schedule.lastClaimAt &&
+            now.getTime() - schedule.lastClaimAt.getTime() <
+              schedule.intervalMinutes * 60000)
+        )
+          throw new PolicyError(
+            "Zeitplan pausiert, ausserhalb Versandzeit oder bereits bearbeitet.",
+            409,
+          );
+        const activator = schedule.activatedBy
+          ? await tx.user.findUnique({ where: { id: schedule.activatedBy } })
+          : null;
+        if (!activator?.active || !allowedAccount(activator))
+          throw new PolicyError(
+            "Aktivierung durch berechtigte Person fehlt.",
+            403,
+          );
+      }
       const { v } = await checked(tx, userId, draftId, version);
+      if (queueId) {
+        const item = await tx.mailQueueItem.findUniqueOrThrow({
+          where: { id: queueId },
+        });
+        if (item.hash !== v.hash)
+          throw new PolicyError("Eingeplante Nachricht geändert.", 409);
+      }
       const key =
         mode === "TEST"
           ? `test:${draftId}:${version}`
@@ -78,7 +121,18 @@ export async function dispatchApproved(
       const prior = await tx.delivery.findUnique({
         where: { idempotencyKey: key },
       });
-      if (prior) return { delivery: prior, reused: true };
+      if (prior) {
+        if (queueId)
+          await tx.mailQueueItem.update({
+            where: { id: queueId },
+            data: {
+              status: "SKIPPED",
+              error: "Bereits verarbeitet; kein erneuter Versand.",
+              deliveryId: prior.id,
+            },
+          });
+        return { delivery: prior, reused: true };
+      }
       if (
         mode === "PRODUCTION" &&
         (await tx.delivery.findFirst({
@@ -92,12 +146,12 @@ export async function dispatchApproved(
         }))
       )
         throw new PolicyError("Doppelversand blockiert.", 409);
-      const since = new Date();
-      since.setUTCHours(0, 0, 0, 0);
+      const since = mailDayStart(now);
       if (
         (await tx.delivery.count({
           where: { mode, createdAt: { gte: since } },
-        })) >= config.dailyLimit
+        })) >=
+        Math.min(config.dailyLimit, schedule?.dailyLimit ?? config.dailyLimit)
       )
         throw new PolicyError("Tageslimit erreicht.");
       const delivery = await tx.delivery.create({
@@ -114,6 +168,16 @@ export async function dispatchApproved(
           idempotencyKey: key,
         },
       });
+      if (queueId) {
+        await tx.mailQueueItem.update({
+          where: { id: queueId },
+          data: { status: "SENDING", deliveryId: delivery.id },
+        });
+        await tx.mailSchedule.update({
+          where: { id: "studiojeker" },
+          data: { lastClaimAt: now },
+        });
+      }
       await audit(tx, userId, "DELIVERY_CLAIMED", delivery.id, {
         mode,
         version,
@@ -131,6 +195,18 @@ export async function dispatchApproved(
         const currentConfig = readMailConfig();
         if (!currentConfig.smtpAllowed || currentConfig.mode !== config.mode)
           throw new PolicyError("Versandkonfiguration geändert.");
+        if (queueId) {
+          const schedule = await tx.mailSchedule.findUniqueOrThrow({
+            where: { id: "studiojeker" },
+          });
+          if (!schedule.enabled || !insideMailWindow(schedule))
+            throw new PolicyError("Automatik pausiert.");
+          const activator = schedule.activatedBy
+            ? await tx.user.findUnique({ where: { id: schedule.activatedBy } })
+            : null;
+          if (!activator?.active || !allowedAccount(activator))
+            throw new PolicyError("Aktivierung ungültig.");
+        }
         const { d, v } = await checked(tx, userId, draftId, version);
         let status: "SENT" | "TEST_SENT" | "FAILED" | "UNKNOWN",
           error: string | null = null;
@@ -161,6 +237,22 @@ export async function dispatchApproved(
           where: { id: claim.delivery.id },
           data: { status, error, completedAt: new Date() },
         });
+        if (queueId) {
+          await tx.mailQueueItem.update({
+            where: { id: queueId },
+            data: { status, error },
+          });
+          if (status !== "SENT")
+            await tx.mailSchedule.update({
+              where: { id: "studiojeker" },
+              data: {
+                enabled: false,
+                pauseReason:
+                  "Versandfehler: Versandhistorie prüfen. Keine automatische Wiederholung.",
+                revision: { increment: 1 },
+              },
+            });
+        }
         if (mode === "PRODUCTION")
           await tx.contact.update({
             where: { id: d.contactId },
@@ -185,6 +277,26 @@ export async function dispatchApproved(
         completedAt: new Date(),
       },
     });
+    if (queueId)
+      await db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('delivery-global'))`;
+        await tx.mailQueueItem.update({
+          where: { id: queueId },
+          data: {
+            status: "UNKNOWN",
+            error:
+              "Versand unterbrochen. Manuell abgleichen; keine Wiederholung.",
+          },
+        });
+        await tx.mailSchedule.update({
+          where: { id: "studiojeker" },
+          data: {
+            enabled: false,
+            pauseReason: "Unklarer Versandstatus. Versandhistorie prüfen.",
+            revision: { increment: 1 },
+          },
+        });
+      });
     await audit(db, userId, "DELIVERY_UNKNOWN", delivery.id, {
       reason: "Interrupted; manual reconciliation required",
     });

@@ -23,6 +23,54 @@ async function signIn(page: import("@playwright/test").Page) {
     page.getByRole("heading", { name: "Übersicht", exact: true }),
   ).toBeVisible();
 }
+for (const width of [390, 768, 1440]) {
+  test(`Täglicher Versand ${width}px: pausiert, bedienbar und ohne Überlauf`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await signIn(page);
+    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    const [scheduleResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/mail-schedule") &&
+          response.request().method() === "GET",
+      ),
+      page
+        .getByRole("button", { name: "Versandhistorie", exact: true })
+        .click(),
+    ]);
+    expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
+    await expect(
+      page.getByRole("heading", { name: "Täglicher Mailversand" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
+      "25",
+    );
+    await expect(
+      page.getByRole("button", { name: "Automatik starten / aktualisieren" }),
+    ).toBeDisabled();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const results = await new AxeBuilder({ page })
+      .include('[aria-labelledby="mail-schedule-title"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
+    expect((await request.post("/api/internal/mail-tick")).status()).toBe(401);
+    expect(
+      (
+        await request.post("/api/mail-schedule/pause", {
+          headers: { Origin: "https://example.test" },
+          data: {},
+        })
+      ).status(),
+    ).toBe(403);
+  });
+}
 test("API schützt Daten, Ursprung und externen Versand", async ({
   request,
 }) => {
@@ -206,7 +254,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .click();
   await expect(editor).not.toBeVisible();
   await page.locator(".draft-row").filter({ hasText: organisation }).click();
-  await expect(editor.getByRole("heading", { level: 2 })).toContainText("Version 2");
+  await expect(editor.getByRole("heading", { level: 2 })).toContainText(
+    "Version 2",
+  );
   await expect(editor.getByLabel(/Ich habe Empfänger/)).not.toBeChecked();
 });
 test("Dashboard und Kontaktformular bestehen WCAG-AA-Automatikprüfung", async ({

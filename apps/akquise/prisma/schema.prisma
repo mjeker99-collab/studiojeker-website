@@ -193,6 +193,40 @@ model Delivery {
   @@index([recipient, status])
 }
 
+// Explicitly selected immutable versions, never an implicit send of all contacts.
+model MailQueueItem {
+  id String @id @default(cuid())
+  draftId String
+  version Int
+  hash String
+  userId String
+  recipient String
+  subject String
+  status String @default("QUEUED")
+  error String?
+  deliveryId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([draftId, version])
+  @@index([status, createdAt])
+}
+
+model MailSchedule {
+  id String @id @default("studiojeker")
+  enabled Boolean @default(false)
+  dailyLimit Int @default(25)
+  weekdaysOnly Boolean @default(true)
+  startHour Int @default(9)
+  endHour Int @default(17)
+  intervalMinutes Int @default(15)
+  revision Int @default(1)
+  activatedBy String?
+  lastClaimAt DateTime?
+  heartbeatAt DateTime?
+  pauseReason String?
+  updatedAt DateTime @updatedAt
+}
+
 model InboundMessage {
   id                String   @id @default(cuid())
   messageId         String   @unique
