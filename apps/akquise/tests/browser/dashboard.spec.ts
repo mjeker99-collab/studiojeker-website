@@ -31,9 +31,17 @@ for (const width of [390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await signIn(page);
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page
-      .getByRole("button", { name: "Versandhistorie", exact: true })
-      .click();
+    const [scheduleResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/mail-schedule") &&
+          response.request().method() === "GET",
+      ),
+      page
+        .getByRole("button", { name: "Versandhistorie", exact: true })
+        .click(),
+    ]);
+    expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
     await expect(
       page.getByRole("heading", { name: "Täglicher Mailversand" }),
     ).toBeVisible();

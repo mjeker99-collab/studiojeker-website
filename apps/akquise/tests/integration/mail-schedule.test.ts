@@ -128,6 +128,16 @@ async function elapsed() {
     data: { lastClaimAt: new Date(Date.now() - 600000) },
   });
 }
+test("Gleichzeitiger erster Browser- und Workerzugriff initialisiert genau einen Zeitplan", async () => {
+  await db.mailSchedule.deleteMany();
+  const states = await Promise.all(
+    Array.from({ length: 5 }, () => mailScheduleState()),
+  );
+  assert.equal(await db.mailSchedule.count(), 1);
+  assert.ok(
+    states.every((s) => !s.schedule.enabled && s.schedule.dailyLimit === 25),
+  );
+});
 test("Standard pausiert, Testmodus startet nicht und einplanen gibt nichts frei", async () => {
   const { d } = await prepared();
   await enqueue(d);

@@ -24,11 +24,12 @@ export const scheduleInput = z
     "Endzeit muss nach Startzeit liegen.",
   );
 async function ensureSchedule() {
-  return db.mailSchedule.upsert({
-    where: { id: "studiojeker" },
-    create: {},
-    update: {},
+  // ON CONFLICT DO NOTHING also handles simultaneous first browser/worker requests.
+  await db.mailSchedule.createMany({
+    data: [{ id: "studiojeker" }],
+    skipDuplicates: true,
   });
+  return db.mailSchedule.findUniqueOrThrow({ where: { id: "studiojeker" } });
 }
 export async function mailScheduleState() {
   const schedule = await ensureSchedule();
