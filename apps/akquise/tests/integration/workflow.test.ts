@@ -1289,6 +1289,146 @@ test("Studio: keine API-Schlüssel, deduplizierte Aufträge, Fehler und Wiederau
   }
 });
 
+test("Chat follow-up: exact proposal snapshot, same-series access and explicit image execution", async () => {
+  const names = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "CONTENT_DAILY_REQUEST_LIMIT",
+    "CONTENT_DAILY_BUDGET_USD",
+    "STUDIO_LOCAL_ASSETS",
+  ];
+  const old = names.map((key) => process.env[key]);
+  Object.assign(process.env, {
+    OPENAI_API_KEY: "synthetic",
+    CONTENT_AI_ENABLED: "true",
+    CONTENT_DAILY_REQUEST_LIMIT: "1000",
+    CONTENT_DAILY_BUDGET_USD: "1000",
+    STUDIO_LOCAL_ASSETS: "true",
+  });
+  try {
+    const { randomUUID } = await import("node:crypto");
+    const source = await testMotif();
+    const s = await studio.createSeries(martin, studioBrief());
+    const base = {
+      seriesId: s.id,
+      kind: "CHAT",
+      message: "Wie kann ich das Bild optimieren?",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [source.id],
+      referenceRights: true,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    };
+    const proposal = await studio.queueJob(martin, base);
+    const reply = "Schatten aufhellen, eine dezente Vignette ergänzen.";
+    await studio.runJob(
+      martin,
+      proposal.id,
+      {
+        async chat() {
+          return { reply, usage: {}, requestId: "synthetic-proposal" };
+        },
+        async text() {
+          throw new Error("Unexpected text call");
+        },
+        async image() {
+          throw new Error("Unexpected image call");
+        },
+      },
+      testStore,
+    );
+    const request = {
+      ...base,
+      kind: "IMAGE",
+      photoEdit: true,
+      message: "Bitte so ausführen.",
+      replyToJobId: proposal.id,
+      requestKey: randomUUID(),
+    };
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, replyToJobId: "inaccessible-job" }),
+      /nicht zugänglich/,
+    );
+    const otherSeries = await studio.createSeries(martin, studioBrief());
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, seriesId: otherSeries.id }),
+      /nicht zugänglich/,
+    );
+    const edit = await studio.queueJob(martin, request);
+    assert.equal((await studio.queueJob(martin, request)).id, edit.id);
+    // A later change must not alter the instruction that was confirmed and queued.
+    await db.studioJob.update({
+      where: { id: proposal.id },
+      data: { result: { reply: "Anderer Vorschlag" } },
+    });
+    const original = await studioAssets.readAsset(martin, source.id, testStore);
+    let imageCalls = 0;
+    await studio.runJob(
+      martin,
+      edit.id,
+      {
+        async text() {
+          throw new Error("Unexpected text call");
+        },
+        async image(prompt, _model, refs, options) {
+          imageCalls++;
+          assert.ok(prompt.includes(reply));
+          assert.ok(prompt.includes(request.message));
+          assert.ok(!prompt.includes("Anderer Vorschlag"));
+          assert.equal(options?.edit, true);
+          assert.deepEqual(refs[0].bytes, original.bytes);
+          return {
+            bytes: await sharp(original.bytes)
+              .modulate({ brightness: 1.15 })
+              .png()
+              .toBuffer(),
+            requestId: "synthetic-execution",
+            usage: {},
+          };
+        },
+      },
+      testStore,
+    );
+    assert.equal(imageCalls, 1);
+    const followup = await studio.queueJob(martin, {
+      ...base,
+      referenceIds: [],
+      message: "Bitte die Vignette weglassen.",
+      replyToJobId: proposal.id,
+      requestKey: randomUUID(),
+    });
+    await studio.runJob(
+      martin,
+      followup.id,
+      {
+        async chat(_context, messages) {
+          const last = messages[messages.length - 1].content;
+          assert.ok(last.includes("Anderer Vorschlag"));
+          assert.ok(last.includes("Bitte die Vignette weglassen."));
+          return {
+            reply: "Angepasster Vorschlag",
+            usage: {},
+            requestId: "synthetic-followup",
+          };
+        },
+        async text() {
+          throw new Error("Unexpected text call");
+        },
+        async image() {
+          throw new Error("Unexpected image call");
+        },
+      },
+      testStore,
+    );
+  } finally {
+    names.forEach((key, index) => {
+      if (old[index] === undefined) delete process.env[key];
+      else process.env[key] = old[index];
+    });
+  }
+});
+
 test("Photo edit: selected source, separate result, explicit version adoption and stale version protection", async () => {
   const names = [
     "OPENAI_API_KEY",

@@ -271,6 +271,7 @@ const requestSchema = z
     conceptVersion: z.number().int().positive().optional(),
     mediaIntent: z.enum(["IMAGE", "VIDEO"]).optional(),
     photoEdit: z.literal(true).optional(),
+    replyToJobId: z.string().min(1).max(100).optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -285,6 +286,10 @@ export async function queueJob(actor: string, raw: unknown) {
     config = studioConfig();
   if (data.kind === "CHAT" && !data.message)
     throw new PolicyError("Nachricht fehlt.");
+  if (data.replyToJobId && data.kind !== "CHAT" && !data.photoEdit)
+    throw new PolicyError(
+      "Eine Antwort benötigt einen Dialog oder eine Bildbearbeitung.",
+    );
   if (
     data.photoEdit &&
     (data.kind !== "IMAGE" ||
@@ -375,6 +380,39 @@ export async function queueJob(actor: string, raw: unknown) {
       },
     });
     if (!series) throw new PolicyError("Serie nicht zugänglich.", 403);
+    let replyTo: { jobId: string; message: string; reply: string } | undefined;
+    if (data.replyToJobId) {
+      const proposal = await tx.studioJob.findFirst({
+        where: {
+          id: data.replyToJobId,
+          organizationId: ORG,
+          seriesId: data.seriesId,
+          kind: "CHAT",
+          status: "SUCCEEDED",
+        },
+      });
+      const original = proposal?.input as
+        { request?: { message?: string; mediaIntent?: string } } | undefined;
+      const answer = proposal?.result as { reply?: unknown } | undefined;
+      if (
+        !proposal ||
+        typeof answer?.reply !== "string" ||
+        !answer.reply.trim()
+      )
+        throw new PolicyError(
+          "GPT-Vorschlag nicht zugänglich oder noch nicht fertig.",
+          403,
+        );
+      if (data.photoEdit && original?.request?.mediaIntent === "VIDEO")
+        throw new PolicyError(
+          "Ein Videoauftrag kann nicht als Bildbearbeitung ausgeführt werden.",
+        );
+      replyTo = {
+        jobId: proposal.id,
+        message: original?.request?.message || "",
+        reply: answer.reply,
+      };
+    }
     if (
       series.concept &&
       (data.kind !== "CHAT" ||
@@ -542,6 +580,7 @@ export async function queueJob(actor: string, raw: unknown) {
       strategy,
       campaignStrategy: await campaignConcept(tx, brief.campaignId),
       request: data,
+      ...(replyTo ? { replyTo } : {}),
       ...(data.photoEdit ? { editTargetId: content!.id, sourceAssets } : {}),
       ...(driveSelection ? { driveSelection } : {}),
       brief,
@@ -652,6 +691,7 @@ export async function runJob(
   });
   const input = job.input as {
     request: z.infer<typeof requestSchema>;
+    replyTo?: { jobId: string; message: string; reply: string };
     brief: unknown;
     selectedRules?: unknown;
     references?: unknown;
@@ -666,6 +706,9 @@ export async function runJob(
     campaignStrategy?: unknown;
   };
   let providerStarted = false;
+  const currentMessage = input.replyTo
+    ? `Bezug auf diesen ausgewählten GPT-Vorschlag:\nUrsprünglicher Auftrag: ${input.replyTo.message}\nVorschlag: ${input.replyTo.reply}\n\nMeine aktuelle Anweisung: ${input.request.message}`
+    : input.request.message;
   try {
     let result: unknown, usage: unknown, requestId: string | null;
     if (job.kind === "CHAT") {
@@ -714,8 +757,8 @@ export async function runJob(
           {
             role: "user",
             content: input.request.mediaIntent
-              ? `Produktionsauftrag ${input.request.mediaIntent === "IMAGE" ? "Bild" : "Video"}: ${input.request.message!}`
-              : input.request.message!,
+              ? `Produktionsauftrag ${input.request.mediaIntent === "IMAGE" ? "Bild" : "Video"}: ${currentMessage!}`
+              : currentMessage!,
           },
         ],
         job.model,
@@ -794,7 +837,7 @@ export async function runJob(
       });
       providerStarted = true;
       const r = await provider.image(
-        input.request.photoEdit ? input.request.message! : imageContext,
+        input.request.photoEdit ? currentMessage! : imageContext,
         job.model,
         refs,
         input.request.photoEdit ? { edit: true } : undefined,

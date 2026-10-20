@@ -1346,6 +1346,12 @@ pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.studio-chat-reply {
+  border-left: 3px solid var(--cyan);
+  padding: 12px 16px;
+  background: #f3f7f8;
+  min-width: 0;
+}
 .studio-chat-handoff {
   display: flex;
   flex-wrap: wrap;
