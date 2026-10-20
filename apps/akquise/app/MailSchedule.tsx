@@ -189,6 +189,18 @@ export default function MailSchedule({
             Absender: Nora Jeker · njeker@studiojeker.ch · Schweizer Zeit
             (Europe/Zurich).
           </p>
+          <button
+            disabled={busy}
+            onClick={() => {
+              void load(true).catch((e) =>
+                setError(
+                  e instanceof Error ? e.message : "Status nicht verfügbar.",
+                ),
+              );
+            }}
+          >
+            Gespeicherten Zeitplan neu laden
+          </button>
           {!data.productionReady && (
             <p className="panel-note">
               Produktionsversand noch deaktiviert. Auswahl und Zeitplan können

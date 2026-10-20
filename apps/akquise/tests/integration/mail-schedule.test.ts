@@ -260,8 +260,17 @@ test("Stale Einstellungen und Serverlimit werden abgewiesen", async () => {
   const s = (await mailScheduleState()).schedule;
   await mutate(user, "pause", {});
   await assert.rejects(
-    mutate(user, "settings", { ...s, enabled: true, confirmDispatch: true }),
-    /./,
+    mutate(user, "settings", {
+      revision: s.revision,
+      enabled: true,
+      dailyLimit: 25,
+      weekdaysOnly: false,
+      startHour: 0,
+      endHour: 24,
+      intervalMinutes: 1,
+      confirmDispatch: true,
+    }),
+    /Zeitplan wurde geändert/,
   );
   process.env.DAILY_SEND_LIMIT = "20";
   await assert.rejects(start(25), /Serverlimit/);
