@@ -248,13 +248,6 @@ export async function runMailSchedule(sender?: SmtpSender) {
     where: { id: "studiojeker" },
   });
   if (
-    !schedule.enabled ||
-    !config.smtpAllowed ||
-    config.mode !== "production" ||
-    !insideMailWindow(schedule)
-  )
-    return;
-  if (
     await db.mailQueueItem.count({
       where: {
         status: "SENDING",
@@ -264,6 +257,28 @@ export async function runMailSchedule(sender?: SmtpSender) {
   ) {
     await db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('delivery-global'))`;
+      const stale = await tx.mailQueueItem.findMany({
+        where: {
+          status: "SENDING",
+          updatedAt: { lt: new Date(Date.now() - 120000) },
+        },
+      });
+      if (!stale.length) return;
+      await tx.delivery.updateMany({
+        where: {
+          id: {
+            in: stale.flatMap((item) =>
+              item.deliveryId ? [item.deliveryId] : [],
+            ),
+          },
+          status: "SENDING",
+        },
+        data: {
+          status: "UNKNOWN",
+          error: "DISPATCH_INTERRUPTED_NO_RETRY",
+          completedAt: new Date(),
+        },
+      });
       await tx.mailQueueItem.updateMany({
         where: {
           status: "SENDING",
@@ -286,6 +301,13 @@ export async function runMailSchedule(sender?: SmtpSender) {
     });
     return;
   }
+  if (
+    !schedule.enabled ||
+    !config.smtpAllowed ||
+    config.mode !== "production" ||
+    !insideMailWindow(schedule)
+  )
+    return;
   if (
     schedule.lastClaimAt &&
     Date.now() - schedule.lastClaimAt.getTime() <

@@ -248,6 +248,8 @@ test("Abgebrochener Claim nach Serverneustart wird nie wiederholt", async () => 
   const a = await prepared();
   await enqueue(a.d);
   await start();
+  // Recovery must work even if someone paused during the interrupted attempt.
+  await mutate(user, "pause", {});
   await db.mailQueueItem.updateMany({
     data: { status: "SENDING", updatedAt: new Date(Date.now() - 300000) },
   });
