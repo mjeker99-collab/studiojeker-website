@@ -270,6 +270,7 @@ const requestSchema = z
     message: z.string().trim().min(1).max(4000).optional(),
     conceptVersion: z.number().int().positive().optional(),
     mediaIntent: z.enum(["IMAGE", "VIDEO"]).optional(),
+    photoEdit: z.literal(true).optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -284,6 +285,15 @@ export async function queueJob(actor: string, raw: unknown) {
     config = studioConfig();
   if (data.kind === "CHAT" && !data.message)
     throw new PolicyError("Nachricht fehlt.");
+  if (
+    data.photoEdit &&
+    (data.kind !== "IMAGE" ||
+      !data.message ||
+      data.referenceIds.length + data.driveReferenceIds.length !== 1)
+  )
+    throw new PolicyError(
+      "Bildbearbeitung benötigt einen Bildauftrag, eine Anweisung und genau ein Ausgangsbild.",
+    );
   if (data.kind !== "CHAT" && data.mediaIntent)
     throw new PolicyError("Bild- und Videoaufträge gehören in den GPT-Dialog.");
   if (!config.connected)
@@ -293,7 +303,7 @@ export async function queueJob(actor: string, raw: unknown) {
     );
   if (data.kind === "IMAGE" && config.storage === "DISCONNECTED")
     throw new PolicyError("Privater Bildspeicher: Nicht verbunden.", 503);
-  if (data.driveReferenceIds.length && data.kind !== "CHAT")
+  if (data.driveReferenceIds.length && data.kind !== "CHAT" && !data.photoEdit)
     throw new PolicyError("Drive-Bilder sind nur im GPT-Chat verfügbar.");
   if (
     data.referenceIds.length + data.driveReferenceIds.length > 4 ||
@@ -416,11 +426,15 @@ export async function queueJob(actor: string, raw: unknown) {
         }
       : undefined;
     const brief = briefingSchema.parse(series.briefing);
-    const content = series.contents.find((c) => c.id === data.contentId);
+    const content =
+      data.photoEdit && !data.contentId
+        ? series.contents[0]
+        : series.contents.find((c) => c.id === data.contentId);
     if (
       data.kind === "IMAGE" &&
       (!content ||
-        !contentInput.parse(content.versions[0].payload).studio?.imageIdea)
+        (!data.photoEdit &&
+          !contentInput.parse(content.versions[0].payload).studio?.imageIdea))
     )
       throw new PolicyError("Beitrag und Bildidee erforderlich.");
     if (
@@ -432,6 +446,7 @@ export async function queueJob(actor: string, raw: unknown) {
       );
     if (
       (data.kind !== "CHAT" &&
+        !data.photoEdit &&
         data.referenceIds.some(
           (id) => !brief.referenceAssetIds.includes(id),
         )) ||
@@ -513,10 +528,21 @@ export async function queueJob(actor: string, raw: unknown) {
           409,
         );
     }
+    const sourceAssets = data.photoEdit
+      ? await tx.studioAsset.findMany({
+          where: {
+            id: { in: data.referenceIds },
+            organizationId: ORG,
+            deletedAt: null,
+          },
+          select: { id: true, sha256: true },
+        })
+      : undefined;
     const input = {
       strategy,
       campaignStrategy: await campaignConcept(tx, brief.campaignId),
       request: data,
+      ...(data.photoEdit ? { editTargetId: content!.id, sourceAssets } : {}),
       ...(driveSelection ? { driveSelection } : {}),
       brief,
       selectedRules,
@@ -630,6 +656,7 @@ export async function runJob(
     selectedRules?: unknown;
     references?: unknown;
     imageIdea: string;
+    sourceAssets?: { id: string; sha256: string }[];
     versions: { id: string; version: number }[];
     history?: { role: "user" | "assistant"; content: string }[];
     campaign?: unknown;
@@ -712,12 +739,53 @@ export async function runJob(
       usage = r.usage;
       requestId = r.requestId;
     } else {
+      const sourceAssetIds: string[] = [];
       const refs = await Promise.all(
         input.request.referenceIds.map(async (ref) => {
+          if (
+            input.request.photoEdit &&
+            !(await db.libraryItem.findFirst({
+              where: { assetId: ref, organizationId: ORG, archivedAt: null },
+            }))
+          )
+            throw new PolicyError("Ausgangsbild nicht mehr verfügbar.");
           const a = await readAsset(actor, ref, store);
+          if (input.request.photoEdit) {
+            if (
+              input.sourceAssets?.find((s) => s.id === ref)?.sha256 !==
+                a.asset.sha256 ||
+              !["image/jpeg", "image/png", "image/webp"].includes(a.asset.mime)
+            )
+              throw new PolicyError(
+                "Ausgangsbild wurde verändert. Neuen Auftrag erstellen.",
+              );
+            sourceAssetIds.push(a.asset.id);
+          }
           return { bytes: a.bytes, mime: a.asset.mime };
         }),
       );
+      if (input.request.photoEdit && input.request.driveReferenceIds?.length) {
+        if (
+          !input.driveSelection ||
+          input.driveSelection.ownerId !== job.userId
+        )
+          throw new PolicyError(
+            "Drive-Auswahl fehlt. Neuen Auftrag erstellen.",
+          );
+        const images = await readDriveImages(actor, input.driveSelection);
+        for (const [i, image] of images.entries()) {
+          const original = await storeAsset(
+            actor,
+            image.bytes,
+            input.driveSelection.files[i].name,
+            "ORIGINAL",
+            undefined,
+            store,
+          );
+          sourceAssetIds.push(original.id);
+          refs.push(image);
+        }
+      }
       const imageContext = JSON.stringify({
         imageIdea: input.imageIdea,
         briefing: input.brief,
@@ -725,23 +793,35 @@ export async function runJob(
         selectedTextReferences: input.references,
       });
       providerStarted = true;
-      const r = await provider.image(imageContext, job.model, refs);
+      const r = await provider.image(
+        input.request.photoEdit ? input.request.message! : imageContext,
+        job.model,
+        refs,
+        input.request.photoEdit ? { edit: true } : undefined,
+      );
       const a = await storeAsset(
         actor,
         r.bytes,
-        `motiv-${job.id}.png`,
+        `${input.request.photoEdit ? "bearbeitung" : "motiv"}-${job.id}.png`,
         "MOTIF",
         undefined,
         store,
       );
-      await db.libraryItem.updateMany({
-        where: { assetId: a.id, organizationId: ORG },
-        data: {
-          source: `KI-Auftrag ${job.id}; Modell ${job.model}`,
-          description: `Motiv für Serie ${job.seriesId}; keine automatische Rechtefreigabe.`,
-        },
-      });
-      result = { assetId: a.id, sha256: a.sha256 };
+      if (!a.reused)
+        await db.libraryItem.updateMany({
+          where: { assetId: a.id, organizationId: ORG },
+          data: {
+            source: `KI-Auftrag ${job.id}; Modell ${job.model}`,
+            description: input.request.photoEdit
+              ? `Bildbearbeitung; Ausgangsbild ${sourceAssetIds.join(", ")}; Auftrag: ${input.request.message}; Serie ${job.seriesId}.`
+              : `Motiv für Serie ${job.seriesId}; keine automatische Rechtefreigabe.`,
+          },
+        });
+      result = {
+        assetId: a.id,
+        sha256: a.sha256,
+        ...(input.request.photoEdit ? { sourceAssetIds } : {}),
+      };
       usage = r.usage;
       requestId = r.requestId;
     }
@@ -792,6 +872,7 @@ export async function applyJob(actor: string, id: string) {
         );
       const input = job.input as {
         request: z.infer<typeof requestSchema>;
+        editTargetId?: string;
         versions: { id: string; version: number }[];
       };
       const result = job.result as {
@@ -802,7 +883,10 @@ export async function applyJob(actor: string, id: string) {
       const targets =
         job.kind === "TEXT"
           ? input.versions
-          : input.versions.filter((c) => c.id === input.request.contentId);
+          : input.versions.filter(
+              (c) => c.id === (input.editTargetId || input.request.contentId),
+            );
+      if (!targets.length) throw new PolicyError("Zielbeitrag fehlt.", 409);
       for (let i = 0; i < targets.length; i++) {
         const t = targets[i],
           c = await tx.marketingContent.findFirst({

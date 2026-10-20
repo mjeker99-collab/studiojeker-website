@@ -524,6 +524,53 @@ test("Drive chat works without S3 and enforces consent, owner, connection and fi
     assert.equal(failed.status, "FAILED");
     assert.match(failed.error || "", /geändert/);
     assert.equal(providerCalls, 1);
+    process.env.STUDIO_LOCAL_ASSETS = "true";
+    const edit = await queueJob(martin, {
+      ...request,
+      kind: "IMAGE",
+      photoEdit: true,
+      message: "Schatten aufhellen",
+      requestKey: randomUUID(),
+    });
+    await assert.rejects(
+      runJob(nora, edit.id, provider, store),
+      /nur vom Auftraggeber/,
+    );
+    await runJob(
+      martin,
+      edit.id,
+      {
+        ...provider,
+        async image(prompt, _model, refs, options) {
+          assert.equal(prompt, "Schatten aufhellen");
+          assert.equal(options?.edit, true);
+          assert.deepEqual(refs[0].bytes, bytes);
+          return {
+            bytes: await sharp(bytes)
+              .modulate({ brightness: 0.8 })
+              .png()
+              .toBuffer(),
+            usage: {},
+            requestId: "synthetic-edit",
+          };
+        },
+      },
+      store,
+    );
+    const editedJob = await db.studioJob.findUniqueOrThrow({
+      where: { id: edit.id },
+    });
+    assert.equal(editedJob.status, "SUCCEEDED");
+    const editedResult = editedJob.result as {
+      sourceAssetIds: string[];
+      assetId: string;
+    };
+    assert.deepEqual(
+      (await readAsset(martin, editedResult.sourceAssetIds[0], store)).bytes,
+      bytes,
+    );
+    assert.notEqual(editedResult.sourceAssetIds[0], editedResult.assetId);
+    process.env.STUDIO_LOCAL_ASSETS = "false";
     const disconnectedRequest = { ...request, requestKey: randomUUID() };
     const disconnected = await queueJob(martin, disconnectedRequest);
     await disconnectDrive(martin);
@@ -538,7 +585,7 @@ test("Drive chat works without S3 and enforces consent, owner, connection and fi
       "FAILED",
     );
     assert.equal(providerCalls, 1);
-    assert.equal(downloads, 1);
+    assert.equal(downloads, 2);
   } finally {
     await db.driveConnection.deleteMany({ where: { userId: martin } });
     names.forEach((name, i) => {
