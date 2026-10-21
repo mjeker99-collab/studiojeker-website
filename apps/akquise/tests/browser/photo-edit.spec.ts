@@ -171,7 +171,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     .getByRole("button", { name: "Bezug entfernen", exact: true })
     .click();
   await chat
-    .getByRole("checkbox", { name: "bibliothek.png", exact: true })
+    .getByRole("checkbox", { name: /^bibliothek\.png(?:\s|$)/ })
     .uncheck();
   await chat.getByLabel("Auftrag", { exact: true }).selectOption("EDIT");
   await chat
