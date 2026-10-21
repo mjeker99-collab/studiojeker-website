@@ -1,6 +1,7 @@
 # One-off backup requested by Martin; no recurring schedule.
 # Setup: GitHub Settings > Secrets and variables > Actions:
-# - SANITY_AUTH_TOKEN: existing token, must be able to read all production documents.
+# - SANITY_BACKUP_TOKEN: project Viewer token with read access to all documents.
+#   Falls back to SANITY_AUTH_TOKEN if the dedicated backup token is absent.
 # - SANITY_BACKUP_PASSPHRASE: strong random password (>=24 characters, one line).
 # Keep the passphrase separately in a password manager; losing it makes backups unusable.
 # Download the artifact before its 30-day expiry and keep an independent copy.
@@ -37,12 +38,12 @@ jobs:
     steps:
       - name: Check required secrets before accessing content
         env:
-          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN || secrets.SANITY_AUTH_TOKEN }}
           SANITY_BACKUP_PASSPHRASE: ${{ secrets.SANITY_BACKUP_PASSPHRASE }}
         run: |
           set -euo pipefail
           if [ -z "$SANITY_AUTH_TOKEN" ]; then
-            echo "::error::Repository secret SANITY_AUTH_TOKEN is missing."
+            echo "::error::Set repository secret SANITY_BACKUP_TOKEN to a Sanity project Viewer token."
             exit 1
           fi
           if [ "${#SANITY_BACKUP_PASSPHRASE}" -lt 24 ] || [[ "$SANITY_BACKUP_PASSPHRASE" == *$'\n'* ]]; then
@@ -66,7 +67,7 @@ jobs:
 
       - name: Export, encrypt and verify backup
         env:
-          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN || secrets.SANITY_AUTH_TOKEN }}
           SANITY_BACKUP_PASSPHRASE: ${{ secrets.SANITY_BACKUP_PASSPHRASE }}
           SANITY_CLI_TELEMETRY_DISABLED: "1"
           CI: "true"
