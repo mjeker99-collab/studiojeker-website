@@ -746,10 +746,6 @@ export default function App() {
                     setError("");
                     setNotice("");
                   }}
-                  openContact={(id) => {
-                    const c = data.contacts.find((c) => c.id === id);
-                    if (c) openContact(c);
-                  }}
                 />
               )}
               <ContactTable

@@ -69,9 +69,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("button", { name: "Prüfdaten aus Notizen prüfen" })
       .click();
     await expect(
-      panel.getByText(
-        "1 Kontakte mit vollständigem Übernahmevorschlag · 1 mit offenen Angaben.",
-      ),
+      panel.getByText("1 Kontakte vollständig · 1 mit offenen Angaben."),
     ).toBeVisible();
     await expect(panel.getByText(/Verifikationsdatum fehlt/)).toBeVisible();
     await panel
@@ -95,24 +93,22 @@ for (const width of [390, 768, 1440]) {
     await expect(panel.getByRole("status")).toContainText(
       "Prüfdaten übernommen",
     );
-    await expect(
-      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
-    ).toBeEnabled();
-    await panel
-      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "1 erfolgreich · 1 noch zu bearbeiten",
-    );
-    await expect(
-      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
-    ).toBeEnabled();
-    await panel
-      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "1 erfolgreich · 1 noch zu bearbeiten",
-    );
+    const prepare = panel.getByRole("button", {
+      name: "1 Kontakte übernehmen und Entwürfe vorbereiten",
+    });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await expect(
+        panel.getByRole("button", { name: "Vorschau aktualisieren" }),
+      ).toBeEnabled();
+      await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+      await prepare.click();
+      await expect(panel.getByRole("status")).toContainText(
+        "1 erfolgreich · 0 noch zu bearbeiten",
+      );
+      await expect(
+        panel.getByText("1 Kontakte vollständig · 1 mit offenen Angaben."),
+      ).toBeVisible();
+    }
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.contacts.find((contact: { id: string }) => contact.id === c.id)
@@ -131,6 +127,104 @@ for (const width of [390, 768, 1440]) {
         })
       ).status(),
     ).toBe(403);
+  });
+}
+for (const width of [390, 768, 1440]) {
+  test(`Sammelbearbeitung ${width}px: gemeinsame Angaben und Ausnahmen ohne Kontaktmodal`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await signIn(page);
+    const suffix = `${width}-${Date.now()}`;
+    const names = [
+      `Gemeinsame Angaben A ${suffix}`,
+      `Gemeinsame Angaben B ${suffix}`,
+    ];
+    const ids: string[] = [];
+    for (const [i, organisation] of names.entries()) {
+      const response = await page.request.post("/api/contacts", {
+        headers: { Origin: "http://localhost:3100" },
+        data: {
+          organisation,
+          firstName: i ? "Eva" : "Anna",
+          lastName: "Muster",
+          email: `bulk.${i}.${suffix}@example.test`,
+          notes: `Betreff: Persönlich ${i}\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nIndividueller Bezug ${i}.\n\nFreundliche Grüsse\nNora Jeker`,
+        },
+      });
+      expect(response.ok()).toBe(true);
+      ids.push((await response.json()).id);
+    }
+    await page.reload();
+    await page
+      .getByRole("heading", { name: "Übersicht", exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    for (const name of names)
+      await page.getByLabel(`${name} auswählen`, { exact: true }).check();
+    const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });
+    const common = panel.getByRole("group", {
+      name: "Gemeinsame Angaben für die Auswahl",
+    });
+    await common.getByLabel("Prüfstatus").selectOption("VERIFIED");
+    await common.getByLabel("Verifikationsdatum").fill("2026-01-02");
+    await common
+      .getByLabel("Quellen-URL")
+      .fill("https://example.test/gepruefte-liste");
+    await panel
+      .getByRole("button", { name: "Prüfdaten aus Notizen prüfen" })
+      .click();
+    await expect(
+      panel.getByText("2 Kontakte vollständig · 0 mit offenen Angaben."),
+    ).toBeVisible();
+    const prepare = panel.getByRole("button", {
+      name: "2 Kontakte übernehmen und Entwürfe vorbereiten",
+    });
+    await expect(prepare).toBeDisabled();
+    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+    await expect(prepare).toBeEnabled();
+    await panel.locator("summary").filter({ hasText: names[1] }).click();
+    const row = panel.getByRole("group", { name: "Angaben für Eva Muster" });
+    await row
+      .getByLabel("Quellen-URL")
+      .fill("https://example.test/individueller-beleg");
+    await expect(prepare).toBeDisabled();
+    await expect(
+      panel.getByLabel(/Ich habe die ausgewählten Angaben/),
+    ).not.toBeChecked();
+    await panel.getByRole("button", { name: "Vorschau aktualisieren" }).click();
+    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+    expect(
+      (await new AxeBuilder({ page }).include(".contact-preparation").analyze())
+        .violations,
+    ).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await prepare.click();
+    await expect(panel.getByRole("status")).toContainText(
+      "2 erfolgreich · 0 noch zu bearbeiten",
+    );
+    await expect(
+      panel.getByRole("button", { name: "Vorschau aktualisieren" }),
+    ).toBeEnabled();
+    const state = await (await page.request.get("/api/state")).json();
+    for (const [i, id] of ids.entries()) {
+      const contact = state.contacts.find((c: { id: string }) => c.id === id);
+      expect(contact.sourceUrl).toBe(
+        i
+          ? "https://example.test/individueller-beleg"
+          : "https://example.test/gepruefte-liste",
+      );
+      expect(contact.hook).toBe(`Individueller Bezug ${i}.`);
+      expect(contact.newsletterConsent).toBe(false);
+      expect(
+        state.drafts.filter((d: { contactId: string }) => d.contactId === id),
+      ).toHaveLength(1);
+    }
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 }
 for (const width of [390, 768, 1440]) {
