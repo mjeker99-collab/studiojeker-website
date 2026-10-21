@@ -93,24 +93,22 @@ for (const width of [390, 768, 1440]) {
     await expect(panel.getByRole("status")).toContainText(
       "Prüfdaten übernommen",
     );
-    await expect(
-      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
-    ).toBeEnabled();
-    await panel
-      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "1 erfolgreich · 1 noch zu bearbeiten",
-    );
-    await expect(
-      panel.getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" }),
-    ).toBeEnabled();
-    await panel
-      .getByRole("button", { name: "Entwürfe für Auswahl vorbereiten" })
-      .click();
-    await expect(panel.getByRole("status")).toContainText(
-      "1 erfolgreich · 1 noch zu bearbeiten",
-    );
+    const prepare = panel.getByRole("button", {
+      name: "1 Kontakte übernehmen und Entwürfe vorbereiten",
+    });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await expect(
+        panel.getByRole("button", { name: "Vorschau aktualisieren" }),
+      ).toBeEnabled();
+      await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+      await prepare.click();
+      await expect(panel.getByRole("status")).toContainText(
+        "1 erfolgreich · 0 noch zu bearbeiten",
+      );
+      await expect(
+        panel.getByText("1 Kontakte vollständig · 1 mit offenen Angaben."),
+      ).toBeVisible();
+    }
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.contacts.find((contact: { id: string }) => contact.id === c.id)

@@ -222,19 +222,6 @@ export default function ContactPreparation({
             ? "Vorschau aktualisieren"
             : "Prüfdaten aus Notizen prüfen"}
         </button>
-        <button
-          className="secondary"
-          disabled={busy || ids.length > 200 || dirty}
-          onClick={() =>
-            run(async () => {
-              const data = await post<{ results: Result[] }>("drafts", { ids });
-              setResults(data.results);
-              await refresh();
-            })
-          }
-        >
-          Entwürfe für Auswahl vorbereiten
-        </button>
         {proposals && (
           <button
             className="secondary"
