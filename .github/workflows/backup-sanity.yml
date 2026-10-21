@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - codex/sanity-backup-2026-10-21
+      - codex/sanity-backup-fix-2026-10-21
     paths:
       - .github/workflows/backup-sanity.yml
 
@@ -78,16 +78,42 @@ jobs:
           mkdir -m 700 "$GNUPGHOME" "$task_dir/payload" "$RUNNER_TEMP/encrypted-backup"
           trap 'rm -rf -- "$task_dir"' EXIT
           archive_name="studiojeker-$(date -u +%Y%m%dT%H%M%SZ)-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.gz.gpg"
+          diagnose_export() {
+            python3 - "$task_dir/export.log" <<'PY'
+          import pathlib, re, sys
+          text = pathlib.Path(sys.argv[1]).read_text(errors="replace")
+          signatures = {
+              "authentication/authorization": r"unauthorized|forbidden|permission|not authorized|401|403|invalid.*token|session.*expired",
+              "login required": r"login|log in|logged in|authenticate",
+              "missing project/dataset": r"dataset.*not found|project.*not found|404",
+              "CLI command mismatch": r"unknown command|not a sanity command|command.*not found|unrecognized.*command",
+              "CLI arguments": r"unknown argument|unknown option|unexpected argument|invalid.*argument",
+              "missing dependency": r"cannot find module|cannot find package|module_not_found|err_module_not_found",
+              "unsupported runtime": r"unsupported|node.js.*version|requires.*node",
+              "network error": r"ENOTFOUND|ECONNRESET|ETIMEDOUT|fetch failed|socket",
+              "interactive prompt": r"non.interactive|tty|prompt|unattended|--yes",
+              "asset error": r"asset.*fail|asset.*missing|asset.*skip|hash.*mismatch",
+              "CLI configuration": r"sanity.cli|configuration|config.*error",
+              "CLI bootstrap": r"install.*cli|resolve.*cli",
+              "Node deprecation warning": r"DeprecationWarning",
+              "syntax error": r"SyntaxError|Unexpected token",
+          }
+          matches = [label for label, pattern in signatures.items() if re.search(pattern, text, re.I)]
+          print("Export diagnostic categories: " + (", ".join(matches) or "unclassified"))
+          PY
+          }
           (
             cd studio
             ./node_modules/.bin/sanity dataset export production "$task_dir/payload/sanity-production.tar.gz"
           ) > "$task_dir/export.log" 2>&1 || {
+            diagnose_export
             echo "::error::Sanity export failed. No archive uploaded. Check token permissions and dataset availability."
             exit 1
           }
           # Fail closed on warnings: the CLI can skip inaccessible assets.
           # Never print raw export logs into this public repository's Actions logs.
           if grep -Eiq 'warn|error|failed|skipp|not found|unauthori|forbidden' "$task_dir/export.log"; then
+            diagnose_export
             echo "::error::Export reported a warning or skipped asset. Backup needs investigation; no archive uploaded."
             exit 1
           fi
