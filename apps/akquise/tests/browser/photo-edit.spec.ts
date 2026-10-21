@@ -30,6 +30,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
         kind: "CHAT",
         status: "SUCCEEDED",
         model: "synthetic",
+        reserveUsd: 0.1,
         createdAt: new Date().toISOString(),
         input: {
           request: {
