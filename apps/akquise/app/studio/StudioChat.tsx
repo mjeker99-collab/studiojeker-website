@@ -752,6 +752,7 @@ export default function StudioChat({
                 <input
                   type="checkbox"
                   checked={referenceIds.includes(a.id)}
+                  aria-label={a.name}
                   disabled={
                     !referenceIds.includes(a.id) &&
                     referenceCount >= referenceLimit

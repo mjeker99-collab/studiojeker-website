@@ -86,6 +86,8 @@ export default function StudioKnowledge({
         Bis zu fünf frühere Projekte aus diesem gemeinsamen
         StudioONE-Arbeitsbereich werden als Textauszüge berücksichtigt. Projekte
         anderer Kunden und frühere Bilddateien werden dabei nicht übertragen.
+        Die tatsächlich verwendeten Projekte stehen jeweils bei deiner
+        Nachricht.
       </p>
       {useMemory &&
         (projects.length ? (
@@ -95,7 +97,10 @@ export default function StudioKnowledge({
             ))}
           </ul>
         ) : (
-          <p>Noch keine früheren Projekte für diese Firma vorhanden.</p>
+          <p>
+            In der aktuellen Projektliste sind keine früheren Projekte dieser
+            Firma enthalten.
+          </p>
         ))}
       <label htmlFor="studio-user-context">
         Was soll GPT über deine Rolle und Arbeitsweise wissen?
