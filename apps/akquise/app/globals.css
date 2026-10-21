@@ -708,9 +708,10 @@ footer {
 .contact-preparation { padding: 20px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .contact-preparation p, .contact-preparation ul { margin: 12px 0; }
 .preparation-contact { padding: 18px 0; border-bottom: 1px solid var(--line); }
-.preparation-contact dl { margin: 12px 0; }
-.preparation-contact dt { font-weight: 600; margin-top: 8px; }
-.preparation-contact dd { margin: 2px 0 0; white-space: pre-wrap; }
+.contact-preparation fieldset { border: 0; padding: 0; margin: 16px 0; min-width: 0; }
+.contact-preparation legend { font-weight: 600; }
+.contact-preparation .form-grid > label { min-width: 0; }
+.preparation-contact summary { cursor: pointer; font-weight: 600; }
 .check {
   display: flex;
   align-items: center;

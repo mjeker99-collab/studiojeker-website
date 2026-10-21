@@ -2,9 +2,20 @@ import type { Contact } from "@prisma/client";
 import { importedDraft } from "./generation";
 import { verificationIssues } from "./policy";
 
+export type PreparationFields = Partial<{
+  sourceUrl: string;
+  verifiedAt: string;
+  confidence: Contact["confidence"];
+  hook: string;
+}>;
+
 // Proposals only. Applying them requires an explicit human confirmation and
 // the unchanged contact revision. Never infer consent from a public address.
-export function contactPreparation(c: Contact, now = new Date()) {
+export function contactPreparation(
+  c: Contact,
+  now = new Date(),
+  input: { shared?: PreparationFields; values?: PreparationFields } = {},
+) {
   const beforeMail = c.notes.split(/^E-Mail-Entwurf:/m)[0];
   const field = (name: string) => {
     const values = beforeMail
@@ -13,12 +24,7 @@ export function contactPreparation(c: Contact, now = new Date()) {
       .map((line) => line.slice(name.length + 1).trim());
     return values.length === 1 ? values[0] : "";
   };
-  const patch: {
-    sourceUrl?: string;
-    verifiedAt?: string;
-    confidence?: "VERIFIED";
-    hook?: string;
-  } = {};
+  const patch: PreparationFields = {};
   const origins: string[] = [];
   const source = field("Quellen-URL");
   if (!c.sourceUrl && /^https?:\/\/\S+$/.test(source)) {
@@ -89,12 +95,47 @@ export function contactPreparation(c: Contact, now = new Date()) {
       }
     }
   }
+  const original = {
+    sourceUrl: c.sourceUrl,
+    verifiedAt: c.verifiedAt?.toISOString() ?? "",
+    confidence: c.confidence,
+    hook: c.hook,
+  };
   const values = {
     sourceUrl: patch.sourceUrl ?? c.sourceUrl,
     verifiedAt: patch.verifiedAt ?? c.verifiedAt?.toISOString() ?? "",
     confidence: patch.confidence ?? c.confidence,
     hook: patch.hook ?? c.hook,
   };
+  // Shared entries fill gaps after note extraction. Only explicit row edits
+  // may replace existing values. A preview never writes or grants permission.
+  for (const key of ["sourceUrl", "verifiedAt", "hook"] as const) {
+    if (!values[key].trim() && input.shared?.[key]) {
+      values[key] = input.shared[key];
+      origins.push(
+        `${key === "sourceUrl" ? "Quelle" : key === "verifiedAt" ? "Prüfdatum" : "Anknüpfungspunkt"} aus gemeinsamer Angabe`,
+      );
+    }
+    if (input.values?.[key] !== undefined) {
+      values[key] = input.values[key];
+      origins.push(
+        `${key === "sourceUrl" ? "Quelle" : key === "verifiedAt" ? "Prüfdatum" : "Anknüpfungspunkt"} in Sammelansicht bearbeitet`,
+      );
+    }
+    if (values[key] !== original[key]) patch[key] = values[key];
+    else delete patch[key];
+  }
+  if (values.confidence === "UNCONFIRMED" && input.shared?.confidence) {
+    values.confidence = input.shared.confidence;
+    origins.push("Prüfstatus aus gemeinsamer Angabe");
+  }
+  if (input.values?.confidence !== undefined) {
+    values.confidence = input.values.confidence;
+    origins.push("Prüfstatus in Sammelansicht bearbeitet");
+  }
+  if (values.confidence !== original.confidence)
+    patch.confidence = values.confidence;
+  else delete patch.confidence;
   const issues = verificationIssues(
     {
       ...c,

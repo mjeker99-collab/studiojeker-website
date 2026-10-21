@@ -190,6 +190,179 @@ test("Sammelübernahme bestätigt vorhandene Daten, erhält Einwilligungsstatus 
     /Berechtigung/,
   );
 });
+test("25 Kontakte gemeinsam vervollständigen und Entwürfe erstellen ohne Einzelbearbeitung", async () => {
+  const contacts = await Promise.all(
+    Array.from({ length: 25 }, (_, i) =>
+      saveContact(martin, {
+        ...input(`bulk-editor-${i}`),
+        sourceUrl: "",
+        verifiedAt: "",
+        confidence: "UNCONFIRMED",
+        hook: "",
+        notes: `Betreff: Persönlicher Entwurf ${i}\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nIndividueller dokumentierter Bezug ${i}.\n\nFreundliche Grüsse\nNora Jeker`,
+      }),
+    ),
+  );
+  const shared = {
+    sourceUrl: "https://example.test/gepruefte-liste",
+    verifiedAt: "2026-01-02T00:00:00.000Z",
+    confidence: "VERIFIED",
+    hook: "Gemeinsamer Bezug darf persönliche Texte nicht ersetzen.",
+  };
+  const preview = await prepareContacts(martin, "preview", {
+    ids: contacts.map((c) => c.id),
+    shared,
+  });
+  assert.ok(preview.contacts);
+  assert.equal(preview.contacts.filter((c) => c.ready).length, 25);
+  assert.equal(
+    await db.draft.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    0,
+  );
+  const selection = contacts.map((c, i) => ({
+    id: c.id,
+    revision: c.revision,
+    ...(i === 0
+      ? { values: { sourceUrl: "https://example.test/einzelbeleg" } }
+      : {}),
+  }));
+  await assert.rejects(
+    prepareContacts(martin, "prepare", {
+      confirmed: false,
+      shared,
+      contacts: selection,
+    }),
+  );
+  await assert.rejects(
+    prepareContacts(martin, "prepare", {
+      confirmed: true,
+      shared: { ...shared, newsletterConsent: true },
+      contacts: selection,
+    }),
+  );
+  await assert.rejects(
+    prepareContacts(martin, "preview", {
+      ids: [contacts[0].id],
+      shared: { sourceUrl: "javascript:alert(1)" },
+    }),
+  );
+  const result = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: selection,
+  });
+  assert.ok(result.results);
+  assert.equal(result.results.filter((r) => r.ok).length, 25);
+  for (const [i, c] of contacts.entries()) {
+    const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+    assert.equal(
+      saved.sourceUrl,
+      i === 0 ? "https://example.test/einzelbeleg" : shared.sourceUrl,
+    );
+    assert.equal(saved.revision, c.revision + 1);
+    assert.equal(saved.newsletterConsent, false);
+    assert.equal(saved.legalCategory, "UNASSESSED");
+    const version = await db.draftVersion.findFirstOrThrow({
+      where: { draft: { contactId: c.id } },
+    });
+    assert.equal(version.subject, `Persönlicher Entwurf ${i}`);
+    assert.match(
+      version.body,
+      new RegExp(`Individueller dokumentierter Bezug ${i}\\.`),
+    );
+  }
+  const fresh = await prepareContacts(martin, "preview", {
+    ids: contacts.map((c) => c.id),
+    shared,
+  });
+  assert.ok(fresh.contacts);
+  const repeat = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: fresh.contacts.map((c) => ({ id: c.id, revision: c.revision })),
+  });
+  assert.ok(repeat.results);
+  assert.equal(repeat.results.filter((r) => r.ok).length, 25);
+  assert.equal(
+    await db.draft.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    25,
+  );
+  assert.equal(
+    await db.approval.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    0,
+  );
+  assert.equal(
+    await db.legalReview.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    0,
+  );
+  const stale = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: selection,
+  });
+  assert.ok(stale.results);
+  assert.equal(stale.results.filter((r) => r.ok).length, 0);
+  await assert.rejects(
+    prepareContacts(martin, "preview", {
+      ids: [contacts[0].id],
+      edits: [selection[0]],
+    }),
+    /geändert/,
+  );
+  await suppress(
+    martin,
+    contacts[0].email,
+    "Synthetische Sperre nach Vorschau",
+  );
+  const blocked = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: [{ id: contacts[0].id, revision: fresh.contacts[0].revision }],
+  });
+  assert.ok(blocked.results);
+  assert.equal(blocked.results[0].ok, false);
+});
+test("Sammelvorbereitung meldet gespeicherte Daten auch bei fehlerhaftem Mailblock", async () => {
+  const bad = await saveContact(martin, {
+    ...input("bulk-mail-gap"),
+    confidence: "UNCONFIRMED",
+    sourceUrl: "",
+    notes: "Betreff: Unvollständig",
+  });
+  const good = await saveContact(martin, {
+    ...input("bulk-mail-good"),
+    confidence: "UNCONFIRMED",
+    sourceUrl: "",
+  });
+  const result = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared: { confidence: "VERIFIED", sourceUrl: "https://example.test/liste" },
+    contacts: [bad, good].map((c) => ({ id: c.id, revision: c.revision })),
+  });
+  assert.ok(result.results);
+  assert.deepEqual(
+    result.results.map((r) => r.ok),
+    [false, true],
+  );
+  assert.match(
+    result.results[0].message,
+    /Prüfdaten gespeichert; Entwurf noch offen/,
+  );
+  assert.equal(
+    "revision" in result.results[0] && result.results[0].revision,
+    bad.revision + 1,
+  );
+  assert.equal(await db.draft.count({ where: { contactId: bad.id } }), 0);
+  assert.equal(await db.draft.count({ where: { contactId: good.id } }), 1);
+});
 test("Individuelle Anmeldung und persistente Login-Sperre", async () => {
   const ok = await login("martin@example.test", "synthetisch-martin-123");
   assert.ok("token" in ok);

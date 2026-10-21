@@ -434,7 +434,12 @@ async function handler(
       const rows = await readSheetContacts();
       return NextResponse.json(await importContacts(user.id, rows));
     }
-    const maxJsonBytes = path[0] === "concepts" ? 256000 : 64000;
+    const maxJsonBytes =
+      path[0] === "contacts" && path[1] === "preparation"
+        ? 2 * 1024 * 1024
+        : path[0] === "concepts"
+          ? 256000
+          : 64000;
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);

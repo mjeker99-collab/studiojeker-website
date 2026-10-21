@@ -137,3 +137,62 @@ test("Sperren und allgemeine Adressen bleiben blockiert; Signatur allein ist kei
     undefined,
   );
 });
+
+test("Gemeinsame Angaben füllen Lücken, Notizen und Bestandswerte behalten Vorrang", () => {
+  const shared = {
+    confidence: "VERIFIED" as const,
+    sourceUrl: "https://example.test/liste",
+    verifiedAt: "2026-01-02T00:00:00.000Z",
+    hook: "Gemeinsam dokumentierter Bezug",
+  };
+  const gap = { ...contact, notes: "", sourceUrl: "" };
+  const p = contactPreparation(gap, now, { shared });
+  assert.equal(p.ready, true);
+  assert.deepEqual(p.patch, shared);
+  const fromNotes = contactPreparation(contact, now, { shared });
+  assert.equal(fromNotes.values.verifiedAt, "2026-10-17T00:00:00.000Z");
+  assert.equal(fromNotes.values.sourceUrl, contact.sourceUrl);
+  assert.equal(
+    fromNotes.values.hook,
+    "Ihr dokumentiertes Architekturprojekt in Burgdorf.",
+  );
+  assert.equal(
+    contactPreparation({ ...gap, confidence: "GENERAL" }, now, { shared })
+      .values.confidence,
+    "GENERAL",
+  );
+  assert.equal(
+    contactPreparation({ ...gap, status: "DO_NOT_CONTACT" }, now, { shared })
+      .ready,
+    false,
+  );
+  assert.equal(
+    contactPreparation({ ...gap, email: "info@example.test" }, now, { shared })
+      .ready,
+    false,
+  );
+});
+test("Einzelkorrekturen in der Sammelansicht ersetzen nur ausdrücklich bearbeitete Felder", () => {
+  const p = contactPreparation(contact, now, {
+    shared: { hook: "Gemeinsame Angabe" },
+    values: {
+      hook: "Korrigierter individueller Bezug",
+      sourceUrl: "https://example.test/korrigiert",
+    },
+  });
+  assert.equal(p.ready, true);
+  assert.equal(p.values.hook, "Korrigierter individueller Bezug");
+  assert.equal(p.values.sourceUrl, "https://example.test/korrigiert");
+  assert.equal(p.values.verifiedAt, "2026-10-17T00:00:00.000Z");
+  assert.equal(
+    contactPreparation(contact, now, { values: { hook: "" } }).ready,
+    false,
+  );
+  assert.equal(
+    contactPreparation(contact, now, {
+      shared: { verifiedAt: "2027-01-01T00:00:00.000Z" },
+      values: { verifiedAt: "2027-01-01T00:00:00.000Z" },
+    }).ready,
+    false,
+  );
+});
