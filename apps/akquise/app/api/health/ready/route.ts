@@ -8,6 +8,7 @@ export async function GET() {
     await db.$queryRaw`SELECT "status" FROM "StudioJob" LIMIT 0`;
     await db.$queryRaw`SELECT "revision" FROM "LibraryItem" LIMIT 0`;
     await db.$queryRaw`SELECT "brandRevision" FROM "StudioOrganization" LIMIT 0`;
+    await db.$queryRaw`SELECT "studioContext", "studioContextRevision" FROM "User" LIMIT 0`;
     return Response.json(
       { status: "ready" },
       { headers: { "Cache-Control": "no-store" } },

@@ -126,6 +126,9 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   expect(result.ok).toBe(true);
   await nav.getByRole("button", { name: /Content-Studio/ }).click();
   await page
+    .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: /01 · SYNTHETISCH Bibliotheksserie/ })
     .click();
   await page

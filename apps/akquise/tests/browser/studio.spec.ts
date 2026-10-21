@@ -27,6 +27,9 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Content-Studio/ })
     .click();
+  await page
+    .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Neues Briefing" }),
   ).toBeVisible();
@@ -107,6 +110,9 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   );
   await expect(page.locator("#studio-chat-intent")).toHaveValue("TEXT");
   await page
+    .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
+    .click();
+  await page
     .getByRole("textbox", { name: "Headline", exact: true })
     .fill("TESTINHALT – Sichtbarkeit planen");
   await page
@@ -144,6 +150,9 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Content-Studio/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();
   await page
     .getByRole("button", { name: /01 · Synthetische Desktop-Abnahme/ })
@@ -252,10 +261,19 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     { times: 1 },
   );
   await page
+    .getByRole("button", { name: "Mit GPT arbeiten", exact: true })
+    .click();
+  await page
+    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
+    .click();
+  await page
     .locator(".studio-chat")
     .getByRole("button", { name: "Status aktualisieren", exact: true })
     .click();
   await received;
+  await page
+    .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "Headline", exact: true })
     .fill("Ungespeicherte Änderung während Aktualisierung");

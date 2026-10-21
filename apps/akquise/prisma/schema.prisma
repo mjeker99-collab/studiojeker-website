@@ -41,6 +41,8 @@ enum DeliveryStatus {
 }
 
 model User {
+  studioContext      String              @default("")
+  studioContextRevision Int               @default(1)
   id                 String              @id @default(cuid())
   name               String
   email              String              @unique

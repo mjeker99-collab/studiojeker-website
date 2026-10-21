@@ -61,6 +61,7 @@ const statusLabel: Record<string, string> = {
   CANCELLED: "Abgebrochen",
 };
 export default function ContentStudio({ userId }: { userId: string }) {
+  const [editorOpen, setEditorOpen] = useState(false);
   const [state, setState] = useState<State | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -204,6 +205,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
           }
         : {}),
     });
+    setEditorOpen(false);
     setTimeout(
       () => document.getElementById("studio-chat-message")?.focus(),
       0,
@@ -275,1315 +277,1357 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
-      <section aria-label="Arbeitsbereiche im Content-Studio">
-        <h2>Ein Content-Studio. Drei Arbeitsbereiche.</h2>
-        <p>
-          Gemeinsames Briefing, KI-Dialog, Versionen und Freigaben für deine
-          Inhalte.
-        </p>
-        <div className="studio-workspaces">
-          {[
-            [
-              "grafikstudio",
-              "Grafikstudio",
-              "Vorlagen, Texte und Logos gestalten. PNG/JPG exportieren.",
-            ],
-            [
-              "fotostudio",
-              "Fotostudio",
-              "Motive auswählen, Bildausschnitte anpassen und Bildideen mit KI entwickeln.",
-            ],
-            [
-              "filmstudio",
-              "Filmstudio",
-              "Drehbuch, Szenen und Schnittplan mit KI vorbereiten. Videoschnitt folgt.",
-            ],
-          ].map(([id, title, description]) => (
-            <article key={id}>
-              <h3>{title}</h3>
-              <p>{description}</p>
-              {editing ? (
-                <a href={`#${id}`}>{title} öffnen</a>
-              ) : (
-                <p>Serie öffnen oder neues Briefing anlegen.</p>
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
-      <StudioChat
-        key={designRequest?.id || 0}
-        state={state}
-        refresh={() => refresh(undefined, undefined, true)}
-        initialRequest={designRequest}
-        hasUnsavedContent={dirty}
-      />
-      {picking && (
-        <LibraryPicker
-          imagesOnly={picking === "motif"}
-          onClose={() => setPicking(null)}
-          onSelect={(i) => {
-            if (
-              picking === "motif" &&
-              form?.studio &&
-              i.asset?.mime.startsWith("image/")
-            ) {
-              update({
-                studio: {
-                  ...form.studio,
-                  motifAssetId: i.asset.id,
-                  motifSha256: i.asset.sha256,
-                  source: i.asset.kind === "MOTIF" ? "AI" : "OWN",
-                },
-                variants: form.variants.map((v) => ({
-                  ...v,
-                  mediaType: "IMAGE",
-                  mediaUrl: "",
-                  mediaReference: `Studio-Asset ${i.asset!.id} · ${i.asset!.sha256}`,
-                })),
-              });
-            } else if (picking === "reference") {
-              if (
-                i.asset?.mime.startsWith("image/") &&
-                ["ORIGINAL", "MOTIF", "EXPORT"].includes(i.asset.kind)
-              )
-                setBrief({
-                  ...brief,
-                  referenceAssetIds: Array.from(
-                    new Set([...brief.referenceAssetIds, i.asset.id]),
-                  ).slice(0, 4),
-                });
-              else {
-                setLibraryRefs((old) =>
-                  Array.from(
-                    new Map([...old, i].map((x) => [x.id, x])).values(),
-                  ).slice(0, 4),
-                );
-                setBrief({
-                  ...brief,
-                  libraryReferenceIds: Array.from(
-                    new Set([...(brief.libraryReferenceIds || []), i.id]),
-                  ).slice(0, 4),
-                });
-              }
-            }
-            setPicking(null);
-          }}
-        />
-      )}
-
-      <div className="hub-toolbar">
-        <div>
-          <p className="eyebrow">STUDIOONE / CONTENT-STUDIO</p>
-          <p>
-            Briefing → Ideen → Bild & Text → Layout → Prüfung → Export & Planung
-          </p>
-        </div>
+      <div
+        className="actions studio-view-switch"
+        aria-label="Ansicht im Content-Studio"
+      >
         <button
-          disabled={busy}
-          onClick={() => {
-            if (dirty && !window.confirm("Ungespeicherte Eingaben verlassen?"))
-              return;
-            setCreating(true);
-            setForm(null);
-            setEditing(null);
-            setBrief(blank);
-          }}
+          type="button"
+          aria-pressed={!editorOpen}
+          onClick={() => setEditorOpen(false)}
         >
-          Neues Briefing
+          Mit GPT arbeiten
+        </button>
+        <button
+          type="button"
+          className="secondary"
+          aria-pressed={editorOpen}
+          onClick={() => setEditorOpen(true)}
+        >
+          Beiträge bearbeiten
         </button>
       </div>
-      <div className="studio-connections">
-        <span>
-          Text & Bild:{" "}
-          <strong>
-            {state.config.connected ? "OpenAI konfiguriert" : "Nicht verbunden"}
-          </strong>
-        </span>
-        <span>
-          Privater Speicher:{" "}
-          <strong>
-            {state.config.storage === "LOCAL"
-              ? "Lokal · nur Entwicklung"
-              : state.config.storage === "S3"
-                ? "S3 konfiguriert"
-                : "Nicht verbunden"}
-          </strong>
-        </span>
-        <span>
-          Veröffentlichung: <strong>Nicht verbunden</strong>
-        </span>
+      <div hidden={editorOpen}>
+        <StudioChat
+          key={designRequest?.id || 0}
+          state={state}
+          refresh={() => refresh(undefined, undefined, true)}
+          initialRequest={designRequest}
+          hasUnsavedContent={dirty}
+        />
       </div>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="notice">
-          {notice}
-        </p>
-      )}
-      <details className="studio-upload">
-        <summary>Eigene Bilder und freigegebene Schriftdateien</summary>
-        <p>
-          JPEG, PNG oder WebP bis 8 MB / 20 Megapixel. TTF/OTF nur mit
-          entsprechender Lizenz. Uploads bleiben privat. Sie werden ohne
-          gesonderten Generierungsauftrag nicht an OpenAI übermittelt.
-        </p>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={rights}
-            onChange={(e) => setRights(e.target.checked)}
-          />
-          Ich darf diese Dateien für Studiojeker verwenden.
-        </label>
-        <label>
-          Datei hochladen
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,.ttf,.otf"
-            disabled={busy || state.config.storage === "DISCONNECTED"}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void act(() => upload(file));
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </details>
-      {creating && (
-        <form
-          className="studio-brief"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void act(async () => {
-              const b = briefingSchema.parse(brief);
-              const s = await api("studio/series", b);
-              await refresh(undefined, s.id);
-              setCreating(false);
-              setNotice(
-                "Serie als eigene Entwürfe gespeichert. Noch keine KI-Generierung gestartet.",
-              );
-            });
-          }}
-        >
-          <h2>Briefing</h2>
-          <div className="studio-fields">
-            {(
+      <div hidden={!editorOpen}>
+        <section aria-label="Arbeitsbereiche im Content-Studio">
+          <h2>Ein Content-Studio. Drei Arbeitsbereiche.</h2>
+          <p>
+            Gemeinsames Briefing, KI-Dialog, Versionen und Freigaben für deine
+            Inhalte.
+          </p>
+          <div className="studio-workspaces">
+            {[
               [
-                ["title", "Serientitel"],
-                ["topic", "Thema"],
-                ["offer", "Angebot · ausschliesslich belegte Angaben"],
-                ["goal", "Kommunikationsziel"],
-                ["audience", "Zielgruppe"],
-                ["tone", "Tonalität"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key}>
-                {label}
-                <textarea
-                  required={key !== "offer"}
-                  rows={key === "offer" || key === "topic" ? 3 : 2}
-                  value={brief[key]}
-                  onChange={(e) =>
-                    setBrief({ ...brief, [key]: e.target.value })
-                  }
-                />
-              </label>
+                "grafikstudio",
+                "Grafikstudio",
+                "Vorlagen, Texte und Logos gestalten. PNG/JPG exportieren.",
+              ],
+              [
+                "fotostudio",
+                "Fotostudio",
+                "Motive auswählen, Bildausschnitte anpassen und Bildideen mit KI entwickeln.",
+              ],
+              [
+                "filmstudio",
+                "Filmstudio",
+                "Drehbuch, Szenen und Schnittplan mit KI vorbereiten. Videoschnitt folgt.",
+              ],
+            ].map(([id, title, description]) => (
+              <article key={id}>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                {editing ? (
+                  <a href={`#${id}`}>{title} öffnen</a>
+                ) : (
+                  <p>Serie öffnen oder neues Briefing anlegen.</p>
+                )}
+              </article>
             ))}
-            <label>
-              Anzahl Beiträge
-              <input
-                type="number"
-                min={1}
-                max={6}
-                value={brief.count}
-                onChange={(e) =>
-                  setBrief({ ...brief, count: Number(e.target.value) })
-                }
-              />
-            </label>
-            <label>
-              Kunde
-              <select
-                value={brief.customerId || ""}
-                onChange={(e) =>
+          </div>
+        </section>
+        {picking && (
+          <LibraryPicker
+            imagesOnly={picking === "motif"}
+            onClose={() => setPicking(null)}
+            onSelect={(i) => {
+              if (
+                picking === "motif" &&
+                form?.studio &&
+                i.asset?.mime.startsWith("image/")
+              ) {
+                update({
+                  studio: {
+                    ...form.studio,
+                    motifAssetId: i.asset.id,
+                    motifSha256: i.asset.sha256,
+                    source: i.asset.kind === "MOTIF" ? "AI" : "OWN",
+                  },
+                  variants: form.variants.map((v) => ({
+                    ...v,
+                    mediaType: "IMAGE",
+                    mediaUrl: "",
+                    mediaReference: `Studio-Asset ${i.asset!.id} · ${i.asset!.sha256}`,
+                  })),
+                });
+              } else if (picking === "reference") {
+                if (
+                  i.asset?.mime.startsWith("image/") &&
+                  ["ORIGINAL", "MOTIF", "EXPORT"].includes(i.asset.kind)
+                )
                   setBrief({
                     ...brief,
-                    customerId: e.target.value || null,
-                    campaignId: null,
-                  })
+                    referenceAssetIds: Array.from(
+                      new Set([...brief.referenceAssetIds, i.asset.id]),
+                    ).slice(0, 4),
+                  });
+                else {
+                  setLibraryRefs((old) =>
+                    Array.from(
+                      new Map([...old, i].map((x) => [x.id, x])).values(),
+                    ).slice(0, 4),
+                  );
+                  setBrief({
+                    ...brief,
+                    libraryReferenceIds: Array.from(
+                      new Set([...(brief.libraryReferenceIds || []), i.id]),
+                    ).slice(0, 4),
+                  });
                 }
-              >
-                <option value="">Intern / nicht zugeordnet</option>
-                {state.customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Kampagne
-              <select
-                value={brief.campaignId || ""}
-                onChange={(e) =>
-                  setBrief({ ...brief, campaignId: e.target.value || null })
-                }
-              >
-                <option value="">Ohne Kampagne</option>
-                {state.campaigns
-                  .filter((c) => c.customerId === brief.customerId)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          </div>
-          <fieldset>
-            <legend>Kanäle</legend>
-            {studioChannels.map((c) => (
-              <label className="check" key={c}>
-                <input
-                  type="checkbox"
-                  checked={brief.channels.includes(c)}
-                  onChange={(e) =>
-                    setBrief({
-                      ...brief,
-                      channels: e.target.checked
-                        ? [...brief.channels, c]
-                        : brief.channels.filter((x) => x !== c),
-                    })
-                  }
-                />
-                {c}
-              </label>
-            ))}
-          </fieldset>
-          <fieldset>
-            <legend>Formate</legend>
-            {formats.map((f) => (
-              <label className="check" key={f}>
-                <input
-                  type="checkbox"
-                  checked={brief.formats.includes(f)}
-                  onChange={(e) =>
-                    setBrief({
-                      ...brief,
-                      formats: e.target.checked
-                        ? [...brief.formats, f]
-                        : brief.formats.filter((x) => x !== f),
-                    })
-                  }
-                />
-                {f}
-              </label>
-            ))}
-          </fieldset>
-          <fieldset>
-            <legend>Optionale eigene Referenzbilder</legend>
-            <button type="button" onClick={() => setPicking("reference")}>
-              Aus Bibliothek wählen · Referenzen
-            </button>
-            {libraryRefs.map((r) => (
-              <p key={r.id}>
-                {r.title} ·{" "}
-                {r.text
-                  ? "Text für KI ausgewählt"
-                  : "Nur Referenz, kein Text verfügbar"}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLibraryRefs((old) => old.filter((x) => x.id !== r.id));
-                    setBrief({
-                      ...brief,
-                      libraryReferenceIds: (
-                        brief.libraryReferenceIds || []
-                      ).filter((id) => id !== r.id),
-                    });
-                  }}
-                >
-                  Entfernen
-                </button>
-              </p>
-            ))}
+              }
+              setPicking(null);
+            }}
+          />
+        )}
+
+        <div className="hub-toolbar">
+          <div>
+            <p className="eyebrow">STUDIOONE / CONTENT-STUDIO</p>
             <p>
-              PDF, Vimeo und Drive werden nicht automatisch gelesen. Nur
-              ausdrücklich ausgewählte Textinhalte werden übermittelt.
+              Briefing → Ideen → Bild & Text → Layout → Prüfung → Export &
+              Planung
             </p>
-            <fieldset>
-              <legend>Markenregeln für KI auswählen</legend>
+          </div>
+          <button
+            disabled={busy}
+            onClick={() => {
+              if (
+                dirty &&
+                !window.confirm("Ungespeicherte Eingaben verlassen?")
+              )
+                return;
+              setCreating(true);
+              setForm(null);
+              setEditing(null);
+              setBrief(blank);
+            }}
+          >
+            Neues Briefing
+          </button>
+        </div>
+        <div className="studio-connections">
+          <span>
+            Text & Bild:{" "}
+            <strong>
+              {state.config.connected
+                ? "OpenAI konfiguriert"
+                : "Nicht verbunden"}
+            </strong>
+          </span>
+          <span>
+            Privater Speicher:{" "}
+            <strong>
+              {state.config.storage === "LOCAL"
+                ? "Lokal · nur Entwicklung"
+                : state.config.storage === "S3"
+                  ? "S3 konfiguriert"
+                  : "Nicht verbunden"}
+            </strong>
+          </span>
+          <span>
+            Veröffentlichung: <strong>Nicht verbunden</strong>
+          </span>
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        {notice && (
+          <p role="status" className="notice">
+            {notice}
+          </p>
+        )}
+        <details className="studio-upload">
+          <summary>Eigene Bilder und freigegebene Schriftdateien</summary>
+          <p>
+            JPEG, PNG oder WebP bis 8 MB / 20 Megapixel. TTF/OTF nur mit
+            entsprechender Lizenz. Uploads bleiben privat. Sie werden ohne
+            gesonderten Generierungsauftrag nicht an OpenAI übermittelt.
+          </p>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={rights}
+              onChange={(e) => setRights(e.target.checked)}
+            />
+            Ich darf diese Dateien für Studiojeker verwenden.
+          </label>
+          <label>
+            Datei hochladen
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,.ttf,.otf"
+              disabled={busy || state.config.storage === "DISCONNECTED"}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void act(() => upload(file));
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </details>
+        {creating && (
+          <form
+            className="studio-brief"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void act(async () => {
+                const b = briefingSchema.parse(brief);
+                const s = await api("studio/series", b);
+                await refresh(undefined, s.id);
+                setCreating(false);
+                setNotice(
+                  "Serie als eigene Entwürfe gespeichert. Noch keine KI-Generierung gestartet.",
+                );
+              });
+            }}
+          >
+            <h2>Briefing</h2>
+            <div className="studio-fields">
               {(
                 [
-                  "tone",
-                  "services",
-                  "audiences",
-                  "examples",
-                  "address",
+                  ["title", "Serientitel"],
+                  ["topic", "Thema"],
+                  ["offer", "Angebot · ausschliesslich belegte Angaben"],
+                  ["goal", "Kommunikationsziel"],
+                  ["audience", "Zielgruppe"],
+                  ["tone", "Tonalität"],
                 ] as const
-              ).map((k) => (
-                <label key={k}>
-                  <input
-                    type="checkbox"
-                    checked={(brief.brandRules || []).includes(k)}
+              ).map(([key, label]) => (
+                <label key={key}>
+                  {label}
+                  <textarea
+                    required={key !== "offer"}
+                    rows={key === "offer" || key === "topic" ? 3 : 2}
+                    value={brief[key]}
                     onChange={(e) =>
-                      setBrief({
-                        ...brief,
-                        brandRules: e.target.checked
-                          ? [...(brief.brandRules || []), k]
-                          : (brief.brandRules || []).filter((v) => v !== k),
-                      })
+                      setBrief({ ...brief, [key]: e.target.value })
                     }
                   />
-                  {
-                    {
-                      tone: "Tonalität",
-                      services: "Leistungen",
-                      audiences: "Zielgruppen",
-                      examples: "Beispieltexte",
-                      address: "Ansprache",
-                    }[k]
-                  }
                 </label>
               ))}
-            </fieldset>
-            {originalAssets.map((a) => (
-              <label className="check" key={a.id}>
+              <label>
+                Anzahl Beiträge
                 <input
-                  type="checkbox"
-                  checked={brief.referenceAssetIds.includes(a.id)}
-                  disabled={
-                    !brief.referenceAssetIds.includes(a.id) &&
-                    brief.referenceAssetIds.length >= 4
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={brief.count}
+                  onChange={(e) =>
+                    setBrief({ ...brief, count: Number(e.target.value) })
                   }
+                />
+              </label>
+              <label>
+                Kunde
+                <select
+                  value={brief.customerId || ""}
                   onChange={(e) =>
                     setBrief({
                       ...brief,
-                      referenceAssetIds: e.target.checked
-                        ? [...brief.referenceAssetIds, a.id]
-                        : brief.referenceAssetIds.filter((x) => x !== a.id),
+                      customerId: e.target.value || null,
+                      campaignId: null,
                     })
                   }
-                />
-                {a.name}
-              </label>
-            ))}
-          </fieldset>
-          <button disabled={busy}>
-            Briefing und Entwürfe speichern · kostenlos
-          </button>
-        </form>
-      )}
-      <div className="studio-columns">
-        <aside className="studio-series" aria-label="Beitragsserien">
-          <h2>Serien</h2>
-          {!state.series.length && (
-            <p>Noch keine Serie. Mit einem Briefing beginnen.</p>
-          )}
-          {state.series.map((s) => (
-            <section key={s.id}>
-              <h3>{s.title}</h3>
-              {s.contents.map((c, i) => (
-                <button
-                  className={`secondary ${editing?.id === c.id ? "studio-active" : ""}`}
-                  key={c.id}
-                  disabled={busy}
-                  onClick={() => select(s, c)}
                 >
-                  <span>
-                    {String(i + 1).padStart(2, "0")} · {c.title}
-                  </span>
-                  <small>
-                    {statusLabel[c.status]} · V{c.version}
-                  </small>
-                </button>
-              ))}
-            </section>
-          ))}
-        </aside>
-        {form && snapshot && editing && series ? (
-          <section className="studio-editor" aria-label="Beitragseditor">
-            <div className="hub-toolbar">
-              <h2>{form.title}</h2>
-              <span className="badge">
-                {statusLabel[editing.status]} · V{editing.version}
-                {dirty ? " · ungespeichert" : ""}
-              </span>
-            </div>
-            <details>
-              <summary>Gespeichertes Briefing</summary>
-              <dl>
-                {Object.entries(briefingSchema.parse(series.briefing))
-                  .filter(
-                    ([k]) => !["referenceAssetIds", "campaignId"].includes(k),
-                  )
-                  .map(([k, v]) => (
-                    <div key={k}>
-                      <dt>{k}</dt>
-                      <dd>{Array.isArray(v) ? v.join(", ") : String(v)}</dd>
-                    </div>
+                  <option value="">Intern / nicht zugeordnet</option>
+                  {state.customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
-              </dl>
-            </details>
-            <section className="studio-generation">
-              <h3>KI-Auftrag ausdrücklich starten</h3>
-              <p>{state.config.costNote}</p>
-              <details>
-                <summary>Welche Inhalte werden an OpenAI übertragen?</summary>
-                <p>
-                  Textauftrag: gespeichertes Briefing, ausdrücklich ausgewählte
-                  Markenregeln und ausgewählte Texte/TXT-Auszüge. Keine PDF-
-                  oder Linkanalyse, keine gesamte Bibliothek. Bildauftrag:
-                  Bildidee und unten ausgewählte Bildreferenzen.
-                </p>
-                <pre style={{ whiteSpace: "pre-wrap" }}>
-                  {JSON.stringify(
-                    {
-                      briefing: series.briefing,
-                      markenregeln: Object.fromEntries(
-                        (
-                          briefingSchema.parse(series.briefing).brandRules || []
-                        ).map((k) => [
-                          k,
-                          snapshot.brandProfile?.[k] || "Offen",
-                        ]),
-                      ),
-                    },
-                    null,
-                    2,
-                  )}
-                </pre>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void libraryApi("state")
-                      .then((s) =>
-                        setLibraryRefs(
-                          s.items.filter((i: LibraryEntry) =>
-                            (
-                              briefingSchema.parse(series.briefing)
-                                .libraryReferenceIds || []
-                            ).includes(i.id),
-                          ),
-                        ),
-                      )
-                      .catch((e) => setError(e.message))
+                </select>
+              </label>
+              <label>
+                Kampagne
+                <select
+                  value={brief.campaignId || ""}
+                  onChange={(e) =>
+                    setBrief({ ...brief, campaignId: e.target.value || null })
                   }
                 >
-                  Ausgewählte Bibliothekstexte anzeigen
-                </button>
-                {libraryRefs
-                  .filter((r) =>
-                    (
-                      briefingSchema.parse(series.briefing)
-                        .libraryReferenceIds || []
-                    ).includes(r.id),
-                  )
-                  .map((r) => (
-                    <div key={r.id}>
-                      <strong>{r.title}</strong>
-                      <pre style={{ whiteSpace: "pre-wrap" }}>
-                        {r.text || "Kein Text verfügbar; keine Analyse."}
-                      </pre>
-                    </div>
-                  ))}
-              </details>
-              <p>
-                Textauftrag: {series.contents.length} Beitrag/Beiträge,
-                Budgetreservierung USD {state.config.textReserve.toFixed(2)}.
-                Bildauftrag: 1 Motiv, USD {state.config.imageReserve.toFixed(2)}
-                . Tageslimit: {state.config.dailyRequests} Aufträge / USD{" "}
-                {state.config.dailyBudget.toFixed(2)} Reservierungen (UTC).
-              </p>
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={costs}
-                  onChange={(e) => setCosts(e.target.checked)}
-                />
-                Ich starte bewusst einen kostenpflichtigen API-Auftrag. Die
-                tatsächlichen Kosten hängen vom Modell und Verbrauch ab.
-              </label>
-              <div className="actions">
-                <button
-                  disabled={busy || dirty || !costs || !state.config.connected}
-                  onClick={() => void act(() => generate("TEXT"))}
-                >
-                  Ideen & Kanaltexte erstellen
-                </button>
-                <button
-                  disabled={
-                    busy ||
-                    dirty ||
-                    !costs ||
-                    !state.config.connected ||
-                    state.config.storage === "DISCONNECTED" ||
-                    !snapshot.imageIdea ||
-                    (refs.length > 0 && (!rights || !transfer))
-                  }
-                  onClick={() => void act(() => generate("IMAGE"))}
-                >
-                  Ein Bildmotiv erstellen
-                </button>
-              </div>
-              <p className="muted">
-                Modell: {state.config.textModel} / {state.config.imageModel}.
-                Ohne API-Zugang bleiben eigene Inhalte, Layouts und Planung
-                nutzbar.
-              </p>
-              <fieldset>
-                <legend>
-                  Bewusst ausgewählte Bildreferenzen für diesen Bildauftrag
-                </legend>
-                {briefingSchema
-                  .parse(series.briefing)
-                  .referenceAssetIds.map((id) => {
-                    const a = state.assets.find((a) => a.id === id);
-                    return (
-                      <label className="check" key={id}>
-                        <input
-                          type="checkbox"
-                          checked={refs.includes(id)}
-                          onChange={(e) => {
-                            setRefs(
-                              e.target.checked
-                                ? [...refs, id]
-                                : refs.filter((x) => x !== id),
-                            );
-                            setTransfer(false);
-                          }}
-                        />
-                        {a?.name || id}
-                      </label>
-                    );
-                  })}
-              </fieldset>
-              {refs.length > 0 && (
-                <>
-                  <p>
-                    Nur die gewählten Dateien werden an OpenAI übermittelt.
-                    Generative Bearbeitung kann das Aussehen von Personen
-                    verändern; eine unveränderte Identität wird nicht
-                    garantiert.
-                  </p>
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={transfer}
-                      onChange={(e) => setTransfer(e.target.checked)}
-                    />
-                    Ich habe die erforderlichen Rechte und bestätige die
-                    Übermittlung dieser Referenzen an OpenAI.
-                  </label>
-                </>
-              )}
-            </section>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void act(async () => {
-                  await api(`hub/contents/${editing.id}`, {
-                    version: editing.version,
-                    data: contentInput.parse(form),
-                  });
-                  await refresh(editing.id);
-                  setNotice(
-                    "Neue Version gespeichert. Bisherige Freigaben sind ungültig.",
-                  );
-                });
-              }}
-            >
-              <div className="studio-fields">
-                <label>
-                  Beitragstitel
-                  <input
-                    value={form.title}
-                    onChange={(e) => update({ title: e.target.value })}
-                  />
-                </label>
-                <label>
-                  Verantwortlich
-                  <select
-                    value={form.ownerId || userId}
-                    onChange={(e) => update({ ownerId: e.target.value })}
-                  >
-                    {state.users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Kampagne
-                  <select
-                    value={form.campaignId || ""}
-                    onChange={(e) =>
-                      update({ campaignId: e.target.value || null })
-                    }
-                  >
-                    <option value="">Ohne Kampagne</option>
-                    {state.campaigns.map((c) => (
+                  <option value="">Ohne Kampagne</option>
+                  {state.campaigns
+                    .filter((c) => c.customerId === brief.customerId)
+                    .map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.title}
                       </option>
                     ))}
-                  </select>
-                </label>
-                <label>
-                  Geplant · Europe/Zurich
+                </select>
+              </label>
+            </div>
+            <fieldset>
+              <legend>Kanäle</legend>
+              {studioChannels.map((c) => (
+                <label className="check" key={c}>
                   <input
-                    type="datetime-local"
-                    value={zurichInput(form.scheduledAt)}
-                    onChange={(e) => {
-                      try {
-                        update({
-                          scheduledAt: e.target.value
-                            ? zurichInstant(e.target.value)
-                            : null,
-                        });
-                      } catch (err) {
-                        setError((err as Error).message);
-                      }
-                    }}
+                    type="checkbox"
+                    checked={brief.channels.includes(c)}
+                    onChange={(e) =>
+                      setBrief({
+                        ...brief,
+                        channels: e.target.checked
+                          ? [...brief.channels, c]
+                          : brief.channels.filter((x) => x !== c),
+                      })
+                    }
                   />
+                  {c}
                 </label>
-              </div>
-              <label>
-                Bildidee
-                <textarea
-                  rows={3}
-                  value={snapshot.imageIdea}
-                  onChange={(e) => studio({ imageIdea: e.target.value })}
-                />
-              </label>
-              <label>
-                Headline
-                <input
-                  maxLength={160}
-                  value={snapshot.headline}
-                  onChange={(e) => studio({ headline: e.target.value })}
-                />
-              </label>
-              <label>
-                Hashtags
-                <input
-                  value={snapshot.hashtags}
-                  onChange={(e) => studio({ hashtags: e.target.value })}
-                />
-              </label>
-              {form.variants.map((v, i) => (
-                <fieldset key={v.channel}>
-                  <legend>{v.channel}</legend>
-                  <label>
-                    Begleittext
-                    <textarea
-                      rows={5}
-                      value={v.text}
+              ))}
+            </fieldset>
+            <fieldset>
+              <legend>Formate</legend>
+              {formats.map((f) => (
+                <label className="check" key={f}>
+                  <input
+                    type="checkbox"
+                    checked={brief.formats.includes(f)}
+                    onChange={(e) =>
+                      setBrief({
+                        ...brief,
+                        formats: e.target.checked
+                          ? [...brief.formats, f]
+                          : brief.formats.filter((x) => x !== f),
+                      })
+                    }
+                  />
+                  {f}
+                </label>
+              ))}
+            </fieldset>
+            <fieldset>
+              <legend>Optionale eigene Referenzbilder</legend>
+              <button type="button" onClick={() => setPicking("reference")}>
+                Aus Bibliothek wählen · Referenzen
+              </button>
+              {libraryRefs.map((r) => (
+                <p key={r.id}>
+                  {r.title} ·{" "}
+                  {r.text
+                    ? "Text für KI ausgewählt"
+                    : "Nur Referenz, kein Text verfügbar"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLibraryRefs((old) => old.filter((x) => x.id !== r.id));
+                      setBrief({
+                        ...brief,
+                        libraryReferenceIds: (
+                          brief.libraryReferenceIds || []
+                        ).filter((id) => id !== r.id),
+                      });
+                    }}
+                  >
+                    Entfernen
+                  </button>
+                </p>
+              ))}
+              <p>
+                PDF, Vimeo und Drive werden nicht automatisch gelesen. Nur
+                ausdrücklich ausgewählte Textinhalte werden übermittelt.
+              </p>
+              <fieldset>
+                <legend>Markenregeln für KI auswählen</legend>
+                {(
+                  [
+                    "tone",
+                    "services",
+                    "audiences",
+                    "examples",
+                    "address",
+                  ] as const
+                ).map((k) => (
+                  <label key={k}>
+                    <input
+                      type="checkbox"
+                      checked={(brief.brandRules || []).includes(k)}
                       onChange={(e) =>
-                        update({
-                          variants: form.variants.map((old, j) =>
-                            j === i ? { ...old, text: e.target.value } : old,
-                          ),
+                        setBrief({
+                          ...brief,
+                          brandRules: e.target.checked
+                            ? [...(brief.brandRules || []), k]
+                            : (brief.brandRules || []).filter((v) => v !== k),
                         })
                       }
                     />
+                    {
+                      {
+                        tone: "Tonalität",
+                        services: "Leistungen",
+                        audiences: "Zielgruppen",
+                        examples: "Beispieltexte",
+                        address: "Ansprache",
+                      }[k]
+                    }
                   </label>
-                  <div className="studio-fields">
-                    <label>
-                      CTA
-                      <input
-                        value={v.cta}
-                        onChange={(e) =>
-                          update({
-                            variants: form.variants.map((old, j) =>
-                              j === i ? { ...old, cta: e.target.value } : old,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      Link · HTTPS
-                      <input
-                        type="url"
-                        value={v.link}
-                        onChange={(e) =>
-                          update({
-                            variants: form.variants.map((old, j) =>
-                              j === i ? { ...old, link: e.target.value } : old,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                  </div>
-                </fieldset>
+                ))}
+              </fieldset>
+              {originalAssets.map((a) => (
+                <label className="check" key={a.id}>
+                  <input
+                    type="checkbox"
+                    checked={brief.referenceAssetIds.includes(a.id)}
+                    disabled={
+                      !brief.referenceAssetIds.includes(a.id) &&
+                      brief.referenceAssetIds.length >= 4
+                    }
+                    onChange={(e) =>
+                      setBrief({
+                        ...brief,
+                        referenceAssetIds: e.target.checked
+                          ? [...brief.referenceAssetIds, a.id]
+                          : brief.referenceAssetIds.filter((x) => x !== a.id),
+                      })
+                    }
+                  />
+                  {a.name}
+                </label>
               ))}
-              <section
-                id="fotostudio"
-                aria-label="Fotostudio"
-                className="studio-substudio"
-                tabIndex={-1}
-              >
-                <h3>Fotostudio</h3>
-                <p>
-                  Wähle ein Original oder KI-Motiv. Ausschnitt und Vergrösserung
-                  werden mit dem Beitrag gespeichert und für das Grafiklayout
-                  verwendet. Der Export «Reines Motiv» liefert das Motiv ohne
-                  Layout und ohne diesen Zuschnitt.
-                </p>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() =>
-                    prepareAdvice(
-                      "Optimiere dieses Bild: Helle die Schatten behutsam auf und verbessere die natürliche Bildwirkung. Bewahre Motiv und Details.",
-                      "EDIT",
+            </fieldset>
+            <button disabled={busy}>
+              Briefing und Entwürfe speichern · kostenlos
+            </button>
+          </form>
+        )}
+        <div className="studio-columns">
+          <aside className="studio-series" aria-label="Beitragsserien">
+            <h2>Serien</h2>
+            {!state.series.length && (
+              <p>Noch keine Serie. Mit einem Briefing beginnen.</p>
+            )}
+            {state.series.map((s) => (
+              <section key={s.id}>
+                <h3>{s.title}</h3>
+                {s.contents.map((c, i) => (
+                  <button
+                    className={`secondary ${editing?.id === c.id ? "studio-active" : ""}`}
+                    key={c.id}
+                    disabled={busy}
+                    onClick={() => select(s, c)}
+                  >
+                    <span>
+                      {String(i + 1).padStart(2, "0")} · {c.title}
+                    </span>
+                    <small>
+                      {statusLabel[c.status]} · V{c.version}
+                    </small>
+                  </button>
+                ))}
+              </section>
+            ))}
+          </aside>
+          {form && snapshot && editing && series ? (
+            <section className="studio-editor" aria-label="Beitragseditor">
+              <div className="hub-toolbar">
+                <h2>{form.title}</h2>
+                <span className="badge">
+                  {statusLabel[editing.status]} · V{editing.version}
+                  {dirty ? " · ungespeichert" : ""}
+                </span>
+              </div>
+              <details>
+                <summary>Gespeichertes Briefing</summary>
+                <dl>
+                  {Object.entries(briefingSchema.parse(series.briefing))
+                    .filter(
+                      ([k]) => !["referenceAssetIds", "campaignId"].includes(k),
                     )
-                  }
-                >
-                  Bild direkt mit KI bearbeiten
-                </button>
+                    .map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>{Array.isArray(v) ? v.join(", ") : String(v)}</dd>
+                      </div>
+                    ))}
+                </dl>
+              </details>
+              <section className="studio-generation">
+                <h3>KI-Auftrag ausdrücklich starten</h3>
+                <p>{state.config.costNote}</p>
+                <details>
+                  <summary>Welche Inhalte werden an OpenAI übertragen?</summary>
+                  <p>
+                    Textauftrag: gespeichertes Briefing, ausdrücklich
+                    ausgewählte Markenregeln und ausgewählte Texte/TXT-Auszüge.
+                    Keine PDF- oder Linkanalyse, keine gesamte Bibliothek.
+                    Bildauftrag: Bildidee und unten ausgewählte Bildreferenzen.
+                  </p>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>
+                    {JSON.stringify(
+                      {
+                        briefing: series.briefing,
+                        markenregeln: Object.fromEntries(
+                          (
+                            briefingSchema.parse(series.briefing).brandRules ||
+                            []
+                          ).map((k) => [
+                            k,
+                            snapshot.brandProfile?.[k] || "Offen",
+                          ]),
+                        ),
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void libraryApi("state")
+                        .then((s) =>
+                          setLibraryRefs(
+                            s.items.filter((i: LibraryEntry) =>
+                              (
+                                briefingSchema.parse(series.briefing)
+                                  .libraryReferenceIds || []
+                              ).includes(i.id),
+                            ),
+                          ),
+                        )
+                        .catch((e) => setError(e.message))
+                    }
+                  >
+                    Ausgewählte Bibliothekstexte anzeigen
+                  </button>
+                  {libraryRefs
+                    .filter((r) =>
+                      (
+                        briefingSchema.parse(series.briefing)
+                          .libraryReferenceIds || []
+                      ).includes(r.id),
+                    )
+                    .map((r) => (
+                      <div key={r.id}>
+                        <strong>{r.title}</strong>
+                        <pre style={{ whiteSpace: "pre-wrap" }}>
+                          {r.text || "Kein Text verfügbar; keine Analyse."}
+                        </pre>
+                      </div>
+                    ))}
+                </details>
+                <p>
+                  Textauftrag: {series.contents.length} Beitrag/Beiträge,
+                  Budgetreservierung USD {state.config.textReserve.toFixed(2)}.
+                  Bildauftrag: 1 Motiv, USD{" "}
+                  {state.config.imageReserve.toFixed(2)}. Tageslimit:{" "}
+                  {state.config.dailyRequests} Aufträge / USD{" "}
+                  {state.config.dailyBudget.toFixed(2)} Reservierungen (UTC).
+                </p>
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={costs}
+                    onChange={(e) => setCosts(e.target.checked)}
+                  />
+                  Ich starte bewusst einen kostenpflichtigen API-Auftrag. Die
+                  tatsächlichen Kosten hängen vom Modell und Verbrauch ab.
+                </label>
+                <div className="actions">
+                  <button
+                    disabled={
+                      busy || dirty || !costs || !state.config.connected
+                    }
+                    onClick={() => void act(() => generate("TEXT"))}
+                  >
+                    Ideen & Kanaltexte erstellen
+                  </button>
+                  <button
+                    disabled={
+                      busy ||
+                      dirty ||
+                      !costs ||
+                      !state.config.connected ||
+                      state.config.storage === "DISCONNECTED" ||
+                      !snapshot.imageIdea ||
+                      (refs.length > 0 && (!rights || !transfer))
+                    }
+                    onClick={() => void act(() => generate("IMAGE"))}
+                  >
+                    Ein Bildmotiv erstellen
+                  </button>
+                </div>
+                <p className="muted">
+                  Modell: {state.config.textModel} / {state.config.imageModel}.
+                  Ohne API-Zugang bleiben eigene Inhalte, Layouts und Planung
+                  nutzbar.
+                </p>
+                <fieldset>
+                  <legend>
+                    Bewusst ausgewählte Bildreferenzen für diesen Bildauftrag
+                  </legend>
+                  {briefingSchema
+                    .parse(series.briefing)
+                    .referenceAssetIds.map((id) => {
+                      const a = state.assets.find((a) => a.id === id);
+                      return (
+                        <label className="check" key={id}>
+                          <input
+                            type="checkbox"
+                            checked={refs.includes(id)}
+                            onChange={(e) => {
+                              setRefs(
+                                e.target.checked
+                                  ? [...refs, id]
+                                  : refs.filter((x) => x !== id),
+                              );
+                              setTransfer(false);
+                            }}
+                          />
+                          {a?.name || id}
+                        </label>
+                      );
+                    })}
+                </fieldset>
+                {refs.length > 0 && (
+                  <>
+                    <p>
+                      Nur die gewählten Dateien werden an OpenAI übermittelt.
+                      Generative Bearbeitung kann das Aussehen von Personen
+                      verändern; eine unveränderte Identität wird nicht
+                      garantiert.
+                    </p>
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={transfer}
+                        onChange={(e) => setTransfer(e.target.checked)}
+                      />
+                      Ich habe die erforderlichen Rechte und bestätige die
+                      Übermittlung dieser Referenzen an OpenAI.
+                    </label>
+                  </>
+                )}
+              </section>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void act(async () => {
+                    await api(`hub/contents/${editing.id}`, {
+                      version: editing.version,
+                      data: contentInput.parse(form),
+                    });
+                    await refresh(editing.id);
+                    setNotice(
+                      "Neue Version gespeichert. Bisherige Freigaben sind ungültig.",
+                    );
+                  });
+                }}
+              >
                 <div className="studio-fields">
-                  <div>
-                    <button type="button" onClick={() => setPicking("motif")}>
-                      Aus Bibliothek wählen · Motiv
-                    </button>
-                  </div>
                   <label>
-                    Eigenes oder generiertes Motiv
+                    Beitragstitel
+                    <input
+                      value={form.title}
+                      onChange={(e) => update({ title: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Verantwortlich
                     <select
-                      value={snapshot.motifAssetId || ""}
-                      onChange={(e) => {
-                        const a = state.assets.find(
-                          (a) => a.id === e.target.value,
-                        );
-                        if (!a) return;
-                        update({
-                          studio: {
-                            ...snapshot,
-                            motifAssetId: a.id,
-                            motifSha256: a.sha256,
-                            source: a.kind === "MOTIF" ? "AI" : "OWN",
-                          },
-                          variants: form.variants.map((v) => ({
-                            ...v,
-                            mediaType: "IMAGE",
-                            mediaUrl: "",
-                            mediaReference: `Studio-Asset ${a.id} · ${a.sha256}`,
-                          })),
-                        });
-                      }}
+                      value={form.ownerId || userId}
+                      onChange={(e) => update({ ownerId: e.target.value })}
                     >
-                      <option value="">Motiv wählen</option>
-                      {imageAssets.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
+                      {state.users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
                         </option>
                       ))}
                     </select>
                   </label>
-                </div>
-                <div className="studio-fields">
-                  {(
-                    [
-                      ["cropX", "Bildausschnitt horizontal", 0, 1, 0.01],
-                      ["cropY", "Bildausschnitt vertikal", 0, 1, 0.01],
-                      ["zoom", "Vergrösserung", 1, 3, 0.05],
-                    ] as const
-                  ).map(([key, label, min, max, step]) => (
-                    <label key={key}>
-                      {label}
-                      <input
-                        type="range"
-                        min={min}
-                        max={max}
-                        step={step}
-                        value={snapshot[key]}
-                        onChange={(e) =>
-                          studio({ [key]: Number(e.target.value) })
-                        }
-                      />
-                    </label>
-                  ))}
-                </div>
-              </section>
-              <div id="grafikstudio" className="studio-substudio" tabIndex={-1}>
-                <div className="studio-fields">
                   <label>
-                    Layoutvorlage · V1 zur Freigabe
+                    Kampagne
                     <select
-                      value={snapshot.template}
+                      value={form.campaignId || ""}
                       onChange={(e) =>
-                        studio({
-                          template: e.target
-                            .value as StudioSnapshot["template"],
-                        })
+                        update({ campaignId: e.target.value || null })
                       }
                     >
-                      <option value="PANEL">
-                        Fotografie / schwarzes Textfeld
-                      </option>
-                      <option value="PHOTO">
-                        Fotografie / transparente Textfläche
-                      </option>
+                      <option value="">Ohne Kampagne</option>
+                      {state.campaigns.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <label>
-                    Freigegebene Schriftdatei
-                    <select
-                      value={snapshot.fontAssetId || ""}
+                    Geplant · Europe/Zurich
+                    <input
+                      type="datetime-local"
+                      value={zurichInput(form.scheduledAt)}
                       onChange={(e) => {
-                        const a = state.assets.find(
-                          (a) => a.id === e.target.value,
-                        );
-                        studio({
-                          fontAssetId: a?.id || null,
-                          fontSha256: a?.sha256 || "",
-                        });
+                        try {
+                          update({
+                            scheduledAt: e.target.value
+                              ? zurichInstant(e.target.value)
+                              : null,
+                          });
+                        } catch (err) {
+                          setError((err as Error).message);
+                        }
                       }}
-                    >
-                      <option value="">
-                        Nicht vorhanden · Textebene gesperrt
-                      </option>
-                      {state.assets
-                        .filter((a) => a.kind === "FONT")
-                        .map((a) => (
+                    />
+                  </label>
+                </div>
+                <label>
+                  Bildidee
+                  <textarea
+                    rows={3}
+                    value={snapshot.imageIdea}
+                    onChange={(e) => studio({ imageIdea: e.target.value })}
+                  />
+                </label>
+                <label>
+                  Headline
+                  <input
+                    maxLength={160}
+                    value={snapshot.headline}
+                    onChange={(e) => studio({ headline: e.target.value })}
+                  />
+                </label>
+                <label>
+                  Hashtags
+                  <input
+                    value={snapshot.hashtags}
+                    onChange={(e) => studio({ hashtags: e.target.value })}
+                  />
+                </label>
+                {form.variants.map((v, i) => (
+                  <fieldset key={v.channel}>
+                    <legend>{v.channel}</legend>
+                    <label>
+                      Begleittext
+                      <textarea
+                        rows={5}
+                        value={v.text}
+                        onChange={(e) =>
+                          update({
+                            variants: form.variants.map((old, j) =>
+                              j === i ? { ...old, text: e.target.value } : old,
+                            ),
+                          })
+                        }
+                      />
+                    </label>
+                    <div className="studio-fields">
+                      <label>
+                        CTA
+                        <input
+                          value={v.cta}
+                          onChange={(e) =>
+                            update({
+                              variants: form.variants.map((old, j) =>
+                                j === i ? { ...old, cta: e.target.value } : old,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Link · HTTPS
+                        <input
+                          type="url"
+                          value={v.link}
+                          onChange={(e) =>
+                            update({
+                              variants: form.variants.map((old, j) =>
+                                j === i
+                                  ? { ...old, link: e.target.value }
+                                  : old,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
+                ))}
+                <section
+                  id="fotostudio"
+                  aria-label="Fotostudio"
+                  className="studio-substudio"
+                  tabIndex={-1}
+                >
+                  <h3>Fotostudio</h3>
+                  <p>
+                    Wähle ein Original oder KI-Motiv. Ausschnitt und
+                    Vergrösserung werden mit dem Beitrag gespeichert und für das
+                    Grafiklayout verwendet. Der Export «Reines Motiv» liefert
+                    das Motiv ohne Layout und ohne diesen Zuschnitt.
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() =>
+                      prepareAdvice(
+                        "Optimiere dieses Bild: Helle die Schatten behutsam auf und verbessere die natürliche Bildwirkung. Bewahre Motiv und Details.",
+                        "EDIT",
+                      )
+                    }
+                  >
+                    Bild direkt mit KI bearbeiten
+                  </button>
+                  <div className="studio-fields">
+                    <div>
+                      <button type="button" onClick={() => setPicking("motif")}>
+                        Aus Bibliothek wählen · Motiv
+                      </button>
+                    </div>
+                    <label>
+                      Eigenes oder generiertes Motiv
+                      <select
+                        value={snapshot.motifAssetId || ""}
+                        onChange={(e) => {
+                          const a = state.assets.find(
+                            (a) => a.id === e.target.value,
+                          );
+                          if (!a) return;
+                          update({
+                            studio: {
+                              ...snapshot,
+                              motifAssetId: a.id,
+                              motifSha256: a.sha256,
+                              source: a.kind === "MOTIF" ? "AI" : "OWN",
+                            },
+                            variants: form.variants.map((v) => ({
+                              ...v,
+                              mediaType: "IMAGE",
+                              mediaUrl: "",
+                              mediaReference: `Studio-Asset ${a.id} · ${a.sha256}`,
+                            })),
+                          });
+                        }}
+                      >
+                        <option value="">Motiv wählen</option>
+                        {imageAssets.map((a) => (
                           <option key={a.id} value={a.id}>
                             {a.name}
                           </option>
                         ))}
-                    </select>
-                  </label>
-                </div>
-                {!snapshot.fontAssetId && (
-                  <p className="notice">
-                    Original-Schriftdatei fehlt. Keine Ersatzschrift im
-                    Bildexport. Headline und Claim lassen sich erst mit
-                    freigegebener TTF/OTF rendern.
-                  </p>
-                )}
-                <GraphicsEditor
-                  snapshot={snapshot}
-                  assets={imageAssets}
-                  onChange={studio}
-                  onAdvice={prepareAdvice}
-                />
-                <fieldset>
-                  <legend>Ebenen und Formate</legend>
-                  {(
-                    [
-                      ["showLogo", "Original-Logo"],
-                      ["showHeadline", "Headline"],
-                      [
-                        "showClaim",
-                        snapshot.brandProfile
-                          ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
-                          : "We create visibility",
-                      ],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <label className="check" key={key}>
-                      <input
-                        type="checkbox"
-                        checked={snapshot[key]}
-                        onChange={(e) => studio({ [key]: e.target.checked })}
-                      />
-                      {label}
+                      </select>
                     </label>
-                  ))}
-                  {formats.map((f) => (
-                    <label className="check" key={f}>
-                      <input
-                        type="checkbox"
-                        checked={snapshot.formats.includes(f)}
+                  </div>
+                  <div className="studio-fields">
+                    {(
+                      [
+                        ["cropX", "Bildausschnitt horizontal", 0, 1, 0.01],
+                        ["cropY", "Bildausschnitt vertikal", 0, 1, 0.01],
+                        ["zoom", "Vergrösserung", 1, 3, 0.05],
+                      ] as const
+                    ).map(([key, label, min, max, step]) => (
+                      <label key={key}>
+                        {label}
+                        <input
+                          type="range"
+                          min={min}
+                          max={max}
+                          step={step}
+                          value={snapshot[key]}
+                          onChange={(e) =>
+                            studio({ [key]: Number(e.target.value) })
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </section>
+                <div
+                  id="grafikstudio"
+                  className="studio-substudio"
+                  tabIndex={-1}
+                >
+                  <div className="studio-fields">
+                    <label>
+                      Layoutvorlage · V1 zur Freigabe
+                      <select
+                        value={snapshot.template}
                         onChange={(e) =>
                           studio({
-                            formats: e.target.checked
-                              ? [...snapshot.formats, f]
-                              : snapshot.formats.filter((x) => x !== f),
+                            template: e.target
+                              .value as StudioSnapshot["template"],
                           })
                         }
-                      />
-                      {f}
+                      >
+                        <option value="PANEL">
+                          Fotografie / schwarzes Textfeld
+                        </option>
+                        <option value="PHOTO">
+                          Fotografie / transparente Textfläche
+                        </option>
+                      </select>
                     </label>
-                  ))}
-                </fieldset>
-              </div>
-              <section
-                id="filmstudio"
-                aria-label="Filmstudio"
-                className="studio-substudio"
-                tabIndex={-1}
-              >
-                <h3>Filmstudio · Planung mit KI</h3>
-                <p>
-                  Entwickle aus dem gemeinsamen Briefing ein Drehbuch, eine
-                  Szenenliste oder einen Schnittplan. Die Antwort bleibt im
-                  KI-Gespräch der Serie gespeichert.
-                </p>
-                <p>
-                  Videoschnitt, Untertitel im Film und Video-Rendering sind noch
-                  nicht angebunden. Es wird hier keine Videodatei erzeugt oder
-                  verändert.
-                </p>
+                    <label>
+                      Freigegebene Schriftdatei
+                      <select
+                        value={snapshot.fontAssetId || ""}
+                        onChange={(e) => {
+                          const a = state.assets.find(
+                            (a) => a.id === e.target.value,
+                          );
+                          studio({
+                            fontAssetId: a?.id || null,
+                            fontSha256: a?.sha256 || "",
+                          });
+                        }}
+                      >
+                        <option value="">
+                          Nicht vorhanden · Textebene gesperrt
+                        </option>
+                        {state.assets
+                          .filter((a) => a.kind === "FONT")
+                          .map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                  </div>
+                  {!snapshot.fontAssetId && (
+                    <p className="notice">
+                      Original-Schriftdatei fehlt. Keine Ersatzschrift im
+                      Bildexport. Headline und Claim lassen sich erst mit
+                      freigegebener TTF/OTF rendern.
+                    </p>
+                  )}
+                  <GraphicsEditor
+                    snapshot={snapshot}
+                    assets={imageAssets}
+                    onChange={studio}
+                    onAdvice={prepareAdvice}
+                  />
+                  <fieldset>
+                    <legend>Ebenen und Formate</legend>
+                    {(
+                      [
+                        ["showLogo", "Original-Logo"],
+                        ["showHeadline", "Headline"],
+                        [
+                          "showClaim",
+                          snapshot.brandProfile
+                            ? `Claim: ${snapshot.brandProfile.claim || "offen"}`
+                            : "We create visibility",
+                        ],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label className="check" key={key}>
+                        <input
+                          type="checkbox"
+                          checked={snapshot[key]}
+                          onChange={(e) => studio({ [key]: e.target.checked })}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                    {formats.map((f) => (
+                      <label className="check" key={f}>
+                        <input
+                          type="checkbox"
+                          checked={snapshot.formats.includes(f)}
+                          onChange={(e) =>
+                            studio({
+                              formats: e.target.checked
+                                ? [...snapshot.formats, f]
+                                : snapshot.formats.filter((x) => x !== f),
+                            })
+                          }
+                        />
+                        {f}
+                      </label>
+                    ))}
+                  </fieldset>
+                </div>
+                <section
+                  id="filmstudio"
+                  aria-label="Filmstudio"
+                  className="studio-substudio"
+                  tabIndex={-1}
+                >
+                  <h3>Filmstudio · Planung mit KI</h3>
+                  <p>
+                    Entwickle aus dem gemeinsamen Briefing ein Drehbuch, eine
+                    Szenenliste oder einen Schnittplan. Die Antwort bleibt im
+                    KI-Gespräch der Serie gespeichert.
+                  </p>
+                  <p>
+                    Videoschnitt, Untertitel im Film und Video-Rendering sind
+                    noch nicht angebunden. Es wird hier keine Videodatei erzeugt
+                    oder verändert.
+                  </p>
+                  <div className="actions">
+                    {[
+                      [
+                        "Drehbuch mit KI vorbereiten",
+                        "ein Drehbuch mit Einstieg, Kernbotschaft, Sprechertext und Handlungsaufforderung",
+                      ],
+                      [
+                        "Szenenliste mit KI vorbereiten",
+                        "eine Szenenliste mit Dauer, Motiv, Kameraeinstellung und benötigtem Material",
+                      ],
+                      [
+                        "Schnittplan mit KI vorbereiten",
+                        "einen Schnittplan mit Rhythmus, Übergängen, Texteinblendungen und Untertitelentwurf",
+                      ],
+                    ].map(([label, task]) => (
+                      <button
+                        key={label}
+                        type="button"
+                        className="secondary"
+                        onClick={() =>
+                          prepareAdvice(
+                            `Erarbeite ${task} für diesen Beitrag. Frage zuerst nach fehlenden Angaben zu Filmlänge, Kanal und vorhandenem Material. Liefere einen Textentwurf, keine Videogenerierung. Verlinkte Videos wurden nicht analysiert.\nTitel: ${form.title}\nHeadline: ${snapshot.headline}\nBildidee: ${snapshot.imageIdea}`,
+                          )
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p>
+                    Der Klick bereitet eine Nachricht vor. Prüfe sie im
+                    KI-Dialog und sende sie bewusst ab.
+                  </p>
+                </section>
+                <button disabled={busy || !dirty}>Version speichern</button>
+              </form>
+              <section className="studio-preview" aria-label="Layoutvorschau">
+                <h3>Vorschau der gespeicherten Version</h3>
+                {snapshot.motifAssetId && (
+                  <img
+                    alt="Zugeordnetes Bildmotiv ohne Layout"
+                    src={`/api/studio/assets/${snapshot.motifAssetId}`}
+                    style={{
+                      objectPosition: `${snapshot.cropX * 100}% ${snapshot.cropY * 100}%`,
+                    }}
+                  />
+                )}
                 <div className="actions">
-                  {[
+                  <label>
+                    Format
+                    <select
+                      value={format}
+                      onChange={(e) => {
+                        setFormat(e.target.value as StudioFormat);
+                        setPreview("");
+                      }}
+                    >
+                      {formats
+                        .filter((f) => snapshot.formats.includes(f))
+                        .map((f) => (
+                          <option key={f}>{f}</option>
+                        ))}
+                    </select>
+                  </label>
+                  <label>
+                    Dateityp
+                    <select
+                      value={encoding}
+                      onChange={(e) =>
+                        setEncoding(e.target.value as "png" | "jpg")
+                      }
+                    >
+                      <option value="png">PNG</option>
+                      <option value="jpg">JPG</option>
+                    </select>
+                  </label>
+                  <button
+                    disabled={busy || dirty || !snapshot.motifAssetId}
+                    onClick={() =>
+                      void act(async () => {
+                        const r = await api(`studio/export/${editing.id}`, {
+                          version: editing.version,
+                          format: snapshot.formats.includes(format)
+                            ? format
+                            : snapshot.formats[0],
+                          encoding,
+                          preview: true,
+                        });
+                        setPreview(r.url);
+                        await refresh();
+                      })
+                    }
+                  >
+                    Layoutvorschau rendern
+                  </button>
+                </div>
+                {preview && (
+                  <img
+                    alt="Gerenderte Layoutvorschau der gespeicherten Version"
+                    src={preview}
+                  />
+                )}
+                <p>
+                  Bild und Layout sind getrennt. Änderungen an Text, Ausschnitt,
+                  Ebenen oder Vorlage benötigen keine neue Bildgenerierung.
+                </p>
+                <h4>{snapshot.headline}</h4>
+                {form.variants.map((v) => (
+                  <article key={v.channel}>
+                    <strong>{v.channel}</strong>
+                    <p className="preserve-lines">{v.text}</p>
+                    <p>
+                      {v.cta} {v.link}
+                    </p>
+                    <p>{snapshot.hashtags}</p>
+                  </article>
+                ))}
+              </section>
+              <section>
+                <h3>Freigabe und Export</h3>
+                <p>
+                  Jede Speicherung ist bereits ein Social-Entwurf in der
+                  gemeinsamen Planung. Ein Termin oder Export ist keine
+                  Veröffentlichung.
+                </p>
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={read}
+                    disabled={dirty}
+                    onChange={(e) => setRead(e.target.checked)}
+                  />
+                  Ich habe diese gespeicherte Version mit allen Kanaltexten,
+                  Motiv, Ebenen und ausgewählten Layoutformaten vollständig
+                  geprüft.
+                </label>
+                <div className="actions">
+                  {(
                     [
-                      "Drehbuch mit KI vorbereiten",
-                      "ein Drehbuch mit Einstieg, Kernbotschaft, Sprechertext und Handlungsaufforderung",
-                    ],
-                    [
-                      "Szenenliste mit KI vorbereiten",
-                      "eine Szenenliste mit Dauer, Motiv, Kameraeinstellung und benötigtem Material",
-                    ],
-                    [
-                      "Schnittplan mit KI vorbereiten",
-                      "einen Schnittplan mit Rhythmus, Übergängen, Texteinblendungen und Untertitelentwurf",
-                    ],
-                  ].map(([label, task]) => (
+                      ["PENDING", "Zur Prüfung"],
+                      ["APPROVED", "Version freigeben"],
+                      ["REJECTED", "Ablehnen"],
+                    ] as const
+                  ).map(([decision, label]) => (
                     <button
-                      key={label}
-                      type="button"
-                      className="secondary"
+                      key={decision}
+                      className={decision === "APPROVED" ? "" : "secondary"}
+                      disabled={
+                        busy || dirty || (decision === "APPROVED" && !read)
+                      }
                       onClick={() =>
-                        prepareAdvice(
-                          `Erarbeite ${task} für diesen Beitrag. Frage zuerst nach fehlenden Angaben zu Filmlänge, Kanal und vorhandenem Material. Liefere einen Textentwurf, keine Videogenerierung. Verlinkte Videos wurden nicht analysiert.\nTitel: ${form.title}\nHeadline: ${snapshot.headline}\nBildidee: ${snapshot.imageIdea}`,
-                        )
+                        void act(async () => {
+                          await api(`hub/review/${editing.id}`, {
+                            version: editing.version,
+                            decision,
+                            read,
+                          });
+                          await refresh(editing.id);
+                        })
                       }
                     >
                       {label}
                     </button>
                   ))}
                 </div>
-                <p>
-                  Der Klick bereitet eine Nachricht vor. Prüfe sie im KI-Dialog
-                  und sende sie bewusst ab.
-                </p>
-              </section>
-              <button disabled={busy || !dirty}>Version speichern</button>
-            </form>
-            <section className="studio-preview" aria-label="Layoutvorschau">
-              <h3>Vorschau der gespeicherten Version</h3>
-              {snapshot.motifAssetId && (
-                <img
-                  alt="Zugeordnetes Bildmotiv ohne Layout"
-                  src={`/api/studio/assets/${snapshot.motifAssetId}`}
-                  style={{
-                    objectPosition: `${snapshot.cropX * 100}% ${snapshot.cropY * 100}%`,
-                  }}
-                />
-              )}
-              <div className="actions">
-                <label>
-                  Format
-                  <select
-                    value={format}
-                    onChange={(e) => {
-                      setFormat(e.target.value as StudioFormat);
-                      setPreview("");
-                    }}
-                  >
-                    {formats
-                      .filter((f) => snapshot.formats.includes(f))
-                      .map((f) => (
-                        <option key={f}>{f}</option>
-                      ))}
-                  </select>
-                </label>
-                <label>
-                  Dateityp
-                  <select
-                    value={encoding}
-                    onChange={(e) =>
-                      setEncoding(e.target.value as "png" | "jpg")
-                    }
-                  >
-                    <option value="png">PNG</option>
-                    <option value="jpg">JPG</option>
-                  </select>
-                </label>
-                <button
-                  disabled={busy || dirty || !snapshot.motifAssetId}
-                  onClick={() =>
-                    void act(async () => {
-                      const r = await api(`studio/export/${editing.id}`, {
-                        version: editing.version,
-                        format: snapshot.formats.includes(format)
-                          ? format
-                          : snapshot.formats[0],
-                        encoding,
-                        preview: true,
-                      });
-                      setPreview(r.url);
-                      await refresh();
-                    })
-                  }
-                >
-                  Layoutvorschau rendern
-                </button>
-              </div>
-              {preview && (
-                <img
-                  alt="Gerenderte Layoutvorschau der gespeicherten Version"
-                  src={preview}
-                />
-              )}
-              <p>
-                Bild und Layout sind getrennt. Änderungen an Text, Ausschnitt,
-                Ebenen oder Vorlage benötigen keine neue Bildgenerierung.
-              </p>
-              <h4>{snapshot.headline}</h4>
-              {form.variants.map((v) => (
-                <article key={v.channel}>
-                  <strong>{v.channel}</strong>
-                  <p className="preserve-lines">{v.text}</p>
-                  <p>
-                    {v.cta} {v.link}
-                  </p>
-                  <p>{snapshot.hashtags}</p>
-                </article>
-              ))}
-            </section>
-            <section>
-              <h3>Freigabe und Export</h3>
-              <p>
-                Jede Speicherung ist bereits ein Social-Entwurf in der
-                gemeinsamen Planung. Ein Termin oder Export ist keine
-                Veröffentlichung.
-              </p>
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={read}
-                  disabled={dirty}
-                  onChange={(e) => setRead(e.target.checked)}
-                />
-                Ich habe diese gespeicherte Version mit allen Kanaltexten,
-                Motiv, Ebenen und ausgewählten Layoutformaten vollständig
-                geprüft.
-              </label>
-              <div className="actions">
-                {(
-                  [
-                    ["PENDING", "Zur Prüfung"],
-                    ["APPROVED", "Version freigeben"],
-                    ["REJECTED", "Ablehnen"],
-                  ] as const
-                ).map(([decision, label]) => (
+                <div className="actions">
                   <button
-                    key={decision}
-                    className={decision === "APPROVED" ? "" : "secondary"}
-                    disabled={
-                      busy || dirty || (decision === "APPROVED" && !read)
-                    }
+                    disabled={busy || dirty || editing.status !== "APPROVED"}
                     onClick={() =>
                       void act(async () => {
-                        await api(`hub/review/${editing.id}`, {
+                        const r = await api(`studio/export/${editing.id}`, {
                           version: editing.version,
-                          decision,
-                          read,
-                        });
-                        await refresh(editing.id);
-                      })
-                    }
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="actions">
-                <button
-                  disabled={busy || dirty || editing.status !== "APPROVED"}
-                  onClick={() =>
-                    void act(async () => {
-                      const r = await api(`studio/export/${editing.id}`, {
-                        version: editing.version,
-                        format: snapshot.formats.includes(format)
-                          ? format
-                          : snapshot.formats[0],
-                        encoding,
-                        preview: false,
-                      });
-                      window.location.assign(r.url + "?download");
-                    })
-                  }
-                >
-                  Freigegebenes Sujet exportieren
-                </button>
-                <button
-                  className="secondary"
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    void act(async () => {
-                      const r = await api(`studio/texts/${editing.id}`, {
-                        version: editing.version,
-                      });
-                      download(r.text, r.name);
-                    })
-                  }
-                >
-                  Kanaltexte als TXT
-                </button>
-                <button
-                  className="secondary"
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    void act(async () => {
-                      const r = await api(`studio/texts/${editing.id}`, {
-                        version: editing.version,
-                      });
-                      await navigator.clipboard.writeText(r.text);
-                      setNotice("Kanaltexte kopiert.");
-                    })
-                  }
-                >
-                  Texte kopieren
-                </button>
-                {snapshot.motifAssetId && (
-                  <button
-                    className="secondary"
-                    disabled={busy || dirty}
-                    onClick={() =>
-                      void act(async () => {
-                        const r = await api(`studio/motif/${editing.id}`, {
-                          version: editing.version,
+                          format: snapshot.formats.includes(format)
+                            ? format
+                            : snapshot.formats[0],
                           encoding,
+                          preview: false,
                         });
                         window.location.assign(r.url + "?download");
                       })
                     }
                   >
-                    Reines Motiv als PNG/JPG
+                    Freigegebenes Sujet exportieren
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={busy || dirty}
+                    onClick={() =>
+                      void act(async () => {
+                        const r = await api(`studio/texts/${editing.id}`, {
+                          version: editing.version,
+                        });
+                        download(r.text, r.name);
+                      })
+                    }
+                  >
+                    Kanaltexte als TXT
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={busy || dirty}
+                    onClick={() =>
+                      void act(async () => {
+                        const r = await api(`studio/texts/${editing.id}`, {
+                          version: editing.version,
+                        });
+                        await navigator.clipboard.writeText(r.text);
+                        setNotice("Kanaltexte kopiert.");
+                      })
+                    }
+                  >
+                    Texte kopieren
+                  </button>
+                  {snapshot.motifAssetId && (
+                    <button
+                      className="secondary"
+                      disabled={busy || dirty}
+                      onClick={() =>
+                        void act(async () => {
+                          const r = await api(`studio/motif/${editing.id}`, {
+                            version: editing.version,
+                            encoding,
+                          });
+                          window.location.assign(r.url + "?download");
+                        })
+                      }
+                    >
+                      Reines Motiv als PNG/JPG
+                    </button>
+                  )}
+                  <button
+                    disabled={
+                      busy ||
+                      dirty ||
+                      series.contents.some((c) => c.status !== "APPROVED")
+                    }
+                    onClick={() =>
+                      void act(async () => {
+                        const r = await api(`studio/zip/${seriesId}`, {});
+                        window.location.assign(r.url + "?download");
+                      })
+                    }
+                  >
+                    Freigegebene Serie als ZIP
+                  </button>
+                </div>
+                <p>
+                  Geplant: {displayTime(form.scheduledAt)} · keine automatische
+                  Veröffentlichung
+                </p>
+                <details>
+                  <summary>Freigabehistorie</summary>
+                  {editing.approvals.map((a) => (
+                    <p key={a.id}>
+                      {a.user.name} · V{a.version} · {a.status} ·{" "}
+                      {displayTime(a.createdAt.toString())}
+                    </p>
+                  ))}
+                </details>
+              </section>
+            </section>
+          ) : (
+            <section>
+              <h2>Eigene Inhalte und KI in einem Ablauf</h2>
+              <p>
+                Eine Serie links öffnen oder ein Briefing anlegen. Es wird
+                nichts automatisch generiert, versendet oder veröffentlicht.
+              </p>
+            </section>
+          )}
+        </div>
+        <section className="studio-jobs">
+          <div className="hub-toolbar">
+            <h2>Aufträge und Nutzung</h2>
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() => void act(() => refresh())}
+            >
+              Auftragsstatus neu laden
+            </button>
+          </div>
+          <p>
+            Aufträge und Ergebnisse bleiben nach Browser-Neuladen gespeichert.
+            Es erfolgt kein automatischer Neustart. Bei unklarem Ergebnis zuerst
+            den Anbieter-Verbrauch prüfen.
+          </p>
+          {state.jobs.map((j) => (
+            <article key={j.id}>
+              <strong>
+                {j.kind} · {statusLabel[j.status] || j.status}
+              </strong>
+              <span>
+                {" "}
+                {j.model} · reserviert USD {j.reserveUsd.toFixed(2)} ·{" "}
+                {displayTime(j.createdAt.toString())}
+              </span>
+              {j.error && <p role="status">{j.error}</p>}
+              <div className="actions">
+                {j.status === "QUEUED" && (
+                  <button
+                    disabled={busy || !costs}
+                    onClick={() =>
+                      void act(async () => {
+                        await api(`studio/run/${j.id}`, {
+                          confirmedCosts: true,
+                        });
+                        await refresh();
+                      })
+                    }
+                  >
+                    Wartenden Auftrag bewusst starten
                   </button>
                 )}
-                <button
-                  disabled={
-                    busy ||
-                    dirty ||
-                    series.contents.some((c) => c.status !== "APPROVED")
-                  }
-                  onClick={() =>
-                    void act(async () => {
-                      const r = await api(`studio/zip/${seriesId}`, {});
-                      window.location.assign(r.url + "?download");
-                    })
-                  }
-                >
-                  Freigegebene Serie als ZIP
-                </button>
+                {j.status === "SUCCEEDED" && j.kind !== "CHAT" && (
+                  <button
+                    disabled={busy || dirty}
+                    onClick={() =>
+                      void act(async () => {
+                        await api(`studio/apply/${j.id}`, {});
+                        await refresh(editing?.id);
+                        setNotice(
+                          "Ergebnis als neue Entwurfsversion übernommen. Bitte prüfen.",
+                        );
+                      })
+                    }
+                  >
+                    Ergebnis als Entwurf übernehmen
+                  </button>
+                )}
+                {["QUEUED", "RUNNING"].includes(j.status) && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      void act(async () => {
+                        await api(`studio/reconcile/${j.id}`, {});
+                        await refresh();
+                      })
+                    }
+                  >
+                    Abbrechen / abgelaufenen Auftrag prüfen
+                  </button>
+                )}
               </div>
-              <p>
-                Geplant: {displayTime(form.scheduledAt)} · keine automatische
-                Veröffentlichung
-              </p>
-              <details>
-                <summary>Freigabehistorie</summary>
-                {editing.approvals.map((a) => (
-                  <p key={a.id}>
-                    {a.user.name} · V{a.version} · {a.status} ·{" "}
-                    {displayTime(a.createdAt.toString())}
-                  </p>
-                ))}
-              </details>
-            </section>
-          </section>
-        ) : (
-          <section>
-            <h2>Eigene Inhalte und KI in einem Ablauf</h2>
-            <p>
-              Eine Serie links öffnen oder ein Briefing anlegen. Es wird nichts
-              automatisch generiert, versendet oder veröffentlicht.
-            </p>
-          </section>
-        )}
+              {j.result && (
+                <details>
+                  <summary>Gespeichertes Ergebnis</summary>
+                  <pre>{JSON.stringify(j.result, null, 2)}</pre>
+                </details>
+              )}
+            </article>
+          ))}
+        </section>
       </div>
-      <section className="studio-jobs">
-        <div className="hub-toolbar">
-          <h2>Aufträge und Nutzung</h2>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => void act(() => refresh())}
-          >
-            Auftragsstatus neu laden
-          </button>
-        </div>
-        <p>
-          Aufträge und Ergebnisse bleiben nach Browser-Neuladen gespeichert. Es
-          erfolgt kein automatischer Neustart. Bei unklarem Ergebnis zuerst den
-          Anbieter-Verbrauch prüfen.
-        </p>
-        {state.jobs.map((j) => (
-          <article key={j.id}>
-            <strong>
-              {j.kind} · {statusLabel[j.status] || j.status}
-            </strong>
-            <span>
-              {" "}
-              {j.model} · reserviert USD {j.reserveUsd.toFixed(2)} ·{" "}
-              {displayTime(j.createdAt.toString())}
-            </span>
-            {j.error && <p role="status">{j.error}</p>}
-            <div className="actions">
-              {j.status === "QUEUED" && (
-                <button
-                  disabled={busy || !costs}
-                  onClick={() =>
-                    void act(async () => {
-                      await api(`studio/run/${j.id}`, { confirmedCosts: true });
-                      await refresh();
-                    })
-                  }
-                >
-                  Wartenden Auftrag bewusst starten
-                </button>
-              )}
-              {j.status === "SUCCEEDED" && j.kind !== "CHAT" && (
-                <button
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    void act(async () => {
-                      await api(`studio/apply/${j.id}`, {});
-                      await refresh(editing?.id);
-                      setNotice(
-                        "Ergebnis als neue Entwurfsversion übernommen. Bitte prüfen.",
-                      );
-                    })
-                  }
-                >
-                  Ergebnis als Entwurf übernehmen
-                </button>
-              )}
-              {["QUEUED", "RUNNING"].includes(j.status) && (
-                <button
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    void act(async () => {
-                      await api(`studio/reconcile/${j.id}`, {});
-                      await refresh();
-                    })
-                  }
-                >
-                  Abbrechen / abgelaufenen Auftrag prüfen
-                </button>
-              )}
-            </div>
-            {j.result && (
-              <details>
-                <summary>Gespeichertes Ergebnis</summary>
-                <pre>{JSON.stringify(j.result, null, 2)}</pre>
-              </details>
-            )}
-          </article>
-        ))}
-      </section>
     </div>
   );
 }
