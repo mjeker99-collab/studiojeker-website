@@ -1,0 +1,151 @@
+# One-off backup requested by Martin; no recurring schedule.
+# Setup: GitHub Settings > Secrets and variables > Actions:
+# - SANITY_AUTH_TOKEN: existing token, must be able to read all production documents.
+# - SANITY_BACKUP_PASSPHRASE: strong random password (>=24 characters, one line).
+# Keep the passphrase separately in a password manager; losing it makes backups unusable.
+# Download the artifact before its 30-day expiry and keep an independent copy.
+# Decrypt locally (interactive password prompt):
+#   gpg --output backup.tar.gz --decrypt studiojeker-*.tar.gz.gpg
+# Extract backup.tar.gz; restore sanity-production.tar.gz into a NEW test dataset first.
+# Source is a snapshot, not Git history. Secrets, hosting configuration and external
+# video originals are NOT included. This never imports data or deploys the website.
+
+name: Backup Sanity (encrypted)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/sanity-backup-2026-10-21
+    paths:
+      - .github/workflows/backup-sanity.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sanity-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check required secrets before accessing content
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_BACKUP_PASSPHRASE: ${{ secrets.SANITY_BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SANITY_AUTH_TOKEN" ]; then
+            echo "::error::Repository secret SANITY_AUTH_TOKEN is missing."
+            exit 1
+          fi
+          if [ "${#SANITY_BACKUP_PASSPHRASE}" -lt 24 ] || [[ "$SANITY_BACKUP_PASSPHRASE" == *$'\n'* ]]; then
+            echo "::error::Set SANITY_BACKUP_PASSPHRASE to a strong single-line password of at least 24 characters. Keep it in a password manager."
+            exit 1
+          fi
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install existing locked Studio dependencies
+        working-directory: studio
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Export, encrypt and verify backup
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_BACKUP_PASSPHRASE: ${{ secrets.SANITY_BACKUP_PASSPHRASE }}
+          SANITY_CLI_TELEMETRY_DISABLED: "1"
+          CI: "true"
+        run: |
+          set -euo pipefail
+          umask 077
+          task_dir=$(mktemp -d "$RUNNER_TEMP/sanity-backup.XXXXXX")
+          export GNUPGHOME="$task_dir/gnupg"
+          mkdir -m 700 "$GNUPGHOME" "$task_dir/payload" "$RUNNER_TEMP/encrypted-backup"
+          trap 'rm -rf -- "$task_dir"' EXIT
+          archive_name="studiojeker-$(date -u +%Y%m%dT%H%M%SZ)-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.gz.gpg"
+          (
+            cd studio
+            ./node_modules/.bin/sanity dataset export production "$task_dir/payload/sanity-production.tar.gz"
+          ) > "$task_dir/export.log" 2>&1 || {
+            echo "::error::Sanity export failed. No archive uploaded. Check token permissions and dataset availability."
+            exit 1
+          }
+          # Fail closed on warnings: the CLI can skip inaccessible assets.
+          # Never print raw export logs into this public repository's Actions logs.
+          if grep -Eiq 'warn|error|failed|skipp|not found|unauthori|forbidden' "$task_dir/export.log"; then
+            echo "::error::Export reported a warning or skipped asset. Backup needs investigation; no archive uploaded."
+            exit 1
+          fi
+          export SANITY_EXPORT_PATH="$task_dir/payload/sanity-production.tar.gz"
+          python3 - <<'PY'
+          import json, os, tarfile
+          with tarfile.open(os.environ["SANITY_EXPORT_PATH"], "r:gz") as archive:
+              documents = [m for m in archive.getmembers() if m.isfile() and m.name.split("/")[-1] == "data.ndjson"]
+              if len(documents) != 1:
+                  raise SystemExit("Export must contain exactly one data.ndjson.")
+              count = 0
+              for line in archive.extractfile(documents[0]):
+                  if line.strip():
+                      document = json.loads(line)
+                      if not isinstance(document, dict) or "_id" not in document:
+                          raise SystemExit("Invalid document in export.")
+                      count += 1
+              if count == 0:
+                  raise SystemExit("Export contains no documents.")
+          print("Export archive and document structure validated.")
+          PY
+          git archive --format=tar.gz -o "$task_dir/payload/website-source.tar.gz" HEAD
+          {
+            echo "Sanity project: tgx6e6jg"
+            echo "Dataset: production"
+            echo "Source commit: $GITHUB_SHA"
+            echo "Created UTC: $(date -u +%FT%TZ)"
+            echo "Includes current documents, drafts and downloadable Sanity assets."
+            echo "Excludes document history, Git history, secrets, Metanet configuration and external video originals."
+            echo "Restore Sanity into a new test dataset before any production recovery."
+          } > "$task_dir/payload/MANIFEST.txt"
+          tar -czf "$task_dir/backup.tar.gz" -C "$task_dir/payload" .
+          encrypted_path="$RUNNER_TEMP/encrypted-backup/$archive_name"
+          printf '%s\n' "$SANITY_BACKUP_PASSPHRASE" |
+            gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --no-symkey-cache \
+              --symmetric --cipher-algo AES256 --output "$encrypted_path" "$task_dir/backup.tar.gz"
+          expected=$(sha256sum "$task_dir/backup.tar.gz" | cut -d ' ' -f 1)
+          actual=$(printf '%s\n' "$SANITY_BACKUP_PASSPHRASE" |
+            gpg --batch --pinentry-mode loopback --passphrase-fd 0 --no-symkey-cache --decrypt "$encrypted_path" |
+            sha256sum | cut -d ' ' -f 1)
+          test "$expected" = "$actual"
+          (
+            cd "$RUNNER_TEMP/encrypted-backup"
+            sha256sum "$archive_name" > "$archive_name.sha256"
+          )
+          echo "Encrypted backup verified. Uploading encrypted files only."
+
+      - name: Store encrypted backup for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: studiojeker-encrypted-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/encrypted-backup/*.tar.gz.gpg
+            ${{ runner.temp }}/encrypted-backup/*.tar.gz.gpg.sha256
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Remove runner copies
+        if: always()
+        run: rm -rf -- "$RUNNER_TEMP/encrypted-backup"
