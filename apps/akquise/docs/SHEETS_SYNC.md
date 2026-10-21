@@ -1,0 +1,46 @@
+# Google-Masterliste → StudioONE (einseitige Kontaktsynchronisation)
+
+**Status:** Code vorbereitet, **nicht produktiv aktiviert**. Keine E-Mail wird durch diesen Ablauf versandt.
+
+## Datenquelle
+
+Die bestehende native Google-Tabelle im Studiojeker-Drive-Unterordner «Adressen», Tabellenblatt `Kontakte`. Das Format ist exakt `A:O` (15 Spalten); die separate «Mailverwaltung» wird nicht gelesen.
+
+Beim Import werden Person, Organisation, Funktion, Region, Direktadresse und Quellenlink übernommen. Prüfstatus, Prüfdatum, Priorität, Mailbetreff, vollständiger E-Mail-Entwurf, Herkunft und Hinweise bleiben als Recherche-Notizen am Kontakt erhalten. Der bestehende Entwurf kann später über «Entwurf vorbereiten» in eine überprüfbare Nachrichtenversion übernommen werden. Es erfolgt **keine** automatische Erstellung, Freigabe oder Versendung von Nachrichten.
+
+**Keine Einwilligungs-, Versand-, Prüf- oder Freigabestatuswerte** werden übernommen. Neue Kontakte sind `UNCONFIRMED/NEW`, öffentliche Auftraggeber werden konservativ als `PUBLIC_AUTHORITY` klassifiziert. Die separate rechtliche und beschaffungsrechtliche Prüfung bleibt Pflicht. Kontakte ohne E-Mail bleiben Recherchekontakte und sind nicht versandfähig.
+
+## Vor dem ersten Import
+
+1. Die aktuelle StudioONE-Datenbank sichern und die Anzahl vorhandener Kontakte notieren. Bereits vorhandene Datensätze werden beim Import **nicht überschrieben**.
+2. In Google Cloud einen Service Account mit aktivierter **Google Sheets API** anlegen; ausschliesslich Lesezugriff.
+3. Die konkrete Google-Tabelle mit der Service-Account-Adresse als **Betrachter** teilen. Nicht den gesamten Drive-Ordner freigeben.
+4. Im Render-Webservice `studiojeker-akquise` serverseitig konfigurieren:
+   - `GOOGLE_SHEET_ID` = tatsächliche Tabellen-ID (keine URL)
+   - `GOOGLE_SHEET_RANGE` = `Kontakte!A1:O501`
+   - `GOOGLE_CLIENT_EMAIL` = Service-Account-Adresse
+   - `GOOGLE_PRIVATE_KEY` = privater Schlüssel des Service Accounts
+   - `INTERNAL_CONTACT_SYNC_TOKEN` = separater zufälliger, ausreichend langer Schlüssel
+   - `MARTIN_EMAIL` = bereits bestehende persönliche StudioONE-Anmeldung
+5. Secrets **nur in Render** eintragen; niemals im Chat, Git, Google Sheet oder Browser.
+6. Code erst nach Review, CI und Datenbank-Backup bereitstellen. Der Render-Webservice hat Auto-Deploy deaktiviert; ein PR-Merge allein aktiviert nichts.
+
+## Erste Synchronisation und Verifikation
+
+Vor einem Zeitplan zuerst einmal manuell auslösen. `POST /api/internal/contact-sync` verlangt den geheimen Bearer-Token. Der Endpunkt liest die Google-Tabelle und verwendet die bestehende, transaktionale `importContacts`-Funktion mit `skipDuplicates`. Er antwortet nur mit `imported` und `duplicates`, nicht mit persönlichen Kontaktdaten.
+
+Nach dem Import im StudioONE-Dashboard prüfen:
+- Gesamtzahl und neue Kontakte
+- bereits vorhandene Kontakte, Freigaben, Sperrliste und Entwurfsversionen unverändert
+- keine Newsletter-Einwilligungen aus der Tabelle übernommen
+- Recherchekontakte ohne E-Mail bleiben blockiert
+- Entwürfe erst nach individueller Prüfung, Kontaktverifikation und Rechtsprüfung freigabefähig
+- erneuter identischer Import ergibt `imported: 0`
+
+**Einschränkung:** Diese Version importiert neue Personen, aktualisiert vorhandene Kontakte aber nicht. Das schützt Freigaben, Entwurfsversionen und manuelle Korrekturen. Eine spätere echte Aktualisierungssynchronisation braucht Konfliktregeln und einen gesonderten Test.
+
+## Tägliche Ausführung
+
+Erst nach erfolgreichem Test kann ein geplanter Job (beispielsweise täglich 06:00 Uhr Europe/Zurich, UTC-Zeit und Sommerzeit berücksichtigen) den obigen HTTPS-Endpunkt aufrufen. Der Job braucht nur den gesonderten Bearer-Token. Keine SMTP-Zugangsdaten und keine Freigaberechte im Job hinterlegen. Bei Fehlern alarmieren, nicht ungeprüft wiederholt importieren.
+
+**Nicht enthalten:** automatischer Versand, automatisches Freigeben, bidirektionaler Sync, bestehende Kontakte überschreiben, Mailchimp-Opt-in übernehmen, Mailentwürfe als freigegebene Versionen importieren.
