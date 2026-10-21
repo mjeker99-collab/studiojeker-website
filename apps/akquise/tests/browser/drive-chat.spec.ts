@@ -11,6 +11,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
     assets: [],
     jobs: [],
     campaigns: [],
+    customers: [],
     users: [user],
     brand: {},
     config: {
@@ -137,7 +138,13 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
     .getByRole("button", { name: /Content-Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
+  await chat
+    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
+    .click();
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("chat");
+  await chat
+    .getByText("Bild hinzufügen oder auswählen", { exact: true })
+    .click();
   await chat
     .getByRole("button", { name: "Bilder aus Google Drive wählen" })
     .click();
@@ -152,6 +159,9 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   const consent = chat.getByRole("checkbox", {
     name: /Ich bestätige die Nutzungsrechte/,
   });
+  await chat
+    .getByLabel("Deine Nachricht", { exact: true })
+    .fill("Erstelle einen Social Post mit Nora.");
   await consent.check();
   await chat.getByRole("checkbox", { name: "Nora 1.png", exact: true }).check();
   await expect(consent).not.toBeChecked();
@@ -214,5 +224,5 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("");
   await expect(
     chat.getByText("Bildreferenzen: 0/4", { exact: true }),
-  ).toBeVisible();
+  ).not.toBeVisible();
 });

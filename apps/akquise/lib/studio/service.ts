@@ -7,6 +7,7 @@ import {
 import { campaignConcept } from "../concepts/service";
 import { conceptInput } from "../concepts/input";
 import { customerKnowledgeContext } from "../customer-knowledge";
+import { assistantContext } from "./context";
 import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -107,6 +108,16 @@ export async function studioState(actor: string) {
       }),
     ]);
   return {
+    assistantUser: await db.user.findUniqueOrThrow({
+      where: { id: actor },
+      select: {
+        id: true,
+        name: true,
+        studioContext: true,
+        studioContextRevision: true,
+      },
+    }),
+    organization: { name: brand.name, revision: brand.brandRevision },
     series,
     assets,
     brand: brand.brand,
@@ -272,6 +283,7 @@ const requestSchema = z
     mediaIntent: z.enum(["IMAGE", "VIDEO"]).optional(),
     photoEdit: z.literal(true).optional(),
     replyToJobId: z.string().min(1).max(100).optional(),
+    useProjectMemory: z.boolean().default(true),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -592,6 +604,15 @@ export async function queueJob(actor: string, raw: unknown) {
         : null,
       ...(data.kind === "CHAT"
         ? {
+            assistant: series.concept
+              ? undefined
+              : await assistantContext(
+                  tx,
+                  actor,
+                  series.id,
+                  series.customerId,
+                  data.useProjectMemory,
+                ),
             campaign: brief.campaignId
               ? await tx.campaign.findFirst({
                   where: { id: brief.campaignId, organizationId: ORG },
@@ -704,6 +725,7 @@ export async function runJob(
     driveSelection?: DriveSelection;
     strategy?: unknown;
     campaignStrategy?: unknown;
+    assistant?: unknown;
   };
   let providerStarted = false;
   const currentMessage = input.replyTo
@@ -740,6 +762,7 @@ export async function runJob(
       providerStarted = true;
       const r = await provider.chat(
         {
+          assistant: input.assistant,
           strategy: input.strategy,
           campaignStrategy: input.campaignStrategy,
           briefing: input.brief,

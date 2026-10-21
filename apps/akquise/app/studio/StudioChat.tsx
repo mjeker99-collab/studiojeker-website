@@ -2,6 +2,8 @@
 /* eslint-disable @next/next/no-img-element -- Private authenticated image routes. */
 import { useState } from "react";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
+import StudioKnowledge from "./StudioKnowledge";
+import StudioProjects from "./StudioProjects";
 import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
 async function post(path: string, body: unknown) {
@@ -34,6 +36,10 @@ export default function StudioChat({
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [useProjectMemory, setUseProjectMemory] = useState(true);
+  const activeSeries = state.series.find((s) => s.id === seriesId);
+  const activeCustomerId = activeSeries?.customerId || customerId || null;
   const [message, setMessage] = useState(initialRequest?.message || "");
   const [mediaIntent, setMediaIntent] = useState<
     "TEXT" | "IMAGE" | "VIDEO" | "EDIT"
@@ -146,6 +152,7 @@ export default function StudioChat({
           count: 1,
           formats: ["4:5"],
           campaignId: campaignId || null,
+          customerId: customerId || null,
           referenceAssetIds: [],
           brandRules: ["tone", "services", "audiences"],
         });
@@ -157,6 +164,7 @@ export default function StudioChat({
         kind: editingImage ? "IMAGE" : "CHAT",
         message: message.trim(),
         ...(replyToJobId ? { replyToJobId } : {}),
+        ...(!editingImage ? { useProjectMemory } : {}),
         ...(editingImage
           ? { photoEdit: true }
           : mediaIntent !== "TEXT"
@@ -248,69 +256,76 @@ export default function StudioChat({
       );
     }
   }
+  const submission = (
+    <>
+      <div hidden={!message.trim()}>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            disabled={busy}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
+          {editingImage ? (
+            <>
+              Ich bestätige die Nutzungsrechte, die Übermittlung des
+              ausgewählten Bildes, meiner Anweisung
+              {replyToJobId ? " und des ausgewählten GPT-Vorschlags" : ""} an
+              OpenAI sowie die kostenpflichtige Bearbeitung. Budgetreservierung:
+              USD {state.config.imageReserve.toFixed(2)}, kein garantierter
+              Preis.
+            </>
+          ) : (
+            <>
+              Ich bestätige die Nutzungsrechte und die Übermittlung von
+              Gespräch, Firmenprofil, meinen Arbeitsvorgaben
+              {useProjectMemory ? ", passenden früheren Projekten" : ""},
+              Serienbriefing, Referenztexten und {referenceCount} ausgewählten
+              Bildern an OpenAI. Bildanalyse verursacht zusätzliche
+              Eingabetokens. Budgetreservierung: USD{" "}
+              {state.config.textReserve.toFixed(2)} pro Nachricht, kein
+              garantierter Preis.
+            </>
+          )}
+        </label>
+      </div>
+      <button
+        disabled={
+          busy ||
+          !confirmed ||
+          !message.trim() ||
+          !state.config.connected ||
+          (editingImage && (!storageReady || referenceCount !== 1))
+        }
+      >
+        {busy
+          ? editingImage
+            ? "Bild wird bearbeitet …"
+            : "GPT antwortet …"
+          : editingImage
+            ? replyToJobId
+              ? "Vorschlag jetzt am Bild ausführen"
+              : "Bild jetzt bearbeiten"
+            : mediaIntent === "TEXT"
+              ? "An GPT senden"
+              : "Auftrag mit GPT vorbereiten"}
+      </button>
+    </>
+  );
   return (
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
-      <h2 id="studio-chat-heading">Mit GPT entwickeln</h2>
-      <p>
-        Beschreibe deine Idee oder bearbeite ein Bild direkt. Wähle es vom
-        Gerät, aus der Bibliothek oder aus Google Drive.
+      <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
+      <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
+      <p className="muted">
+        Für{" "}
+        {state.customers.find((c) => c.id === activeCustomerId)?.name ||
+          state.organization?.name ||
+          "Studiojeker"}
+        {state.assistantUser?.name ? ` · ${state.assistantUser.name}` : ""}
       </p>
-      <div className="studio-chat-controls">
-        <label>
-          Gespräch / Content-Serie
-          <select
-            value={seriesId}
-            disabled={busy}
-            onChange={(e) => {
-              setSeriesId(e.target.value);
-              setConfirmed(false);
-              setReferenceIds([]);
-              setDriveImages([]);
-              setError("");
-              setContentId("");
-              setReplyToJobId("");
-            }}
-          >
-            <option value="">Neues Gespräch</option>
-            {state.series.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        {!seriesId && (
-          <label>
-            Kampagne
-            <select
-              disabled={busy}
-              value={campaignId}
-              onChange={(e) => setCampaignId(e.target.value)}
-            >
-              <option value="">Ohne Kampagne</option>
-              {state.campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            setError("");
-            void refresh().catch(() =>
-              setError("Status konnte nicht geladen werden."),
-            );
-          }}
-        >
-          Status aktualisieren
-        </button>
-      </div>
       <div
         className="studio-chat-transcript"
+        hidden={!jobs.length}
         role="log"
         aria-label="Gespräch mit GPT"
         aria-live="polite"
@@ -325,6 +340,12 @@ export default function StudioChat({
           const input = j.input as {
             editTargetId?: string;
             replyTo?: { reply: string };
+            assistant?: {
+              organization: { name: string; revision: number };
+              user: { name: string };
+              customer?: { name: string } | null;
+              projectMemory: { id: string; title: string }[];
+            };
             request?: {
               message?: string;
               mediaIntent?: "IMAGE" | "VIDEO";
@@ -356,6 +377,26 @@ export default function StudioChat({
                 </strong>
               </p>
               <p className="studio-chat-message">{input.request?.message}</p>
+              {input.assistant && (
+                <details>
+                  <summary>Verwendetes Firmen- & Projektwissen</summary>
+                  <p>
+                    {input.assistant.customer?.name ||
+                      input.assistant.organization.name}{" "}
+                    · {input.assistant.user.name} · Markenprofil V
+                    {input.assistant.organization.revision}
+                  </p>
+                  {input.assistant.projectMemory.length ? (
+                    <ul>
+                      {input.assistant.projectMemory.map((project) => (
+                        <li key={project.id}>{project.title}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>Keine anderen Projekte verwendet.</p>
+                  )}
+                </details>
+              )}
               {input.replyTo && (
                 <details>
                   <summary>Bezug: ausgewählter GPT-Vorschlag</summary>
@@ -515,14 +556,6 @@ export default function StudioChat({
           );
         })}
       </div>
-      <p className="muted">
-        «Bild bearbeiten» führt deine Anweisung direkt am ausgewählten Bild aus.
-        Das Ergebnis bleibt als separate Datei erhalten. Bildideen und
-        Videoaufträge lassen sich weiterhin als Text vorbereiten. Die letzten 12
-        erfolgreichen Gesprächsrunden werden als Textkontext verwendet. Nur die
-        aktuell ausgewählten Bilder werden übermittelt. Die Bildauswahl bleibt
-        für weitere Nachrichten dieses Gesprächs bestehen, bis du sie entfernst.
-      </p>
       {!state.config.connected && (
         <p>
           GPT ist noch nicht verbunden. API-Schlüssel und KI-Aktivierung müssen
@@ -536,11 +569,6 @@ export default function StudioChat({
           void send();
         }}
       >
-        <h3>
-          {replyToJobId
-            ? "Mit diesem Vorschlag weiterarbeiten"
-            : "Deine nächste Nachricht"}
-        </h3>
         {replyToText && (
           <div
             role="group"
@@ -568,57 +596,6 @@ export default function StudioChat({
             </button>
           </div>
         )}
-        <label htmlFor="studio-chat-intent">Auftrag</label>
-        <select
-          id="studio-chat-intent"
-          value={mediaIntent}
-          disabled={busy}
-          onChange={(e) => {
-            setMediaIntent(
-              e.target.value as "TEXT" | "IMAGE" | "VIDEO" | "EDIT",
-            );
-            setConfirmed(false);
-            setReplyToJobId("");
-          }}
-        >
-          <option value="TEXT">Gespräch / Text</option>
-          <option value="EDIT">Bild bearbeiten · direkt ausführen</option>
-          <option value="IMAGE">Bildidee vorbereiten</option>
-          <option value="VIDEO">Videoauftrag vorbereiten</option>
-        </select>
-        {editingImage && (
-          <p>
-            Wähle genau ein Ausgangsbild und beschreibe die gewünschte Änderung.
-            Zum Beispiel: «Schatten aufhellen und den Hund hervorheben». Nur
-            Bild, Anweisung und gegebenenfalls der oben ausgewählte Vorschlag
-            werden für diese Bearbeitung übermittelt.
-          </p>
-        )}
-        {editingImage && !!seriesId && (
-          <label>
-            Zielbeitrag
-            <select
-              value={
-                contentId ||
-                state.series.find((s) => s.id === seriesId)?.contents[0]?.id ||
-                ""
-              }
-              disabled={busy}
-              onChange={(e) => {
-                setContentId(e.target.value);
-                setConfirmed(false);
-              }}
-            >
-              {state.series
-                .find((s) => s.id === seriesId)
-                ?.contents.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
-            </select>
-          </label>
-        )}
         <label htmlFor="studio-chat-message">Deine Nachricht</label>
         <textarea
           id="studio-chat-message"
@@ -628,7 +605,7 @@ export default function StudioChat({
           placeholder={
             replyToJobId
               ? "Zum Beispiel: Bitte etwas heller und mit weniger Vignette."
-              : "Was möchtest du erstellen oder ändern?"
+              : "Zum Beispiel: Ich brauche einen LinkedIn-Beitrag zu unserem neuen Angebot."
           }
           disabled={busy}
           onChange={(e) => {
@@ -636,146 +613,244 @@ export default function StudioChat({
             setConfirmed(false);
           }}
         />
-        <p>
-          Bildreferenzen: {referenceCount}/{referenceLimit}
-        </p>
+        {!jobs.length && !message && (
+          <div className="actions studio-start-options">
+            {[
+              ["TEXT", "Text erstellen", "Ich möchte einen Text erstellen."],
+              ["EDIT", "Bild bearbeiten", ""],
+              ["VIDEO", "Video planen", "Ich möchte ein Video planen."],
+            ].map(([intent, label, prompt]) => (
+              <button
+                type="button"
+                className="secondary"
+                key={intent}
+                disabled={busy}
+                onClick={() => {
+                  setMediaIntent(intent as "TEXT" | "EDIT" | "VIDEO");
+                  setMessage(prompt);
+                  setConfirmed(false);
+                  document.getElementById("studio-chat-message")?.focus();
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {!editingImage && submission}
+        <details open={editingImage}>
+          <summary>Weitere Auftragsoptionen</summary>
+          <label htmlFor="studio-chat-intent">Auftrag</label>
+          <select
+            id="studio-chat-intent"
+            value={mediaIntent}
+            disabled={busy}
+            onChange={(e) => {
+              setMediaIntent(
+                e.target.value as "TEXT" | "IMAGE" | "VIDEO" | "EDIT",
+              );
+              setConfirmed(false);
+              setReplyToJobId("");
+            }}
+          >
+            <option value="TEXT">Gespräch / Text</option>
+            <option value="EDIT">Bild bearbeiten · direkt ausführen</option>
+            <option value="IMAGE">Bildidee vorbereiten</option>
+            <option value="VIDEO">Videoauftrag vorbereiten</option>
+          </select>
+          {editingImage && (
+            <p>
+              Wähle genau ein Ausgangsbild und beschreibe die gewünschte
+              Änderung. Zum Beispiel: «Schatten aufhellen und den Hund
+              hervorheben». Nur Bild, Anweisung und gegebenenfalls der oben
+              ausgewählte Vorschlag werden für diese Bearbeitung übermittelt.
+            </p>
+          )}
+          {editingImage && !!seriesId && (
+            <label>
+              Zielbeitrag
+              <select
+                value={
+                  contentId ||
+                  state.series.find((s) => s.id === seriesId)?.contents[0]
+                    ?.id ||
+                  ""
+                }
+                disabled={busy}
+                onChange={(e) => {
+                  setContentId(e.target.value);
+                  setConfirmed(false);
+                }}
+              >
+                {state.series
+                  .find((s) => s.id === seriesId)
+                  ?.contents.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          )}
+        </details>
+        {(referenceCount > 0 || editingImage) && (
+          <p>
+            Bildreferenzen: {referenceCount}/{referenceLimit}
+          </p>
+        )}
         {editingImage && referenceCount !== 1 && (
           <p role="status">
             Für die Bearbeitung genau ein Bild auswählen. Entferne
             gegebenenfalls zusätzliche Referenzen.
           </p>
         )}
-        <fieldset disabled={busy || !storageReady}>
-          <legend>Bild vom Gerät · Computer, iPad oder Smartphone</legend>
-          <p>
-            Direkt aus Fotos oder Dateien wählen. JPEG, PNG und WebP bis 8 MB /
-            20 Megapixel. HEIC bitte zuvor als JPEG exportieren.
-          </p>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={uploadRights}
-              onChange={(e) => setUploadRights(e.target.checked)}
-            />
-            Ich darf das hochgeladene Bild verwenden und in der Bibliothek
-            speichern.
-          </label>
-          <label>
-            Bild hochladen (JPEG, PNG oder WebP, maximal 8 MB)
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={!uploadRights || referenceCount >= referenceLimit}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void uploadImage(file);
-              }}
-            />
-          </label>
-        </fieldset>
-        <fieldset disabled={busy || !storageReady}>
-          <legend>Bilder aus der Bibliothek</legend>
-          {!storageReady && (
+        <details
+          open={editingImage || referenceCount > 0}
+          className="studio-image-sources"
+        >
+          <summary>Bild hinzufügen oder auswählen</summary>
+          <fieldset disabled={busy || !storageReady}>
+            <legend>Bild vom Gerät · Computer, iPad oder Smartphone</legend>
             <p>
-              Der Speicher für Uploads ist noch nicht eingerichtet. Bilder aus
-              Google Drive kannst du oben auswählen.
+              Direkt aus Fotos oder Dateien wählen. JPEG, PNG und WebP bis 8 MB
+              / 20 Megapixel. HEIC bitte zuvor als JPEG exportieren.
             </p>
-          )}
-          {images.length === 0 && <p>Noch keine Bilder in der Bibliothek.</p>}
-          {images.map((a) => (
-            <label className="check" key={a.id}>
+            <label className="check">
               <input
                 type="checkbox"
-                checked={referenceIds.includes(a.id)}
-                disabled={
-                  !referenceIds.includes(a.id) &&
-                  referenceCount >= referenceLimit
-                }
+                checked={uploadRights}
+                onChange={(e) => setUploadRights(e.target.checked)}
+              />
+              Ich darf das hochgeladene Bild verwenden und in der Bibliothek
+              speichern.
+            </label>
+            <label>
+              Bild hochladen (JPEG, PNG oder WebP, maximal 8 MB)
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={!uploadRights || referenceCount >= referenceLimit}
                 onChange={(e) => {
-                  setReferenceIds(
-                    e.target.checked
-                      ? [...referenceIds, a.id]
-                      : referenceIds.filter((id) => id !== a.id),
-                  );
-                  setConfirmed(false);
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void uploadImage(file);
                 }}
               />
-              {a.name}
-              {referenceIds.includes(a.id) && (
-                <img
-                  className="studio-reference-thumb"
-                  alt={`Ausgewählt: ${a.name}`}
-                  src={`/api/studio/assets/${a.id}`}
-                />
-              )}
             </label>
-          ))}
-        </fieldset>
-        <DriveImagePicker
-          selected={driveImages}
-          remaining={Math.max(0, referenceLimit - referenceCount)}
-          disabled={busy}
-          onChange={(files) => {
-            setDriveImages(files);
-            setConfirmed(false);
-          }}
-        />
-        {editingImage && driveImages.length > 0 && (
-          <p>
-            Das ausgewählte Drive-Bild wird für den Vorher/Nachher-Vergleich
-            zusätzlich privat in der Bibliothek gespeichert.
-          </p>
-        )}
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={confirmed}
+          </fieldset>
+          <fieldset disabled={busy || !storageReady}>
+            <legend>Bilder aus der Bibliothek</legend>
+            {!storageReady && (
+              <p>
+                Der Speicher für Uploads ist noch nicht eingerichtet. Bilder aus
+                Google Drive kannst du oben auswählen.
+              </p>
+            )}
+            {images.length === 0 && <p>Noch keine Bilder in der Bibliothek.</p>}
+            {images.map((a) => (
+              <label className="check" key={a.id}>
+                <input
+                  type="checkbox"
+                  checked={referenceIds.includes(a.id)}
+                  aria-label={a.name}
+                  disabled={
+                    !referenceIds.includes(a.id) &&
+                    referenceCount >= referenceLimit
+                  }
+                  onChange={(e) => {
+                    setReferenceIds(
+                      e.target.checked
+                        ? [...referenceIds, a.id]
+                        : referenceIds.filter((id) => id !== a.id),
+                    );
+                    setConfirmed(false);
+                  }}
+                />
+                {a.name}
+                {referenceIds.includes(a.id) && (
+                  <img
+                    className="studio-reference-thumb"
+                    alt={`Ausgewählt: ${a.name}`}
+                    src={`/api/studio/assets/${a.id}`}
+                  />
+                )}
+              </label>
+            ))}
+          </fieldset>
+          <DriveImagePicker
+            selected={driveImages}
+            remaining={Math.max(0, referenceLimit - referenceCount)}
             disabled={busy}
-            onChange={(e) => setConfirmed(e.target.checked)}
+            onChange={(files) => {
+              setDriveImages(files);
+              setConfirmed(false);
+            }}
           />
-          {editingImage ? (
-            <>
-              Ich bestätige die Nutzungsrechte, die Übermittlung des
-              ausgewählten Bildes, meiner Anweisung
-              {replyToJobId ? " und des ausgewählten GPT-Vorschlags" : ""} an
-              OpenAI sowie die kostenpflichtige Bearbeitung. Budgetreservierung:
-              USD {state.config.imageReserve.toFixed(2)}, kein garantierter
-              Preis.
-            </>
-          ) : (
-            <>
-              Ich bestätige die Nutzungsrechte und die Übermittlung von
-              Gespräch, Serienbriefing, Referenztexten und {referenceCount}{" "}
-              ausgewählten Bildern an OpenAI. Bildanalyse verursacht zusätzliche
-              Eingabetokens. Budgetreservierung: USD{" "}
-              {state.config.textReserve.toFixed(2)} pro Nachricht, kein
-              garantierter Preis.
-            </>
+          {editingImage && driveImages.length > 0 && (
+            <p>
+              Das ausgewählte Drive-Bild wird für den Vorher/Nachher-Vergleich
+              zusätzlich privat in der Bibliothek gespeichert.
+            </p>
           )}
-        </label>
-        <button
-          disabled={
-            busy ||
-            !confirmed ||
-            !message.trim() ||
-            !state.config.connected ||
-            (editingImage && (!storageReady || referenceCount !== 1))
-          }
-        >
-          {busy
-            ? editingImage
-              ? "Bild wird bearbeitet …"
-              : "GPT antwortet …"
-            : editingImage
-              ? replyToJobId
-                ? "Vorschlag jetzt am Bild ausführen"
-                : "Bild jetzt bearbeiten"
-              : mediaIntent === "TEXT"
-                ? "An GPT senden"
-                : "Auftrag mit GPT vorbereiten"}
-        </button>
+        </details>
+        {editingImage && submission}
       </form>
+      <StudioProjects
+        state={state}
+        seriesId={seriesId}
+        customerId={customerId}
+        campaignId={campaignId}
+        busy={busy}
+        onSeries={(id) => {
+          setSeriesId(id);
+          setMediaIntent("TEXT");
+          setConfirmed(false);
+          setReferenceIds([]);
+          setDriveImages([]);
+          setError("");
+          setContentId("");
+          setReplyToJobId("");
+          setCustomerId("");
+          setCampaignId("");
+        }}
+        onCustomer={(id) => {
+          setCustomerId(id);
+          setCampaignId("");
+          setConfirmed(false);
+        }}
+        onCampaign={(id) => {
+          setCampaignId(id);
+          setConfirmed(false);
+        }}
+        refresh={() => {
+          setError("");
+          void refresh().catch(() =>
+            setError("Status konnte nicht geladen werden."),
+          );
+        }}
+      />
+      <StudioKnowledge
+        state={state}
+        customerId={activeCustomerId}
+        seriesId={seriesId}
+        useMemory={useProjectMemory}
+        busy={busy}
+        onMemoryChange={(value) => {
+          setUseProjectMemory(value);
+          setConfirmed(false);
+        }}
+      />
+      <details className="muted">
+        <summary>So arbeitet GPT mit Bildern und Gesprächsverlauf</summary>
+        <p>
+          «Bild bearbeiten» führt deine Anweisung direkt am ausgewählten Bild
+          aus. Das Ergebnis bleibt als separate Datei erhalten. Bildideen und
+          Videoaufträge lassen sich als Text vorbereiten. Die letzten zwölf
+          Gesprächsrunden und bis zu fünf passende frühere Projekte werden als
+          Textkontext verwendet. Nur aktuell ausgewählte Bilder werden visuell
+          übermittelt. Die Bildauswahl bleibt bestehen, bis du sie entfernst.
+        </p>
+      </details>
     </section>
   );
 }

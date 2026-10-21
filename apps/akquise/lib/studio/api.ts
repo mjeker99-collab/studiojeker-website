@@ -17,12 +17,15 @@ import { db } from "../db";
 import { contentInput } from "../hub/input";
 import { hubActor } from "../hub/workflow";
 import { PolicyError } from "../policy";
+import { saveAssistantPreferences } from "./context";
 export async function studioMutation(
   actor: string,
   path: string[],
   body: unknown,
 ) {
   const id = path[2];
+  if (path[1] === "preferences" && path.length === 2)
+    return saveAssistantPreferences(actor, body);
   if (path[1] === "series" && path.length === 2)
     return createSeries(actor, body);
   if (path[1] === "jobs" && path.length === 2) return queueJob(actor, body);

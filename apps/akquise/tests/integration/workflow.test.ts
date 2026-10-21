@@ -34,6 +34,7 @@ const { exportNewsletter } = await import("../../lib/hub/newsletter");
 const { transferNewsletter, mailchimpAudiences } =
   await import("../../lib/hub/mailchimp");
 const studio = await import("../../lib/studio/service");
+const assistantContext = await import("../../lib/studio/context");
 const studioAssets = await import("../../lib/studio/assets");
 const studioRender = await import("../../lib/studio/render");
 const { contentInput: studioContentInput } =
@@ -1539,6 +1540,214 @@ test("Studio: keine API-Schlüssel, deduplizierte Aufträge, Fehler und Wiederau
       if (old[k] === undefined) delete process.env[k];
       else process.env[k] = old[k];
     }
+  }
+});
+
+test("Studio context: persistent personal preferences, current company knowledge and isolated project memory", async () => {
+  const envNames = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "CONTENT_DAILY_REQUEST_LIMIT",
+    "CONTENT_DAILY_BUDGET_USD",
+    "STUDIO_LOCAL_ASSETS",
+  ];
+  const old = envNames.map((key) => process.env[key]);
+  Object.assign(process.env, {
+    OPENAI_API_KEY: "synthetic",
+    CONTENT_AI_ENABLED: "true",
+    CONTENT_DAILY_REQUEST_LIMIT: "1000",
+    CONTENT_DAILY_BUDGET_USD: "1000",
+    STUDIO_LOCAL_ASSETS: "true",
+  });
+  try {
+    const { randomUUID } = await import("node:crypto");
+    const user = await db.user.findUniqueOrThrow({ where: { id: martin } });
+    const otherUser = await db.user.findUniqueOrThrow({ where: { id: nora } });
+    const prefs = await assistantContext.saveAssistantPreferences(martin, {
+      revision: user.studioContextRevision,
+      text: "Ich betreue Marketing nebenbei. Bitte kurze Erklärungen.",
+    });
+    await assert.rejects(
+      assistantContext.saveAssistantPreferences(martin, {
+        revision: user.studioContextRevision,
+        text: "Veralteter Stand",
+      }),
+      /geändert/,
+    );
+    await assert.rejects(
+      assistantContext.saveAssistantPreferences(martin, {
+        revision: prefs.revision,
+        text: "Andere Person ändern",
+        userId: nora,
+      }),
+      /Unrecognized key/,
+    );
+    assert.equal(
+      (await db.user.findUniqueOrThrow({ where: { id: nora } })).studioContext,
+      otherUser.studioContext,
+    );
+    assert.equal(
+      (await studio.studioState(martin)).assistantUser.studioContext,
+      prefs.text,
+    );
+    const customerInput = {
+      name: "SYNTHETISCH Firma A",
+      website: "",
+      contactName: "",
+      contactEmail: "",
+      notes: "",
+      status: "ACTIVE",
+      knowledge: { offers: "SYNTHETISCH Maschinenbau" },
+    };
+    const a = await customers.saveCustomer(martin, customerInput);
+    const b = await customers.saveCustomer(martin, {
+      ...customerInput,
+      name: "SYNTHETISCH Firma B",
+    });
+    const previous = await studio.createSeries(martin, {
+      ...studioBrief(),
+      title: "SYNTHETISCH Frühere Kampagne A",
+      customerId: a.id,
+    });
+    const excluded = await studio.createSeries(martin, {
+      ...studioBrief(),
+      title: "SYNTHETISCH Vertrauliche Kampagne B",
+      customerId: b.id,
+    });
+    const internal = await studio.createSeries(martin, {
+      ...studioBrief(),
+      title: "SYNTHETISCH Agentureigenes Projekt",
+    });
+    const request = (seriesId: string) => ({
+      seriesId,
+      kind: "CHAT",
+      message: "Entwickle einen Beitrag.",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [],
+      referenceRights: false,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    });
+    const fake: import("../../lib/studio/provider").AIProvider = {
+      async chat() {
+        return {
+          reply: "SYNTHETISCH Vorschlag: Maschinen im Einsatz zeigen.",
+          usage: {},
+          requestId: "synthetic-context",
+        };
+      },
+      async text() {
+        throw new Error("Unexpected text call");
+      },
+      async image() {
+        throw new Error("Unexpected image call");
+      },
+    };
+    const previousJob = await studio.queueJob(martin, request(previous.id));
+    await studio.runJob(martin, previousJob.id, fake, testStore);
+    const current = await studio.createSeries(martin, {
+      ...studioBrief(),
+      customerId: a.id,
+    });
+    const job = await studio.queueJob(martin, request(current.id));
+    await assistantContext.saveAssistantPreferences(martin, {
+      revision: prefs.revision,
+      text: "Neue Arbeitsweise nach Auftragserteilung",
+    });
+    await studio.runJob(
+      martin,
+      job.id,
+      {
+        ...fake,
+        async chat(context) {
+          const assistant = (
+            context as {
+              assistant: Awaited<
+                ReturnType<typeof assistantContext.assistantContext>
+              >;
+            }
+          ).assistant;
+          assert.equal(assistant.user.name, user.name);
+          assert.equal(assistant.user.preferences, prefs.text);
+          assert.equal(
+            assistant.customer?.knowledge.offers,
+            "SYNTHETISCH Maschinenbau",
+          );
+          assert.deepEqual(
+            assistant.projectMemory.map((project) => project.id),
+            [previous.id],
+          );
+          assert.match(
+            assistant.projectMemory[0].lastProposal,
+            /Maschinen im Einsatz/,
+          );
+          assert.ok(!JSON.stringify(assistant).includes(excluded.title));
+          assert.ok(!JSON.stringify(assistant).includes(internal.title));
+          const org = await db.studioOrganization.findUniqueOrThrow({
+            where: { id: "studiojeker" },
+          });
+          assert.equal(assistant.organization.name, org.name);
+          assert.deepEqual(
+            assistant.organization.profile.services,
+            (org.brand as { services: string }).services || "",
+          );
+          return {
+            reply: "SYNTHETISCH Fortsetzung",
+            usage: {},
+            requestId: "synthetic-recall",
+          };
+        },
+      },
+      testStore,
+    );
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: job.id } })).status,
+      "SUCCEEDED",
+    );
+    const noMemory = await studio.queueJob(martin, {
+      ...request(current.id),
+      useProjectMemory: false,
+    });
+    await studio.runJob(
+      martin,
+      noMemory.id,
+      {
+        ...fake,
+        async chat(context) {
+          const assistant = (
+            context as {
+              assistant: Awaited<
+                ReturnType<typeof assistantContext.assistantContext>
+              >;
+            }
+          ).assistant;
+          assert.deepEqual(assistant.projectMemory, []);
+          assert.equal(
+            assistant.user.preferences,
+            "Neue Arbeitsweise nach Auftragserteilung",
+          );
+          return {
+            reply: "SYNTHETISCH Ohne andere Projekte",
+            usage: {},
+            requestId: "synthetic-no-memory",
+          };
+        },
+      },
+      testStore,
+    );
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: noMemory.id } }))
+        .status,
+      "SUCCEEDED",
+    );
+    // Reading another actor's state never returns this user's private preferences.
+    assert.equal((await studio.studioState(nora)).assistantUser.id, nora);
+  } finally {
+    envNames.forEach((key, index) => {
+      if (old[index] === undefined) delete process.env[key];
+      else process.env[key] = old[index];
+    });
   }
 });
 

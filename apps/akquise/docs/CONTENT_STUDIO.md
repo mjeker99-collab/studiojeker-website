@@ -1,5 +1,7 @@
 # Studiojeker ONE: Content-Studio / Desktop V1
 
+Aktueller Einstieg, Firmen-/Benutzerwissen und Projektgedächtnis: [SIMPLE_CONTENT_STUDIO.md](SIMPLE_CONTENT_STUDIO.md).
+
 ## Umfang und Daten
 
 Bestehender Marketing Hub wird erweitert, keine parallele Anwendung. Neues Menü Content-Studio; technische Verzeichnisstruktur bleibt apps/akquise. Akquise, Newsletter/Mailchimp-Export, Kampagnen, Kalender und bisherige Freigaben bleiben erhalten. Keine automatische Veröffentlichung, Newsletter-Übertragung oder Mailzustellung.

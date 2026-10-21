@@ -83,11 +83,10 @@ test("Chat sends server context and ordered messages without tools or provider s
       const body = JSON.parse(String(init?.body));
       assert.equal(body.store, false);
       assert.equal(body.tools, undefined);
-      assert.match(body.instructions, /KEINE ausführenden Medienwerkzeuge/);
-      assert.match(
-        body.instructions,
-        /ChatGPT die Auswahl eines verfügbaren Generierungswerkzeugs/,
-      );
+      assert.match(body.instructions, /keine ausführenden Medienwerkzeuge/);
+      assert.match(body.instructions, /höchstens eine konkrete Rückfrage/);
+      assert.match(body.instructions, /datierte Referenzen/);
+      assert.match(body.instructions, /Vorschlag am Bild ausführen/);
       assert.match(body.instructions, /Kampagne A/);
       assert.deepEqual(
         body.input.map((m: { role: string }) => m.role),
