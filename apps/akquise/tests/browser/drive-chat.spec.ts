@@ -11,6 +11,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
     assets: [],
     jobs: [],
     campaigns: [],
+    customers: [],
     users: [user],
     brand: {},
     config: {

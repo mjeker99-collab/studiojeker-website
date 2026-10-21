@@ -256,6 +256,62 @@ export default function StudioChat({
       );
     }
   }
+  const submission = (
+    <>
+      <div hidden={!message.trim()}>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            disabled={busy}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
+          {editingImage ? (
+            <>
+              Ich bestätige die Nutzungsrechte, die Übermittlung des
+              ausgewählten Bildes, meiner Anweisung
+              {replyToJobId ? " und des ausgewählten GPT-Vorschlags" : ""} an
+              OpenAI sowie die kostenpflichtige Bearbeitung. Budgetreservierung:
+              USD {state.config.imageReserve.toFixed(2)}, kein garantierter
+              Preis.
+            </>
+          ) : (
+            <>
+              Ich bestätige die Nutzungsrechte und die Übermittlung von
+              Gespräch, Firmenprofil, meinen Arbeitsvorgaben
+              {useProjectMemory ? ", passenden früheren Projekten" : ""},
+              Serienbriefing, Referenztexten und {referenceCount} ausgewählten
+              Bildern an OpenAI. Bildanalyse verursacht zusätzliche
+              Eingabetokens. Budgetreservierung: USD{" "}
+              {state.config.textReserve.toFixed(2)} pro Nachricht, kein
+              garantierter Preis.
+            </>
+          )}
+        </label>
+      </div>
+      <button
+        disabled={
+          busy ||
+          !confirmed ||
+          !message.trim() ||
+          !state.config.connected ||
+          (editingImage && (!storageReady || referenceCount !== 1))
+        }
+      >
+        {busy
+          ? editingImage
+            ? "Bild wird bearbeitet …"
+            : "GPT antwortet …"
+          : editingImage
+            ? replyToJobId
+              ? "Vorschlag jetzt am Bild ausführen"
+              : "Bild jetzt bearbeiten"
+            : mediaIntent === "TEXT"
+              ? "An GPT senden"
+              : "Auftrag mit GPT vorbereiten"}
+      </button>
+    </>
+  );
   return (
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
@@ -581,6 +637,7 @@ export default function StudioChat({
             ))}
           </div>
         )}
+        {!editingImage && submission}
         <details open={editingImage}>
           <summary>Weitere Auftragsoptionen</summary>
           <label htmlFor="studio-chat-intent">Auftrag</label>
@@ -735,58 +792,7 @@ export default function StudioChat({
             </p>
           )}
         </details>
-        <div hidden={!message.trim()}>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              disabled={busy}
-              onChange={(e) => setConfirmed(e.target.checked)}
-            />
-            {editingImage ? (
-              <>
-                Ich bestätige die Nutzungsrechte, die Übermittlung des
-                ausgewählten Bildes, meiner Anweisung
-                {replyToJobId ? " und des ausgewählten GPT-Vorschlags" : ""} an
-                OpenAI sowie die kostenpflichtige Bearbeitung.
-                Budgetreservierung: USD {state.config.imageReserve.toFixed(2)},
-                kein garantierter Preis.
-              </>
-            ) : (
-              <>
-                Ich bestätige die Nutzungsrechte und die Übermittlung von
-                Gespräch, Firmenprofil, meinen Arbeitsvorgaben
-                {useProjectMemory ? ", passenden früheren Projekten" : ""},
-                Serienbriefing, Referenztexten und {referenceCount} ausgewählten
-                Bildern an OpenAI. Bildanalyse verursacht zusätzliche
-                Eingabetokens. Budgetreservierung: USD{" "}
-                {state.config.textReserve.toFixed(2)} pro Nachricht, kein
-                garantierter Preis.
-              </>
-            )}
-          </label>
-        </div>
-        <button
-          disabled={
-            busy ||
-            !confirmed ||
-            !message.trim() ||
-            !state.config.connected ||
-            (editingImage && (!storageReady || referenceCount !== 1))
-          }
-        >
-          {busy
-            ? editingImage
-              ? "Bild wird bearbeitet …"
-              : "GPT antwortet …"
-            : editingImage
-              ? replyToJobId
-                ? "Vorschlag jetzt am Bild ausführen"
-                : "Bild jetzt bearbeiten"
-              : mediaIntent === "TEXT"
-                ? "An GPT senden"
-                : "Auftrag mit GPT vorbereiten"}
-        </button>
+        {editingImage && submission}
       </form>
       <StudioProjects
         state={state}
@@ -796,6 +802,7 @@ export default function StudioChat({
         busy={busy}
         onSeries={(id) => {
           setSeriesId(id);
+          setMediaIntent("TEXT");
           setConfirmed(false);
           setReferenceIds([]);
           setDriveImages([]);
