@@ -567,3 +567,27 @@ model LibraryItem {
 
   @@index([organizationId, createdAt])
 }
+
+// Versioned website drafts; public hosting is separate from internal editing.
+model WebsiteProject {
+  id String @id @default(cuid())
+  organizationId String @default("studiojeker")
+  customerId String?
+  name String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions WebsiteVersion[]
+  @@index([organizationId, updatedAt])
+}
+model WebsiteVersion {
+  id String @id @default(cuid())
+  projectId String
+  project WebsiteProject @relation(fields: [projectId], references: [id])
+  version Int
+  payload Json
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([projectId, version])
+}

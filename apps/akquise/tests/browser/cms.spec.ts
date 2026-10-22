@@ -35,6 +35,7 @@ test("CMS overview, responsive controls, import status and provider failure", as
           integrations: {},
         },
       });
+    if (path === "/api/websites") return route.fulfill({json:{projects:[],customers:[],config:{connected:false,reserveUsd:0.3}}});
     if (path === "/api/cms/state") {
       cmsRequests++;
       return route.fulfill(
