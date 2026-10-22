@@ -134,6 +134,41 @@
   }
 }
 
+@media (max-width: 63.9375rem) {
+  .copy {
+    padding-bottom: var(--space-4);
+  }
+}
+
+/*
+ * Homepage + About square hero clips (Vimeo 1:1).
+ * Photo column is the square plane; cyan bar is a sibling grid track that
+ * stretches to the photo height — flush left, no layout offset of the video.
+ * Scoped class so KI / Abo / Service keep shared 4/3 (stacked) / 5/4 (split).
+ */
+.squareHeroMedia {
+  --hero-media-aspect: 1 / 1;
+}
+
+.squareHeroMedia .media {
+  /* Aspect lives on .photo so cyan width does not skew the video plane */
+  aspect-ratio: auto;
+  width: 100%;
+  height: auto;
+  max-width: min(
+    100%,
+    calc(var(--cyan-bar-width) + (100svh - var(--header-height)))
+  );
+}
+
+.squareHeroMedia .photo {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: auto;
+  max-height: calc(100svh - var(--header-height));
+  max-width: min(100%, calc(100svh - var(--header-height)));
+}
+
 @media (min-width: 64rem) {
   .grid {
     grid-template-columns: var(--hero-grid-copy) var(--hero-grid-media);
@@ -144,19 +179,16 @@
     padding-left: max(var(--container-padding-x), 3.25%);
     max-width: 38rem;
   }
-}
-
-@media (max-width: 63.9375rem) {
-  .copy {
-    padding-bottom: var(--space-4);
-  }
 
   /*
-   * Homepage (+ About via .squareHeroMedia): square media plane on stacked
-   * layouts. Scoped so KI / Abo / Service keep the shared 4/3 token.
-   * Cyan bar stays a grid column — it does not offset the cover frame.
+   * Split heroes: keep the square media inside the viewport height.
+   * justify-self end so a capped square stays flush to the right edge.
    */
-  .squareHeroMedia {
-    --hero-media-aspect: 1 / 1;
+  .squareHeroMedia .mediaWrap {
+    max-width: min(
+      100%,
+      calc(var(--cyan-bar-width) + (100svh - var(--header-height)))
+    );
+    justify-self: end;
   }
 }

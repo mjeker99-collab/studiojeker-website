@@ -1,9 +1,9 @@
 /*
  * Absolute fill of the hero .photo slot.
  * One shared .frame is cover-sized to the clip’s intrinsic aspect by
- * HeroVimeoLoop.tsx — poster and iframe both fill that frame with identical
- * footprint / object-position so the handoff never jumps. Poster stays
- * visible until a real first frame paints.
+ * HeroVimeoLoop.tsx (top/left + slight overscale — never transform, which
+ * offsets iframe paint in Safari). Poster uses object-fit: cover; iframe
+ * fills the frame box (object-fit cannot crop Vimeo internals).
  */
 .root {
   position: absolute;
@@ -15,31 +15,25 @@
   background: var(--color-neutral);
 }
 
-/* Shared cover plane — width/height set by ResizeObserver; centered in .root */
+/* Cover plane — JS sets width/height/top/left; default fills .root */
 .frame {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   overflow: hidden;
-  transform: translate(-50%, -50%);
-  /* Intrinsic size before JS measures — avoids zero-size flash */
+  transform: none;
   width: 100%;
   height: 100%;
-}
-
-.poster,
-.iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Same crop token as static hero images — never distort on handoff */
-  object-position: var(--hero-media-object-position, center center);
 }
 
 .poster {
+  position: absolute;
+  inset: 0;
   z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--hero-media-object-position, center center);
   opacity: 1;
   transition: opacity 280ms var(--ease-standard, ease);
 }
@@ -49,7 +43,12 @@
 }
 
 .iframe {
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  width: 100%;
+  height: 100%;
+  /* object-fit has no effect on iframe document pixels — size .frame instead */
   border: 0;
   opacity: 0;
   transition: opacity 280ms var(--ease-standard, ease);
