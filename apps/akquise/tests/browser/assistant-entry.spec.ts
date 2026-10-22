@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { mkdirSync } from "node:fs";
 
 test("GPT entry points preserve input and require an explicit confirmed request", async ({
   page,
 }) => {
+  test.setTimeout(90000);
   const writes: string[] = [];
   let failStudio = true;
   await page.route("**/api/**", async (route) => {
@@ -110,6 +112,11 @@ test("GPT entry points preserve input and require an explicit confirmed request"
         (await new AxeBuilder({ page }).include(".assistant-entry").analyze())
           .violations,
       ).toEqual([]);
+      mkdirSync(".local/hub-screenshots", { recursive: true });
+      await page.screenshot({
+        path: `.local/hub-screenshots/studio-assistant-${section.replaceAll(" ", "-")}-${width}.png`,
+        fullPage: true,
+      });
     }
     await page.mouse.move(0, 0);
     await expect(
