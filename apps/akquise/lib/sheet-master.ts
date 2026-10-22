@@ -14,6 +14,7 @@ export function mapMasterSheet(values: string[][]) {
     throw new Error("Masterliste: erwartet Kontakte!A:O mit 15 Spalten in der bekannten Reihenfolge.");
   }
   const mapped: Record<string, string>[] = [];
+  const dedupe = new Map<string, { index: number; score: number }>();
   for (const [i, raw] of rows.entries()) {
     const cells = masterHeaders.map((_, col) => (raw[col] ?? "").trim());
     if (!cells.some(Boolean)) continue;
@@ -29,7 +30,7 @@ export function mapMasterSheet(values: string[][]) {
     ].join("\n");
     if (notes.length > 4000)
       throw new Error(`Masterliste Zeile ${i + 2}: Notizen zu lang.`);
-    mapped.push({
+    const contact = {
       organisation: cells[2],
       region: cells[3],
       firstName: person[0],
@@ -41,7 +42,22 @@ export function mapMasterSheet(values: string[][]) {
       // Conservative categorisation. Never grants legal approval.
       legalCategory: /^(?:Kanton Solothurn|Stadt |Bürgergemeinde )/i.test(cells[2])
         ? "PUBLIC_AUTHORITY" : "UNASSESSED",
-    });
+    };
+    // Two historic rows can describe the same person with slightly different
+    // organisation labels. Keep the better documented row, never send twice.
+    const identity = [person.join(" "), cells[4]]
+      .map((part) => part.normalize("NFKC").toLowerCase().trim())
+      .join("|");
+    const score = (cells[11] && cells[12] ? 100 : 0) +
+      (cells[8] ? 10 : 0) + cells.filter(Boolean).length;
+    const prior = dedupe.get(identity);
+    if (!prior) {
+      dedupe.set(identity, { index: mapped.length, score });
+      mapped.push(contact);
+    } else if (score > prior.score) {
+      mapped[prior.index] = contact;
+      dedupe.set(identity, { index: prior.index, score });
+    }
   }
   return mapped;
 }
