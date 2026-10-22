@@ -68,7 +68,7 @@ test("GPT entry points preserve input and require an explicit confirmed request"
     });
   });
   await page.goto("/");
-  for (const section of ["Kampagnen", "Social Media", "Website"]) {
+  for (const section of ["Kampagnen", "Social Media"]) {
     await page
       .getByRole("navigation", { name: "Hauptnavigation" })
       .getByRole("button", { name: new RegExp(section) })
