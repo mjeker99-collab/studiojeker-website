@@ -391,6 +391,7 @@ export default function MailStudio({
               <label>
                 Rechtsgrundlage und Nachweis
                 <textarea
+                  aria-label="Rechtsgrundlage und Nachweis"
                   rows={3}
                   maxLength={4000}
                   value={rationale}
