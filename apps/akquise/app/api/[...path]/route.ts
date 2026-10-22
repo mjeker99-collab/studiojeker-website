@@ -1,3 +1,4 @@
+import { assistCustomer } from "@/lib/customer-assistant/service";
 import { conceptState, conceptMutation } from "@/lib/concepts/service";
 import { sendInternalSmtpTest } from "@/lib/smtp-test";
 import { conceptInput } from "@/lib/concepts/input";
@@ -464,6 +465,10 @@ async function handler(
       return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "concepts")
       return NextResponse.json(await conceptMutation(user.id, path, body));
+    if (route === "customers/assist")
+      return NextResponse.json(await assistCustomer(user.id, body), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "customers")
       return NextResponse.json(await saveCustomer(user.id, body));
     if (path[0] === "customers" && path.length === 2)

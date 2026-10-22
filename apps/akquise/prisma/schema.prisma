@@ -484,8 +484,8 @@ model StudioJob {
   id                String             @id @default(cuid())
   organizationId    String             @default("studiojeker")
   organization      StudioOrganization @relation(fields: [organizationId], references: [id])
-  seriesId          String
-  series            StudioSeries       @relation(fields: [seriesId], references: [id])
+  seriesId          String?
+  series            StudioSeries?      @relation(fields: [seriesId], references: [id])
   requestKey        String             @unique
   kind              String
   status            String             @default("QUEUED")

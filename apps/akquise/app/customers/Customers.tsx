@@ -1,4 +1,5 @@
 "use client";
+import CustomerAssistant from "./CustomerAssistant";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   customerKnowledgeSchema,
@@ -46,6 +47,8 @@ export default function Customers() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const [formSession, setFormSession] = useState(0);
   async function refresh() {
     const response = await fetch("/api/customers/state", { cache: "no-store" });
     const value = await response.json();
@@ -74,7 +77,7 @@ export default function Customers() {
   }, []);
   async function save(event: FormEvent) {
     event.preventDefault();
-    if (!form) return;
+    if (!form || assistantBusy) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -107,7 +110,9 @@ export default function Customers() {
       <div className="section-head">
         <h2>Interne Kundenprofile</h2>
         <button
+          disabled={busy || assistantBusy}
           onClick={() => {
+            setFormSession((v) => v + 1);
             setEditing(null);
             setForm({ ...blank });
           }}
@@ -135,6 +140,7 @@ export default function Customers() {
           <label>
             Firma / Kundenname
             <input
+              disabled={busy || assistantBusy}
               required
               maxLength={200}
               value={form.name}
@@ -144,7 +150,18 @@ export default function Customers() {
           <label>
             Website (HTTPS)
             <input
+              disabled={busy || assistantBusy}
               type="url"
+              onBlur={() => {
+                if (
+                  form.website.trim() &&
+                  !/^https?:\/\//i.test(form.website.trim())
+                )
+                  setForm({
+                    ...form,
+                    website: `https://${form.website.trim()}`,
+                  });
+              }}
               value={form.website}
               onChange={(e) => setForm({ ...form, website: e.target.value })}
             />
@@ -189,7 +206,7 @@ export default function Customers() {
               <option value="INACTIVE">Inaktiv</option>
             </select>
           </label>
-          <fieldset disabled={busy} style={{ minWidth: 0 }}>
+          <fieldset disabled={busy || assistantBusy} style={{ minWidth: 0 }}>
             <legend>Unternehmenswissen für die KI</legend>
             <p>
               Diese Angaben werden im Konzeptgespräch nach deiner
@@ -197,6 +214,19 @@ export default function Customers() {
               offen. Gestaltungsregeln beschreiben Vorgaben; sie ersetzen keine
               Logo- oder Schriftdateien.
             </p>
+            <CustomerAssistant
+              key={formSession}
+              name={form.name}
+              website={form.website}
+              knowledge={form.knowledge}
+              disabled={busy}
+              onBusy={setAssistantBusy}
+              onChange={(knowledge) =>
+                setForm((current) =>
+                  current ? { ...current, knowledge } : current,
+                )
+              }
+            />
             {knowledgeFields.map(([key, label]) => (
               <label key={key}>
                 {label}
@@ -215,9 +245,10 @@ export default function Customers() {
               </label>
             ))}
           </fieldset>
-          <button disabled={busy}>Speichern</button>{" "}
+          <button disabled={busy || assistantBusy}>Speichern</button>{" "}
           <button
             type="button"
+            disabled={busy || assistantBusy}
             className="secondary"
             onClick={() => {
               setEditing(null);
@@ -250,7 +281,9 @@ export default function Customers() {
             </p>
             <button
               className="secondary"
+              disabled={busy || assistantBusy}
               onClick={() => {
+                setFormSession((v) => v + 1);
                 setEditing(c);
                 setForm({
                   name: c.name,
