@@ -24,6 +24,7 @@ const {
 const { parseImport } = await import("../../lib/import");
 const { prepareContacts } =
   await import("../../lib/contact-preparation-service");
+const { mailReview } = await import("../../lib/mail-review");
 const { execFileSync } = await import("node:child_process");
 // Load all modules before registering hooks/tests: late top-level awaits can
 // let the node:test runner finish a filtered suite and drop its schema early.
@@ -104,6 +105,116 @@ async function prepared(suffix: string) {
   await reviewDraft(nora, d.id, 1, "APPROVED", true);
   return { c, d };
 }
+test("Globale Mailprüfung: 24 exakte Versionen, gemeinsame Grundlage und kein Versand", async () => {
+  const ids: string[] = [];
+  for (let i = 0; i < 24; i++) {
+    const c = await saveContact(martin, input(`global-${i}`));
+    ids.push((await newDraft(martin, c.id)).id);
+  }
+  const preview = await mailReview(martin, "preview", { ids });
+  assert.ok(preview.rows);
+  assert.equal(preview.rows.length, 24);
+  assert.ok(preview.rows.every((r) => r.needsLegal && !r.issues.length));
+  const items = preview.rows.map(({ id, version, hash, contactRevision }) => ({
+    id,
+    version,
+    hash,
+    contactRevision,
+  }));
+  await assert.rejects(mailReview(martin, "approve", { items, read: false }));
+  const withoutLegal = await mailReview(martin, "approve", {
+    items: items.slice(0, 1),
+    read: true,
+  });
+  assert.equal(withoutLegal.results?.[0].ok, false);
+  const approved = await mailReview(martin, "approve", {
+    items,
+    read: true,
+    legal: {
+      confirmed: true,
+      rationale:
+        "Synthetischer Nachweis gilt ausdrücklich für diese Testkontakte.",
+      procurementReviewed: false,
+    },
+  });
+  assert.equal(approved.results?.filter((r) => r.ok).length, 24);
+  assert.equal(
+    await db.approval.count({
+      where: { draftId: { in: ids }, status: "APPROVED" },
+    }),
+    24,
+  );
+  assert.equal(await db.delivery.count({ where: { draftId: { in: ids } } }), 0);
+  assert.equal(
+    await db.mailQueueItem.count({ where: { draftId: { in: ids } } }),
+    0,
+  );
+});
+test("Globale Prüfung blockiert geänderte Vorschauen, Sperren und ungeprüfte Behörden ohne andere Freigaben zu verlieren", async () => {
+  const contacts = [];
+  const ids = [];
+  for (let i = 0; i < 5; i++) {
+    const c = await saveContact(martin, {
+      ...input(`global-stale-${i}`),
+      publicAuthority: i === 3,
+    });
+    contacts.push(c);
+    ids.push((await newDraft(martin, c.id)).id);
+  }
+  const preview = await mailReview(martin, "preview", { ids });
+  assert.ok(preview.rows);
+  const items = preview.rows.map(({ id, version, hash, contactRevision }) => ({
+    id,
+    version,
+    hash,
+    contactRevision,
+  }));
+  await editDraft(martin, ids[0], 1, {
+    recipient: contacts[0].email,
+    subject: "Neuer Betreff",
+    body: "Geänderter Text",
+  });
+  await saveContact(
+    martin,
+    { ...input("global-stale-1"), hook: "Eine geänderte Kontaktangabe." },
+    contacts[1].id,
+    contacts[1].revision,
+  );
+  await suppress(martin, contacts[2].email, "Synthetischer Widerspruch");
+  const result = await mailReview(martin, "approve", {
+    items,
+    read: true,
+    legal: {
+      confirmed: true,
+      rationale:
+        "Synthetischer dokumentierter Nachweis für die gewählten Kontakte.",
+      procurementReviewed: false,
+    },
+  });
+  assert.deepEqual(
+    result.results?.map((r) => r.ok),
+    [false, false, false, false, true],
+  );
+  for (const c of contacts.slice(0, 4)) {
+    assert.equal(await db.legalReview.count({ where: { contactId: c.id } }), 0);
+  }
+  const updated = await mailReview(martin, "preview", { ids: [ids[2]] });
+  assert.ok(updated.rows?.[0].issues.some((i) => i.includes("Sperrliste")));
+  await assert.rejects(
+    mailReview(martin, "preview", { ids: [ids[4], ids[4]] }),
+  );
+  await assert.rejects(
+    mailReview(martin, "approve", {
+      items: [items[4]],
+      read: true,
+      legal: {
+        confirmed: false,
+        rationale: "Synthetisch",
+        procurementReviewed: false,
+      },
+    }),
+  );
+});
 test("Berechtigungen: unbekannte und deaktivierte Benutzer sind blockiert", async () => {
   await assert.rejects(
     saveContact("unbekannt", input("no-user")),

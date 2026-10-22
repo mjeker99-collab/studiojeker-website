@@ -1,6 +1,7 @@
 "use client";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
+import MailStudio from "./MailStudio";
 import ContactPreparation from "./ContactPreparation";
 import Hub from "./hub/Hub";
 import Website from "./cms/Website";
@@ -57,6 +58,7 @@ const nav = [
   "Einstellungen",
 ];
 const acquisitionTabs = [
+  "Mail-Studio",
   "Kontakte",
   "E-Mail-Entwürfe",
   "Freigaben",
@@ -424,7 +426,7 @@ export default function App() {
                   !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
                 )
                   return;
-                setTab(n === "Kontakte/Akquise" ? "Kontakte" : n);
+                setTab(n === "Kontakte/Akquise" ? "Mail-Studio" : n);
                 setNotice("");
                 setError("");
                 setSelected([]);
@@ -448,7 +450,7 @@ export default function App() {
           <p>
             <span className="dot" /> {mailLabel}
           </p>
-          <p>Nachrichtenversionen einzeln prüfen</p>
+          <p>Persönliche Mails gemeinsam prüfen</p>
           <div className="profile">
             <span className="avatar">
               {data.user.name
@@ -684,8 +686,22 @@ export default function App() {
               </section>
             </>
           )}
+          {tab === "Mail-Studio" && (
+            <MailStudio
+              drafts={data.drafts}
+              contacts={data.contacts}
+              refresh={refresh}
+              openDraft={(id) => {
+                const d = data.drafts.find((d) => d.id === id);
+                if (d) openDraft(d);
+              }}
+            />
+          )}
           {tab === "Kontakte" && (
             <section className="panel">
+              <button onClick={() => setTab("Mail-Studio")}>
+                Weiter zur gemeinsamen Mailprüfung
+              </button>
               <div className="toolbar">
                 <label className="search">
                   Suche
