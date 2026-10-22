@@ -1,6 +1,6 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 const url = new URL(process.env.DATABASE_URL!);
@@ -12,7 +12,9 @@ process.env.DATABASE_URL = url.toString();
 const { db } = await import("../../lib/db");
 const { websiteMutation, websiteState, websiteVersion, assistWebsite } =
   await import("../../lib/websites/service");
-const { blankWebsite } = await import("../../lib/websites/input");
+const { blankWebsite, blankSection, blankPage } =
+  await import("../../lib/websites/input");
+const { publicWebsite } = await import("../../lib/websites/publication");
 const { ProviderFailure } = await import("../../lib/studio/provider");
 let actor: string;
 before(async () => {
@@ -30,8 +32,10 @@ before(async () => {
       },
     })
   ).id;
-  await db.studioOrganization.create({
-    data: { id: "studiojeker", name: "Studiojeker", brand: {} },
+  await db.studioOrganization.upsert({
+    where: { id: "studiojeker" },
+    create: { id: "studiojeker", name: "Studiojeker", brand: {} },
+    update: {},
   });
   process.env.CONTENT_AI_ENABLED = "true";
   process.env.OPENAI_API_KEY = "synthetic-never-sent";
@@ -52,6 +56,120 @@ async function create() {
   assert.ok("id" in p);
   return p.id;
 }
+test("Public snapshots exclude drafts, restrict media, enforce revisions and revoke immediately", async () => {
+  const id = await create();
+  const bytes = Buffer.from("synthetic-public-image");
+  const asset = await db.studioAsset.create({
+    data: {
+      organizationId: "studiojeker",
+      name: "test.png",
+      mime: "image/png",
+      size: bytes.length,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      objectKey: `studiojeker/${randomUUID()}`,
+      userId: actor,
+      kind: "ORIGINAL",
+    },
+  });
+  const doc = {
+    ...blankWebsite,
+    briefing: "PRIVATE BRIEFING",
+    pages: [
+      {
+        ...blankPage,
+        headline: "Published heading",
+        sections: [
+          { ...blankSection, imageAssetId: asset.id, imageAlt: "Testbild" },
+        ],
+      },
+    ],
+  };
+  await websiteMutation(actor, ["websites", id], { version: 1, document: doc });
+  const input = {
+    version: 2,
+    revision: 0,
+    slug: "synthetic-test",
+    confirmedPublic: true,
+  };
+  await assert.rejects(publicWebsite(input.slug, ["index.html"]));
+  await assert.rejects(
+    websiteMutation(actor, ["websites", id, "publish"], {
+      ...input,
+      confirmedPublic: false,
+    }),
+  );
+  await websiteMutation(actor, ["websites", id, "publish"], input);
+  const first = await publicWebsite(input.slug, ["index.html"]);
+  assert.match(String(first.body), /Published heading/);
+  assert.ok(!String(first.body).includes("PRIVATE BRIEFING"));
+  await assert.rejects(publicWebsite(input.slug, ["studioone.json"]));
+  await assert.rejects(
+    publicWebsite(input.slug, ["media", "unrelated-private-image"]),
+  );
+  const store = {
+    get: async (key: string) => {
+      assert.equal(key, asset.objectKey);
+      return bytes;
+    },
+    put: async () => {},
+    remove: async () => {},
+  };
+  assert.deepEqual(
+    (await publicWebsite(input.slug, ["media", asset.id], store)).body,
+    new Uint8Array(bytes),
+  );
+  await assert.rejects(
+    publicWebsite(input.slug, ["media", asset.id], {
+      ...store,
+      get: async () => Buffer.from("changed"),
+    }),
+  );
+  const draft = {
+    ...doc,
+    pages: [{ ...doc.pages[0], headline: "PRIVATE DRAFT" }],
+  };
+  await websiteMutation(actor, ["websites", id], {
+    version: 2,
+    document: draft,
+  });
+  assert.ok(
+    !String((await publicWebsite(input.slug, ["index.html"])).body).includes(
+      "PRIVATE DRAFT",
+    ),
+  );
+  await assert.rejects(
+    websiteMutation(actor, ["websites", id, "publish"], input),
+  );
+  const other = await create();
+  await assert.rejects(
+    websiteMutation(actor, ["websites", other, "publish"], {
+      ...input,
+      version: 1,
+    }),
+  );
+  await assert.rejects(
+    websiteMutation("unknown-user", ["websites", id, "publish"], {
+      ...input,
+      version: 3,
+      revision: 1,
+    }),
+  );
+  await websiteMutation(actor, ["websites", id, "publish"], {
+    ...input,
+    version: 3,
+    revision: 1,
+  });
+  assert.match(
+    String((await publicWebsite(input.slug, ["index.html"])).body),
+    /PRIVATE DRAFT/,
+  );
+  await websiteMutation(actor, ["websites", id, "unpublish"], {
+    version: 3,
+    revision: 2,
+  });
+  await assert.rejects(publicWebsite(input.slug, ["index.html"]));
+  await assert.rejects(publicWebsite(input.slug, ["media", asset.id], store));
+});
 test("Website persistence, concurrent edits, restoration and access boundaries", async () => {
   const id = await create();
   assert.equal(

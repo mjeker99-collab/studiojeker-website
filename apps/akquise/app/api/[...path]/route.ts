@@ -1,5 +1,5 @@
 import { websiteList, websiteState, websiteVersion, websiteMutation } from "@/lib/websites/service";
-import { websiteZip } from "@/lib/websites/render";
+import { websiteExport } from "@/lib/websites/publication";
 import { assistCustomer } from "@/lib/customer-assistant/service";
 import { conceptState, conceptMutation } from "@/lib/concepts/service";
 import { sendInternalSmtpTest } from "@/lib/smtp-test";
@@ -144,7 +144,7 @@ async function handler(
         const version=z.coerce.number().int().positive().parse(req.nextUrl.searchParams.get("version"));
         const document=await websiteVersion(user.id,path[1],version);
         if(path[2] === "version") return NextResponse.json(document,{headers});
-        return new NextResponse(new Uint8Array(await websiteZip(document)),{headers:{...headers,"Content-Type":"application/zip","Content-Disposition":`attachment; filename="website-v${version}.zip"`}});
+        return new NextResponse(new Uint8Array(await websiteExport(user.id, document)),{headers:{...headers,"Content-Type":"application/zip","Content-Disposition":`attachment; filename="website-v${version}.zip"`}});
       }
       throw new PolicyError("Nicht gefunden.",404);
     }

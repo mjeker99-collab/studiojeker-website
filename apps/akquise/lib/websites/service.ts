@@ -10,6 +10,7 @@ import { ProviderFailure } from "../studio/provider";
 import { customerKnowledgeContext } from "../customer-knowledge";
 import { assistantInput, validatedDocument, suggestionSchema } from "./input";
 import { generateWebsite, type WebsiteContext } from "./provider";
+import { publicationMutation } from "./publication";
 const json = (v: unknown) =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
 const versionInput = z.object({ version: z.number().int().positive() });
@@ -55,7 +56,7 @@ async function save(
 }
 export async function websiteList(actor: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
-  const [projects, customers] = await Promise.all([
+  const [projects, customers, images] = await Promise.all([
     db.websiteProject.findMany({
       where: { organizationId: ORG },
       orderBy: { updatedAt: "desc" },
@@ -65,11 +66,22 @@ export async function websiteList(actor: string) {
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    db.studioAsset.findMany({
+      where: {
+        organizationId: ORG,
+        deletedAt: null,
+        mime: { in: ["image/jpeg", "image/png", "image/webp"] },
+      },
+      select: { id: true, name: true, mime: true },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
   ]);
   const c = studioConfig();
   return {
     projects,
     customers,
+    images,
     config: {
       connected: c.connected,
       model: c.textModel,
@@ -105,6 +117,16 @@ export async function websiteState(actor: string, id: string) {
     ]);
     return {
       ...p,
+      publication: await tx.websitePublication.findUnique({
+        where: { projectId: id },
+        select: {
+          slug: true,
+          version: true,
+          revision: true,
+          active: true,
+          publishedAt: true,
+        },
+      }),
       document: validatedDocument.parse(p.versions[0].payload),
       versions,
       jobs: jobs.map((j) => {
@@ -180,6 +202,8 @@ export async function websiteMutation(
     });
   }
   const id = path[1];
+  if (path.length === 3 && ["publish", "unpublish"].includes(path[2]))
+    return publicationMutation(actor, id, path[2], raw);
   if (path.length === 2) {
     const input = versionInput
       .extend({ document: validatedDocument })
@@ -353,12 +377,10 @@ export async function assistWebsite(
         ? customerKnowledgeContext(customer)
         : { name: "Studiojeker" },
       message: input.message,
-      history: history
-        .reverse()
-        .map((j) => ({
-          message: (j.input as { message: string }).message,
-          reply: suggestionSchema.parse(j.result).reply,
-        })),
+      history: history.reverse().map((j) => ({
+        message: (j.input as { message: string }).message,
+        reply: suggestionSchema.parse(j.result).reply,
+      })),
     };
     const job = await tx.studioJob.create({
       data: {

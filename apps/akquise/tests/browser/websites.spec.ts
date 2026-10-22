@@ -15,6 +15,12 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
   let jobs: unknown[] = [];
   let aiCalls = 0;
   let failSave = false;
+  let publication: {
+    slug: string;
+    version: number;
+    revision: number;
+    active: boolean;
+  } | null = null;
   const proposal = {
     ...structuredClone(blankWebsite),
     name: "Testbetrieb",
@@ -44,6 +50,7 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     document: documents.at(-1),
     versions: documents.map((_, i) => ({ version: i + 1 })).reverse(),
     jobs,
+    publication,
   });
   await page.route("**/api/**", async (route) => {
     const request = route.request(),
@@ -68,11 +75,42 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
         json: {
           projects: documents.length ? [project()] : [],
           customers: [],
+          images: [
+            { id: "test-image", name: "Eigenes Bild.png", mime: "image/png" },
+          ],
           config: { connected: true, model: "synthetic", reserveUsd: 0.3 },
         },
       });
     if (path === "/api/websites/web1" && request.method() === "GET")
       return route.fulfill({ json: project() });
+    if (path === "/api/studio/assets/test-image")
+      return route.fulfill({
+        contentType: "image/png",
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      });
+    if (path.endsWith("/publish")) {
+      const input = request.postDataJSON();
+      expect(input.confirmedPublic).toBe(true);
+      expect(input.version).toBe(documents.length);
+      publication = {
+        slug: input.slug,
+        version: input.version,
+        revision: (publication?.revision || 0) + 1,
+        active: true,
+      };
+      return route.fulfill({ json: { ok: true } });
+    }
+    if (path.endsWith("/unpublish")) {
+      publication = {
+        ...publication!,
+        active: false,
+        revision: publication!.revision + 1,
+      };
+      return route.fulfill({ json: { ok: true } });
+    }
     if (
       ["/api/websites", "/api/websites/web1"].includes(path) &&
       request.method() === "POST"
@@ -157,7 +195,7 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     .getByLabel("Dein Auftrag an GPT")
     .fill("Erstelle die beiden Seiten");
   await expect(gpt).toBeDisabled();
-  await studio.getByRole("checkbox").check();
+  await studio.getByRole("checkbox", { name: /Website, Kundenwissen/ }).check();
   await gpt.click();
   await expect(
     studio.getByText("Startseite und Kontakt ergänzt.", { exact: false }),
@@ -208,6 +246,54 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
   await expect(
     studio.getByLabel("Hauptüberschrift", { exact: true }),
   ).toHaveValue("Von Hand bearbeitet");
+  const publishing = studio.getByRole("region", {
+    name: "Veröffentlichung",
+    exact: true,
+  });
+  await studio.getByText("SEO & Gestaltung", { exact: true }).click();
+  await studio
+    .getByLabel("Gestaltungsvorlage", { exact: true })
+    .selectOption("CAMPAIGN");
+  await expect(
+    publishing.getByRole("button", { name: "Jetzt veröffentlichen" }),
+  ).toBeDisabled();
+  await studio
+    .getByLabel("Gestaltungsvorlage", { exact: true })
+    .selectOption("EDITORIAL");
+  await studio
+    .getByLabel("Bild aus der Mediathek", { exact: true })
+    .selectOption("test-image");
+  await studio
+    .getByLabel("Bildbeschreibung", { exact: true })
+    .fill("Eigenes Testbild");
+  await expect(
+    studio
+      .frameLocator("iframe")
+      .getByRole("img", { name: "Eigenes Testbild" }),
+  ).toHaveAttribute("src", /^data:image\/png;base64,/);
+  await studio
+    .getByLabel("Bild aus der Mediathek", { exact: true })
+    .selectOption("");
+  await studio.getByLabel("Bildbeschreibung", { exact: true }).fill("");
+  await publishing
+    .getByLabel("Webadresse", { exact: true })
+    .fill("testbetrieb");
+  await expect(
+    publishing.getByRole("button", { name: "Jetzt veröffentlichen" }),
+  ).toBeDisabled();
+  await publishing.getByRole("checkbox").check();
+  await publishing
+    .getByRole("button", { name: "Jetzt veröffentlichen" })
+    .click();
+  await expect(
+    publishing.getByRole("link", { name: /Veröffentlichte Website/ }),
+  ).toHaveAttribute("href", "/sites/testbetrieb/index.html");
+  await publishing
+    .getByRole("button", { name: "Veröffentlichung zurückziehen" })
+    .click();
+  await expect(
+    publishing.getByRole("link", { name: /Veröffentlichte Website/ }),
+  ).toHaveCount(0);
   for (const width of [1440, 1180, 820, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(

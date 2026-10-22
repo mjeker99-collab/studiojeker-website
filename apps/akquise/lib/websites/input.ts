@@ -39,6 +39,7 @@ export const sectionSchema = z
     body: text,
     layout: z.enum(["TEXT", "SPLIT", "BANNER"]),
     imageUrl,
+    imageAssetId: z.string().max(100).nullable().default(null),
     imageAlt: z.string().trim().max(300),
     ctaLabel: z.string().trim().max(100),
     ctaUrl: linkUrl,
@@ -62,6 +63,9 @@ export const websiteDocument = z
     language: z.enum(["de-CH", "de", "en", "fr", "it"]),
     accent: z.string().regex(/^#[0-9a-fA-F]{6}$/),
     style: z.enum(["LIGHT", "DARK"]),
+    template: z
+      .enum(["EDITORIAL", "CAMPAIGN", "PORTFOLIO"])
+      .default("EDITORIAL"),
     footer: text,
     pages: z.array(pageSchema).min(1).max(10),
   })
@@ -81,7 +85,7 @@ export const validatedDocument = websiteDocument.superRefine((v, ctx) => {
     });
   for (const [i, p] of v.pages.entries())
     for (const [j, s] of p.sections.entries()) {
-      if (s.imageUrl && !s.imageAlt)
+      if ((s.imageUrl || s.imageAssetId) && !s.imageAlt)
         ctx.addIssue({
           code: "custom",
           message: "Bildbeschreibung fehlt.",
@@ -111,6 +115,7 @@ export const blankSection: z.infer<typeof sectionSchema> = {
   body: "",
   layout: "TEXT",
   imageUrl: "",
+  imageAssetId: null,
   imageAlt: "",
   ctaLabel: "",
   ctaUrl: "",
@@ -130,6 +135,7 @@ export const blankWebsite: WebsiteDocument = {
   language: "de-CH",
   accent: "#00cbdc",
   style: "LIGHT",
+  template: "EDITORIAL",
   footer: "",
   pages: [blankPage],
 };

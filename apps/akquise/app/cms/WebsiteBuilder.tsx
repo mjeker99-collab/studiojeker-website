@@ -10,6 +10,7 @@ import {
 } from "@/lib/websites/input";
 import { websiteHtml } from "@/lib/websites/render";
 import type { websiteList, websiteState } from "@/lib/websites/service";
+import WebsitePublication from "./WebsitePublication";
 type List = Awaited<ReturnType<typeof websiteList>>;
 type Project = Awaited<ReturnType<typeof websiteState>>;
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -39,6 +40,8 @@ export default function WebsiteBuilder() {
     [consent, setConsent] = useState(false),
     [previewJob, setPreviewJob] = useState("");
   const [proposalPage, setProposalPage] = useState(0);
+  const [media, setMedia] = useState<Record<string, string>>({});
+  const [mediaError, setMediaError] = useState("");
   const [mobile, setMobile] = useState(false),
     [restoreVersion, setRestoreVersion] = useState("");
   const dirty = project
@@ -135,12 +138,51 @@ export default function WebsiteBuilder() {
   const proposal = project?.jobs.find((j) => j.id === previewJob)?.result
     ?.document;
   const shown = proposal || doc;
+  const assetIds = JSON.stringify([
+    ...new Set(
+      shown.pages.flatMap((p) =>
+        p.sections.flatMap((s) => (s.imageAssetId ? [s.imageAssetId] : [])),
+      ),
+    ),
+  ]);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function resolveImages() {
+      const resolved: Record<string, string> = {};
+      for (const id of JSON.parse(assetIds) as string[]) {
+        const response = await fetch(
+          `/api/studio/assets/${encodeURIComponent(id)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok)
+          throw new Error("Ein Mediathek-Bild konnte nicht geladen werden.");
+        const blob = await response.blob();
+        if (!["image/jpeg", "image/png", "image/webp"].includes(blob.type))
+          throw new Error("Bildformat nicht unterstützt.");
+        resolved[id] = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+      if (!controller.signal.aborted) {
+        setMedia(resolved);
+        setMediaError("");
+      }
+    }
+    void resolveImages().catch((e) => {
+      if (!controller.signal.aborted) setMediaError(e.message);
+    });
+    return () => controller.abort();
+  }, [assetIds]);
   const checked = validatedDocument.safeParse(shown);
   const preview = checked.success
     ? websiteHtml(
         checked.data,
         checked.data.pages[proposal ? proposalPage : pageIndex]?.slug ||
           "index",
+        media,
       )
     : "";
   return (
@@ -587,6 +629,7 @@ export default function WebsiteBuilder() {
                   <label key={key}>
                     {label}
                     <input
+                      disabled={key === "imageUrl" && !!s.imageAssetId}
                       value={s[key]}
                       maxLength={
                         key === "imageAlt"
@@ -605,6 +648,38 @@ export default function WebsiteBuilder() {
                     />
                   </label>
                 ))}
+                <label>
+                  Bild aus der Mediathek
+                  <select
+                    value={s.imageAssetId || ""}
+                    onChange={(e) =>
+                      updatePage({
+                        sections: page.sections.map((x, n) =>
+                          n === i
+                            ? { ...x, imageAssetId: e.target.value || null }
+                            : x,
+                        ),
+                      })
+                    }
+                  >
+                    <option value="">
+                      Kein Mediathek-Bild / externe Bildadresse
+                    </option>
+                    {(list?.images || []).map((image) => (
+                      <option key={image.id} value={image.id}>
+                        {image.name}
+                      </option>
+                    ))}
+                    {s.imageAssetId &&
+                      !list?.images?.some(
+                        (image) => image.id === s.imageAssetId,
+                      ) && (
+                        <option value={s.imageAssetId}>
+                          Gespeichertes Bild
+                        </option>
+                      )}
+                  </select>
+                </label>
                 <div className="actions">
                   <button
                     type="button"
@@ -727,6 +802,28 @@ export default function WebsiteBuilder() {
                 </select>
               </label>
               <label>
+                Gestaltungsvorlage
+                <select
+                  value={doc.template || "EDITORIAL"}
+                  onChange={(e) =>
+                    setDoc({
+                      ...doc,
+                      template: e.target.value as WebsiteDocument["template"],
+                    })
+                  }
+                >
+                  <option value="EDITORIAL">
+                    Editorial · klare Texte und Abschnitte
+                  </option>
+                  <option value="CAMPAIGN">
+                    Kampagne · zentrierter Einstieg und Aktionen
+                  </option>
+                  <option value="PORTFOLIO">
+                    Portfolio · grosszügige Bildflächen
+                  </option>
+                </select>
+              </label>
+              <label>
                 Fusszeile
                 <textarea
                   value={doc.footer}
@@ -782,9 +879,10 @@ export default function WebsiteBuilder() {
             </label>
           )}
           <p className="muted">
-            Seitenwechsel über die Auswahl. Bilder werden von ihren öffentlichen
-            Adressen geladen.
+            Seitenwechsel über die Auswahl. Mediathek-Bilder bleiben bis zur
+            Veröffentlichung intern.
           </p>
+          {mediaError && <p role="alert">{mediaError}</p>}
           {checked.success ? (
             <iframe
               title="Website-Vorschau"
@@ -801,6 +899,25 @@ export default function WebsiteBuilder() {
           )}
         </section>
       </div>
+      {project && (
+        <WebsitePublication
+          key={project.id}
+          publication={project.publication || null}
+          version={project.version}
+          disabled={busy || dirty}
+          mutate={(action, body) =>
+            run(async () => {
+              await api(`/${project.id}/${action}`, body);
+              await load(project.id);
+              setStatus(
+                action === "publish"
+                  ? "Gespeicherte Website veröffentlicht."
+                  : "Veröffentlichung zurückgezogen.",
+              );
+            })
+          }
+        />
+      )}
       {project && (
         <section className="website-export" aria-label="Versionen und Export">
           <h3>Versionen & Export</h3>
@@ -852,8 +969,9 @@ export default function WebsiteBuilder() {
           </div>
           <p className="muted">
             Exportiert die gespeicherte Version {project.version}. Enthält alle
-            Seiten und eine Projektdatei. Öffentliche Bilddateien bleiben extern
-            verlinkt. Die Veröffentlichung auf einer Domain erfolgt separat.
+            Seiten, Mediathek-Bilder und eine Projektdatei. Externe Bildadressen
+            bleiben verlinkt. Das Paket kann auch auf einem eigenen Webspace
+            verwendet werden.
           </p>
         </section>
       )}

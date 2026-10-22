@@ -12,6 +12,13 @@ export type WebsiteContext = {
   message: string;
 };
 export async function generateWebsite(context: WebsiteContext, model: string) {
+  // Defaults migrate older stored documents, but are not part of the provider contract.
+  const schema = JSON.parse(
+    JSON.stringify(
+      z.toJSONSchema(suggestionSchema, { target: "draft-7" }),
+      (key, value) => (key === "default" ? undefined : value),
+    ),
+  );
   const { data, requestId } = await openAIRequest(
     "responses",
     JSON.stringify({
@@ -25,7 +32,7 @@ export async function generateWebsite(context: WebsiteContext, model: string) {
           type: "json_schema",
           name: "website_proposal",
           strict: true,
-          schema: z.toJSONSchema(suggestionSchema, { target: "draft-7" }),
+          schema,
         },
       },
     }),

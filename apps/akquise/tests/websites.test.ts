@@ -96,6 +96,40 @@ test("Validation catches duplicate/missing homepage, invalid links, missing alt 
     false,
   );
 });
+test("Templates preserve content, older documents migrate, and private media is explicitly resolved into export", async () => {
+  const legacy = { ...blankWebsite } as Record<string, unknown>;
+  delete legacy.template;
+  assert.equal(validatedDocument.parse(legacy).template, "EDITORIAL");
+  const doc = sample();
+  doc.pages[0].sections[0].imageAssetId = "own-image";
+  for (const template of ["EDITORIAL", "CAMPAIGN", "PORTFOLIO"] as const) {
+    const html = websiteHtml({ ...doc, template }, "index", {
+      "own-image": "assets/own-image.png",
+    });
+    assert.ok(html.includes('src="assets/own-image.png"'));
+    assert.ok(html.includes("Text &lt;/p&gt;"));
+    assert.ok(!html.includes('src="https://example.test/photo.jpg"'));
+  }
+  assert.ok(!websiteHtml(doc).includes("/api/studio/assets/"));
+  const zip = await JSZip.loadAsync(
+    await websiteZip(doc, [
+      {
+        id: "own-image",
+        mime: "image/png",
+        bytes: Buffer.from("synthetic-image"),
+      },
+    ]),
+  );
+  assert.equal(
+    await zip.file("assets/own-image.png")!.async("string"),
+    "synthetic-image",
+  );
+  assert.ok(
+    (await zip.file("index.html")!.async("string")).includes(
+      'src="assets/own-image.png"',
+    ),
+  );
+});
 test("Provider sends structured document/history and refuses incomplete or invalid replies", async () => {
   const original = globalThis.fetch;
   let responseStatus = "completed",
