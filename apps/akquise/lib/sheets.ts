@@ -9,7 +9,7 @@ export async function readSheetContacts(actorId?: string) {
   const email = process.env.GOOGLE_CLIENT_EMAIL;
   const key = process.env.GOOGLE_PRIVATE_KEY;
   if (!id) throw new PolicyError("Google-Sheets-ID ist nicht konfiguriert.", 503);
-  if (!/^[\\w-]+$/.test(id)) throw new PolicyError("Ungültige Sheet-ID.");
+  if (!/^[\w-]+$/.test(id)) throw new PolicyError("Ungültige Sheet-ID.");
   const range = process.env.GOOGLE_SHEET_RANGE ?? "Kontakte!A1:O501";
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}`;
   let values: string[][] | undefined;
@@ -18,7 +18,7 @@ export async function readSheetContacts(actorId?: string) {
       throw new PolicyError("Unvollständige Service-Account-Konfiguration.", 503);
     const auth = new JWT({
       email,
-      key: key.replace(/\\\\n/g, "\\n"),
+      key: key.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
     });
     const result = await auth.request<{ values?: string[][] }>({
