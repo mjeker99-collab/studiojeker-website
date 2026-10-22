@@ -1,0 +1,990 @@
+[
+  {
+    "width": 700,
+    "scroll": 700,
+    "container": 700,
+    "headings": [
+      {
+        "text": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.",
+        "size": "32px",
+        "line": "34.56px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Studiojeker entwickelt sich weiter.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Neue Möglichkeiten. Gleicher Anspruch an Qualität.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Content. Distribution. Visibility.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Willkommen beim neuen Studiojeker.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      }
+    ],
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 48.65625,
+        "w": 160,
+        "h": 74,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "x": 313.59375,
+        "y": 157.046875,
+        "w": 386.40625,
+        "h": 289.796875,
+        "nw": 1040,
+        "nh": 780
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "x": 24,
+        "y": 848.84375,
+        "w": 286.15625,
+        "h": 160.109375,
+        "nw": 1344,
+        "nh": 752
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "x": 24,
+        "y": 1492.375,
+        "w": 151,
+        "h": 113.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "x": 191,
+        "y": 1492.375,
+        "w": 151,
+        "h": 113.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "x": 358,
+        "y": 1492.375,
+        "w": 151,
+        "h": 113.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "x": 525,
+        "y": 1492.375,
+        "w": 151,
+        "h": 113.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "x": 320.5,
+        "y": 1682.3125,
+        "w": 379.5,
+        "h": 222.859375,
+        "nw": 1667,
+        "nh": 979
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 1961.625,
+        "w": 140,
+        "h": 64.75,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 556,
+        "y": 1990.875,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 596,
+        "y": 1990.875,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 636,
+        "y": 1990.875,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      }
+    ],
+    "bars": [
+      {
+        "w": 10,
+        "h": 310.59375,
+        "row": 310.59375
+      },
+      {
+        "w": 10,
+        "h": 468.9375,
+        "row": 468.9375
+      },
+      {
+        "w": 10,
+        "h": 236.4375,
+        "row": 236.4375
+      }
+    ],
+    "badFonts": 0,
+    "copyFonts": [
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      }
+    ],
+    "heroTextH": 310.59375,
+    "heroImageCellW": 386.40625,
+    "overflows": 0
+  },
+  {
+    "width": 600,
+    "scroll": 600,
+    "container": 600,
+    "headings": [
+      {
+        "text": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.",
+        "size": "32px",
+        "line": "34.56px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Studiojeker entwickelt sich weiter.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Neue Möglichkeiten. Gleicher Anspruch an Qualität.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Content. Distribution. Visibility.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Willkommen beim neuen Studiojeker.",
+        "size": "24px",
+        "line": "27.6px",
+        "weight": "700",
+        "transform": "none"
+      }
+    ],
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 48.65625,
+        "w": 160,
+        "h": 74,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": "hero_image_desktop",
+        "loaded": true,
+        "x": 269.59375,
+        "y": 212.609375,
+        "w": 330.40625,
+        "h": 247.796875,
+        "nw": 1040,
+        "nh": 780
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "x": 24,
+        "y": 939.71875,
+        "w": 238.15625,
+        "h": 133.25,
+        "nw": 1344,
+        "nh": 752
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "x": 24,
+        "y": 1670.25,
+        "w": 126,
+        "h": 94.5,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "x": 166,
+        "y": 1670.25,
+        "w": 126,
+        "h": 94.5,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "x": 308,
+        "y": 1670.25,
+        "w": 126,
+        "h": 94.5,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "x": 450,
+        "y": 1670.25,
+        "w": 126,
+        "h": 94.5,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "x": 275.5,
+        "y": 1857.59375,
+        "w": 324.5,
+        "h": 190.5625,
+        "nw": 1667,
+        "nh": 979
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 2120.75,
+        "w": 140,
+        "h": 64.75,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 456,
+        "y": 2150,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 496,
+        "y": 2150,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 536,
+        "y": 2150,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      }
+    ],
+    "bars": [
+      {
+        "w": 10,
+        "h": 379.71875,
+        "row": 379.71875
+      },
+      {
+        "w": 10,
+        "h": 534.1875,
+        "row": 534.1875
+      },
+      {
+        "w": 10,
+        "h": 236.4375,
+        "row": 236.4375
+      }
+    ],
+    "badFonts": 0,
+    "copyFonts": [
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      }
+    ],
+    "heroTextH": 379.71875,
+    "heroImageCellW": 330.40625,
+    "overflows": 0
+  },
+  {
+    "width": 390,
+    "scroll": 390,
+    "container": 390,
+    "headings": [
+      {
+        "text": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.",
+        "size": "28px",
+        "line": "30.24px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Studiojeker entwickelt sich weiter.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Neue Möglichkeiten. Gleicher Anspruch an Qualität.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Content. Distribution. Visibility.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Willkommen beim neuen Studiojeker.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      }
+    ],
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 48.65625,
+        "w": 160,
+        "h": 74,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "x": 34,
+        "y": 366.484375,
+        "w": 332,
+        "h": 249,
+        "nw": 800,
+        "nh": 600
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "x": 46,
+        "y": 1160.578125,
+        "w": 288,
+        "h": 161.140625,
+        "nw": 1344,
+        "nh": 752
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "x": 24,
+        "y": 2209.3125,
+        "w": 163,
+        "h": 122.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "x": 203,
+        "y": 2209.3125,
+        "w": 163,
+        "h": 122.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "x": 24,
+        "y": 2389.46875,
+        "w": 163,
+        "h": 122.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "x": 203,
+        "y": 2389.46875,
+        "w": 163,
+        "h": 122.25,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "x": 34,
+        "y": 2797.515625,
+        "w": 332,
+        "h": 194.96875,
+        "nw": 1667,
+        "nh": 979
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 3042.140625,
+        "w": 140,
+        "h": 64.75,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 24,
+        "y": 3208.75,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 64,
+        "y": 3208.75,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 104,
+        "y": 3208.75,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      }
+    ],
+    "bars": [
+      {
+        "w": 10,
+        "h": 468.828125,
+        "row": 468.828125
+      },
+      {
+        "w": 10,
+        "h": 811.1875,
+        "row": 811.1875
+      },
+      {
+        "w": 10,
+        "h": 426.8125,
+        "row": 426.8125
+      }
+    ],
+    "badFonts": 0,
+    "copyFonts": [
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      }
+    ],
+    "heroTextH": 219.828125,
+    "heroImageCellW": 332,
+    "overflows": 0
+  },
+  {
+    "width": 320,
+    "scroll": 320,
+    "container": 320,
+    "headings": [
+      {
+        "text": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit.",
+        "size": "28px",
+        "line": "30.24px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Studiojeker entwickelt sich weiter.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Neue Möglichkeiten. Gleicher Anspruch an Qualität.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Content. Distribution. Visibility.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      },
+      {
+        "text": "Willkommen beim neuen Studiojeker.",
+        "size": "22px",
+        "line": "25.3px",
+        "weight": "700",
+        "transform": "none"
+      }
+    ],
+    "images": [
+      {
+        "id": "header_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 48.65625,
+        "w": 160,
+        "h": 74,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": "hero_image_mobile",
+        "loaded": true,
+        "x": 34,
+        "y": 426.953125,
+        "w": 262,
+        "h": 196.5,
+        "nw": 800,
+        "nh": 600
+      },
+      {
+        "id": "ai_image",
+        "loaded": true,
+        "x": 46,
+        "y": 1233.796875,
+        "w": 218,
+        "h": 121.96875,
+        "nw": 1344,
+        "nh": 752
+      },
+      {
+        "id": "service_digital_image",
+        "loaded": true,
+        "x": 24,
+        "y": 2399.15625,
+        "w": 128,
+        "h": 96,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_business_image",
+        "loaded": true,
+        "x": 168,
+        "y": 2399.15625,
+        "w": 128,
+        "h": 96,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_product_image",
+        "loaded": true,
+        "x": 24,
+        "y": 2553.0625,
+        "w": 128,
+        "h": 96,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "service_architecture_image",
+        "loaded": true,
+        "x": 168,
+        "y": 2553.0625,
+        "w": 128,
+        "h": 96,
+        "nw": 600,
+        "nh": 450
+      },
+      {
+        "id": "contact_image",
+        "loaded": true,
+        "x": 34,
+        "y": 2950.8125,
+        "w": 262,
+        "h": 153.859375,
+        "nw": 1667,
+        "nh": 979
+      },
+      {
+        "id": "footer_logo",
+        "loaded": true,
+        "x": 24,
+        "y": 3154.328125,
+        "w": 140,
+        "h": 64.75,
+        "nw": 320,
+        "nh": 148
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 24,
+        "y": 3320.9375,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 64,
+        "y": 3320.9375,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      },
+      {
+        "id": null,
+        "loaded": true,
+        "x": 104,
+        "y": 3320.9375,
+        "w": 24,
+        "h": 24,
+        "nw": 32,
+        "nh": 32
+      }
+    ],
+    "bars": [
+      {
+        "w": 10,
+        "h": 476.796875,
+        "row": 476.796875
+      },
+      {
+        "w": 10,
+        "h": 859.015625,
+        "row": 859.015625
+      },
+      {
+        "w": 10,
+        "h": 385.703125,
+        "row": 385.703125
+      }
+    ],
+    "badFonts": 0,
+    "copyFonts": [
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      },
+      {
+        "size": "15px",
+        "line": "21.75px",
+        "weight": "400"
+      }
+    ],
+    "heroTextH": 280.296875,
+    "heroImageCellW": 262,
+    "overflows": 0
+  }
+]
