@@ -684,7 +684,8 @@ export async function runJob(
     const j = await tx.studioJob.findFirst({
       where: { id, organizationId: ORG },
     });
-    if (!j) throw new PolicyError("Auftrag nicht zugänglich.", 403);
+    if (!j || !j.seriesId)
+      throw new PolicyError("Auftrag nicht zugänglich.", 403);
     const request = (j.input as { request?: { driveReferenceIds?: string[] } })
       .request;
     if (request?.driveReferenceIds?.length && j.userId !== actor)
@@ -927,7 +928,7 @@ export async function applyJob(actor: string, id: string) {
       const job = await tx.studioJob.findFirst({
         where: { id, organizationId: ORG, status: "SUCCEEDED" },
       });
-      if (!job)
+      if (!job || !job.seriesId)
         throw new PolicyError(
           "Erfolgreicher, noch nicht übernommener Auftrag erforderlich.",
           409,
@@ -1024,7 +1025,8 @@ export async function cancelOrReconcile(actor: string, id: string) {
     const job = await tx.studioJob.findFirst({
       where: { id, organizationId: ORG },
     });
-    if (!job) throw new PolicyError("Auftrag nicht zugänglich.", 403);
+    if (!job || !job.seriesId)
+      throw new PolicyError("Auftrag nicht zugänglich.", 403);
     if (job.status === "QUEUED")
       await tx.studioJob.updateMany({
         where: { id, status: "QUEUED" },
