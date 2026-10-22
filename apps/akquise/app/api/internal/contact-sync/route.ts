@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     if (!email) return Response.json({ error: "Actor not configured" }, { status: 503 });
     const actor = await db.user.findUnique({ where: { email }, select: { id: true, active: true } });
     if (!actor?.active) return Response.json({ error: "Actor unavailable" }, { status: 503 });
-    const contacts = await readSheetContacts();
+    const contacts = await readSheetContacts(actor.id);
     const result = await importContacts(actor.id, contacts);
     return Response.json({ ok: true, ...result }, {
       headers: { "Cache-Control": "no-store" },
