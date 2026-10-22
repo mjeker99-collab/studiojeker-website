@@ -516,6 +516,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
+  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   await dialog
     .getByLabel("Rechtsgrundlage und Nachweis")
