@@ -114,8 +114,12 @@ Workflow file: `.github/workflows/deploy-staging.yml`
 | `push` to `main` | Code merged/pushed to main | Implicit (staging only) |
 | `workflow_dispatch` | Manual run from Actions UI | Must type `staging2026` |
 | `repository_dispatch` type `sanity-homepage-published` | Sanity Homepage publish webhook | Implicit (staging only) |
+| `repository_dispatch` type `sanity-work-published` | Sanity Work publish webhook | Implicit (staging only) |
+| other `sanity-*-published` types | See webhook table below | Implicit (staging only) |
 
 Does **not** run on pull requests or schedule. Does **not** deploy production.
+
+**Important:** A successful **Deploy staging (Metanet)** run updates **`https://staging2026.studiojeker.ch` only**. It does **not** change `studiojeker.ch` / `www.studiojeker.ch`. Checking production after a green staging run will still show the previous production Document Root.
 
 ### What it does
 
