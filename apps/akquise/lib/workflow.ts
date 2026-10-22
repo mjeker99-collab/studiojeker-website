@@ -227,6 +227,11 @@ export async function reviewDraft(
   version: number,
   decision: "PENDING" | "APPROVED" | "REJECTED",
   read: boolean,
+  batch?: {
+    hash: string;
+    contactRevision: number;
+    legal?: { rationale: string; procurementReviewed: boolean };
+  },
 ) {
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
@@ -241,6 +246,25 @@ export async function reviewDraft(
     const v = await tx.draftVersion.findUniqueOrThrow({
       where: { draftId_version: { draftId: id, version } },
     });
+    if (batch) {
+      if (decision !== "APPROVED" || !read)
+        throw new PolicyError("Gemeinsame Prüfung bestätigen.");
+      if (v.hash !== batch.hash || d.contact.revision !== batch.contactRevision)
+        throw new PolicyError("Prüfvorschau veraltet. Neu laden.", 409);
+      if (
+        await tx.delivery.findFirst({
+          where: {
+            recipient: v.recipient,
+            status: {
+              in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
+            },
+          },
+        })
+      )
+        throw new PolicyError(
+          "Bereits versandt oder Zustellung in Bearbeitung.",
+        );
+    }
     if (decision !== "REJECTED") {
       verifiedContact(d.contact);
       if (
@@ -258,10 +282,46 @@ export async function reviewDraft(
           409,
         );
       if (!read) throw new PolicyError("Vollständiges Lesen bestätigen.");
-      const legal = await tx.legalReview.findFirst({
+      let legal = await tx.legalReview.findFirst({
         where: { contactId: d.contactId },
         orderBy: { createdAt: "desc" },
       });
+      // Common evidence is an explicit human decision, committed atomically
+      // with this exact message approval. Existing current reviews are retained.
+      let needsLegal = false;
+      try {
+        legalAllowed(legal, d.contact.revision, d.contact.publicAuthority);
+      } catch {
+        needsLegal = true;
+      }
+      if (needsLegal && batch?.legal) {
+        const evidence = batch.legal;
+        if (
+          evidence.rationale.trim().length < 15 ||
+          evidence.rationale.length > 4000
+        )
+          throw new PolicyError("Begründung der Versandprüfung fehlt.");
+        if (d.contact.publicAuthority && !evidence.procurementReviewed)
+          throw new PolicyError("Beschaffungsrecht separat prüfen.");
+        legal = await tx.legalReview.create({
+          data: {
+            contactId: d.contactId,
+            contactRevision: d.contact.revision,
+            allowed: true,
+            rationale: evidence.rationale.trim(),
+            procurementReviewed: evidence.procurementReviewed,
+            userId,
+          },
+        });
+        await invalidate(tx, d.contactId, userId);
+        await audit(tx, userId, "LEGAL_REVIEW", d.contactId, {
+          allowed: true,
+          rationale: evidence.rationale.trim(),
+          revision: d.contact.revision,
+          procurementReviewed: evidence.procurementReviewed,
+          source: "global-review",
+        });
+      }
       legalAllowed(legal, d.contact.revision, d.contact.publicAuthority);
     }
     await tx.approval.updateMany({

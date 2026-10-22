@@ -24,6 +24,104 @@ async function signIn(page: import("@playwright/test").Page) {
   ).toBeVisible();
 }
 for (const width of [390, 768, 1440]) {
+  test(`Mail-Studio ${width}px: gemeinsame Vorschau, Freigabe und Versandübergabe`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await signIn(page);
+    const suffix = `global-${width}-${Date.now()}`;
+    const ids: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      const created = await page.request.post("/api/contacts", {
+        headers: { Origin: "http://localhost:3100" },
+        data: {
+          organisation: `Mail-Studio ${suffix} ${i}`,
+          firstName: "Anna",
+          lastName: "Muster",
+          email: `${suffix}.${i}@example.test`,
+          confidence: "VERIFIED",
+          verifiedAt: "2026-01-01T00:00:00.000Z",
+          sourceUrl: "https://example.test/team",
+          hook: "Synthetisch dokumentierter Bedarf an Architekturfotografie.",
+          notes: `Betreff: Architektur ${i}\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nPersönlicher Architekturtext ${i}.\n\nFreundliche Grüsse\nNora Jeker`,
+        },
+      });
+      expect(created.ok()).toBe(true);
+      const draft = await page.request.post("/api/drafts", {
+        headers: { Origin: "http://localhost:3100" },
+        data: { contactId: (await created.json()).id },
+      });
+      expect(draft.ok()).toBe(true);
+      ids.push((await draft.json()).id);
+    }
+    await page.reload();
+    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
+    await page
+      .getByRole("button", {
+        name: "Erste 25 angezeigte Mails auswählen",
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("button", { name: "2 Mails gemeinsam prüfen", exact: true })
+      .click();
+    const panel = page.getByRole("region", {
+      name: "Globale Mailprüfung",
+      exact: true,
+    });
+    await expect(
+      panel.getByText("Persönlicher Architekturtext 0.", { exact: false }),
+    ).toBeVisible();
+    await expect(
+      panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
+    ).toBeVisible();
+    const approve = panel.getByRole("button", {
+      name: "2 Nachrichten gemeinsam freigeben",
+      exact: true,
+    });
+    await expect(approve).toBeDisabled();
+    await panel
+      .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
+      .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
+    await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
+    await panel.getByLabel(/Ich habe alle 2 ausgewählten Nachrichten/).check();
+    await expect(approve).toBeEnabled();
+    await panel
+      .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
+      .fill("Aktualisierter synthetischer Nachweis für beide Testkontakte.");
+    await expect(approve).toBeDisabled();
+    await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
+    await panel.getByLabel(/Ich habe alle 2 ausgewählten Nachrichten/).check();
+    expect(
+      (await new AxeBuilder({ page }).include(".mail-studio").analyze())
+        .violations,
+    ).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await approve.click();
+    await expect(panel.getByRole("status")).toContainText(
+      "2 freigegeben · 0 noch offen. Noch keine Mails versandt.",
+    );
+    const state = await (await page.request.get("/api/state")).json();
+    expect(
+      state.deliveries.filter((d: { draftId: string }) =>
+        ids.includes(d.draftId),
+      ),
+    ).toHaveLength(0);
+    await panel
+      .getByRole("button", { name: "Weiter zum Versand", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Täglicher Mailversand", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText("Pausiert", { exact: true })).toBeVisible();
+  });
+}
+for (const width of [390, 768, 1440]) {
   test(`Prüfdaten gemeinsam übernehmen ${width}px: Vorschau, Bestätigung und Einzelresultate`, async ({
     page,
   }) => {
@@ -60,6 +158,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "Übersicht", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
       .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
@@ -160,6 +259,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "Übersicht", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     for (const name of names)
       await page.getByLabel(`${name} auswählen`, { exact: true }).check();
     const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });

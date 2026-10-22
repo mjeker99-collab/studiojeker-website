@@ -1421,3 +1421,36 @@ pre {
 .studio-photo-result figure { margin: 0; min-width: 0; }
 .studio-photo-result img { display: block; width: 100%; max-height: 480px; object-fit: contain; }
 .studio-reference-thumb { width: 64px; height: 64px; object-fit: contain; }
+
+/* Mail-Studio shares the existing panels, controls and signature renderer. */
+.mail-studio {
+  min-width: 0;
+}
+.mail-studio .mail-selection {
+  padding: 12px 0;
+  border-bottom: 1px solid #c8cfd1;
+}
+.mail-studio .mail-selection span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mail-review-message {
+  padding: 20px 0;
+  border-bottom: 1px solid #c8cfd1;
+  overflow-wrap: anywhere;
+}
+.mail-review-body {
+  padding: 16px;
+  border: 1px solid #c8cfd1;
+  background: #fff;
+}
+.mail-review-body img {
+  max-width: 100%;
+  height: auto;
+}
+.mail-studio fieldset {
+  min-width: 0;
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #c8cfd1;
+}

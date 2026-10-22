@@ -28,6 +28,7 @@ import { appOrigin, sessionCookieName, readMailConfig } from "@/lib/config.mjs";
 import { dispatchApproved } from "@/lib/delivery";
 import { parseImport } from "@/lib/import";
 import { prepareContacts } from "@/lib/contact-preparation-service";
+import { mailReview } from "@/lib/mail-review";
 import {
   saveContact,
   importContacts,
@@ -443,6 +444,10 @@ async function handler(
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
+    if (path[0] === "mail-review" && path.length === 2)
+      return NextResponse.json(await mailReview(user.id, path[1], body), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (
       path[0] === "contacts" &&
       path[1] === "preparation" &&
