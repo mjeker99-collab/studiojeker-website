@@ -205,6 +205,20 @@ async function access(actor: string) {
     );
   }
 }
+// Reuse the user's existing read-only Drive grant for a Sheets snapshot.
+// Never read a spreadsheet outside the explicitly selected StudioONE folder.
+export async function sheetAccessWithinSelectedFolder(actor: string, sheetId: string) {
+  const { token, connection } = await access(actor);
+  if (!connection.folderId)
+    throw new PolicyError("Für den Sheets-Abgleich zuerst den Drive-Ordner auswählen.", 409);
+  const metadata = await new DriveFiles(token, connection.folderId).withinRoot(
+    driveId.parse(sheetId),
+  );
+  if (metadata.mimeType !== "application/vnd.google-apps.spreadsheet")
+    throw new PolicyError("Die Masterliste ist keine native Google-Tabelle.", 400);
+  return token;
+}
+
 async function driveFetch(
   token: string,
   path: string,
