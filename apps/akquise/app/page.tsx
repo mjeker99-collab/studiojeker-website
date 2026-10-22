@@ -525,7 +525,9 @@ export default function App() {
           )}
           {(tab === "Kampagnen" ||
             tab === "Social Media" ||
-            tab === "Website") && <AssistantEntry key={tab} section={tab} />}
+            tab === "Website") && (
+            <AssistantEntry key={`assistant-${tab}`} section={tab} />
+          )}
           {[
             "Übersicht",
             "Kampagnen",
