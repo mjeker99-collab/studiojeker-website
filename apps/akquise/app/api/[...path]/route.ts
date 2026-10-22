@@ -431,7 +431,7 @@ async function handler(
       return NextResponse.json(await importContacts(user.id, rows));
     }
     if (route === "contacts/sheets") {
-      const rows = await readSheetContacts();
+      const rows = await readSheetContacts(user.id);
       return NextResponse.json(await importContacts(user.id, rows));
     }
     const maxJsonBytes = path[0] === "concepts" ? 256000 : 64000;
