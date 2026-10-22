@@ -1,0 +1,15 @@
+{
+  "name": "etziken-verkaufsdokumentation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Layoutentwurf Immobilien-Verkaufsdokumentation Bolackerweg 10, Etziken",
+  "type": "module",
+  "scripts": {
+    "preview": "node scripts/preview-server.mjs",
+    "export": "node scripts/export.mjs",
+    "verify-hashes": "node scripts/verify-hashes.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
