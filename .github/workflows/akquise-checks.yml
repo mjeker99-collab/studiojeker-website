@@ -1,5 +1,7 @@
 name: Akquise isolated checks (no deployment)
 on:
+  push:
+    branches: ['feat/akquise-production-readiness']
   pull_request:
     paths: ['apps/akquise/**', '.github/workflows/akquise-checks.yml']
   workflow_dispatch:
