@@ -149,6 +149,7 @@ export default function WebsiteBuilder() {
     const controller = new AbortController();
     async function resolveImages() {
       const resolved: Record<string, string> = {};
+      let totalBytes = 0;
       for (const id of JSON.parse(assetIds) as string[]) {
         const response = await fetch(
           `/api/studio/assets/${encodeURIComponent(id)}`,
@@ -157,6 +158,11 @@ export default function WebsiteBuilder() {
         if (!response.ok)
           throw new Error("Ein Mediathek-Bild konnte nicht geladen werden.");
         const blob = await response.blob();
+        totalBytes += blob.size;
+        if (totalBytes > 32 * 1024 * 1024)
+          throw new Error(
+            "Website-Bilder dürfen zusammen höchstens 32 MB umfassen.",
+          );
         if (!["image/jpeg", "image/png", "image/webp"].includes(blob.type))
           throw new Error("Bildformat nicht unterstützt.");
         resolved[id] = await new Promise<string>((resolve, reject) => {
@@ -651,6 +657,7 @@ export default function WebsiteBuilder() {
                 <label>
                   Bild aus der Mediathek
                   <select
+                    aria-label="Bild aus der Mediathek"
                     value={s.imageAssetId || ""}
                     onChange={(e) =>
                       updatePage({
@@ -680,6 +687,11 @@ export default function WebsiteBuilder() {
                       )}
                   </select>
                 </label>
+                <p className="muted">
+                  Eigene Bilder zuerst in der Mediathek hochladen, dann hier
+                  auswählen. JPEG, PNG oder WebP; die Bildbeschreibung dient als
+                  Alternativtext.
+                </p>
                 <div className="actions">
                   <button
                     type="button"
@@ -804,6 +816,7 @@ export default function WebsiteBuilder() {
               <label>
                 Gestaltungsvorlage
                 <select
+                  aria-label="Gestaltungsvorlage"
                   value={doc.template || "EDITORIAL"}
                   onChange={(e) =>
                     setDoc({
