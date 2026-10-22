@@ -13,13 +13,12 @@ Beim Import werden Person, Organisation, Funktion, Region, Direktadresse und Que
 ## Vor dem ersten Import
 
 1. Die aktuelle StudioONE-Datenbank sichern und die Anzahl vorhandener Kontakte notieren. Bereits vorhandene Datensätze werden beim Import **nicht überschrieben**.
-2. In Google Cloud einen Service Account mit aktivierter **Google Sheets API** anlegen; ausschliesslich Lesezugriff.
-3. Die konkrete Google-Tabelle mit der Service-Account-Adresse als **Betrachter** teilen. Nicht den gesamten Drive-Ordner freigeben.
+2. **Einfachster Weg:** Mit Martins StudioONE-Konto unter «Bibliothek → Google Drive» verbinden und den gemeinsamen Drive-Ordner «GTP-Dateiaustausch/Relaunch2026» wählen. Die Masterliste muss innerhalb dieses Ordners liegen. Die bestehende read-only Drive-OAuth-Freigabe kann so auch für den Sheets-Abruf verwendet werden (Google Sheets API im Google-Cloud-Projekt aktivieren).
+3. **Alternative für dauerhaften Serverbetrieb:** Einen Google Service Account mit aktivierter Google Sheets API einrichten und nur die konkrete Masterliste als Betrachter freigeben. So bleibt der Zeitplan unabhängig vom persönlichen OAuth-Token.
 4. Im Render-Webservice `studiojeker-akquise` serverseitig konfigurieren:
    - `GOOGLE_SHEET_ID` = tatsächliche Tabellen-ID (keine URL)
    - `GOOGLE_SHEET_RANGE` = `Kontakte!A1:O501`
-   - `GOOGLE_CLIENT_EMAIL` = Service-Account-Adresse
-   - `GOOGLE_PRIVATE_KEY` = privater Schlüssel des Service Accounts
+   - `GOOGLE_CLIENT_EMAIL` und `GOOGLE_PRIVATE_KEY` = **nur bei Verwendung des Service Accounts**. Andernfalls leer lassen und die bestehende persönliche Drive-Verbindung nutzen
    - `INTERNAL_CONTACT_SYNC_TOKEN` = separater zufälliger, ausreichend langer Schlüssel
    - `MARTIN_EMAIL` = bereits bestehende persönliche StudioONE-Anmeldung
 5. Secrets **nur in Render** eintragen; niemals im Chat, Git, Google Sheet oder Browser.
