@@ -35,3 +35,17 @@ test("Wrong or incomplete sheet headers fail closed", () => {
   assert.throws(() => mapMasterSheet([headers.slice(0, 14)]), /15 Spalten/);
   assert.throws(() => mapMasterSheet([headers.map((h, i) => i === 4 ? "Direktadresse" : h)]), /15 Spalten/);
 });
+
+test("Duplicate people across organisation variants retain the better documented draft", () => {
+  const rows = mapMasterSheet([
+    headers,
+    ["Karin Rickli", "Marketing", "Regiobank", "Solothurn", "karin@example.test"],
+    ["Karin Rickli", "Marketing", "Regiobank Solothurn", "Solothurn",
+      "karin@example.test", "Offiziell", "2026-10-16", "A",
+      "https://example.test/team", "Keine Einwilligung", "Nicht versenden",
+      "Persönlicher Betreff", "Guten Tag Frau Rickli\\n\\nEin konkreter Bezug."],
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].organisation, "Regiobank Solothurn");
+  assert.match(rows[0].notes, /Persönlicher Betreff/);
+});
