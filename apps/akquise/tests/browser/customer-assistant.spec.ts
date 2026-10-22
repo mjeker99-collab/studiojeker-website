@@ -121,7 +121,9 @@ test("GPT customer assistant previews sourced fields, preserves manual text and 
     route.fulfill({ status: 503, json: { error: "GPT ist nicht verbunden." } }),
   );
   await research.click();
-  await expect(page.getByRole("alert")).toHaveText("GPT ist nicht verbunden.");
+  await expect(
+    page.getByRole("region", { name: "GPT-Unterstützung" }).getByRole("alert"),
+  ).toHaveText("GPT ist nicht verbunden.");
   await expect(
     page.getByLabel("Unternehmen & Markt", { exact: true }),
   ).toHaveValue("");
