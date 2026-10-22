@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContactStatus {
+  NEW
+  VERIFIED
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  SEND_READY
+  SENT
+  REPLIED
+  FAILED
+  DO_NOT_CONTACT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  INVALIDATED
+}
+
+enum DeliveryStatus {
+  BLOCKED
+  SIMULATED
+  SEND_READY
+  SENT
+  REPLIED
+  FAILED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  active       Boolean    @default(true)
+  sessions     Session[]
+  approvals    Approval[]
+  audits       Audit[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+model LoginAttempt {
+  key         String    @id
+  failures    Int       @default(0)
+  lockedUntil DateTime?
+}
+
+model Contact {
+  id                 String        @id @default(cuid())
+  organisation       String
+  industry           String        @default("")
+  region             String        @default("")
+  firstName          String
+  lastName           String
+  position           String        @default("")
+  email              String        @unique
+  personKey          String        @unique
+  website            String        @default("")
+  sourceUrl          String        @default("")
+  verifiedAt         DateTime?
+  confidence         String        @default("UNCONFIRMED")
+  hook               String        @default("")
+  service            String        @default("")
+  legalCategory      String        @default("UNASSESSED")
+  publicAuthority    Boolean       @default(false)
+  newsletterConsent  Boolean       @default(false)
+  newsletterEvidence String        @default("")
+  status             ContactStatus @default(NEW)
+  owner              String        @default("")
+  notes              String        @default("")
+  revision           Int           @default(1)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  drafts             Draft[]
+  legalReviews       LegalReview[]
+}
+
+model LegalReview {
+  id                  String   @id @default(cuid())
+  contactId           String
+  contact             Contact  @relation(fields: [contactId], references: [id])
+  contactRevision     Int
+  allowed             Boolean
+  rationale           String
+  procurementReviewed Boolean  @default(false)
+  userId              String
+  createdAt           DateTime @default(now())
+}
+
+model Draft {
+  id         String         @id @default(cuid())
+  contactId  String
+  contact    Contact        @relation(fields: [contactId], references: [id])
+  version    Int            @default(1)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  versions   DraftVersion[]
+  approvals  Approval[]
+  deliveries Delivery[]
+}
+
+model DraftVersion {
+  id              String   @id @default(cuid())
+  draftId         String
+  draft           Draft    @relation(fields: [draftId], references: [id])
+  version         Int
+  recipient       String
+  subject         String
+  body            String
+  hash            String
+  contactRevision Int
+  authorId        String
+  createdAt       DateTime @default(now())
+
+  @@unique([draftId, version])
+}
+
+model Approval {
+  id        String         @id @default(cuid())
+  draftId   String
+  draft     Draft          @relation(fields: [draftId], references: [id])
+  contactId String
+  version   Int
+  hash      String
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  status    ApprovalStatus
+  createdAt DateTime       @default(now())
+}
+
+model Suppression {
+  email     String   @id
+  reason    String
+  userId    String
+  createdAt DateTime @default(now())
+}
+
+model Delivery {
+  id             String         @id @default(cuid())
+  draftId        String
+  draft          Draft          @relation(fields: [draftId], references: [id])
+  version        Int
+  recipient      String
+  hash           String
+  status         DeliveryStatus
+  messageId      String         @unique
+  idempotencyKey String         @unique
+  attempts       Int            @default(1)
+  error          String?
+  createdAt      DateTime       @default(now())
+}
+
+model InboundMessage {
+  id                String   @id @default(cuid())
+  messageId         String   @unique
+  inReplyTo         String?
+  references        String[]
+  deliveryMessageId String?
+  receivedAt        DateTime @default(now())
+}
+
+model Audit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entityId  String
+  detail    Json
+  createdAt DateTime @default(now())
+}
