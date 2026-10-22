@@ -10,6 +10,7 @@ import Customers from "./customers/Customers";
 import Image from "next/image";
 import Library from "./library/Library";
 import ContentStudio from "./studio/ContentStudio";
+import AssistantEntry from "./studio/AssistantEntry";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
   Contact,
@@ -522,6 +523,9 @@ export default function App() {
               ))}
             </nav>
           )}
+          {(tab === "Kampagnen" ||
+            tab === "Social Media" ||
+            tab === "Website") && <AssistantEntry key={tab} section={tab} />}
           {[
             "Übersicht",
             "Kampagnen",

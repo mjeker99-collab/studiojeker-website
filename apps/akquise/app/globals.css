@@ -1,6 +1,7 @@
 @import "tailwindcss";
 :root {
   --cyan: #00cbdc;
+  --button-radius: 10px;
   --ink: #151719;
   --muted: #666d73;
   --line: #e4e7e8;
@@ -27,6 +28,7 @@ textarea {
 button {
   cursor: pointer;
   border: 1px solid transparent;
+  border-radius: var(--button-radius);
   background: var(--cyan);
   color: #102326;
   padding: 12px 17px;
@@ -41,6 +43,14 @@ button {
 button:hover {
   background: #00b3c2;
 }
+.assistant-entry { padding: clamp(16px, 3vw, 26px); border-radius: 14px; }
+.assistant-entry-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.assistant-entry-intro > div { flex: 1 1 240px; min-width: 0; }
+.assistant-entry .eyebrow { color: #006873; margin-bottom: 8px; }
+.assistant-entry-intro p:last-child { margin: 8px 0 0; }
+.ai-button { gap: 10px; padding: 14px 22px; box-shadow: 0 3px 10px #15171912; max-width: 100%; white-space: normal; }
+.ai-button svg { flex-shrink: 0; }
+.assistant-entry-dialog { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 20px; min-width: 0; }
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -569,6 +579,7 @@ footer {
 }
 .file-button {
   border: 1px solid #c8cfd1;
+  border-radius: var(--button-radius);
   padding: 12px;
   position: relative;
   min-height: 44px;
