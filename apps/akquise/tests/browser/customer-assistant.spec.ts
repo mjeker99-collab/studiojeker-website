@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -83,8 +84,13 @@ test("GPT customer assistant previews sourced fields, preserves manual text and 
   await expect(
     page.getByLabel("Angebote & Leistungen", { exact: true }),
   ).toHaveValue("Meine eigenen Leistungen");
+  await mkdir(".local/hub-screenshots", { recursive: true });
   for (const width of [1440, 820, 390]) {
     await page.setViewportSize({ width, height: 1000 });
+    await page.screenshot({
+      path: `.local/hub-screenshots/studio-customer-assistant-${width}.png`,
+      fullPage: true,
+    });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
