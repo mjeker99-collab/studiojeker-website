@@ -438,16 +438,15 @@ for (const [name, width, height] of [
           .getByRole("navigation", { name: "Hauptnavigation" })
           .getByRole("button", { name: /Kontakte/ })
           .click();
-      if (section !== "Kontakte")
-        await page
-          .getByRole("navigation", {
-            name:
-              section === "Einstellungen"
-                ? "Hauptnavigation"
-                : "Akquise-Navigation",
-          })
-          .getByRole("button", { name: section, exact: true })
-          .click();
+      await page
+        .getByRole("navigation", {
+          name:
+            section === "Einstellungen"
+              ? "Hauptnavigation"
+              : "Akquise-Navigation",
+        })
+        .getByRole("button", { name: section, exact: true })
+        .click();
       await expect(
         page.getByRole("heading", { name: section, exact: true }),
       ).toBeVisible();
@@ -487,6 +486,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
+  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeFocused();
