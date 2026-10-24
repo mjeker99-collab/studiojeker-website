@@ -265,9 +265,10 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByRole("button", { name: "Mit GPT arbeiten", exact: true })
     .click();
-  await page
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
+  if (!(await page.getByLabel("Gespräch / Content-Serie").isVisible()))
+    await page
+      .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
+      .click();
   await page
     .locator(".studio-chat")
     .getByRole("button", { name: "Status aktualisieren", exact: true })
