@@ -702,7 +702,7 @@ test("Dashboard opens the selected campaign, content conversation and website wi
     .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
     .click();
   await expect(
-    page.getByLabel("Gespräch / Content-Serie", { exact: true }),
+    page.getByRole("combobox", { name: /Gespräch \/ Content-Serie/ }),
   ).toHaveValue(series.id);
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
