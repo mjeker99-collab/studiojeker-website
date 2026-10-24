@@ -183,7 +183,8 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     name: "Grundtemplates",
     exact: true,
   });
-  await expect(gallery.getByRole("button", { pressed: false })).toHaveCount(5);
+  await expect(gallery.locator("button[aria-pressed]")).toHaveCount(6);
+  await expect(gallery.locator('button[aria-pressed="true"]')).toHaveCount(1);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
