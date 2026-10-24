@@ -11,6 +11,7 @@ import {
 import Cms from "../cms/Cms";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
+import ChatGptIntegration from "./ChatGptIntegration";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
@@ -1535,6 +1536,7 @@ export default function Hub({
       {section === "Einstellungen" && (
         <>
           <SocialConnections userId={userId} />
+          <ChatGptIntegration />
           <section className="panel padded">
             <h2>Marketing-Verbindungen</h2>
             <p>

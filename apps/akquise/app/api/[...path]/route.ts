@@ -61,6 +61,13 @@ import {
   listDriveFiles,
   driveImagePreview,
 } from "@/lib/drive/service";
+import {
+  gptConnectorStatus,
+  updateGptScopes,
+  revokeGptAccess,
+  restoreGptAccess,
+  setGptShare,
+} from "@/lib/gpt-connector/settings";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const draftSchema = z
@@ -370,6 +377,10 @@ async function handler(
       return NextResponse.json(await mailchimpAudiences(user.id), {
         headers: { "Cache-Control": "no-store" },
       });
+    if (route === "integrations/gpt/status" && req.method === "GET")
+      return NextResponse.json(await gptConnectorStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
       const token = jar.get(sessionCookieName())?.value;
@@ -505,6 +516,14 @@ async function handler(
       if (result !== null) return NextResponse.json(result);
       throw new PolicyError("Nicht gefunden.", 404);
     }
+    if (route === "integrations/gpt/scopes")
+      return NextResponse.json(await updateGptScopes(user.id, body));
+    if (route === "integrations/gpt/revoke")
+      return NextResponse.json(await revokeGptAccess(user.id));
+    if (route === "integrations/gpt/restore")
+      return NextResponse.json(await restoreGptAccess(user.id));
+    if (route === "integrations/gpt/share")
+      return NextResponse.json(await setGptShare(user.id, body));
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }

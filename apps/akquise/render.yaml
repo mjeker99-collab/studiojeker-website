@@ -59,6 +59,8 @@ services:
         value: "false"
       - key: DAILY_SEND_LIMIT
         value: "20"
+      - key: CHATGPT_CONNECTOR_TOKEN
+        sync: false
 databases:
   - name: studiojeker-akquise-db
     region: frankfurt
