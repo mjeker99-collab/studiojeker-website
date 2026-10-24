@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private authenticated image routes. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
@@ -22,6 +23,7 @@ export default function StudioChat({
   refresh,
   initialRequest,
   hasUnsavedContent = false,
+  projectArea = "Content-Studio",
 }: {
   state: State;
   refresh: () => Promise<void>;
@@ -33,12 +35,36 @@ export default function StudioChat({
     contentId?: string;
   };
   hasUnsavedContent?: boolean;
+  projectArea?: string;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [useProjectMemory, setUseProjectMemory] = useState(true);
-  const activeSeries = state.series.find((s) => s.id === seriesId);
+  const [error, setError] = useState("");
+  const [selectedState, setSelectedState] = useState<State | null>(null);
+  useEffect(() => {
+    if (!seriesId) return;
+    const controller = new AbortController();
+    fetch(`/api/studio/state?seriesId=${encodeURIComponent(seriesId)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || "Projekt konnte nicht geladen werden.");
+        if (!controller.signal.aborted) setSelectedState(data);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      });
+    return () => controller.abort();
+  }, [seriesId, state]);
+  const projectState = selectedState?.series.some((s) => s.id === seriesId)
+    ? selectedState
+    : state;
+  const activeSeries = projectState.series.find((s) => s.id === seriesId);
   const activeCustomerId = activeSeries?.customerId || customerId || null;
   const [message, setMessage] = useState(initialRequest?.message || "");
   const [mediaIntent, setMediaIntent] = useState<
@@ -46,7 +72,7 @@ export default function StudioChat({
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+
   const [confirmed, setConfirmed] = useState(false);
   const [referenceIds, setReferenceIds] = useState<string[]>(
     initialRequest?.sourceAssetId ? [initialRequest.sourceAssetId] : [],
@@ -58,7 +84,7 @@ export default function StudioChat({
   const [uploadRights, setUploadRights] = useState(false);
   const [copiedJob, setCopiedJob] = useState("");
   const [replyToJobId, setReplyToJobId] = useState("");
-  const replyToJob = state.jobs.find((job) => job.id === replyToJobId);
+  const replyToJob = projectState.jobs.find((job) => job.id === replyToJobId);
   const replyToText = (replyToJob?.result as { reply?: string } | undefined)
     ?.reply;
   const images = state.assets.filter((a) =>
@@ -101,7 +127,7 @@ export default function StudioChat({
       setBusy(false);
     }
   }
-  const jobs = state.jobs
+  const jobs = projectState.jobs
     .filter(
       (j) =>
         (j.kind === "CHAT" ||
@@ -316,6 +342,45 @@ export default function StudioChat({
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
       <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
+      <ProjectSave
+        area={projectArea}
+        identity={seriesId}
+        suggestedTitle={
+          activeSeries?.title ||
+          message.trim().slice(0, 80) ||
+          `${projectArea} Projekt`
+        }
+        busy={busy}
+        value={{
+          nativeId: seriesId,
+          campaignId,
+          customerId,
+          message,
+          mediaIntent,
+          contentId,
+          referenceIds,
+          driveImages,
+          replyToJobId,
+          useProjectMemory,
+        }}
+        restore={async (draft) => {
+          await refresh();
+          setSeriesId(draft.nativeId);
+          setCampaignId(draft.campaignId);
+          setCustomerId(draft.customerId);
+          setMessage(draft.message);
+          setMediaIntent(draft.mediaIntent);
+          setContentId(draft.contentId);
+          setReferenceIds(draft.referenceIds);
+          setDriveImages(draft.driveImages);
+          setReplyToJobId(draft.replyToJobId);
+          setUseProjectMemory(draft.useProjectMemory);
+          setConfirmed(false);
+          setUploadRights(false);
+          setError("");
+        }}
+      />
+
       <p className="muted">
         Für{" "}
         {state.customers.find((c) => c.id === activeCustomerId)?.name ||

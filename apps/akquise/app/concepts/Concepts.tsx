@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import ProjectSave from "../projects/ProjectSave";
 import { agencyStarters } from "@/lib/concepts/agency";
 import {
   chapters,
@@ -231,6 +232,36 @@ export default function Concepts({
               Neu laden
             </button>
           </div>
+
+          <ProjectSave
+            area="Konzepte"
+            identity={doc?.id || ""}
+            suggestedTitle={form.title || "Neues Konzept"}
+            busy={busy}
+            value={{
+              nativeId: doc?.id || "",
+              nativeVersion: doc?.version || 0,
+              form,
+              message,
+              target,
+              startsAt,
+              endsAt,
+            }}
+            restore={async (draft) => {
+              const next: Document | null = draft.nativeId
+                ? await api(`concepts/${draft.nativeId}`)
+                : null;
+              setDoc(next ? { ...next, version: draft.nativeVersion } : null);
+              setForm(draft.form);
+              setMessage(draft.message);
+              setTarget(draft.target);
+              setStartsAt(draft.startsAt);
+              setEndsAt(draft.endsAt);
+              setHistory(draft.nativeVersion);
+              setConsent(false);
+              setReviewed(false);
+            }}
+          />
           <div className="concept-columns">
             <section
               className="studio-chat"

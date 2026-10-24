@@ -22,7 +22,7 @@ export default function StudioProjects({
   refresh: () => void;
 }) {
   return (
-    <details className="studio-chat-controls">
+    <details open className="studio-chat-controls">
       <summary>Projekte öffnen oder neues Gespräch beginnen</summary>
       <label>
         Gespräch / Content-Serie

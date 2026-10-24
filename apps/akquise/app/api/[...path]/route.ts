@@ -1,4 +1,10 @@
-import { websiteList, websiteState, websiteVersion, websiteMutation } from "@/lib/websites/service";
+import { projectDrafts, saveProjectDraft } from "@/lib/projects/service";
+import {
+  websiteList,
+  websiteState,
+  websiteVersion,
+  websiteMutation,
+} from "@/lib/websites/service";
 import { websiteExport } from "@/lib/websites/publication";
 import { assistCustomer } from "@/lib/customer-assistant/service";
 import { conceptState, conceptMutation } from "@/lib/concepts/service";
@@ -136,17 +142,57 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (path[0] === "project-drafts" && path.length <= 2) {
+      if (req.method === "GET")
+        return NextResponse.json(
+          await projectDrafts(
+            user.id,
+            req.nextUrl.searchParams.get("area"),
+            path[1],
+          ),
+        );
+      if (req.method === "POST")
+        return NextResponse.json(
+          await saveProjectDraft(
+            user.id,
+            await jsonBody(req, 1050000),
+            path[1],
+          ),
+        );
+    }
+
     if (path[0] === "websites" && req.method === "GET") {
-      const headers = { "Cache-Control": "no-store, private", "X-Content-Type-Options": "nosniff" };
-      if (path.length === 1) return NextResponse.json(await websiteList(user.id), {headers});
-      if (path.length === 2) return NextResponse.json(await websiteState(user.id,path[1]), {headers});
-      if (path.length === 3 && ["export","version"].includes(path[2])) {
-        const version=z.coerce.number().int().positive().parse(req.nextUrl.searchParams.get("version"));
-        const document=await websiteVersion(user.id,path[1],version);
-        if(path[2] === "version") return NextResponse.json(document,{headers});
-        return new NextResponse(new Uint8Array(await websiteExport(user.id, document)),{headers:{...headers,"Content-Type":"application/zip","Content-Disposition":`attachment; filename="website-v${version}.zip"`}});
+      const headers = {
+        "Cache-Control": "no-store, private",
+        "X-Content-Type-Options": "nosniff",
+      };
+      if (path.length === 1)
+        return NextResponse.json(await websiteList(user.id), { headers });
+      if (path.length === 2)
+        return NextResponse.json(await websiteState(user.id, path[1]), {
+          headers,
+        });
+      if (path.length === 3 && ["export", "version"].includes(path[2])) {
+        const version = z.coerce
+          .number()
+          .int()
+          .positive()
+          .parse(req.nextUrl.searchParams.get("version"));
+        const document = await websiteVersion(user.id, path[1], version);
+        if (path[2] === "version")
+          return NextResponse.json(document, { headers });
+        return new NextResponse(
+          new Uint8Array(await websiteExport(user.id, document)),
+          {
+            headers: {
+              ...headers,
+              "Content-Type": "application/zip",
+              "Content-Disposition": `attachment; filename="website-v${version}.zip"`,
+            },
+          },
+        );
       }
-      throw new PolicyError("Nicht gefunden.",404);
+      throw new PolicyError("Nicht gefunden.", 404);
     }
     if (route === "mail-schedule" && req.method === "GET")
       return NextResponse.json(await mailScheduleState(), {
@@ -313,7 +359,12 @@ async function handler(
     if (route === "library/state" && req.method === "GET")
       return NextResponse.json(await libraryState(user.id));
     if (route === "studio/state" && req.method === "GET")
-      return NextResponse.json(await studioState(user.id));
+      return NextResponse.json(
+        await studioState(
+          user.id,
+          req.nextUrl.searchParams.get("seriesId") || undefined,
+        ),
+      );
     if (route === "studio/logo" && req.method === "GET")
       return new NextResponse(new Uint8Array(logoBytes()), {
         headers: {
@@ -459,7 +510,10 @@ async function handler(
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
-    if (path[0] === "websites") return NextResponse.json(await websiteMutation(user.id,path,body), {headers:{"Cache-Control":"no-store"}});
+    if (path[0] === "websites")
+      return NextResponse.json(await websiteMutation(user.id, path, body), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (path[0] === "mail-review" && path.length === 2)
       return NextResponse.json(await mailReview(user.id, path[1], body), {
         headers: { "Cache-Control": "no-store" },

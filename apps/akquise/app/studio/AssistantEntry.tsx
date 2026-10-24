@@ -132,6 +132,7 @@ export default function AssistantEntry({
                 : "Übernimm passende Vorschläge anschliessend in deine Planung."}
             </p>
             <StudioChat
+              projectArea={section}
               state={state}
               refresh={refresh}
               initialRequest={{ seriesId: "", message: entry.message }}
