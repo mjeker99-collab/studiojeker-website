@@ -380,6 +380,7 @@ test("API schützt Daten, Ursprung und externen Versand", async ({
 }) => {
   const unauthorized = await request.get("/api/state");
   expect(unauthorized.status()).toBe(401);
+  expect((await request.get("/api/dashboard")).status()).toBe(401);
   const badOrigin = await request.post("/api/login", {
     headers: { Origin: "https://example.test" },
     data: { email, password },
@@ -415,7 +416,7 @@ for (const [name, width, height] of [
     await page.setViewportSize({ width, height });
     await signIn(page);
     await expect(
-      page.getByText("Persönlich ansprechen. Bewusst freigeben."),
+      page.getByRole("heading", { name: "Deine Arbeitsbereiche" }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -577,4 +578,141 @@ test("Dashboard und Kontaktformular bestehen WCAG-AA-Automatikprüfung", async (
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   expect(form.violations).toEqual([]);
+});
+
+test("Dashboard opens each work area and keeps navigation available after project loading fails", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  await page.route("**/api/dashboard", (route) =>
+    route.fulfill({ status: 503, json: { error: "Synthetischer Ausfall" } }),
+  );
+  await signIn(page);
+  await expect(
+    page.locator(".dashboard-home").getByRole("alert"),
+  ).toContainText("Projekte konnten nicht geladen werden");
+  await page.unroute("**/api/dashboard");
+  await page.getByRole("button", { name: "Projekte erneut laden" }).click();
+  await expect(page.locator(".dashboard-home").getByRole("alert")).toHaveCount(
+    0,
+  );
+  const main = page.getByRole("navigation", { name: "Hauptnavigation" });
+  for (const [button, heading] of [
+    ["Content erstellen öffnen", "Content-Studio"],
+    ["Kampagnen öffnen", "Kampagnen"],
+    ["Social Media öffnen", "Social Media"],
+    ["Newsletter öffnen", "Newsletter"],
+    ["Websites öffnen", "Website"],
+    ["Kontakte & Akquise öffnen", "Mail-Studio"],
+    ["Kunden", "Kunden"],
+    ["Strategie & Konzepte", "Strategie & Konzepte"],
+    ["Bibliothek", "Bibliothek"],
+    ["Kalender", "Kalender"],
+    ["Einstellungen", "Einstellungen"],
+  ]) {
+    await page
+      .locator(".dashboard-home")
+      .getByRole("button", { name: button, exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: heading, level: 1, exact: true }),
+    ).toBeVisible();
+    await main.getByRole("button", { name: /Übersicht/ }).click();
+  }
+});
+
+test("Dashboard opens the selected campaign, content conversation and website without writing", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  await signIn(page);
+  const state = await (await page.request.get("/api/state")).json();
+  const suffix = Date.now();
+  const titles = [
+    `Dashboard Kampagne ${suffix}`,
+    `Dashboard Content ${suffix}`,
+    `Dashboard Website ${suffix}`,
+  ];
+  async function create(path: string, data: unknown) {
+    const response = await page.request.post(`/api/${path}`, {
+      headers: { Origin: "http://localhost:3100" },
+      data,
+    });
+    expect(response.ok(), await response.text()).toBe(true);
+    return response.json();
+  }
+  const campaign = await create("hub/campaigns", {
+    title: titles[0],
+    goal: "Synthetische Navigation prüfen",
+    audience: "Testpublikum",
+    startsAt: "2026-01-01T10:00:00.000Z",
+    endsAt: "2026-12-31T10:00:00.000Z",
+    ownerId: state.user.id,
+  });
+  const series = await create("studio/series", {
+    title: titles[1],
+    topic: "Synthetische Projektprüfung",
+    goal: "Testen",
+    audience: "Testpublikum",
+    tone: "Sachlich",
+    offer: "",
+    channels: ["LINKEDIN"],
+    formats: ["1:1"],
+    count: 1,
+    campaignId: null,
+    customerId: null,
+    referenceAssetIds: [],
+    brandRules: [],
+  });
+  const { blankWebsite } = await import("../../lib/websites/input");
+  const website = await create("websites", {
+    customerId: null,
+    document: { ...structuredClone(blankWebsite), name: titles[2] },
+  });
+  const snapshotResponse = await page.request.get("/api/dashboard");
+  expect(snapshotResponse.headers()["cache-control"]).toContain("no-store");
+  const snapshot = await snapshotResponse.json();
+  expect(snapshot.projects.map((p: { id: string }) => p.id)).toEqual(
+    expect.arrayContaining([campaign.id, series.id, website.id]),
+  );
+  const writes: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() !== "GET") writes.push(request.url());
+  });
+  await page.reload();
+  await page.getByLabel("Projekt suchen").fill(titles[0]);
+  await expect(page.locator(".dashboard-project-list li")).toHaveCount(1);
+  await page
+    .getByRole("button", { name: `Kampagne ${titles[0]} öffnen`, exact: true })
+    .click();
+  await expect(page.getByLabel("Kampagnentitel", { exact: true })).toHaveValue(
+    titles[0],
+  );
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Übersicht/ })
+    .click();
+  await page
+    .getByRole("button", {
+      name: `Content-Projekt ${titles[1]} öffnen`,
+      exact: true,
+    })
+    .click();
+  await page
+    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
+    .click();
+  await expect(
+    page.getByLabel("Gespräch / Content-Serie", { exact: true }),
+  ).toHaveValue(series.id);
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Übersicht/ })
+    .click();
+  await page
+    .getByRole("button", { name: `Website ${titles[2]} öffnen`, exact: true })
+    .click();
+  await expect(page.getByLabel("Projektname", { exact: true })).toHaveValue(
+    titles[2],
+  );
+  expect(writes).toEqual([]);
 });

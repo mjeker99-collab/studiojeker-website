@@ -1489,3 +1489,61 @@ pre {
 .website-builder h3 { font-size: 18px; font-weight: 700; line-height: 1.35; margin-bottom: 12px; }
 .website-builder .eyebrow { color: #006873; }
 .website-builder > label { margin-top: 24px; }
+
+/* StudioONE start page: use the same brand token and existing editors. */
+.dashboard-home { display: grid; gap: 30px; min-width: 0; }
+.dashboard-welcome { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: clamp(22px, 3vw, 36px); background: #111315; color: #fff; border-radius: 16px; border-left: 5px solid var(--cyan); }
+.dashboard-welcome > div { min-width: 0; }
+.dashboard-welcome .eyebrow { color: #93c7ef; }
+.dashboard-welcome h2 { font-size: clamp(22px, 2.4vw, 30px); line-height: 1.2; letter-spacing: -.7px; }
+.dashboard-welcome p:last-child { color: #c4cdd3; margin: 12px 0 0; max-width: 530px; }
+.dashboard-welcome button { flex-shrink: 0; }
+.dashboard-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.dashboard-section-heading h2 { font-size: 20px; }
+.dashboard-section-heading p { margin: 6px 0 0; }
+.dashboard-areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+button.dashboard-area { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 18px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); min-height: 190px; }
+button.dashboard-area:hover { border-color: var(--cyan); background: #f2f8fd; }
+.dashboard-area-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #e8f2fb; color: #1f639c; font-size: 23px; }
+.dashboard-area-copy { display: grid; gap: 8px; padding-right: 10px; }
+.dashboard-area-copy strong { font-size: 17px; }
+.dashboard-area-copy > span { font-size: 13px; font-weight: 400; line-height: 1.55; color: var(--muted); }
+.dashboard-area-arrow { position: absolute; right: 22px; top: 30px; color: #1f639c; font-size: 20px; }
+.dashboard-shortcuts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.dashboard-shortcuts button { background: #fff; }
+.dashboard-projects { padding: clamp(18px, 2.5vw, 28px); border-radius: 14px; margin: 0; min-width: 0; }
+.dashboard-project-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 240px); gap: 14px; }
+.dashboard-project-filters input, .dashboard-project-filters select { border-radius: 8px; }
+.dashboard-project-list { list-style: none; padding: 0; margin: 4px 0 0; max-height: 500px; overflow-y: auto; }
+.dashboard-project-list li { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); padding: 18px 4px; }
+.dashboard-project-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.dashboard-project-list h3 { margin: 6px 0; font-size: 16px; }
+.dashboard-project-list button { flex-shrink: 0; }
+.dashboard-project-kind { font-size: 11px; font-weight: 700; color: #1f639c; }
+.dashboard-project-list .muted { font-size: 12px; }
+.dashboard-project-note { margin: 16px 0 0; font-size: 12px; }
+.dashboard-status-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+button.dashboard-status { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px; border-radius: 12px; background: #fff; color: var(--ink); border: 1px solid var(--line); text-align: left; }
+button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); }
+.dashboard-status > span:first-child { color: var(--muted); font-size: 12px; }
+.dashboard-status strong { font-size: 32px; font-weight: 500; line-height: 1; }
+.dashboard-status-link { color: #1f639c; font-size: 12px; }
+@media (max-width: 1200px) {
+  .dashboard-areas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-welcome { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 600px) {
+  .dashboard-home { gap: 24px; }
+  .dashboard-areas { grid-template-columns: minmax(0, 1fr); }
+  button.dashboard-area { min-height: auto; padding: 18px; flex-direction: row; gap: 14px; }
+  .dashboard-area-icon { flex-shrink: 0; }
+  .dashboard-area-copy { padding-right: 15px; }
+  .dashboard-area-arrow { right: 14px; top: 24px; }
+  .dashboard-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-shortcuts button { justify-content: space-between; text-align: left; gap: 6px; }
+  .dashboard-project-filters { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .dashboard-project-list li { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .dashboard-project-list button { padding: 10px 16px; }
+  .dashboard-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-welcome .ai-button { width: 100%; }
+}

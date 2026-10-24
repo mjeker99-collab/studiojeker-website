@@ -124,9 +124,11 @@ function DateField({
 export default function Hub({
   section,
   userId,
+  initialCampaignId,
 }: {
   section: string;
   userId: string;
+  initialCampaignId?: string;
 }) {
   const [templateId, setTemplateId] = useState("master-v7");
   const [mailchimp, setMailchimp] = useState<{
@@ -178,12 +180,29 @@ export default function Hub({
         const j = await r.json();
         if (!r.ok) throw new Error(j.error);
         setData(j);
+        if (initialCampaignId) {
+          const selected = (j as HubState).campaigns.find(
+            (item) => item.id === initialCampaignId,
+          );
+          if (selected) {
+            setCampaign(selected);
+            setCampaignForm({
+              customerId: selected.customerId,
+              title: selected.title,
+              goal: selected.goal,
+              audience: selected.audience,
+              startsAt: new Date(selected.startsAt).toISOString(),
+              endsAt: new Date(selected.endsAt).toISOString(),
+              ownerId: selected.ownerId,
+            });
+          } else setError("Kampagne nicht mehr verfügbar.");
+        }
       })
       .catch((e) => {
         if (e.name !== "AbortError") setError(e.message);
       });
     return () => controller.abort();
-  }, []);
+  }, [initialCampaignId]);
   useEffect(() => {
     if (section !== "Newsletter" && section !== "Einstellungen") return;
     const controller = new AbortController();
@@ -549,7 +568,7 @@ export default function Hub({
               Kampagne erstellen ＋
             </button>
           </div>
-          <div className="hub-cards">
+          <div className="hub-cards" hidden={!!campaignForm}>
             {data.campaigns.map((c) => (
               <article className="panel padded" key={c.id}>
                 <p className="eyebrow">KAMPAGNE · {userName(c.ownerId)}</p>
