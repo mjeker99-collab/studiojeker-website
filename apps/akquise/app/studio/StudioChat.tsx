@@ -83,6 +83,38 @@ export default function StudioChat({
   const activeCustomerId = activeSeries
     ? activeSeries.customerId
     : customerId || null;
+  const dialogContents =
+    activeSeries?.contents.filter(
+      (c) =>
+        c.kind === "SOCIAL" &&
+        (c.workspace === "GPT_DIALOG" || c.workspace === "CONTENT_DRAFT"),
+    ) || [];
+  async function promoteSocial(contentId: string, version: number) {
+    setBusy(true);
+    setError("");
+    setProjectNotice("");
+    try {
+      const r = await fetch(`/api/hub/promote-social/${contentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const data = await r.json();
+      if (!r.ok)
+        throw new Error(
+          data.error || "Übernahme in Social Media fehlgeschlagen.",
+        );
+      await refresh();
+      setProjectNotice("Beitrag in Social Media übernommen.");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Übernahme in Social Media fehlgeschlagen.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   const [message, setMessage] = useState(initialRequest?.message || "");
   const [mediaIntent, setMediaIntent] = useState<
     "TEXT" | "IMAGE" | "VIDEO" | "EDIT"
@@ -200,6 +232,7 @@ export default function StudioChat({
           customerId: customerId || null,
           referenceAssetIds: [],
           brandRules: ["tone", "services", "audiences"],
+          workspace: "GPT_DIALOG",
         });
         id = series.id;
         setSeriesId(id);
@@ -361,6 +394,26 @@ export default function StudioChat({
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
       <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
+      {!!dialogContents.length && (
+        <div className="studio-chat-promote" role="region" aria-label="Social Media Übernahme">
+          <p>
+            GPT-Dialoge und Content-Entwürfe erscheinen nicht automatisch unter
+            Social Media. Explizit übernehmen, wenn der Beitrag publishing-reif
+            ist.
+          </p>
+          {dialogContents.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="ai-button"
+              disabled={busy}
+              onClick={() => void promoteSocial(c.id, c.version)}
+            >
+              «{c.title}» in Social Media übernehmen
+            </button>
+          ))}
+        </div>
+      )}
       <p className="muted">
         Für{" "}
         {state.customers.find((c) => c.id === activeCustomerId)?.name ||

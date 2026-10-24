@@ -13,11 +13,17 @@ import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
+import SocialMediaField from "./SocialMediaField";
 import ChatGptIntegration from "./ChatGptIntegration";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
 import { displayTime, zurichInput, zurichInstant } from "@/lib/hub/time";
+import {
+  canPromoteToSocial,
+  isSocialPublishingPost,
+  workspaceLabels,
+} from "@/lib/hub/workspace";
 type HubState = Awaited<ReturnType<typeof hubState>>;
 type Content = HubState["contents"][number];
 type Campaign = HubState["campaigns"][number];
@@ -165,7 +171,8 @@ export default function Hub({
   const [channel, setChannel] = useState(""),
     [campaignFilter, setCampaignFilter] = useState(""),
     [owner, setOwner] = useState(""),
-    [status, setStatus] = useState("");
+    [status, setStatus] = useState(""),
+    [publicationFilter, setPublicationFilter] = useState("");
   const [mode, setMode] = useState("calendar"),
     [month, setMonth] = useState(() => zurichInput(new Date()).slice(0, 7));
   const [publication, setPublication] = useState({
@@ -317,11 +324,29 @@ export default function Hub({
               (v) => v.channel === channel,
             ))),
   );
-  const visible = filtered.filter((c) =>
+  const visible = filtered.filter((c) => {
+    if (section === "Social Media") {
+      if (!isSocialPublishingPost(c)) return false;
+      if (publicationFilter === "published")
+        return c.publications.some((p) => p.version === c.version);
+      if (publicationFilter === "unpublished")
+        return !c.publications.some((p) => p.version === c.version);
+      return true;
+    }
+    if (section === "Newsletter") return c.kind === "NEWSLETTER";
+    return true;
+  });
+  const promotable = data.contents.filter(
+    (c) =>
+      canPromoteToSocial(c) &&
+      (!campaignFilter || c.campaignId === campaignFilter) &&
+      (!owner || c.ownerId === owner),
+  );
+  const socialChannelOptions = Object.entries(channelLabels).filter(([key]) =>
     section === "Social Media"
-      ? c.kind === "SOCIAL"
+      ? channels.includes(key as (typeof channels)[number])
       : section === "Newsletter"
-        ? c.kind === "NEWSLETTER"
+        ? key === "NEWSLETTER"
         : true,
   );
   const filters = (
@@ -330,7 +355,7 @@ export default function Hub({
         Kanal
         <select value={channel} onChange={(e) => setChannel(e.target.value)}>
           <option value="">Alle Kanäle</option>
-          {Object.entries(channelLabels).map(([key, name]) => (
+          {socialChannelOptions.map(([key, name]) => (
             <option key={key} value={key}>
               {name}
             </option>
@@ -365,6 +390,19 @@ export default function Hub({
           ))}
         </select>
       </label>
+      {section === "Social Media" && (
+        <label>
+          Veröffentlichung
+          <select
+            value={publicationFilter}
+            onChange={(e) => setPublicationFilter(e.target.value)}
+          >
+            <option value="">Alle</option>
+            <option value="unpublished">Noch nicht veröffentlicht</option>
+            <option value="published">Manuell veröffentlicht</option>
+          </select>
+        </label>
+      )}
     </div>
   );
   const cards = (items: Content[]) => (
@@ -389,12 +427,28 @@ export default function Hub({
               <p className="muted">
                 {campaignName(c.campaignId)} · {userName(c.ownerId)} · V
                 {c.version}
+                {c.kind === "SOCIAL" && c.workspace
+                  ? ` · ${workspaceLabels[c.workspace as keyof typeof workspaceLabels] || c.workspace}`
+                  : ""}
               </p>
               <p className="hub-excerpt">
                 {c.kind === "SOCIAL"
                   ? p.variants[0]?.text
                   : p.preheader || p.subject}
               </p>
+              {c.kind === "SOCIAL" &&
+                p.variants.some((v) => v.mediaType !== "NONE") && (
+                  <p className="hub-media-strip">
+                    {p.variants
+                      .filter((v) => v.mediaType !== "NONE")
+                      .map((v) => (
+                        <span key={v.channel}>
+                          {channelLabels[v.channel]} ·{" "}
+                          {v.mediaType === "VIDEO" ? "Video" : "Bild"}
+                        </span>
+                      ))}
+                  </p>
+                )}
               <p>
                 {c.kind === "SOCIAL"
                   ? `${published.length}/${p.variants.length} manuell veröffentlicht`
@@ -402,9 +456,7 @@ export default function Hub({
                     ? "Exportiert · nicht übertragen · nicht versandt"
                     : "Nicht exportiert · nicht übertragen · nicht versandt"}
               </p>
-              <button className="secondary" onClick={() => edit(c)}>
-                Inhalt öffnen ↗
-              </button>
+              <button onClick={() => edit(c)}>Inhalt öffnen ↗</button>
               {c.kind === "NEWSLETTER" && (
                 <button
                   className="secondary"
@@ -452,6 +504,7 @@ export default function Hub({
   };
   const events: Event[] = [];
   for (const c of data.contents) {
+    if (c.kind === "SOCIAL" && !isSocialPublishingPost(c)) continue;
     const p = c.versions[0].payload as unknown as ContentInput;
     const variants =
       c.kind === "SOCIAL"
@@ -531,15 +584,80 @@ export default function Hub({
         Planung &amp; Freigabe · Veröffentlichungen nur nach gesonderter
         Prüfung.
       </p>
-      {section === "Social Media" && <SocialConnections userId={userId} />}
+      {section === "Social Media" && (
+        <>
+          <SocialConnections userId={userId} />
+          <section className="panel padded social-workspace-intro">
+            <p className="eyebrow">SOCIAL MEDIA PUBLISHING</p>
+            <h2>Beiträge planen, prüfen und freigeben</h2>
+            <p>
+              GPT-Dialoge und Content-Studio-Entwürfe erscheinen hier erst nach
+              «In Social Media übernehmen». Kampagnen, Freigaben und manuelle
+              Veröffentlichungsnachweise bleiben getrennt vom automatischen
+              Versand.
+            </p>
+          </section>
+          {!!promotable.length && (
+            <section
+              className="panel padded social-promote"
+              aria-label="Zur Übernahme in Social Media"
+            >
+              <h2>Zur Übernahme</h2>
+              <p>
+                Content-Entwürfe und GPT-Dialoge bleiben gespeichert. Übernahme
+                verschiebt sie nur in die Publishing-Liste – nichts wird
+                gelöscht.
+              </p>
+              <div className="hub-cards">
+                {promotable.map((c) => (
+                  <article className="panel padded" key={c.id}>
+                    <p className="eyebrow">
+                      {workspaceLabels[
+                        (c.workspace ||
+                          "CONTENT_DRAFT") as keyof typeof workspaceLabels
+                      ]}
+                    </p>
+                    <h3>{c.title}</h3>
+                    <p className="muted">
+                      {campaignName(c.campaignId)} · V{c.version}
+                    </p>
+                    <div className="actions">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          act(async () => {
+                            await post("promote-social/" + c.id, {
+                              version: c.version,
+                            });
+                          }, "In Social Media übernommen.")
+                        }
+                      >
+                        In Social Media übernehmen
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => edit(c)}
+                      >
+                        Vorher öffnen
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
       {section === "Übersicht" && (
         <>
           <div className="metrics">
             {[
               ["Kampagnen", data.campaigns.length],
               [
-                "Social-Entwürfe",
-                data.contents.filter((c) => c.kind === "SOCIAL").length,
+                "Social Posts",
+                data.contents.filter((c) => isSocialPublishingPost(c)).length,
               ],
               [
                 "Newsletter",
@@ -652,7 +770,11 @@ export default function Hub({
                 <details>
                   <summary>Zugeordnete Inhalte</summary>
                   {data.contents
-                    .filter((x) => x.campaignId === c.id)
+                    .filter(
+                      (x) =>
+                        x.campaignId === c.id &&
+                        (x.kind === "NEWSLETTER" || isSocialPublishingPost(x)),
+                    )
                     .map((x) => (
                       <p key={x.id}>
                         <button className="text-button" onClick={() => edit(x)}>
@@ -1028,41 +1150,6 @@ export default function Hub({
                             onChange={(e) => change({ cta: e.target.value })}
                           />
                         </label>
-                        <label>
-                          {channelLabels[v.channel]} Medientyp
-                          <select
-                            value={v.mediaType}
-                            onChange={(e) =>
-                              change({
-                                mediaType: e.target.value as typeof v.mediaType,
-                              })
-                            }
-                          >
-                            <option value="NONE">Kein Medium</option>
-                            <option value="IMAGE">Bild</option>
-                            <option value="VIDEO">Video</option>
-                          </select>
-                        </label>
-                        <label>
-                          {channelLabels[v.channel]} Medien-URL
-                          <input
-                            type="url"
-                            value={v.mediaUrl}
-                            onChange={(e) =>
-                              change({ mediaUrl: e.target.value })
-                            }
-                          />
-                        </label>
-                        <label>
-                          {channelLabels[v.channel]} Medienreferenz
-                          <input
-                            placeholder="Asset-ID oder dokumentierter Ablageort"
-                            value={v.mediaReference}
-                            onChange={(e) =>
-                              change({ mediaReference: e.target.value })
-                            }
-                          />
-                        </label>
                         <DateField
                           label={
                             channelLabels[v.channel] +
@@ -1072,6 +1159,11 @@ export default function Hub({
                           change={(scheduledAt) => change({ scheduledAt })}
                         />
                       </div>
+                      <SocialMediaField
+                        channelLabel={channelLabels[v.channel]}
+                        value={v}
+                        onChange={change}
+                      />
                     </fieldset>
                   );
                 })}
@@ -1203,6 +1295,30 @@ export default function Hub({
               </article>
             )}
           </section>
+          {editing && canPromoteToSocial(editing) && (
+            <div className="actions">
+              <button
+                type="button"
+                disabled={busy || dirty}
+                onClick={() =>
+                  act(async () => {
+                    const promoted = await post("promote-social/" + editing.id, {
+                      version: editing.version,
+                    });
+                    const r = await fetch("/api/hub/state", {
+                      cache: "no-store",
+                    });
+                    const updated: HubState = await r.json();
+                    const c = updated.contents.find((x) => x.id === promoted.id)!;
+                    setData(updated);
+                    edit(c);
+                  }, "In Social Media übernommen.")
+                }
+              >
+                In Social Media übernehmen
+              </button>
+            </div>
+          )}
           {editing && (
             <>
               <label className="check read-check">
@@ -1227,7 +1343,12 @@ export default function Hub({
                     key={decision}
                     className={decision === "APPROVED" ? "" : "secondary"}
                     disabled={
-                      busy || dirty || (decision === "APPROVED" && !read)
+                      busy ||
+                      dirty ||
+                      (decision === "APPROVED" && !read) ||
+                      (editing.kind === "SOCIAL" &&
+                        !isSocialPublishingPost(editing) &&
+                        decision === "APPROVED")
                     }
                     onClick={() =>
                       act(async () => {

@@ -261,6 +261,14 @@ enum EditorialStatus {
   DONE
 }
 
+// Separates Social publishing posts from Content Studio drafts and GPT dialog stubs.
+// Existing rows are classified additively; nothing is deleted.
+enum ContentWorkspace {
+  SOCIAL_POST
+  CONTENT_DRAFT
+  GPT_DIALOG
+}
+
 model Campaign {
   customerId     String?
   customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -290,6 +298,7 @@ model MarketingContent {
   organization   StudioOrganization  @relation(fields: [organizationId], references: [id])
   id             String              @id @default(cuid())
   kind           ContentKind
+  workspace      ContentWorkspace    @default(SOCIAL_POST)
   title          String
   version        Int                 @default(1)
   status         EditorialStatus     @default(DRAFT)
@@ -307,6 +316,7 @@ model MarketingContent {
   mailchimpTransfers MailchimpTransfer[]
 
   @@index([campaignId, scheduledAt])
+  @@index([kind, workspace, status])
 }
 
 model MarketingVersion {
