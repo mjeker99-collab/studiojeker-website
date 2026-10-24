@@ -4,6 +4,7 @@ import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
 import ContactPreparation from "./ContactPreparation";
 import Hub from "./hub/Hub";
+import Dashboard, { type DashboardTarget } from "./Dashboard";
 import Website from "./cms/Website";
 import Concepts from "./concepts/Concepts";
 import Customers from "./customers/Customers";
@@ -149,6 +150,25 @@ export default function App() {
     [rationale, setRationale] = useState(""),
     [procurement, setProcurement] = useState(false),
     [dispatchConfirm, setDispatchConfirm] = useState(false);
+  const [dashboardTarget, setDashboardTarget] =
+    useState<DashboardTarget | null>(null);
+  function navigate(target: DashboardTarget) {
+    if (
+      conceptDirty &&
+      !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
+    )
+      return;
+    setDashboardTarget(target);
+    setTab(
+      target.section === "Kontakte/Akquise" ? "Mail-Studio" : target.section,
+    );
+    setNotice("");
+    setError("");
+    setSelected([]);
+    setSearch("");
+    setFilter("");
+    window.scrollTo({ top: 0 });
+  }
   const mailLabel = data?.externalSending
     ? data.mailMode === "test"
       ? "Interner SMTP-Testmodus"
@@ -421,19 +441,7 @@ export default function App() {
                   ? "active"
                   : ""
               }
-              onClick={() => {
-                if (
-                  conceptDirty &&
-                  !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
-                )
-                  return;
-                setTab(n === "Kontakte/Akquise" ? "Mail-Studio" : n);
-                setNotice("");
-                setError("");
-                setSelected([]);
-                setSearch("");
-                setFilter("");
-              }}
+              onClick={() => navigate({ section: n })}
             >
               <span className="nav-index" aria-hidden="true">
                 0{i + 1}
@@ -523,21 +531,36 @@ export default function App() {
               ))}
             </nav>
           )}
-          {(tab === "Kampagnen" ||
-            tab === "Social Media") && (
+          {(tab === "Kampagnen" || tab === "Social Media") && (
             <AssistantEntry key={`assistant-${tab}`} section={tab} />
           )}
           {[
-            "Übersicht",
             "Kampagnen",
             "Social Media",
             "Newsletter",
             "Kalender",
             "Einstellungen",
           ].includes(tab) && (
-            <Hub key={tab} section={tab} userId={data.user.id} />
+            <Hub
+              key={tab}
+              section={tab}
+              userId={data.user.id}
+              initialCampaignId={
+                dashboardTarget?.section === tab
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
           )}
-          {tab === "Website" && <Website />}
+          {tab === "Website" && (
+            <Website
+              initialProjectId={
+                dashboardTarget?.section === "Website"
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
+          )}
           {tab === "Bibliothek" && <Library />}
           {tab === "Kunden" && <Customers />}
           {tab === "Strategie & Konzepte" && (
@@ -546,150 +569,27 @@ export default function App() {
               openCampaigns={() => setTab("Kampagnen")}
             />
           )}
-          {tab === "Content-Studio" && <ContentStudio userId={data.user.id} />}
+          {tab === "Content-Studio" && (
+            <ContentStudio
+              userId={data.user.id}
+              initialSeriesId={
+                dashboardTarget?.section === "Content-Studio"
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
+          )}
           {tab === "Übersicht" && (
-            <>
-              <div className="banner">
-                <span className="banner-icon">↗</span>
-                <div>
-                  <strong>Persönlich ansprechen. Bewusst freigeben.</strong>
-                  <p>
-                    Jede Nachricht bleibt ein Entwurf, bis Martin oder Nora die
-                    exakte Version geprüft hat.
-                  </p>
-                </div>
-                <span className="outline-tag">{mailLabel.toUpperCase()}</span>
-              </div>
-              <div className="metrics">
-                {[
-                  [
-                    "Neue Kontakte",
-                    data.contacts.filter((c) => c.status === "NEW").length,
-                  ],
-                  [
-                    "Verifizierte Kontakte",
-                    data.contacts.filter((c) => c.confidence === "VERIFIED")
-                      .length,
-                  ],
-                  [
-                    "Entwürfe in Bearbeitung",
-                    data.drafts.filter((d) => latest(d) === "DRAFT").length,
-                  ],
-                  [
-                    "Wartende Freigaben",
-                    data.drafts.filter((d) => latest(d) === "PENDING").length,
-                  ],
-                  [
-                    "Freigegebene E-Mails",
-                    data.drafts.filter((d) => latest(d) === "APPROVED").length,
-                  ],
-                  [
-                    "Versandte E-Mails",
-                    data.deliveries.filter((d) => d.status === "SENT").length,
-                  ],
-                  [
-                    "Eingegangene Antworten",
-                    data.deliveries.filter((d) => d.status === "REPLIED")
-                      .length,
-                  ],
-                ].map(([label, count], i) => (
-                  <article className="metric" key={label}>
-                    <span>{label}</span>
-                    <div>
-                      {count}
-                      <small>0{i + 1}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <div className="dashboard-grid">
-                <section className="panel">
-                  <div className="section-head">
-                    <h2>Kontakte im Fokus</h2>
-                    <button
-                      className="text-button"
-                      onClick={() => setTab("Kontakte")}
-                    >
-                      Alle Kontakte ↗
-                    </button>
-                  </div>
-                  <ContactTable
-                    contacts={data.contacts.slice(0, 6)}
-                    selected={selected}
-                    setSelected={setSelected}
-                    open={openContact}
-                  />
-                  {!data.contacts.length && (
-                    <p className="empty">
-                      Noch keine Kontakte. Erfassen oder importieren Sie
-                      geprüfte Recherche.
-                    </p>
-                  )}
-                </section>
-                <section className="panel">
-                  <div className="section-head">
-                    <h2>Nächste Schritte</h2>
-                    <span className="cyan">↗</span>
-                  </div>
-                  <ol className="steps">
-                    <li>
-                      <span>01</span>
-                      <div>
-                        <strong>Recherche dokumentieren</strong>
-                        <p>
-                          Quelle, Anknüpfungspunkt und persönliche
-                          Geschäftsadresse prüfen.
-                        </p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>02</span>
-                      <div>
-                        <strong>Zulässigkeit beurteilen</strong>
-                        <p>
-                          Öffentliche Kontaktdaten gelten nicht als
-                          Werbeeinwilligung.
-                        </p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>03</span>
-                      <div>
-                        <strong>Entwurf einzeln lesen</strong>
-                        <p>
-                          Inhalt und Empfänger prüfen, dann die konkrete Version
-                          freigeben.
-                        </p>
-                      </div>
-                    </li>
-                  </ol>
-                  <div className="panel-note">
-                    {data.externalSending
-                      ? "Jeder Versand benötigt die Freigabe der exakten Version und eine separate Versandbestätigung."
-                      : "Es werden keine externen E-Mails versandt. Lokale Simulation bleibt möglich."}
-                  </div>
-                </section>
-              </div>
-              <section className="panel">
-                <div className="section-head">
-                  <h2>Letzte Aktivitäten</h2>
-                  <span className="muted">Audit-Protokoll</span>
-                </div>
-                <div className="activity">
-                  {data.audits.slice(0, 5).map((a) => (
-                    <div key={a.id}>
-                      <span className="dot" />
-                      <strong>{a.action}</strong>
-                      <span>{a.user.name}</span>
-                      <time>{date(a.createdAt)}</time>
-                    </div>
-                  ))}
-                  {!data.audits.length && (
-                    <p className="empty">Noch keine Aktivitäten.</p>
-                  )}
-                </div>
-              </section>
-            </>
+            <Dashboard
+              name={data.user.name}
+              contacts={data.contacts.length}
+              drafts={data.drafts.filter((d) => latest(d) === "DRAFT").length}
+              approvals={
+                data.drafts.filter((d) => latest(d) === "PENDING").length
+              }
+              sent={data.deliveries.filter((d) => d.status === "SENT").length}
+              onOpen={navigate}
+            />
           )}
           {tab === "Mail-Studio" && (
             <MailStudio

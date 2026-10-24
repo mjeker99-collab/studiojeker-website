@@ -1,3 +1,4 @@
+import { dashboardState } from "@/lib/dashboard";
 import { websiteList, websiteState, websiteVersion, websiteMutation } from "@/lib/websites/service";
 import { websiteExport } from "@/lib/websites/publication";
 import { assistCustomer } from "@/lib/customer-assistant/service";
@@ -136,6 +137,9 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "dashboard" && req.method === "GET") {
+      return NextResponse.json(await dashboardState(), { headers: { "Cache-Control": "no-store, private" } });
+    }
     if (path[0] === "websites" && req.method === "GET") {
       const headers = { "Cache-Control": "no-store, private", "X-Content-Type-Options": "nosniff" };
       if (path.length === 1) return NextResponse.json(await websiteList(user.id), {headers});
