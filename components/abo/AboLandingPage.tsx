@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { AboPageContent } from "@/lib/content/abo-page";
 import { mediaPath } from "@/lib/media/paths";
+import { AboPackagesSection } from "@/components/abo/AboPackagesSection";
 import { aboBenefitIcons } from "@/components/home/aboBenefitIcons";
 import { HeroMediaFrame } from "@/components/home/HeroMediaFrame";
 import { ShowreelSection } from "@/components/home/ShowreelSection";
@@ -189,6 +190,11 @@ export function AboLandingPage({ content }: AboLandingPageProps) {
           </Reveal>
         </Container>
       </section>
+
+      <AboPackagesSection
+        packages={content.packages}
+        promo={content.promo}
+      />
 
       <ShowreelSection
         key={`${content.showreel.videoId ?? "image"}:${content.showreel.media.src}`}

@@ -2,14 +2,19 @@ import type { Locale } from "@/types/i18n";
 import type { HomepageBenefit, HomepageMedia } from "@/types/homepage";
 import {
   getAboPageContent,
+  type AboPackage,
   type AboPageContent,
+  type AboPromoContent,
 } from "@/lib/content/abo-page";
 import { localizePathname, stripLocalePrefix } from "@/lib/i18n/config";
 import type {
   SanityAbo,
   SanityAboBenefitItem,
   SanityAboCta,
+  SanityAboPackage,
+  SanityAboPackageFeature,
   SanityAboProcessStep,
+  SanityAboPromoTerm,
   SanityAboScopeItem,
 } from "@/lib/sanity/abo";
 import type {
@@ -173,6 +178,115 @@ function mergeScopeItems(
   return merged.length > 0 ? merged : base;
 }
 
+function mergePackageFeatures(
+  base: string[],
+  features: SanityAboPackageFeature[] | null | undefined,
+  locale: Locale,
+): string[] {
+  const source = (features ?? []).filter(
+    (item): item is NonNullable<SanityAboPackageFeature> => Boolean(item),
+  );
+
+  if (source.length === 0) {
+    return base;
+  }
+
+  const merged = source
+    .map((item) => pickLocalized(item.label, locale))
+    .filter((label): label is string => Boolean(label));
+
+  return merged.length > 0 ? merged : base;
+}
+
+function mergePackages(
+  base: AboPackage[],
+  packages: SanityAboPackage[] | null | undefined,
+  locale: Locale,
+): AboPackage[] {
+  const source = (packages ?? []).filter(
+    (item): item is NonNullable<SanityAboPackage> => Boolean(item),
+  );
+
+  if (source.length === 0) {
+    return base;
+  }
+
+  const ordered = sortByOrder(source);
+  const merged = ordered
+    .map((item, index) => {
+      const id = clean(item.id ?? undefined) ?? base[index]?.id;
+      if (!id) return null;
+      const fallback = base.find((pkg) => pkg.id === id) ?? base[index];
+      const name = pickLocalized(item.name, locale) ?? fallback?.name;
+      const price = pickLocalized(item.price, locale) ?? fallback?.price;
+      if (!name || !price) return null;
+
+      return {
+        id,
+        name,
+        price,
+        priceSuffix:
+          pickLocalized(item.priceSuffix, locale) ?? fallback?.priceSuffix ?? "",
+        summary:
+          pickLocalized(item.summary, locale) ?? fallback?.summary ?? "",
+        features: mergePackageFeatures(
+          fallback?.features ?? [],
+          item.features,
+          locale,
+        ),
+        highlighted: item.highlighted ?? fallback?.highlighted ?? false,
+        cta: resolveCta(item.cta, locale, fallback?.cta ?? { label: name, href: "/contact" }),
+      };
+    })
+    .filter((item): item is AboPackage => Boolean(item));
+
+  return merged.length > 0 ? merged : base;
+}
+
+function mergePromoTerms(
+  base: string[],
+  terms: SanityAboPromoTerm[] | null | undefined,
+  locale: Locale,
+): string[] {
+  const source = (terms ?? []).filter(
+    (item): item is NonNullable<SanityAboPromoTerm> => Boolean(item),
+  );
+
+  if (source.length === 0) {
+    return base;
+  }
+
+  const merged = source
+    .map((item) => pickLocalized(item.label, locale))
+    .filter((label): label is string => Boolean(label));
+
+  return merged.length > 0 ? merged : base;
+}
+
+function mergePromo(
+  base: AboPromoContent,
+  section: SanityAbo["promoSection"],
+  locale: Locale,
+): AboPromoContent {
+  if (!section) {
+    return { ...base, terms: [...base.terms], cta: { ...base.cta } };
+  }
+
+  const startDate = clean(section.startDate ?? undefined) ?? base.startDate;
+  const endDate = clean(section.endDate ?? undefined) ?? base.endDate;
+
+  return {
+    enabled: section.enabled ?? base.enabled,
+    startDate,
+    endDate,
+    label: pickLocalized(section.label, locale) ?? base.label,
+    headline: pickLocalized(section.headline, locale) ?? base.headline,
+    text: pickLocalized(section.text, locale) ?? base.text,
+    terms: mergePromoTerms(base.terms, section.terms, locale),
+    cta: resolveCta(section.cta, locale, base.cta),
+  };
+}
+
 function applyMedia(
   base: HomepageMedia,
   media: SanityMediaField | undefined,
@@ -209,6 +323,19 @@ export function mergeSanityAbo(
     scope: {
       ...base.scope,
       items: [...base.scope.items],
+    },
+    packages: {
+      ...base.packages,
+      items: base.packages.items.map((item) => ({
+        ...item,
+        features: [...item.features],
+        cta: { ...item.cta },
+      })),
+    },
+    promo: {
+      ...base.promo,
+      terms: [...base.promo.terms],
+      cta: { ...base.promo.cta },
     },
     showreel: {
       ...base.showreel,
@@ -323,6 +450,29 @@ export function mergeSanityAbo(
 
   const scopeHighlight = pickLocalized(doc.scopeSection?.highlight, locale);
   if (scopeHighlight) merged.scope.highlight = scopeHighlight;
+
+  const packagesLabel = pickLocalized(doc.packagesSection?.label, locale);
+  if (packagesLabel) merged.packages.label = packagesLabel;
+
+  const packagesHeadline = pickLocalized(doc.packagesSection?.headline, locale);
+  if (packagesHeadline) merged.packages.headline = packagesHeadline;
+
+  const packagesIntro = pickLocalized(
+    doc.packagesSection?.introduction,
+    locale,
+  );
+  if (packagesIntro) merged.packages.introduction = packagesIntro;
+
+  const packagesVat = pickLocalized(doc.packagesSection?.vatNote, locale);
+  if (packagesVat) merged.packages.vatNote = packagesVat;
+
+  merged.packages.items = mergePackages(
+    base.packages.items,
+    doc.packagesSection?.packages,
+    locale,
+  );
+
+  merged.promo = mergePromo(base.promo, doc.promoSection, locale);
 
   const showreelLabel = pickLocalized(doc.showreelSection?.label, locale);
   if (showreelLabel) merged.showreel.label = showreelLabel;
