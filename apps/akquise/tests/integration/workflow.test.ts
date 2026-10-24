@@ -1362,6 +1362,17 @@ test("Social workspace: GPT-Dialoge bleiben erhalten und erscheinen erst nach Ü
     hub.reviewContent(martin, content.id, 1, "APPROVED", true),
     /Social Media übernehmen/,
   );
+  await assert.rejects(
+    hub.recordPublication(
+      martin,
+      content.id,
+      1,
+      "INSTAGRAM",
+      "2026-10-01T10:00:00.000Z",
+      "",
+    ),
+    /nicht freigegeben|Publishing-Workspace|Social Media/,
+  );
   const promoted = await hub.promoteToSocialPost(martin, content.id, 1);
   assert.equal(promoted.workspace, "SOCIAL_POST");
   const stillThere = await db.marketingContent.findUniqueOrThrow({

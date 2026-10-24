@@ -228,7 +228,7 @@ export async function reviewContent(
     if (
       decision === "APPROVED" &&
       c.kind === "SOCIAL" &&
-      c.workspace !== "SOCIAL_POST"
+      c.workspace === "GPT_DIALOG"
     )
       throw new PolicyError(
         "Zuerst «In Social Media übernehmen», danach freigeben.",
@@ -309,6 +309,11 @@ export async function recordPublication(
     await hubActor(tx, actor);
     await lock(tx, id);
     const { c, payload } = await approvedContent(tx, id, version);
+    if (c.workspace !== "SOCIAL_POST")
+      throw new PolicyError(
+        "Nur Social Posts im Publishing-Workspace können manuell veröffentlicht werden.",
+        409,
+      );
     if (
       c.kind !== "SOCIAL" ||
       !payload.variants.some((v) => v.channel === channel)

@@ -1346,9 +1346,9 @@ export default function Hub({
                       busy ||
                       dirty ||
                       (decision === "APPROVED" && !read) ||
-                      (editing.kind === "SOCIAL" &&
-                        !isSocialPublishingPost(editing) &&
-                        decision === "APPROVED")
+                      (decision === "APPROVED" &&
+                        editing.kind === "SOCIAL" &&
+                        editing.workspace === "GPT_DIALOG")
                     }
                     onClick={() =>
                       act(async () => {
@@ -1543,7 +1543,8 @@ export default function Hub({
                       dirty ||
                       !publication.confirmed ||
                       !publication.publishedAt ||
-                      !["APPROVED", "DONE"].includes(editing.status)
+                      !["APPROVED", "DONE"].includes(editing.status) ||
+                      !isSocialPublishingPost(editing)
                     }
                     onClick={() =>
                       act(async () => {
