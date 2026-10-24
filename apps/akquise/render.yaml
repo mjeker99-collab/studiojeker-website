@@ -61,6 +61,8 @@ services:
         value: "20"
       - key: CHATGPT_CONNECTOR_TOKEN
         sync: false
+      - key: CHATGPT_CONNECTOR_WRITE_TOKEN
+        sync: false
 databases:
   - name: studiojeker-akquise-db
     region: frankfurt

@@ -7,13 +7,16 @@ import { audit, type Tx } from "../workflow";
 import {
   connectorTokenConfigured,
   parseScopes,
+  writeTokenConfigured,
 } from "./auth";
 import {
   GPT_ENTITY_TYPES,
+  GPT_WRITE_ENTITY_TYPES,
   defaultScopes,
   type GptConnectorStatus,
   type GptEntityType,
   type GptScopes,
+  type GptWriteEntityType,
 } from "./types";
 
 async function ensureActor(tx: Tx, userId: string) {
@@ -84,6 +87,25 @@ async function titleFor(
   }
 }
 
+async function writeTitleFor(
+  entityType: GptWriteEntityType,
+  entityId: string,
+): Promise<string> {
+  switch (entityType) {
+    case "CAMPAIGN":
+      return titleFor("CAMPAIGN", entityId);
+    case "SERIES":
+      return titleFor("SERIES", entityId);
+    case "WEBSITE": {
+      const row = await db.websiteProject.findUnique({
+        where: { id: entityId },
+        select: { name: true },
+      });
+      return row?.name ?? entityId;
+    }
+  }
+}
+
 export async function gptConnectorStatus(
   userId: string,
 ): Promise<GptConnectorStatus> {
@@ -94,7 +116,11 @@ export async function gptConnectorStatus(
     orderBy: { sharedAt: "desc" },
     take: 200,
   });
-  const [campaigns, projects, concepts, contents] = await Promise.all([
+  const writeGrants = await db.gptWriteGrant.findMany({
+    orderBy: { grantedAt: "desc" },
+    take: 200,
+  });
+  const [campaigns, projects, concepts, contents, websites] = await Promise.all([
     db.campaign.findMany({
       where: { organizationId: "studiojeker" },
       orderBy: { updatedAt: "desc" },
@@ -122,8 +148,17 @@ export async function gptConnectorStatus(
       select: { id: true, title: true },
       take: 200,
     }),
+    db.websiteProject.findMany({
+      where: { organizationId: "studiojeker" },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, name: true },
+      take: 200,
+    }),
   ]);
   const sharedSet = new Set(shares.map((s) => `${s.entityType}:${s.entityId}`));
+  const writeSet = new Set(
+    writeGrants.map((s) => `${s.entityType}:${s.entityId}`),
+  );
   const shareRows = await Promise.all(
     shares.map(async (s) => ({
       entityType: s.entityType as GptEntityType,
@@ -132,15 +167,29 @@ export async function gptConnectorStatus(
       sharedAt: s.sharedAt.toISOString(),
     })),
   );
+  const writeRows = await Promise.all(
+    writeGrants.map(async (s) => ({
+      entityType: s.entityType as GptWriteEntityType,
+      entityId: s.entityId,
+      title: await writeTitleFor(s.entityType as GptWriteEntityType, s.entityId),
+      grantedAt: s.grantedAt.toISOString(),
+    })),
+  );
   const tokenConfigured = connectorTokenConfigured();
+  const writeConfigured = writeTokenConfigured();
   const revoked = Boolean(settings.revokedAt);
   return {
     tokenConfigured,
+    writeTokenConfigured: writeConfigured,
     revoked,
     connected: tokenConfigured && !revoked,
+    writeDraftsEnabled:
+      writeConfigured && !revoked && scopes.write_drafts === true,
     scopes,
     lastAccessAt: settings.lastAccessAt?.toISOString() ?? null,
+    lastWriteAccessAt: settings.lastWriteAccessAt?.toISOString() ?? null,
     shares: shareRows,
+    writeGrants: writeRows,
     shareCandidates: {
       campaigns: campaigns.map((c) => ({
         id: c.id,
@@ -166,6 +215,23 @@ export async function gptConnectorStatus(
         shared: sharedSet.has(`CONTENT:${c.id}`),
       })),
     },
+    writeCandidates: {
+      campaigns: campaigns.map((c) => ({
+        id: c.id,
+        title: c.title,
+        granted: writeSet.has(`CAMPAIGN:${c.id}`),
+      })),
+      projects: projects.map((p) => ({
+        id: p.id,
+        title: p.title,
+        granted: writeSet.has(`SERIES:${p.id}`),
+      })),
+      websites: websites.map((w) => ({
+        id: w.id,
+        title: w.name,
+        granted: writeSet.has(`WEBSITE:${w.id}`),
+      })),
+    },
   };
 }
 
@@ -175,6 +241,7 @@ const scopesSchema = z
     campaigns: z.boolean(),
     concepts: z.boolean(),
     content: z.boolean(),
+    write_drafts: z.boolean(),
   })
   .strict();
 
@@ -318,6 +385,85 @@ export async function setGptShare(userId: string, body: unknown) {
         where: { entityType: input.entityType, entityId: input.entityId },
       });
       await audit(tx, userId, "GPT_SHARE_REVOKED", input.entityId, {
+        entityType: input.entityType,
+      });
+    }
+    return { ok: true, ...input };
+  });
+}
+
+const writeGrantSchema = z
+  .object({
+    entityType: z.enum(GPT_WRITE_ENTITY_TYPES),
+    entityId: z.string().min(1).max(64),
+    granted: z.boolean(),
+  })
+  .strict();
+
+async function assertWriteEntityExists(
+  tx: Tx,
+  entityType: GptWriteEntityType,
+  entityId: string,
+) {
+  switch (entityType) {
+    case "CAMPAIGN":
+      if (
+        !(await tx.campaign.findFirst({
+          where: { id: entityId, organizationId: "studiojeker" },
+          select: { id: true },
+        }))
+      )
+        throw new PolicyError("Kampagne nicht gefunden.", 404);
+      break;
+    case "SERIES":
+      if (
+        !(await tx.studioSeries.findFirst({
+          where: { id: entityId, organizationId: "studiojeker" },
+          select: { id: true },
+        }))
+      )
+        throw new PolicyError("Projekt nicht gefunden.", 404);
+      break;
+    case "WEBSITE":
+      if (
+        !(await tx.websiteProject.findFirst({
+          where: { id: entityId, organizationId: "studiojeker" },
+          select: { id: true },
+        }))
+      )
+        throw new PolicyError("Website nicht gefunden.", 404);
+      break;
+  }
+}
+
+export async function setGptWriteGrant(userId: string, body: unknown) {
+  const input = writeGrantSchema.parse(body);
+  return db.$transaction(async (tx) => {
+    await ensureActor(tx, userId);
+    await assertWriteEntityExists(tx, input.entityType, input.entityId);
+    if (input.granted) {
+      await tx.gptWriteGrant.upsert({
+        where: {
+          entityType_entityId: {
+            entityType: input.entityType,
+            entityId: input.entityId,
+          },
+        },
+        create: {
+          entityType: input.entityType,
+          entityId: input.entityId,
+          grantedBy: userId,
+        },
+        update: { grantedBy: userId, grantedAt: new Date() },
+      });
+      await audit(tx, userId, "GPT_WRITE_GRANT_GRANTED", input.entityId, {
+        entityType: input.entityType,
+      });
+    } else {
+      await tx.gptWriteGrant.deleteMany({
+        where: { entityType: input.entityType, entityId: input.entityId },
+      });
+      await audit(tx, userId, "GPT_WRITE_GRANT_REVOKED", input.entityId, {
         entityType: input.entityType,
       });
     }

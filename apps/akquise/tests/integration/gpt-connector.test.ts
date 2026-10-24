@@ -13,6 +13,8 @@ const schema = "gpt_connector_" + randomBytes(8).toString("hex");
 url.searchParams.set("schema", schema);
 process.env.DATABASE_URL = url.toString();
 process.env.CHATGPT_CONNECTOR_TOKEN = "test-connector-token-" + randomBytes(16).toString("hex");
+process.env.CHATGPT_CONNECTOR_WRITE_TOKEN =
+  "test-write-token-" + randomBytes(16).toString("hex");
 process.env.MARTIN_EMAIL = "martin@example.test";
 process.env.APP_URL = "http://localhost:3100";
 
@@ -20,6 +22,7 @@ const { db } = await import("../../lib/db");
 const auth = await import("../../lib/gpt-connector/auth");
 const service = await import("../../lib/gpt-connector/service");
 const settings = await import("../../lib/gpt-connector/settings");
+const drafts = await import("../../lib/gpt-connector/drafts");
 const { saveCampaign, saveContent } = await import("../../lib/hub/workflow");
 const { contentHash } = await import("../../lib/hub/workflow");
 
@@ -92,6 +95,22 @@ after(async () => {
 function bearerReq(path: string, token = process.env.CHATGPT_CONNECTOR_TOKEN!) {
   return new Request(`http://localhost:3100${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+function writeReq(
+  path: string,
+  init?: { method?: string; body?: unknown; ifMatch?: string },
+) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${process.env.CHATGPT_CONNECTOR_WRITE_TOKEN!}`,
+  };
+  if (init?.body !== undefined) headers["Content-Type"] = "application/json";
+  if (init?.ifMatch) headers["If-Match"] = init.ifMatch;
+  return new Request(`http://localhost:3100${path}`, {
+    method: init?.method ?? "GET",
+    headers,
+    body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
   });
 }
 
@@ -190,6 +209,7 @@ test("Scope disable and share revoke block access without mutating content", asy
     campaigns: false,
     concepts: true,
     content: true,
+    write_drafts: false,
   });
   await assert.rejects(
     () => auth.requireGptConnector(bearerReq("/api/integrations/gpt/campaigns"), "campaigns"),
@@ -200,6 +220,7 @@ test("Scope disable and share revoke block access without mutating content", asy
     campaigns: true,
     concepts: true,
     content: true,
+    write_drafts: false,
   });
 
   await settings.setGptShare(actor, {
@@ -218,8 +239,195 @@ test("Scope disable and share revoke block access without mutating content", asy
 
   const status = await settings.gptConnectorStatus(actor);
   assert.equal(status.tokenConfigured, true);
+  assert.equal(status.writeTokenConfigured, true);
   assert.equal(status.revoked, false);
+  assert.equal(status.scopes.write_drafts, false);
+  assert.equal(status.writeDraftsEnabled, false);
   assert.ok(status.lastAccessAt);
-  // Never expose the raw token in status payloads.
+  // Never expose the raw tokens in status payloads.
   assert.equal(JSON.stringify(status).includes(process.env.CHATGPT_CONNECTOR_TOKEN!), false);
+  assert.equal(
+    JSON.stringify(status).includes(process.env.CHATGPT_CONNECTOR_WRITE_TOKEN!),
+    false,
+  );
+});
+
+test("Write drafts: auth, grants, create/read, locking, idempotency, no side effects", async () => {
+  auth.resetConnectorRateLimit();
+
+  // Read token must not authorize writes.
+  await assert.rejects(
+    () =>
+      auth.requireGptWrite(
+        bearerReq("/api/integrations/gpt/drafts", process.env.CHATGPT_CONNECTOR_TOKEN!),
+      ),
+    (e: Error & { status?: number }) => e.status === 401,
+  );
+
+  // write_drafts still off → 403 even with write token.
+  await assert.rejects(
+    () => auth.requireGptWrite(writeReq("/api/integrations/gpt/drafts")),
+    (e: Error & { status?: number }) => e.status === 403,
+  );
+
+  await settings.updateGptScopes(actor, {
+    projects: true,
+    campaigns: true,
+    concepts: true,
+    content: true,
+    write_drafts: true,
+  });
+  auth.resetConnectorRateLimit();
+  await auth.requireGptWrite(writeReq("/api/integrations/gpt/drafts"));
+
+  const newsletter = newsletterDefaults("newsletter-03");
+  const createBody = {
+    kind: "NEWSLETTER" as const,
+    title: "Newsletter 3 · Visibility Abo Entwurf",
+    campaignId,
+    subject: "Sichtbarkeit im Abo – Entwurf aus ChatGPT",
+    preheader: "Promotion bis 30. November 2026",
+    body: newsletterText(newsletter),
+    audience: "Abo-Interessenten",
+    newsletter,
+    idempotencyKey: "nl3-visibility-abo-test-key",
+  };
+
+  // No write grant yet → 403
+  await assert.rejects(
+    () => drafts.createDraft(actor, createBody),
+    (e: Error & { status?: number }) => e.status === 403,
+  );
+
+  await settings.setGptWriteGrant(actor, {
+    entityType: "CAMPAIGN",
+    entityId: campaignId,
+    granted: true,
+  });
+
+  const created = await drafts.createDraft(actor, createBody);
+  assert.equal(created.type, "MARKETING");
+  assert.equal(created.kind, "NEWSLETTER");
+  assert.equal(created.status, "DRAFT");
+  assert.equal(created.version, 1);
+  assert.match(String(created.draft?.subject), /Sichtbarkeit im Abo/);
+  assert.equal(created.draft?.newsletter?.templateId, "newsletter-03");
+
+  // Second call with same idempotency key does not duplicate.
+  const replay = await drafts.createDraft(actor, createBody);
+  assert.equal(replay.id, created.id);
+  assert.equal(replay.idempotentReplay, true);
+  assert.equal(
+    await db.marketingContent.count({
+      where: { title: "Newsletter 3 · Visibility Abo Entwurf" },
+    }),
+    1,
+  );
+
+  // Read back via getDraft
+  const read = await drafts.getDraft(created.id);
+  assert.equal(read.id, created.id);
+  assert.equal(read.status, "DRAFT");
+  assert.equal(read.type, "MARKETING");
+  assert.match(
+    String(read.type === "MARKETING" ? read.draft?.preheader : ""),
+    /30\. November 2026/,
+  );
+
+  // First update succeeds and bumps version.
+  const ok = await drafts.updateDraft(
+    actor,
+    created.id,
+    { expectedVersion: 1, subject: "Aktualisierter Betreff Visibility Abo" },
+    "1",
+  );
+  assert.equal(ok.version, 2);
+  assert.equal(ok.status, "DRAFT");
+
+  // Stale expectedVersion → 409
+  await assert.rejects(
+    () =>
+      drafts.updateDraft(actor, created.id, {
+        expectedVersion: 1,
+        subject: "should-conflict",
+      }),
+    (e: Error & { status?: number }) => e.status === 409,
+  );
+
+  // Forbidden fields rejected by schema
+  await assert.rejects(
+    () =>
+      drafts.updateDraft(actor, created.id, {
+        expectedVersion: 2,
+        status: "APPROVED",
+      } as never),
+    (e: Error & { name?: string }) => e.name === "ZodError",
+  );
+
+  // No Mailchimp / publication / export side effects
+  assert.equal(await db.newsletterExport.count({ where: { contentId: created.id } }), 0);
+  assert.equal(await db.mailchimpTransfer.count({ where: { contentId: created.id } }), 0);
+  assert.equal(await db.manualPublication.count({ where: { contentId: created.id } }), 0);
+
+  const audits = await db.audit.findMany({
+    where: {
+      entityId: created.id,
+      action: { in: ["GPT_DRAFT_CREATED", "GPT_DRAFT_UPDATED", "MARKETING_VERSION_SAVED"] },
+    },
+  });
+  assert.ok(audits.some((a) => a.action === "GPT_DRAFT_CREATED"));
+  assert.ok(audits.some((a) => a.action === "GPT_DRAFT_UPDATED"));
+
+  // Unshare write grant → further updates blocked
+  await settings.setGptWriteGrant(actor, {
+    entityType: "CAMPAIGN",
+    entityId: campaignId,
+    granted: false,
+  });
+  await assert.rejects(
+    () =>
+      drafts.updateDraft(actor, created.id, {
+        expectedVersion: 2,
+        subject: "blocked",
+      }),
+    (e: Error & { status?: number }) => e.status === 403,
+  );
+
+  // Reading existing shared content still works with read token.
+  await settings.setGptShare(actor, {
+    entityType: "CAMPAIGN",
+    entityId: campaignId,
+    shared: true,
+  });
+  auth.resetConnectorRateLimit();
+  await auth.requireGptConnector(
+    bearerReq(`/api/integrations/gpt/campaigns/${campaignId}`),
+    "campaigns",
+  );
+  const stillReadable = await service.getSharedCampaign(campaignId);
+  assert.ok(stillReadable.contents.some((c) => c.id === contentId || c.id === created.id));
+
+  const status = await settings.gptConnectorStatus(actor);
+  assert.equal(status.scopes.write_drafts, true);
+  assert.ok(status.lastWriteAccessAt);
+});
+
+test("Write token missing disables writes without affecting reads", async () => {
+  const previous = process.env.CHATGPT_CONNECTOR_WRITE_TOKEN;
+  delete process.env.CHATGPT_CONNECTOR_WRITE_TOKEN;
+  auth.resetConnectorRateLimit();
+  await assert.rejects(
+    () =>
+      auth.requireGptWrite(
+        new Request("http://localhost:3100/api/integrations/gpt/drafts", {
+          headers: { Authorization: `Bearer ${previous}` },
+        }),
+      ),
+    (e: Error & { status?: number }) => e.status === 503,
+  );
+  process.env.CHATGPT_CONNECTOR_WRITE_TOKEN = previous;
+  auth.resetConnectorRateLimit();
+  await auth.requireGptConnector(bearerReq("/api/integrations/gpt/campaigns"), "campaigns");
+  const listed = await service.listSharedCampaigns();
+  assert.ok(listed.campaigns.length >= 0);
 });
