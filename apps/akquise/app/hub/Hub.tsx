@@ -10,6 +10,7 @@ import {
 } from "@/lib/hub/newsletter-template";
 import Cms from "../cms/Cms";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
+import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
 import ChatGptIntegration from "./ChatGptIntegration";
@@ -1257,6 +1258,9 @@ export default function Hub({
                   Redaktionell erledigt
                 </button>
               </div>
+              {form.kind === "NEWSLETTER" && form.newsletter && (
+                <NewsletterPreflight subject={form.subject} preheader={form.preheader} newsletter={form.newsletter} />
+              )}
               {form.kind === "NEWSLETTER" && (
                 <section className="legal">
                   <h3>Mailchimp</h3>
