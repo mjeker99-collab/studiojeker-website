@@ -144,7 +144,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator('.notice[role="status"]')).toContainText(
     "Neue Version gespeichert",
   );
   await page

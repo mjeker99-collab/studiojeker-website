@@ -26,7 +26,11 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
     throw new Error(data.error || "Website konnte nicht geladen werden.");
   return data;
 }
-export default function WebsiteBuilder() {
+export default function WebsiteBuilder({
+  initialProjectId,
+}: {
+  initialProjectId?: string;
+}) {
   const [list, setList] = useState<List | null>(null),
     [project, setProject] = useState<Project | null>(null);
   const [doc, setDoc] = useState<WebsiteDocument>(
@@ -50,9 +54,20 @@ export default function WebsiteBuilder() {
     : JSON.stringify(doc) !== JSON.stringify(blankWebsite);
   useEffect(() => {
     let active = true;
-    api<List>("")
-      .then((d) => {
-        if (active) setList(d);
+    Promise.all([
+      api<List>(""),
+      initialProjectId
+        ? api<Project>(`/${initialProjectId}`)
+        : Promise.resolve(null),
+    ])
+      .then(([list, selected]) => {
+        if (!active) return;
+        setList(list);
+        if (selected) {
+          setProject(selected);
+          setDoc(selected.document);
+          setCustomerId(selected.customerId);
+        }
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -60,7 +75,7 @@ export default function WebsiteBuilder() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialProjectId]);
   useEffect(() => {
     if (!dirty) return;
     const unload = (e: BeforeUnloadEvent) => {
@@ -416,6 +431,7 @@ export default function WebsiteBuilder() {
         <label>
           Dein Auftrag an GPT
           <textarea
+            aria-label="Dein Auftrag an GPT"
             rows={3}
             maxLength={6000}
             value={message}

@@ -61,7 +61,13 @@ const statusLabel: Record<string, string> = {
   UNKNOWN: "Ergebnis/Kosten unklar",
   CANCELLED: "Abgebrochen",
 };
-export default function ContentStudio({ userId }: { userId: string }) {
+export default function ContentStudio({
+  userId,
+  initialSeriesId,
+}: {
+  userId: string;
+  initialSeriesId?: string;
+}) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [state, setState] = useState<State | null>(null),
     [error, setError] = useState(""),
@@ -135,7 +141,17 @@ export default function ContentStudio({ userId }: { userId: string }) {
     let live = true;
     api("studio/state")
       .then((s) => {
-        if (live) setState(s);
+        if (live) {
+          setState(s);
+          if (
+            initialSeriesId &&
+            !(s as State).series.some((series) => series.id === initialSeriesId)
+          ) {
+            setError(
+              "Content-Projekt nicht mehr in der aktuellen Projektliste verfügbar. Bitte ein anderes Projekt auswählen.",
+            );
+          }
+        }
       })
       .catch((e) => {
         if (live) setError(e.message);
@@ -143,7 +159,7 @@ export default function ContentStudio({ userId }: { userId: string }) {
     return () => {
       live = false;
     };
-  }, []);
+  }, [initialSeriesId]);
   async function act(fn: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -303,7 +319,13 @@ export default function ContentStudio({ userId }: { userId: string }) {
           key={designRequest?.id || 0}
           state={state}
           refresh={() => refresh(undefined, undefined, true)}
-          initialRequest={designRequest}
+          initialRequest={
+            designRequest ||
+            (initialSeriesId &&
+            state.series.some((series) => series.id === initialSeriesId)
+              ? { seriesId: initialSeriesId, message: "" }
+              : undefined)
+          }
           hasUnsavedContent={dirty}
         />
       </div>

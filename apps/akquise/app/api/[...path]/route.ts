@@ -1,3 +1,4 @@
+import { dashboardState } from "@/lib/dashboard";
 import { projectDrafts, saveProjectDraft } from "@/lib/projects/service";
 import {
   websiteList,
@@ -161,6 +162,11 @@ async function handler(
         );
     }
 
+    if (route === "dashboard" && req.method === "GET") {
+      return NextResponse.json(await dashboardState(), {
+        headers: { "Cache-Control": "no-store, private" },
+      });
+    }
     if (path[0] === "websites" && req.method === "GET") {
       const headers = {
         "Cache-Control": "no-store, private",

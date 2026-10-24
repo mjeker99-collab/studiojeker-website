@@ -1,8 +1,12 @@
 import WebsiteBuilder from "./WebsiteBuilder";
-export default function Website() {
+export default function Website({
+  initialProjectId,
+}: {
+  initialProjectId?: string;
+}) {
   return (
     <>
-      <WebsiteBuilder />
+      <WebsiteBuilder initialProjectId={initialProjectId} />
       <section className="panel cms-panel" aria-label="Website-Verwaltung">
         <h2>Website-Inhalte verwalten</h2>
         <p>Texte, Bilder und Projekte von studiojeker.ch bearbeiten.</p>
