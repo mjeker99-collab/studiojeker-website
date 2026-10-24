@@ -152,6 +152,10 @@ export default function App() {
     [dispatchConfirm, setDispatchConfirm] = useState(false);
   const [dashboardTarget, setDashboardTarget] =
     useState<DashboardTarget | null>(null);
+  const [assistantCampaign, setAssistantCampaign] = useState<{
+    id: string;
+    request: number;
+  }>();
   function navigate(target: DashboardTarget) {
     if (
       conceptDirty &&
@@ -532,7 +536,13 @@ export default function App() {
             </nav>
           )}
           {(tab === "Kampagnen" || tab === "Social Media") && (
-            <AssistantEntry key={`assistant-${tab}`} section={tab} />
+            <AssistantEntry
+              key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
+              section={tab}
+              campaignRequest={
+                tab === "Kampagnen" ? assistantCampaign : undefined
+              }
+            />
           )}
           {[
             "Kampagnen",
@@ -545,6 +555,22 @@ export default function App() {
               key={tab}
               section={tab}
               userId={data.user.id}
+              onCampaignAssistant={
+                tab === "Kampagnen"
+                  ? (id) => {
+                      if (
+                        document.querySelector(
+                          ".assistant-entry .studio-chat",
+                        ) &&
+                        !window.confirm(
+                          "Kampagne im GPT-Arbeitsbereich wechseln? Ungesendete Eingaben werden verworfen. Gespeicherte Gespräche bleiben erhalten.",
+                        )
+                      )
+                        return;
+                      setAssistantCampaign({ id, request: Date.now() });
+                    }
+                  : undefined
+              }
               initialCampaignId={
                 dashboardTarget?.section === tab
                   ? dashboardTarget.projectId

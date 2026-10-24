@@ -28,13 +28,25 @@ const sections = {
 
 export default function AssistantEntry({
   section,
+  campaignRequest,
 }: {
   section: keyof typeof sections;
+  campaignRequest?: { id: string; request: number };
 }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [projectId, setProjectId] = useState("");
+  const [campaignId, setCampaignId] = useState(campaignRequest?.id || "");
+  const [query, setQuery] = useState("");
+  const [chatKey, setChatKey] = useState(0);
+  const [chatRequest, setChatRequest] = useState<{
+    seriesId: string;
+    message: string;
+    campaignId: string;
+    customerId: string;
+  } | null>(null);
   const id = useId();
   const entry = sections[section];
 
@@ -49,7 +61,7 @@ export default function AssistantEntry({
   }
 
   useEffect(() => {
-    if (!open || state) return;
+    if (state) return;
     const controller = new AbortController();
     fetch("/api/studio/state", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
@@ -69,6 +81,47 @@ export default function AssistantEntry({
     return () => controller.abort();
   }, [open, attempt, state]);
 
+  useEffect(() => {
+    if (!campaignRequest) return;
+    document
+      .getElementById(id)
+      ?.closest("section")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [campaignRequest, id]);
+  const campaign = state?.campaigns.find((c) => c.id === campaignId);
+  const projects =
+    state?.series.filter((s) => {
+      const assigned = (s.briefing as { campaignId?: string | null })
+        .campaignId;
+      return (
+        (!campaignId || assigned === campaignId || !assigned) &&
+        s.title.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+      );
+    }) || [];
+
+  function openProject() {
+    if (
+      chatRequest &&
+      !window.confirm(
+        "Projekt wechseln? Ungesendete Eingaben werden verworfen. Gespeicherte Gespräche bleiben erhalten.",
+      )
+    )
+      return;
+    setChatKey((key) => key + 1);
+    setChatRequest({
+      seriesId: projectId,
+      message: projectId
+        ? ""
+        : campaign
+          ? `Ich möchte die Kampagne «${campaign.title}» weiterentwickeln. Ziel: ${campaign.goal}. Zielgruppe: ${campaign.audience}.`
+          : entry.message,
+      campaignId,
+      customerId: campaign?.customerId || "",
+    });
+    setOpen(true);
+    setError("");
+  }
+
   return (
     <section
       className="panel assistant-entry"
@@ -87,7 +140,8 @@ export default function AssistantEntry({
           aria-controls={id}
           onClick={() => {
             setError("");
-            setOpen((value) => !value);
+            if (!open && !chatRequest) openProject();
+            else setOpen((value) => !value);
           }}
         >
           <svg
@@ -106,6 +160,64 @@ export default function AssistantEntry({
           {open ? "GPT-Dialog einklappen" : "GPT beauftragen"}
         </button>
       </div>
+      {state && (
+        <div className="assistant-project-picker">
+          <label>
+            Kampagne für GPT
+            <select
+              value={campaignId}
+              onChange={(e) => {
+                setCampaignId(e.target.value);
+                setProjectId("");
+              }}
+            >
+              <option value="">Alle Kampagnen</option>
+              {state.campaigns.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Gespeichertes Projekt suchen
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Zum Beispiel Visibility"
+            />
+          </label>
+          <label>
+            Gespeichertes GPT-Projekt
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+            >
+              <option value="">
+                Neues Gespräch{campaign ? ` für ${campaign.title}` : ""}
+              </option>
+              {projects.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                  {!(s.briefing as { campaignId?: string }).campaignId
+                    ? " · Noch ohne Kampagne"
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="secondary" onClick={openProject}>
+            {projectId
+              ? "Projekt und GPT-Verlauf öffnen"
+              : "Neues GPT-Projekt öffnen"}
+          </button>
+          <p className="muted">
+            Auch Projekte ohne Kampagnenzuordnung sind auffindbar. Öffne sie und
+            wähle «Projektname und Zuordnung ändern».
+          </p>
+        </div>
+      )}
       <div id={id} hidden={!open} className="assistant-entry-dialog">
         {error ? (
           <div role="alert">
@@ -131,11 +243,14 @@ export default function AssistantEntry({
                 ? "Freigegebene Texte kannst du anschliessend im Website-Editor übernehmen."
                 : "Übernimm passende Vorschläge anschliessend in deine Planung."}
             </p>
-            <StudioChat
-              state={state}
-              refresh={refresh}
-              initialRequest={{ seriesId: "", message: entry.message }}
-            />
+            {chatRequest && (
+              <StudioChat
+                key={chatKey}
+                state={state}
+                refresh={refresh}
+                initialRequest={chatRequest}
+              />
+            )}
           </>
         )}
       </div>

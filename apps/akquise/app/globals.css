@@ -52,6 +52,10 @@ button:hover {
 .ai-button { gap: 10px; padding: 14px 22px; box-shadow: 0 3px 10px #15171912; max-width: 100%; white-space: normal; }
 .ai-button svg { flex-shrink: 0; }
 .assistant-entry-dialog { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 20px; min-width: 0; }
+.assistant-project-picker { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; align-items: end; }
+.assistant-project-picker > * { min-width: 0; }
+.assistant-project-picker > p { grid-column: 1 / -1; margin: 0; }
+.assistant-project-picker select, .assistant-project-picker input, .studio-chat-controls select { width: 100%; min-width: 0; max-width: 100%; }
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;

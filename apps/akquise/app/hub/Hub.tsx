@@ -126,10 +126,12 @@ export default function Hub({
   section,
   userId,
   initialCampaignId,
+  onCampaignAssistant,
 }: {
   section: string;
   userId: string;
   initialCampaignId?: string;
+  onCampaignAssistant?: (id: string) => void;
 }) {
   const [templateId, setTemplateId] = useState("master-v7");
   const [mailchimp, setMailchimp] = useState<{
@@ -617,6 +619,15 @@ export default function Hub({
                 >
                   Kampagne bearbeiten
                 </button>
+                {onCampaignAssistant && (
+                  <button
+                    type="button"
+                    className="ai-button"
+                    onClick={() => onCampaignAssistant(c.id)}
+                  >
+                    Mit GPT weiterarbeiten
+                  </button>
+                )}
                 <details>
                   <summary>Zugeordnete Inhalte</summary>
                   {data.contents
@@ -648,6 +659,15 @@ export default function Hub({
       {campaignForm && (
         <section className="panel padded hub-editor">
           <h2>{campaign ? "Kampagne bearbeiten" : "Neue Kampagne"}</h2>
+          {campaign && onCampaignAssistant && (
+            <button
+              type="button"
+              className="ai-button"
+              onClick={() => onCampaignAssistant(campaign.id)}
+            >
+              Mit GPT weiterarbeiten
+            </button>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();

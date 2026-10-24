@@ -324,7 +324,10 @@ async function handler(
     if (route === "library/state" && req.method === "GET")
       return NextResponse.json(await libraryState(user.id));
     if (route === "studio/state" && req.method === "GET")
-      return NextResponse.json(await studioState(user.id));
+      return NextResponse.json(
+        await studioState(user.id, req.nextUrl.searchParams.get("seriesId") || undefined),
+        { headers: { "Cache-Control": "no-store" } },
+      );
     if (route === "studio/logo" && req.method === "GET")
       return new NextResponse(new Uint8Array(logoBytes()), {
         headers: {
