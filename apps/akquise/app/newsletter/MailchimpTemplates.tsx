@@ -10,19 +10,20 @@ export default function MailchimpTemplates() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
 
-  async function refresh(signal?: AbortSignal) {
-    try {
-      const response = await fetch("/api/mailchimp/templates", { cache: "no-store", signal });
+  function refresh(signal?: AbortSignal) {
+    return fetch("/api/mailchimp/templates", { cache: "no-store", signal }).then(async response => {
       const body = await response.json();
-      if (signal?.aborted) return;
       if (!response.ok) throw new Error(body.error || "Mailchimp nicht erreichbar.");
+      return body;
+    }).then(body => {
+      if (signal?.aborted) return;
       setConnected(body.connected);
       setTemplates(body.templates);
-    } catch (e) {
+    }).catch(e => {
       if (!signal?.aborted && (e as Error).name !== "AbortError") setError((e as Error).message);
-    } finally {
+    }).finally(() => {
       if (!signal?.aborted) setBusy(false);
-    }
+    });
   }
 
   useEffect(() => {
