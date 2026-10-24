@@ -179,6 +179,40 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     name: "Website-Studio",
     exact: true,
   });
+  const gallery = studio.getByRole("region", {
+    name: "Grundtemplates",
+    exact: true,
+  });
+  await expect(gallery.getByRole("button", { pressed: false })).toHaveCount(5);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect((await new AxeBuilder({ page }).include(".website-templates").setLegacyMode().options({ iframes: false }).analyze()).violations).toEqual([]);
+  }
+  await gallery
+    .getByRole("button", { name: /Abo \/ Angebotspakete/ })
+    .first()
+    .click();
+  await gallery
+    .getByRole("button", { name: "Mit «Abo / Angebotspakete» starten" })
+    .click();
+  await expect(studio.getByLabel("Projektname", { exact: true })).toHaveValue(
+    "Abo / Angebotspakete",
+  );
+  await expect(
+    studio.getByText("Abschnitt 2: Paket 1", { exact: true }),
+  ).toBeVisible();
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await studio
+    .getByRole("button", { name: "Neue Website", exact: true })
+    .click();
+  await expect(studio.getByLabel("Projektname", { exact: true })).toHaveValue(
+    "Abo / Angebotspakete",
+  );
+  page.once("dialog", (dialog) => dialog.accept());
+  await studio
+    .getByRole("button", { name: "Neue Website", exact: true })
+    .click();
   const gpt = studio.getByRole("button", { name: "✦ GPT beauftragen" });
   await expect(gpt).toBeDisabled();
   await studio.getByLabel("Projektname", { exact: true }).fill("Testbetrieb");

@@ -4,6 +4,8 @@ Der Bereich Website enthält einen persistenten Editor für neue statische Websi
 
 ## Ablauf
 
+Neue Projekte können mit sechs Grundtemplates beginnen: Firmenwebsite/KMU, Kampagnen-Landingpage, Portfolio/Kreativstudio, Immobilien/Architektur, Produkt/Dienstleistung und Abo/Angebotspakete. Die Galerie zeigt schematische Vorschaubilder und eine HTML-Vorschau. «Mit Vorlage starten» lädt unabhängige, vollständig editierbare Seiten und Abschnitte. Ungespeicherte Änderungen werden nur nach Bestätigung ersetzt; bestehende Projekte bieten keine überschreibende Vorlagenaktion. Danach Kunde und Ziel im Briefing ergänzen, speichern und GPT zur Personalisierung beauftragen. Alle Texte, Bildbeschreibungen und rechtlichen Angaben sind erkennbare Platzhalter; es werden keine Kundenfakten oder Aktionskonditionen erfunden.
+
 1. Projektname, Kunde und Briefing eingeben, Projekt anlegen.
 2. Auftrag an GPT formulieren und Übermittlung/Kosten bestätigen. Die bestehende serverseitige OpenAI-Verbindung wird verwendet.
 3. Die Antwort bleibt im Projektverlauf. «Vorschau des Vorschlags» zeigt den vorgeschlagenen Stand; «Vorschlag übernehmen» speichert eine neue Version.
