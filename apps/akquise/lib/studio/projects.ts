@@ -9,7 +9,7 @@ import { ORG } from "./input";
 
 const selection = z
   .object({
-    title: z.string().trim().min(1).max(160),
+    title: z.string().trim().min(1).max(200),
     customerId: z.string().min(1).nullable(),
     campaignId: z.string().min(1).nullable(),
     expectedTitle: z.string(),

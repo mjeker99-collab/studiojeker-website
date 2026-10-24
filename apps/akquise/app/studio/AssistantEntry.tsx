@@ -72,7 +72,17 @@ export default function AssistantEntry({
           throw new Error(
             data.error || "GPT-Arbeitsbereich konnte nicht geladen werden.",
           );
-        if (!controller.signal.aborted) setState(data);
+        if (!controller.signal.aborted) {
+          setState(data);
+          if (campaignRequest)
+            setProjectId(
+              (data as State).series.find(
+                (s) =>
+                  (s.briefing as { campaignId?: string }).campaignId ===
+                  campaignRequest.id,
+              )?.id || "",
+            );
+        }
       })
       .catch((error) => {
         if (!controller.signal.aborted)
@@ -81,7 +91,7 @@ export default function AssistantEntry({
           );
       });
     return () => controller.abort();
-  }, [open, attempt, state]);
+  }, [open, attempt, state, campaignRequest]);
 
   useEffect(() => {
     if (!campaignRequest) return;
@@ -170,7 +180,13 @@ export default function AssistantEntry({
               value={campaignId}
               onChange={(e) => {
                 setCampaignId(e.target.value);
-                setProjectId("");
+                setProjectId(
+                  state.series.find(
+                    (s) =>
+                      (s.briefing as { campaignId?: string }).campaignId ===
+                      e.target.value,
+                  )?.id || "",
+                );
               }}
             >
               <option value="">Alle Kampagnen</option>
@@ -186,7 +202,10 @@ export default function AssistantEntry({
             <input
               type="search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setProjectId("");
+              }}
               placeholder="Zum Beispiel Visibility"
             />
           </label>

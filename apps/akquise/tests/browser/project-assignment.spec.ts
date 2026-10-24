@@ -158,7 +158,8 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kampagnen/ })
     .click();
-  await entry.getByLabel("Gespeichertes GPT-Projekt").selectOption("series");
+  await page.getByRole("button", { name: "Mit GPT weiterarbeiten", exact: true }).click();
+  await expect(entry.getByLabel("Gespeichertes GPT-Projekt")).toHaveValue("series");
   await entry
     .getByRole("button", { name: "Projekt und GPT-Verlauf öffnen" })
     .click();

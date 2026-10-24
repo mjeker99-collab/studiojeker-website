@@ -116,7 +116,7 @@ export default function StudioProjects({
               Projektname
               <input
                 value={title}
-                maxLength={160}
+                maxLength={200}
                 disabled={busy}
                 onChange={(e) => setTitle(e.target.value)}
               />
