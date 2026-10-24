@@ -8,19 +8,18 @@ export default function MailchimpTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
 
   async function refresh(signal?: AbortSignal) {
-    setBusy(true);
-    setError("");
     try {
       const response = await fetch("/api/mailchimp/templates", { cache: "no-store", signal });
       const body = await response.json();
+      if (signal?.aborted) return;
       if (!response.ok) throw new Error(body.error || "Mailchimp nicht erreichbar.");
       setConnected(body.connected);
       setTemplates(body.templates);
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setError((e as Error).message);
+      if (!signal?.aborted && (e as Error).name !== "AbortError") setError((e as Error).message);
     } finally {
       if (!signal?.aborted) setBusy(false);
     }
@@ -36,7 +35,11 @@ export default function MailchimpTemplates() {
     <section className="panel padded" aria-label="Mailchimp-Vorlagen">
       <h2>Mailchimp-Vorlagen</h2>
       <p>Vorhandene Vorlagen aus dem verbundenen Mailchimp-Konto anzeigen. Die Originale werden nicht verändert.</p>
-      <button type="button" className="secondary" disabled={busy} onClick={() => void refresh()}>
+      <button type="button" className="secondary" disabled={busy} onClick={() => {
+        setBusy(true);
+        setError("");
+        void refresh();
+      }}>
         {busy ? "Vorlagen werden geladen…" : "Mailchimp-Vorlagen aktualisieren"}
       </button>
       {error && <p role="alert">{error}</p>}
