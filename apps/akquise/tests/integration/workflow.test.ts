@@ -920,6 +920,7 @@ test("Hub: Kampagnen und Varianten bleiben nach Wiederladen zugeordnet; Konflikt
     include: { versions: true, campaign: true },
   });
   assert.equal(saved.campaign?.title, c.title);
+  assert.equal(saved.workspace, "SOCIAL_POST");
   assert.equal(saved.versions.length, 1);
   assert.deepEqual(saved.versions[0].payload, social(nora, c.id));
   await hub.saveCampaign(
@@ -1317,6 +1318,7 @@ test("Studio: Speichern/Wiederladen, bestehende Datenzuordnung und Serien bis se
   });
   assert.equal(all.length, 6);
   assert.ok(all.every((c) => c.organizationId === "studiojeker"));
+  assert.ok(all.every((c) => c.workspace === "CONTENT_DRAFT"));
   assert.equal(await db.contact.count(), before);
   const configBefore = process.env.STUDIO_LOCAL_ASSETS;
   process.env.STUDIO_LOCAL_ASSETS = "true";
@@ -1333,6 +1335,55 @@ test("Studio: Speichern/Wiederladen, bestehende Datenzuordnung und Serien bis se
   await assert.rejects(
     studio.createSeries("unbekannt", studioBrief()),
     /Berechtigung/,
+  );
+});
+test("Social workspace: GPT-Dialoge bleiben erhalten und erscheinen erst nach Übernahme", async () => {
+  const series = await studio.createSeries(martin, {
+    title: "Synthetischer GPT-Dialog",
+    topic: "Ideen für Sichtbarkeit",
+    offer: "",
+    goal: "Im Gespräch klären",
+    audience: "Im Gespräch klären",
+    tone: "Persönlich",
+    channels: ["INSTAGRAM"],
+    count: 1,
+    formats: ["4:5"],
+    campaignId: null,
+    customerId: null,
+    referenceAssetIds: [],
+    brandRules: ["tone"],
+    workspace: "GPT_DIALOG",
+  });
+  const content = await db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: series.id },
+  });
+  assert.equal(content.workspace, "GPT_DIALOG");
+  await assert.rejects(
+    hub.reviewContent(martin, content.id, 1, "APPROVED", true),
+    /Social Media übernehmen/,
+  );
+  await assert.rejects(
+    hub.recordPublication(
+      martin,
+      content.id,
+      1,
+      "INSTAGRAM",
+      "2026-10-01T10:00:00.000Z",
+      "",
+    ),
+    /nicht freigegeben|Publishing-Workspace|Social Media/,
+  );
+  const promoted = await hub.promoteToSocialPost(martin, content.id, 1);
+  assert.equal(promoted.workspace, "SOCIAL_POST");
+  const stillThere = await db.marketingContent.findUniqueOrThrow({
+    where: { id: content.id },
+    include: { versions: true },
+  });
+  assert.equal(stillThere.workspace, "SOCIAL_POST");
+  assert.equal(stillThere.versions.length, 1);
+  await assert.rejects(
+    hub.promoteToSocialPost(martin, content.id, 1),
+    /Content-Entwürfe und GPT-Dialoge/,
   );
 });
 test("Studio: geschützte Assets, falsche Typen, fremde Organisation und Hash-Manipulation", async () => {
