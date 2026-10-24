@@ -29,9 +29,11 @@ const sections = {
 export default function AssistantEntry({
   section,
   campaignRequest,
+  onProjectAssigned,
 }: {
   section: keyof typeof sections;
   campaignRequest?: { id: string; request: number };
+  onProjectAssigned?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<State | null>(null);
@@ -248,6 +250,7 @@ export default function AssistantEntry({
                 key={chatKey}
                 state={state}
                 refresh={refresh}
+                onProjectAssigned={onProjectAssigned}
                 initialRequest={chatRequest}
               />
             )}

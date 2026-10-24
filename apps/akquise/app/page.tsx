@@ -156,6 +156,7 @@ export default function App() {
     id: string;
     request: number;
   }>();
+  const [projectRevision, setProjectRevision] = useState(0);
   function navigate(target: DashboardTarget) {
     if (
       conceptDirty &&
@@ -539,6 +540,9 @@ export default function App() {
             <AssistantEntry
               key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
               section={tab}
+              onProjectAssigned={() =>
+                setProjectRevision((revision) => revision + 1)
+              }
               campaignRequest={
                 tab === "Kampagnen" ? assistantCampaign : undefined
               }
@@ -555,6 +559,7 @@ export default function App() {
               key={tab}
               section={tab}
               userId={data.user.id}
+              projectRevision={projectRevision}
               onCampaignAssistant={
                 tab === "Kampagnen"
                   ? (id) => {

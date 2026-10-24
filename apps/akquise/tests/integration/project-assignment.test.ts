@@ -36,8 +36,10 @@ before(async () => {
       },
     })
   ).id;
-  await db.studioOrganization.create({
-    data: { id: "studiojeker", name: "Studiojeker", brand: {} },
+  await db.studioOrganization.upsert({
+    where: { id: "studiojeker" },
+    create: { id: "studiojeker", name: "Studiojeker", brand: {} },
+    update: {},
   });
   customer = (
     await db.customer.create({

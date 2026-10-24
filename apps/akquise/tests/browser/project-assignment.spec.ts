@@ -126,7 +126,9 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
     .getByLabel("Projektname", { exact: true })
     .fill("Visibility Abo · Kampagnenplanung");
   await entry.getByLabel("Für welche Firma?").selectOption("customer");
-  await entry.getByLabel("Kampagne", { exact: true }).selectOption("campaign");
+  await entry
+    .getByRole("combobox", { name: "Kampagne", exact: true })
+    .selectOption("campaign");
   await entry.getByRole("button", { name: "Zuordnung sichern" }).click();
   await expect(entry.getByRole("status")).toContainText(
     "Zuordnung gespeichert",

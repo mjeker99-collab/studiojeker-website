@@ -22,6 +22,7 @@ export default function StudioChat({
   refresh,
   initialRequest,
   hasUnsavedContent = false,
+  onProjectAssigned,
 }: {
   state: State;
   refresh: () => Promise<void>;
@@ -35,6 +36,7 @@ export default function StudioChat({
     customerId?: string;
   };
   hasUnsavedContent?: boolean;
+  onProjectAssigned?: () => void;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState(
@@ -388,6 +390,7 @@ export default function StudioChat({
                   .campaignId || null,
             });
             await refresh();
+            onProjectAssigned?.();
             setProjectNotice("Projektname und Zuordnung gespeichert.");
           } catch (e) {
             setError(
