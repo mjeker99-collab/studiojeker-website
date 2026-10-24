@@ -22,13 +22,23 @@ function subscribeToClock(onStoreChange: () => void): () => void {
  * (Europe/Zurich, inclusive). Evaluated on the client so a static export can
  * pick up the window without a redeploy on the start day.
  */
+function subscribeToPreviewHash(onStoreChange: () => void): () => void {
+  window.addEventListener("hashchange", onStoreChange);
+  const unsubscribeClock = subscribeToClock(onStoreChange);
+  return () => {
+    window.removeEventListener("hashchange", onStoreChange);
+    unsubscribeClock();
+  };
+}
+
 export function AboPromoBanner({ promo }: AboPromoBannerProps) {
-  const getSnapshot = useCallback(
-    () => isAboPromoActive(promo),
-    [promo],
-  );
+  const getSnapshot = useCallback(() => {
+    // `#promo-preview` lets editors verify the block outside the date window.
+    if (window.location.hash === "#promo-preview") return true;
+    return isAboPromoActive(promo);
+  }, [promo]);
   const active = useSyncExternalStore(
-    subscribeToClock,
+    subscribeToPreviewHash,
     getSnapshot,
     () => false,
   );
