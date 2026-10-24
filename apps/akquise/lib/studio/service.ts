@@ -31,12 +31,16 @@ const json = (v: unknown) =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
 const digest = (v: unknown) =>
   createHash("sha256").update(JSON.stringify(v)).digest("hex");
-export async function studioState(actor: string) {
+export async function studioState(actor: string, selectedSeriesId?: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
   const [series, assets, brand, jobs, campaigns, users, customers] =
     await Promise.all([
       db.studioSeries.findMany({
-        where: { organizationId: ORG, concept: { is: null } },
+        where: {
+          organizationId: ORG,
+          concept: { is: null },
+          ...(selectedSeriesId ? { id: selectedSeriesId } : {}),
+        },
         orderBy: { createdAt: "desc" },
         take: 100,
         include: {
@@ -73,9 +77,13 @@ export async function studioState(actor: string) {
       }),
       db.studioOrganization.findUniqueOrThrow({ where: { id: ORG } }),
       db.studioJob.findMany({
-        where: { organizationId: ORG, series: { concept: { is: null } } },
+        where: {
+          organizationId: ORG,
+          series: { concept: { is: null } },
+          ...(selectedSeriesId ? { seriesId: selectedSeriesId } : {}),
+        },
         orderBy: { createdAt: "desc" },
-        take: 100,
+        take: selectedSeriesId ? undefined : 100,
         select: {
           id: true,
           seriesId: true,

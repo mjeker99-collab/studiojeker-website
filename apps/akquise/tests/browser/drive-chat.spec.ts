@@ -37,6 +37,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/state")
       return route.fulfill({
         json: {
@@ -138,9 +139,12 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
     .getByRole("button", { name: /Content-Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
-  await chat
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
+  if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible()))
+    await chat
+      .getByText("Projekte öffnen oder neues Gespräch beginnen", {
+        exact: true,
+      })
+      .click();
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("chat");
   await chat
     .getByText("Bild hinzufügen oder auswählen", { exact: true })
