@@ -145,7 +145,7 @@ export default function ProjectSave<T extends object>({
     <section className="project-save" aria-label={`Projekt sichern · ${area}`}>
       <div className="project-save-controls">
         <label>
-          Projektname
+          Name der Sicherung
           <input
             value={titleValue}
             maxLength={200}
