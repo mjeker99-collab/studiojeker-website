@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import NewsletterImageField from "./NewsletterImageField";
 import {
   getNewsletterTemplate,
   renderNewsletter,
@@ -51,6 +52,11 @@ export function NewsletterFields({
                         fields: { ...value.fields, [slot.key]: e.target.value },
                       })
                     }
+                  />
+                ) : slot.kind === "image" ? (
+                  <NewsletterImageField
+                    value={value.fields[slot.key]}
+                    onChange={(url) => change({ ...value, fields: { ...value.fields, [slot.key]: url } })}
                   />
                 ) : (
                   <input
