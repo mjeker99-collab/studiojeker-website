@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import {
   verifiedContact,
   legalAllowed,
@@ -12,6 +13,232 @@ import {
 import { parseImport, validateRows } from "../lib/import";
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
+import type { Contact } from "@prisma/client";
+import { generateDraft, importedDraft } from "../lib/generation";
+import { sendInternalSmtpTest } from "../lib/smtp-test";
+import type { PrismaClient } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+import {
+  signedMessage,
+  signatureParts,
+  signatureAssets,
+} from "../lib/mail-signature";
+import { signatureAttachments } from "../lib/mail-signature-assets";
+import sharp from "sharp";
+
+test("Nora-Signatur ersetzt bekannte Textsignatur und erhält Nachricht und Widerspruchshinweis", () => {
+  const body =
+    "Guten Tag\n\nIhre Architektur.\n\nFreundliche Grüsse\nNora Jeker\nStudiojeker – We create visibility\nstudiojeker.ch\n\nFalls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.";
+  const signed = signedMessage(body);
+  assert.equal((signed.text.match(/Nora Jeker/g) || []).length, 1);
+  assert.match(signed.text, /Ihre Architektur/);
+  assert.match(signed.text, /\+41 78 601 78 85/);
+  assert.match(signed.text, /Hauptstrasse 73\nCH-4528 Zuchwil/);
+  assert.ok(
+    signed.text.endsWith(
+      "Falls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.",
+    ),
+  );
+  assert.match(signed.html, /cid:nora-jeker@signature/);
+  assert.match(signed.html, /cid:studiojeker-logo@signature/);
+  assert.match(signedMessage(body, true).html, /\/brand\/mail\/nora.jpg/);
+  assert.deepEqual(signatureParts("Eigener Text\nPS: Zusatz"), {
+    before: "Eigener Text\nPS: Zusatz",
+    after: "",
+  });
+  assert.match(
+    signedMessage("<img src=x onerror=alert(1)> & Text").html,
+    /&lt;img/,
+  );
+  assert.doesNotMatch(
+    signedMessage("<script>alert(1)</script>").html,
+    /<script>/,
+  );
+  assert.match(signedMessage("Grüsse\nAndere Person").text, /Andere Person/);
+});
+
+test("Signaturbilder und HTML sind Bestandteil der Freigabe und des lokalen MIME", async () => {
+  const attachments = await signatureAttachments();
+  assert.equal(attachments.length, 2);
+  for (const [index, asset] of attachments.entries()) {
+    const dimensions = await sharp(asset.content).metadata();
+    assert.equal(dimensions.width, signatureAssets[index].width);
+    assert.equal(dimensions.height, signatureAssets[index].height);
+    assert.ok(
+      asset.content.length < 30000,
+      "Keine grossen Originalbilder im Versand",
+    );
+    assert.equal(asset.contentDisposition, "inline");
+  }
+  const html = signedMessage("Test").html;
+  assert.match(html, /alt="Studiojeker" width="180" height="83"/);
+  assert.match(html, /alt="Nora Jeker" width="160" height="90"/);
+  assert.match(html, /<font face="Arial,Helvetica,sans-serif" size="3"/);
+  const oldHash = createHash("sha256")
+    .update(JSON.stringify(["anna@example.test", "Test", "Text"]))
+    .digest("hex");
+  assert.notEqual(messageHash("anna@example.test", "Test", "Text"), oldHash);
+  const mime = await renderLocalMessage({
+    recipient: "anna@example.test",
+    subject: "Test",
+    body: "Guten Tag",
+    messageId: "<signature@example.test>",
+  });
+  assert.match(mime, /multipart\/alternative/);
+  assert.match(mime, /Content-Type: text\/plain/);
+  assert.match(mime, /Content-Type: text\/html/);
+  assert.match(mime, /Content-ID: <nora-jeker@signature>/);
+  assert.match(mime, /Content-ID: <studiojeker-logo@signature>/);
+  assert.match(mime, /Content-Disposition: inline/);
+});
+
+test("Separate SMTP-Testmail bindet Empfänger, bestätigt Versand und verhindert Wiederholung", async () => {
+  const env = {
+    MAIL_MODE: "test",
+    ENABLE_EMAIL_SENDING: "true",
+    SMTP_CONFIGURATION_CONFIRMED: "true",
+    SMTP_HOST: "jovinus.metanet.ch",
+    SMTP_USER: "njeker@studiojeker.ch",
+    MAIL_FROM: "njeker@studiojeker.ch",
+    SMTP_PASSWORD: "synthetic-test-only",
+    SMTP_PORT: "465",
+    SMTP_SECURE: "true",
+    TEST_MAIL_RECIPIENTS: "njeker@studiojeker.ch",
+    NODE_ENV: "test",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(env).map((k) => [k, process.env[k]]),
+  );
+  Object.assign(process.env, env);
+  type Entry = { action: string; entityId: string; createdAt?: Date };
+  const records: Entry[] = [];
+  let active = true;
+  const audit = {
+    async findFirst({
+      where,
+    }: {
+      where: { action: string; entityId?: string; createdAt?: { gte: Date } };
+    }) {
+      return (
+        records.find(
+          (r) =>
+            r.action === where.action &&
+            (!where.entityId || r.entityId === where.entityId) &&
+            (!where.createdAt || r.createdAt! >= where.createdAt.gte),
+        ) ?? null
+      );
+    },
+    async create({ data }: { data: Entry }) {
+      records.push({ ...data, createdAt: new Date() });
+      return data;
+    },
+  };
+  const tx = {
+    audit,
+    user: {
+      async findFirst() {
+        return active
+          ? { name: "Martin Jeker", email: "martin@example.test", active: true }
+          : null;
+      },
+    },
+    async $executeRaw() {},
+  };
+  const client = {
+    audit,
+    async $transaction(fn: (value: typeof tx) => Promise<void>) {
+      return fn(tx);
+    },
+  } as unknown as PrismaClient;
+  let sends = 0;
+  const sender: import("../lib/mail").SmtpSender = async (message) => {
+    sends++;
+    assert.deepEqual(message.envelopeRecipients, ["njeker@studiojeker.ch"]);
+    assert.equal(message.recipient, "njeker@studiojeker.ch");
+    assert.equal(message.test, true);
+    assert.match(message.body, /interne Testmail/);
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_STARTED");
+    return { accepted: ["njeker@studiojeker.ch"], rejected: [] };
+  };
+  const request = { requestId: randomUUID(), confirmed: true };
+  try {
+    for (const mode of ["disabled", "production"]) {
+      process.env.MAIL_MODE = mode;
+      await assert.rejects(
+        sendInternalSmtpTest("martin", request, sender, client),
+      );
+    }
+    process.env.MAIL_MODE = "test";
+    process.env.TEST_MAIL_RECIPIENTS = "other@studiojeker.ch";
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+    );
+    process.env.TEST_MAIL_RECIPIENTS = env.TEST_MAIL_RECIPIENTS;
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, confirmed: false },
+        sender,
+        client,
+      ),
+    );
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, recipient: "outside@example.test" },
+        sender,
+        client,
+      ),
+    );
+    active = false;
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+    );
+    active = true;
+    assert.equal(sends, 0);
+    await sendInternalSmtpTest("martin", request, sender, client);
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_ACCEPTED");
+    await assert.rejects(
+      sendInternalSmtpTest("martin", request, sender, client),
+      /bereits gestartet/,
+    );
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        { ...request, requestId: randomUUID() },
+        sender,
+        client,
+      ),
+      /Minute/,
+    );
+    assert.equal(sends, 1);
+    records.length = 0;
+    const failed = { ...request, requestId: randomUUID() };
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        failed,
+        async () => {
+          throw new Error("secret must not escape");
+        },
+        client,
+      ),
+      /nicht bestätigt/,
+    );
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_UNCERTAIN");
+    await assert.rejects(
+      sendInternalSmtpTest("martin", failed, sender, client),
+      /bereits gestartet/,
+    );
+    assert.equal(sends, 1);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
 const base = {
   email: "anna.muster@example.test",
   confidence: "VERIFIED",
@@ -20,6 +247,173 @@ const base = {
   hook: "Dokumentierte Recherche.",
   status: "VERIFIED",
 };
+const architectureBody = `Guten Tag Frau Muster
+
+Studiojeker unterstützt Architekturbüros mit 3D-Visualisierungen, Architekturfotografie und Projektfilmen.
+
+Wäre ein kurzer Austausch interessant?
+
+Freundliche Grüsse
+Nora Jeker
+Studiojeker
+studiojeker.ch`;
+const architectureNotes = `Originalname: Anna Muster
+Prüfstatus: Persönliche Adresse und Rolle auf offizieller Website veröffentlicht
+Prüfdatum: 01.01.2026
+Newsletter-Einwilligung: Keine Einwilligung dokumentiert
+Akquise-Status: ENTWURF – NICHT VERSENDEN
+Betreff: Architektur und Projekte sichtbar machen
+E-Mail-Entwurf: ${architectureBody}
+Herkunft: Recherche 01.01.2026
+Hinweise: Vor Versand erneut prüfen; keine Newsletter-Einwilligung.`;
+const architectureContact = {
+  ...base,
+  organisation: "Beispiel Architekten AG",
+  firstName: "Anna",
+  lastName: "Muster",
+  industry: "",
+  service: "",
+  notes: architectureNotes,
+} as Contact;
+
+test("Bestehender importierter Mailtext hat Vorrang und enthält keine internen Metadaten", async () => {
+  const generated = await generateDraft(architectureContact, {
+    async generate() {
+      throw new Error("Importierten Text nicht neu generieren");
+    },
+  });
+  assert.deepEqual(generated, {
+    subject: "Architektur und Projekte sichtbar machen",
+    body: architectureBody,
+  });
+  assert.doesNotMatch(
+    generated.body,
+    /Herkunft:|Hinweise:|Prüfstatus:|Akquise-Status:/,
+  );
+  assert.equal(architectureContact.notes, architectureNotes);
+});
+test("Beide Masterlisten-Betreffnamen und Windows-Zeilenumbrüche bleiben lesbar", () => {
+  const notes = architectureNotes
+    .replace("Betreff:", "E-Mail-Betreff:")
+    .replaceAll("\n", "\r\n");
+  assert.equal(importedDraft(notes)?.body, architectureBody);
+  assert.equal(
+    importedDraft(`Betreff: Architektur\nE-Mail-Entwurf:\n${architectureBody}`)
+      ?.body,
+    architectureBody,
+  );
+  assert.equal(importedDraft("Nur eine interne Recherche-Notiz."), null);
+});
+test("Unvollständige oder mehrdeutige importierte Entwürfe werden nicht still ersetzt", () => {
+  for (const notes of [
+    "Betreff: Architektur",
+    "E-Mail-Entwurf: Text",
+    "Betreff: \nE-Mail-Entwurf: Text",
+    "Betreff: Architektur\nE-Mail-Entwurf:\nHinweise: Intern",
+    architectureNotes + "\nBetreff: Zweiter Betreff",
+    architectureNotes + "\nE-Mail-Entwurf: Zweiter Text",
+    `Betreff: ${"x".repeat(251)}\nE-Mail-Entwurf: Text`,
+  ])
+    assert.throws(() => importedDraft(notes), /Importierter Mailentwurf/);
+});
+test("Auch importierte Mailtexte umgehen keine Kontaktprüfung", async () => {
+  await assert.rejects(
+    generateDraft({ ...architectureContact, confidence: "UNCONFIRMED" }),
+  );
+  await assert.rejects(
+    generateDraft({ ...architectureContact, status: "DO_NOT_CONTACT" }),
+  );
+});
+test("Lokale Vorlage erkennt Architekten bei leerer Branche im Organisationsnamen", async () => {
+  const generated = await generateDraft({ ...architectureContact, notes: "" });
+  assert.match(generated.subject, /Architekturvisualisierungen/);
+  assert.doesNotMatch(generated.body, /Businessfotografie/);
+  const explicit = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    service: "Projektfilmen",
+  });
+  assert.match(explicit.body, /Projektfilmen/);
+  const industry = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    industry: "Industrie",
+  });
+  assert.match(industry.body, /Businessfotografie/);
+});
+test("Kontakte ohne Adresse bleiben für Entwurf und Freigabe gesperrt", () => {
+  assert.throws(() => verifiedContact({ ...base, email: "" }));
+});
+
+test("Drive-Masterliste übernimmt alle Personen, auch ohne oder mit gemeinsamer Adresse", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("Kontakte");
+  sheet.addRow([
+    "Person",
+    "Funktion",
+    "Organisation",
+    "Ort",
+    "E-Mail",
+    "Prüfstatus",
+    "Prüfdatum",
+    "Priorität",
+    "Quellen-URL",
+    "Newsletter-Einwilligung",
+    "Akquise-Status",
+    "Betreff",
+    "E-Mail-Entwurf",
+    "Herkunft",
+    "Hinweise",
+  ]);
+  for (let i = 0; i < 179; i++) {
+    sheet.addRow([
+      `Anna Person${i}`,
+      "Leitung",
+      "Test AG",
+      "Bern",
+      i < 8 ? "" : i < 11 ? "shared@example.test" : `p${i}@example.test`,
+      "Aktuell offiziell",
+      "2026-10-19",
+      "A",
+      "https://example.test",
+      "Ja",
+      "Freigegeben",
+      "Betreff",
+      "Entwurf",
+      "Drive",
+      "Notiz",
+    ]);
+  }
+  book.addWorksheet("Mailverwaltung").addRow(["Nicht importieren"]);
+  sheet.getCell("I2").value = {
+    text: "https://example.test",
+    hyperlink: "https://example.test",
+  };
+  const rows = await parseImport(
+    Buffer.from(await book.xlsx.writeBuffer()),
+    "drive.xlsx",
+  );
+  assert.equal(rows.length, 179);
+  assert.equal(rows.filter((r) => !r.email).length, 8);
+  assert.equal(
+    new Set(rows.filter((r) => r.email).map((r) => r.email)).size,
+    169,
+  );
+  assert.ok(
+    rows.every((r) => !r.newsletterConsent && r.confidence === "UNCONFIRMED"),
+  );
+  assert.match(rows[0].notes, /Herkunft: Drive/);
+  assert.match(rows[0].notes, /E-Mail-Entwurf: Entwurf/);
+  assert.deepEqual(await generateDraft({ ...rows[8], ...base } as Contact), {
+    subject: "Betreff",
+    body: "Entwurf",
+  });
+  sheet.getCell("A2").value = { formula: "1+1", result: 2 };
+  await assert.rejects(
+    parseImport(Buffer.from(await book.xlsx.writeBuffer()), "drive.xlsx"),
+    /Formeln/,
+  );
+});
 test("Nur individuell verifizierte Kontakte sind freigabefähig", () => {
   assert.doesNotThrow(() => verifiedContact(base));
   for (const confidence of ["UNCONFIRMED", "ESTIMATED", "GENERAL"])
@@ -149,4 +543,81 @@ test("XLSX akzeptiert Text und blockiert Formeln", async () => {
     parseImport(Buffer.from(await book.xlsx.writeBuffer()), "test.xlsx"),
     /Formeln/,
   );
+});
+
+test("Masterliste mit mehreren Blättern und x:-Namespace importiert nur Kontakte", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("Masterkontakte");
+  sheet.addRow([
+    "Person",
+    "Funktion",
+    "Organisation",
+    "Ort",
+    "Direkte E-Mail",
+    "Prüfstatus",
+    "Prüfdatum",
+    "Priorität",
+    "Kontaktrolle",
+    "Kontaktstrategie",
+    "Studiojeker-Anknüpfungspunkt",
+    "Quellen-URL",
+    "Newsletter-Einwilligung",
+    "Akquise-Status",
+    "E-Mail-Betreff",
+    "E-Mail-Entwurf",
+  ]);
+  sheet.addRow([
+    "Anna Beispiel",
+    "Leitung",
+    "Beispiel AG",
+    "Solothurn",
+    "anna@example.test",
+    "Aktuell offiziell",
+    "2026-10-15",
+    "A",
+    "Leitung",
+    "Erstkontakt",
+    "Synthetischer Anknüpfungspunkt",
+    "https://example.test/quelle",
+    "Nicht belegt",
+    "Nicht kontaktiert",
+    "Betreff",
+    "Entwurf",
+  ]);
+  sheet.addRow(["Ohne E-Mail", "", "Zweite AG", "Solothurn"]);
+  book.addWorksheet("Übersicht").addRow(["Nur Übersicht"]);
+  const zip = await JSZip.loadAsync(await book.xlsx.writeBuffer());
+  for (const name of Object.keys(zip.files)) {
+    if (!name.startsWith("xl/") || !name.endsWith(".xml")) continue;
+    const xml = await zip.file(name)!.async("string");
+    if (
+      !xml.includes(
+        'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+      )
+    )
+      continue;
+    zip.file(
+      name,
+      xml
+        .replace(/<(\/?)([A-Za-z][\w.-]*)(?=[\s/>])/g, "<$1x:$2")
+        .replaceAll(
+          'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+          'xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',
+        ),
+    );
+  }
+  const rows = await parseImport(
+    await zip.generateAsync({ type: "nodebuffer" }),
+    "master.xlsx",
+  );
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].email, "");
+  assert.equal(rows[0].email, "anna@example.test");
+  assert.equal(rows[0].newsletterConsent, false);
+  assert.equal(rows[0].confidence, "UNCONFIRMED");
+  assert.match(rows[0].notes, /Nicht belegt/);
+  assert.deepEqual(await generateDraft({ ...rows[0], ...base } as Contact), {
+    subject: "Betreff",
+    body: "Entwurf",
+  });
 });

@@ -1,4 +1,17 @@
 "use client";
+import { signedMessage } from "../lib/mail-signature";
+import MailSchedule from "./MailSchedule";
+import MailStudio from "./MailStudio";
+import ContactPreparation from "./ContactPreparation";
+import Hub from "./hub/Hub";
+import Dashboard, { type DashboardTarget } from "./Dashboard";
+import Website from "./cms/Website";
+import Concepts from "./concepts/Concepts";
+import Customers from "./customers/Customers";
+import Image from "next/image";
+import Library from "./library/Library";
+import ContentStudio from "./studio/ContentStudio";
+import AssistantEntry from "./studio/AssistantEntry";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
   Contact,
@@ -15,7 +28,7 @@ type C = Omit<Contact, "verifiedAt" | "createdAt" | "updatedAt"> & {
   legalReviews: LegalReview[];
 };
 type D = Draft & {
-  versions: DraftVersion[];
+  versions: (DraftVersion & { signatureCurrent: boolean })[];
   approvals: (Approval & { user: { name: string } })[];
 };
 type State = {
@@ -27,14 +40,31 @@ type State = {
   suppressions: Suppression[];
   audits: (Audit & { user: { name: string } })[];
   generator: string;
+  externalSending: boolean;
+  mailMode: string;
+  smtpPort: number | null;
+  smtpSecure: boolean;
 };
 const nav = [
-  "Dashboard",
+  "Übersicht",
+  "Kontakte/Akquise",
+  "Kunden",
+  "Strategie & Konzepte",
+  "Kampagnen",
+  "Social Media",
+  "Content-Studio",
+  "Bibliothek",
+  "Newsletter",
+  "Website",
+  "Kalender",
+  "Einstellungen",
+];
+const acquisitionTabs = [
+  "Mail-Studio",
   "Kontakte",
   "E-Mail-Entwürfe",
   "Freigaben",
   "Versandhistorie",
-  "Einstellungen",
 ];
 const labels: Record<string, string> = {
   NEW: "Neu",
@@ -52,6 +82,9 @@ const labels: Record<string, string> = {
   INVALIDATED: "Ungültig",
   SIMULATED: "Lokal simuliert",
   BLOCKED: "Blockiert",
+  SENDING: "Versand reserviert",
+  UNKNOWN: "Zustellung unklar · keine Wiederholung",
+  TEST_SENT: "Intern versandt",
 };
 const empty = {
   organisation: "",
@@ -76,14 +109,31 @@ const empty = {
 };
 type ContactForm = typeof empty;
 const date = (v: unknown) =>
-  v ? new Date(String(v)).toLocaleString("de-CH") : "–";
+  v
+    ? new Date(String(v)).toLocaleString("de-CH", { timeZone: "Europe/Zurich" })
+    : "–";
 function Badge({ value }: { value: string }) {
   return <span className={`badge b-${value}`}>{labels[value] ?? value}</span>;
+}
+function AppLogo() {
+  return (
+    <div className="wordmark app-brand">
+      <Image
+        src="/brand/logo?v=2"
+        alt="STUDIOONE – Dein Marketing. Ein Ort."
+        width={1280}
+        height={593}
+        unoptimized
+        priority
+      />
+    </div>
+  );
 }
 export default function App() {
   const [data, setData] = useState<State | null>(null),
     [loaded, setLoaded] = useState(false),
-    [tab, setTab] = useState("Dashboard"),
+    [conceptDirty, setConceptDirty] = useState(false),
+    [tab, setTab] = useState("Übersicht"),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -98,7 +148,32 @@ export default function App() {
     [message, setMessage] = useState({ recipient: "", subject: "", body: "" }),
     [read, setRead] = useState(false),
     [rationale, setRationale] = useState(""),
-    [procurement, setProcurement] = useState(false);
+    [procurement, setProcurement] = useState(false),
+    [dispatchConfirm, setDispatchConfirm] = useState(false);
+  const [dashboardTarget, setDashboardTarget] =
+    useState<DashboardTarget | null>(null);
+  function navigate(target: DashboardTarget) {
+    if (
+      conceptDirty &&
+      !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
+    )
+      return;
+    setDashboardTarget(target);
+    setTab(
+      target.section === "Kontakte/Akquise" ? "Mail-Studio" : target.section,
+    );
+    setNotice("");
+    setError("");
+    setSelected([]);
+    setSearch("");
+    setFilter("");
+    window.scrollTo({ top: 0 });
+  }
+  const mailLabel = data?.externalSending
+    ? data.mailMode === "test"
+      ? "Interner SMTP-Testmodus"
+      : "Produktionsversand aktiv"
+    : "Versand deaktiviert";
   async function refresh() {
     const r = await fetch("/api/state", { cache: "no-store" });
     if (r.status === 401) {
@@ -193,9 +268,9 @@ export default function App() {
     setError("");
     setNotice("");
     try {
-      await fn();
+      const result = await fn();
       await refresh();
-      setNotice(success);
+      setNotice(typeof result === "string" ? result : success);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fehler");
     } finally {
@@ -226,9 +301,11 @@ export default function App() {
     const v = d.versions[0];
     setMessage({ recipient: v.recipient, subject: v.subject, body: v.body });
     setRead(false);
+    setDispatchConfirm(false);
   }
   const dirty = draft
-    ? message.recipient !== draft.versions[0].recipient ||
+    ? !draft.versions[0].signatureCurrent ||
+      message.recipient !== draft.versions[0].recipient ||
       message.subject !== draft.versions[0].subject ||
       message.body !== draft.versions[0].body
     : false;
@@ -279,18 +356,16 @@ export default function App() {
   if (!loaded)
     return (
       <main className="login">
-        <h1>Studiojeker</h1>
-        <p>Akquiseplattform wird geladen …</p>
+        <h1>StudioONE</h1>
+        <p>StudioONE wird geladen …</p>
       </main>
     );
   if (!data)
     return (
       <main className="login">
         <div className="login-card">
-          <div className="wordmark">
-            studiojeker<span>®</span>
-          </div>
-          <p className="eyebrow">AKQUISEPLATTFORM / VERSION 1</p>
+          <AppLogo />
+          <p className="eyebrow">STUDIOONE / MARKETING HUB</p>
           <h1>
             Gute Kontakte.
             <br />
@@ -339,31 +414,38 @@ export default function App() {
               {error}
             </p>
           )}
-          <p className="safe">● V1 · Externer Versand deaktiviert</p>
+          <p className="safe">
+            Persönlicher Zugang · Versand nur nach Freigabe
+          </p>
         </div>
       </main>
     );
   return (
     <div className="shell">
       <aside className="sidebar" inert={showContact || !!draft}>
-        <div className="wordmark">
-          studiojeker<span>®</span>
-        </div>
-        <p className="eyebrow">AKQUISE / WORKSPACE</p>
+        <AppLogo />
+        <p className="eyebrow">STUDIOONE / WORKSPACE</p>
         <nav aria-label="Hauptnavigation">
           {nav.map((n, i) => (
             <button
               key={n}
-              aria-current={tab === n ? "page" : undefined}
-              className={tab === n ? "active" : ""}
-              onClick={() => {
-                setTab(n);
-                setSelected([]);
-                setSearch("");
-                setFilter("");
-              }}
+              aria-current={
+                tab === n ||
+                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
+                  ? "page"
+                  : undefined
+              }
+              className={
+                tab === n ||
+                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
+                  ? "active"
+                  : ""
+              }
+              onClick={() => navigate({ section: n })}
             >
-              <span className="nav-index">0{i + 1}</span>
+              <span className="nav-index" aria-hidden="true">
+                0{i + 1}
+              </span>
               {n}
               {n === "Freigaben" && (
                 <small>
@@ -375,9 +457,9 @@ export default function App() {
         </nav>
         <div className="sidebar-bottom">
           <p>
-            <span className="dot" /> SICHERER TESTMODUS
+            <span className="dot" /> {mailLabel}
           </p>
-          <p>Kein externer E-Mail-Versand</p>
+          <p>Persönliche Mails gemeinsam prüfen</p>
           <div className="profile">
             <span className="avatar">
               {data.user.name
@@ -401,9 +483,9 @@ export default function App() {
       <div className="workspace" inert={showContact || !!draft}>
         <header>
           <span>
-            STUDIOJEKER GMBH <span className="muted">/ Akquiseplattform</span>
+            STUDIOJEKER GMBH <span className="muted">/ StudioONE</span>
           </span>
-          <span className="test-tag">● V1 · Versand deaktiviert</span>
+          <span className="test-tag">● {mailLabel}</span>
         </header>
         <main className="content">
           <div className="page-heading">
@@ -419,7 +501,7 @@ export default function App() {
                   year: "numeric",
                 })}
               </span>
-              {["Dashboard", "Kontakte"].includes(tab) && (
+              {["Übersicht", "Kontakte"].includes(tab) && (
                 <button onClick={() => openContact(null)}>
                   Kontakt erfassen <span>＋</span>
                 </button>
@@ -436,151 +518,95 @@ export default function App() {
               {notice}
             </div>
           )}
-          {tab === "Dashboard" && (
-            <>
-              <div className="banner">
-                <span className="banner-icon">↗</span>
-                <div>
-                  <strong>Persönlich ansprechen. Bewusst freigeben.</strong>
-                  <p>
-                    Jede Nachricht bleibt ein Entwurf, bis Martin oder Nora die
-                    exakte Version geprüft hat.
-                  </p>
-                </div>
-                <span className="outline-tag">LOKALER TESTMODUS</span>
-              </div>
-              <div className="metrics">
-                {[
-                  [
-                    "Neue Kontakte",
-                    data.contacts.filter((c) => c.status === "NEW").length,
-                  ],
-                  [
-                    "Verifizierte Kontakte",
-                    data.contacts.filter((c) => c.confidence === "VERIFIED")
-                      .length,
-                  ],
-                  [
-                    "Entwürfe in Bearbeitung",
-                    data.drafts.filter((d) => latest(d) === "DRAFT").length,
-                  ],
-                  [
-                    "Wartende Freigaben",
-                    data.drafts.filter((d) => latest(d) === "PENDING").length,
-                  ],
-                  [
-                    "Freigegebene E-Mails",
-                    data.drafts.filter((d) => latest(d) === "APPROVED").length,
-                  ],
-                  [
-                    "Versandte E-Mails",
-                    data.deliveries.filter((d) => d.status === "SENT").length,
-                  ],
-                  [
-                    "Eingegangene Antworten",
-                    data.deliveries.filter((d) => d.status === "REPLIED")
-                      .length,
-                  ],
-                ].map(([label, count], i) => (
-                  <article className="metric" key={label}>
-                    <span>{label}</span>
-                    <div>
-                      {count}
-                      <small>0{i + 1}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <div className="dashboard-grid">
-                <section className="panel">
-                  <div className="section-head">
-                    <h2>Kontakte im Fokus</h2>
-                    <button
-                      className="text-button"
-                      onClick={() => setTab("Kontakte")}
-                    >
-                      Alle Kontakte ↗
-                    </button>
-                  </div>
-                  <ContactTable
-                    contacts={data.contacts.slice(0, 6)}
-                    selected={selected}
-                    setSelected={setSelected}
-                    open={openContact}
-                  />
-                  {!data.contacts.length && (
-                    <p className="empty">
-                      Noch keine Kontakte. Erfassen oder importieren Sie
-                      geprüfte Recherche.
-                    </p>
-                  )}
-                </section>
-                <section className="panel">
-                  <div className="section-head">
-                    <h2>Nächste Schritte</h2>
-                    <span className="cyan">↗</span>
-                  </div>
-                  <ol className="steps">
-                    <li>
-                      <span>01</span>
-                      <div>
-                        <strong>Recherche dokumentieren</strong>
-                        <p>
-                          Quelle, Anknüpfungspunkt und persönliche
-                          Geschäftsadresse prüfen.
-                        </p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>02</span>
-                      <div>
-                        <strong>Zulässigkeit beurteilen</strong>
-                        <p>
-                          Öffentliche Kontaktdaten gelten nicht als
-                          Werbeeinwilligung.
-                        </p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>03</span>
-                      <div>
-                        <strong>Entwurf einzeln lesen</strong>
-                        <p>
-                          Inhalt und Empfänger prüfen, dann die konkrete Version
-                          freigeben.
-                        </p>
-                      </div>
-                    </li>
-                  </ol>
-                  <div className="panel-note">
-                    V1 simuliert ausschliesslich lokal. Es werden keine externen
-                    E-Mails versandt.
-                  </div>
-                </section>
-              </div>
-              <section className="panel">
-                <div className="section-head">
-                  <h2>Letzte Aktivitäten</h2>
-                  <span className="muted">Audit-Protokoll</span>
-                </div>
-                <div className="activity">
-                  {data.audits.slice(0, 5).map((a) => (
-                    <div key={a.id}>
-                      <span className="dot" />
-                      <strong>{a.action}</strong>
-                      <span>{a.user.name}</span>
-                      <time>{date(a.createdAt)}</time>
-                    </div>
-                  ))}
-                  {!data.audits.length && (
-                    <p className="empty">Noch keine Aktivitäten.</p>
-                  )}
-                </div>
-              </section>
-            </>
+          {acquisitionTabs.includes(tab) && (
+            <nav className="hub-subnav" aria-label="Akquise-Navigation">
+              {acquisitionTabs.map((n) => (
+                <button
+                  className={tab === n ? "" : "secondary"}
+                  key={n}
+                  onClick={() => setTab(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </nav>
+          )}
+          {(tab === "Kampagnen" || tab === "Social Media") && (
+            <AssistantEntry key={`assistant-${tab}`} section={tab} />
+          )}
+          {[
+            "Kampagnen",
+            "Social Media",
+            "Newsletter",
+            "Kalender",
+            "Einstellungen",
+          ].includes(tab) && (
+            <Hub
+              key={tab}
+              section={tab}
+              userId={data.user.id}
+              initialCampaignId={
+                dashboardTarget?.section === tab
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
+          )}
+          {tab === "Website" && (
+            <Website
+              initialProjectId={
+                dashboardTarget?.section === "Website"
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
+          )}
+          {tab === "Bibliothek" && <Library />}
+          {tab === "Kunden" && <Customers />}
+          {tab === "Strategie & Konzepte" && (
+            <Concepts
+              onDirtyChange={setConceptDirty}
+              openCampaigns={() => setTab("Kampagnen")}
+            />
+          )}
+          {tab === "Content-Studio" && (
+            <ContentStudio
+              userId={data.user.id}
+              initialSeriesId={
+                dashboardTarget?.section === "Content-Studio"
+                  ? dashboardTarget.projectId
+                  : undefined
+              }
+            />
+          )}
+          {tab === "Übersicht" && (
+            <Dashboard
+              name={data.user.name}
+              contacts={data.contacts.length}
+              drafts={data.drafts.filter((d) => latest(d) === "DRAFT").length}
+              approvals={
+                data.drafts.filter((d) => latest(d) === "PENDING").length
+              }
+              sent={data.deliveries.filter((d) => d.status === "SENT").length}
+              onOpen={navigate}
+            />
+          )}
+          {tab === "Mail-Studio" && (
+            <MailStudio
+              drafts={data.drafts}
+              contacts={data.contacts}
+              refresh={refresh}
+              openDraft={(id) => {
+                const d = data.drafts.find((d) => d.id === id);
+                if (d) openDraft(d);
+              }}
+            />
           )}
           {tab === "Kontakte" && (
             <section className="panel">
+              <button onClick={() => setTab("Mail-Studio")}>
+                Weiter zur gemeinsamen Mailprüfung
+              </button>
               <div className="toolbar">
                 <label className="search">
                   Suche
@@ -619,9 +645,7 @@ export default function App() {
                         body.set("file", f);
                         action(async () => {
                           const r = await post("contacts/import", body);
-                          setNotice(
-                            `${r.imported} importiert, ${r.duplicates} Dubletten übersprungen.`,
-                          );
+                          return `${r.imported} importiert, ${r.duplicates} bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
                         }, "Import abgeschlossen.");
                       }
                       e.target.value = "";
@@ -633,31 +657,24 @@ export default function App() {
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
                 Importe erhalten keine Versandfreigabe.
               </div>
+              {selected.length > 0 && (
+                <ContactPreparation
+                  key={selected.join(",")}
+                  ids={selected}
+                  contacts={data.contacts}
+                  refresh={refresh}
+                  begin={() => {
+                    setError("");
+                    setNotice("");
+                  }}
+                />
+              )}
               <ContactTable
                 contacts={contacts}
                 selected={selected}
                 setSelected={setSelected}
                 open={openContact}
               />
-              {selected.length > 0 && (
-                <div className="bulk">
-                  <button
-                    disabled={busy}
-                    onClick={() =>
-                      action(async () => {
-                        for (const id of selected)
-                          await post("drafts", { contactId: id });
-                        setSelected([]);
-                      }, "Lokale Entwürfe erstellt. Jeder Entwurf muss einzeln gelesen und freigegeben werden.")
-                    }
-                  >
-                    Entwürfe für Auswahl vorbereiten
-                  </button>
-                  <span>
-                    Nur für verifizierte Kontakte. Keine Sammelfreigabe.
-                  </span>
-                </div>
-              )}
             </section>
           )}
           {["E-Mail-Entwürfe", "Freigaben"].includes(tab) && (
@@ -702,10 +719,19 @@ export default function App() {
             </section>
           )}
           {tab === "Versandhistorie" && (
+            <MailSchedule
+              drafts={data.drafts}
+              openDraft={(id) => {
+                const d = data.drafts.find((d) => d.id === id);
+                if (d) openDraft(d);
+              }}
+            />
+          )}
+          {tab === "Versandhistorie" && (
             <section className="panel">
               <div className="section-head">
                 <h2>Nachrichtenprotokoll</h2>
-                <span className="test-tag">Externer Versand gesperrt</span>
+                <span className="test-tag">{mailLabel}</span>
               </div>
               <div className="table-wrap">
                 <table>
@@ -726,7 +752,13 @@ export default function App() {
                         <td>
                           <Badge value={d.status} />
                         </td>
-                        <td className="mono">{d.messageId}</td>
+                        <td className="mono">
+                          {d.messageId}
+                          <small>
+                            {d.mode} · {d.envelopeRecipients?.join(", ")}
+                          </small>
+                          {d.error && <small>{d.error}</small>}
+                        </td>
                         <td>{date(d.createdAt)}</td>
                       </tr>
                     ))}
@@ -734,10 +766,7 @@ export default function App() {
                 </table>
               </div>
               {!data.deliveries.length && (
-                <p className="empty">
-                  Keine Nachrichten. Auch bei Freigabe bleibt der externe
-                  Versand deaktiviert.
-                </p>
+                <p className="empty">Keine Nachrichten. {mailLabel}.</p>
               )}
             </section>
           )}
@@ -752,10 +781,18 @@ export default function App() {
                     <dt>Absender</dt>
                     <dd>njeker@studiojeker.ch</dd>
                     <dt>Port / Verschlüsselung</dt>
-                    <dd>Noch durch Metanet zu bestätigen</dd>
+                    <dd>
+                      {data.smtpPort
+                        ? `${data.smtpPort} / ${data.smtpSecure ? "TLS" : "STARTTLS"}`
+                        : "Noch durch Metanet zu bestätigen"}
+                    </dd>
                     <dt>Externer Versand</dt>
                     <dd>
-                      <Badge value="BLOCKED" />
+                      {data.externalSending ? (
+                        mailLabel
+                      ) : (
+                        <Badge value="BLOCKED" />
+                      )}
                     </dd>
                     <dt>IMAP</dt>
                     <dd>Header-Zuordnung vorbereitet · nicht verbunden</dd>
@@ -776,6 +813,32 @@ export default function App() {
                   <p className="muted">
                     Bestehende Dubletten werden übersprungen. Keine
                     Statusübernahme, keine Versandwarteschlange.
+                  </p>
+                  <h3>Interne Testmail</h3>
+                  <p>
+                    Sendet einen neutralen Verbindungstest ausschliesslich an
+                    njeker@studiojeker.ch. Es wird kein Akquisekontakt
+                    freigegeben.
+                  </p>
+                  <button
+                    disabled={
+                      busy || data.mailMode !== "test" || !data.externalSending
+                    }
+                    onClick={() =>
+                      action(async () => {
+                        const result = await post("smtp/test", {
+                          confirmed: true,
+                          requestId: crypto.randomUUID(),
+                        });
+                        return result.message;
+                      })
+                    }
+                  >
+                    Testmail an njeker@studiojeker.ch senden
+                  </button>
+                  <p className="muted">
+                    Benötigt den internen SMTP-Testmodus. Höchstens ein Test pro
+                    Minute.
                   </p>
                   <h3>Berechtigte Konten</h3>
                   {data.users.map((u) => (
@@ -851,7 +914,7 @@ export default function App() {
           )}
           <footer>
             STUDIOJEKER · WE CREATE VISIBILITY.{" "}
-            <span>Akquiseplattform V1 / intern</span>
+            <span>StudioONE V1 / intern</span>
           </footer>
         </main>
       </div>
@@ -909,7 +972,6 @@ export default function App() {
                         "organisation",
                         "firstName",
                         "lastName",
-                        "email",
                       ].includes(key)}
                       onChange={(e) =>
                         setForm({ ...form, [key]: e.target.value })
@@ -1196,6 +1258,29 @@ export default function App() {
                 Als neue Version speichern
               </button>
             </form>
+            <section
+              aria-label="Mailvorschau mit Signatur"
+              style={{ marginTop: 24 }}
+            >
+              <h3>Mailvorschau mit Signatur</h3>
+              <div
+                style={{
+                  padding: 16,
+                  border: "1px solid #c8cfd1",
+                  background: "#fff",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: signedMessage(message.body, true).html,
+                }}
+              />
+            </section>
+            {!draft.versions[0].signatureCurrent && (
+              <p className="warning">
+                Die neue Signatur ist noch nicht Bestandteil dieser
+                gespeicherten Version. Bitte als neue Version speichern und
+                erneut prüfen.
+              </p>
+            )}
             <label className="check read-check">
               <input
                 type="checkbox"
@@ -1204,7 +1289,7 @@ export default function App() {
                 onChange={(e) => setRead(e.target.checked)}
               />
               Ich habe Empfänger, Betreff und die vollständige Nachricht dieser
-              Version gelesen und geprüft.
+              Version einschliesslich Signatur gelesen und geprüft.
             </label>
             {dirty && (
               <p className="warning">
@@ -1245,9 +1330,54 @@ export default function App() {
                 Lokal simulieren
               </button>
             </div>
+            {data.externalSending && (
+              <section className="legal">
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={dispatchConfirm}
+                    disabled={dirty}
+                    onChange={(e) => setDispatchConfirm(e.target.checked)}
+                  />
+                  {data.mailMode === "test"
+                    ? "Ich bestätige den Versand dieser Version ausschliesslich an die serverseitig festgelegten internen Testempfänger."
+                    : "Ich bestätige den tatsächlichen Versand dieser freigegebenen Version an den angezeigten Kontakt."}
+                </label>
+                <button
+                  disabled={
+                    busy ||
+                    dirty ||
+                    !dispatchConfirm ||
+                    latest(draft) !== "APPROVED"
+                  }
+                  onClick={() =>
+                    action(async () => {
+                      const result = await post("send", {
+                        draftId: draft.id,
+                        version,
+                        confirmDispatch: true,
+                      });
+                      setDispatchConfirm(false);
+                      if (
+                        !["SENT", "TEST_SENT"].includes(result.delivery.status)
+                      )
+                        throw new Error(
+                          "Zustellung nicht bestätigt. Protokoll prüfen; nicht erneut senden.",
+                        );
+                      setDraft(null);
+                    }, "Versand protokolliert.")
+                  }
+                >
+                  {data.mailMode === "test"
+                    ? "Internen Test versenden"
+                    : "Freigegebene Version versenden"}
+                </button>
+              </section>
+            )}
             <p className="warning">
-              Externer Versand ist in V1 gesperrt. Freigabe und rechtliche
-              Prüfung sind getrennte Entscheidungen.
+              {mailLabel}. Freigabe und rechtliche Prüfung sind getrennte
+              Entscheidungen. Unklare Zustellungen werden niemals automatisch
+              wiederholt.
             </p>
             <details>
               <summary>Versionen & Freigabeprotokoll</summary>

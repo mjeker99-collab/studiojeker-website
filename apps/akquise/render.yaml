@@ -1,0 +1,73 @@
+# Custom Blueprint path: apps/akquise/render.yaml. Applying creates paid resources!
+# Marketing Hub depends on PR #141 -> #140 -> #133. Apply only the reviewed full stack.
+previews:
+  generation: "off"
+services:
+  - type: web
+    name: studiojeker-akquise
+    runtime: node
+    region: frankfurt
+    plan: 0.5c-512mb
+    numInstances: 1
+    rootDir: apps/akquise
+    autoDeployTrigger: "off"
+    buildCommand: node render/build.mjs
+    preDeployCommand: node render/command.mjs migrate
+    startCommand: node render/command.mjs start
+    healthCheckPath: /api/health/ready
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: studiojeker-akquise-db
+          property: connectionString
+      - key: MARTIN_EMAIL
+        sync: false
+      - key: NORA_EMAIL
+        sync: false
+      - key: MAIL_MODE
+        value: disabled
+      - key: ENABLE_EMAIL_SENDING
+        value: "false"
+      - key: SMTP_CONFIGURATION_CONFIRMED
+        value: "false"
+      - key: SMTP_HOST
+        value: jovinus.metanet.ch
+      - key: SMTP_USER
+        value: njeker@studiojeker.ch
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: TEST_MAIL_RECIPIENTS
+        sync: false
+      - key: MAIL_FROM
+        value: njeker@studiojeker.ch
+      - key: MAILCHIMP_API_KEY
+        sync: false
+      - key: DATABASE_CONNECTION_LIMIT
+        value: "3"
+      - key: CONTENT_AI_ENABLED
+        value: "false"
+      - key: STUDIO_LOCAL_ASSETS
+        value: "false"
+      - key: DAILY_SEND_LIMIT
+        value: "20"
+      - key: CHATGPT_CONNECTOR_TOKEN
+        sync: false
+databases:
+  - name: studiojeker-akquise-db
+    region: frankfurt
+    plan: 0.1c-256mb
+    postgresMajorVersion: "18"
+    databaseName: akquise
+    user: akquise
+    diskSizeGB: 1
+    storageAutoscalingEnabled: false
+    ipAllowList: []

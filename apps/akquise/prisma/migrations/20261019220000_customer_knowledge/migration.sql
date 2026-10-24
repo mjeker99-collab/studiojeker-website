@@ -1,0 +1,1 @@
+ALTER TABLE "Customer" ADD COLUMN "knowledge" JSONB NOT NULL DEFAULT '{}';

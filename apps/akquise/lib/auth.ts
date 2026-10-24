@@ -6,6 +6,7 @@ import {
 } from "node:crypto";
 import { cookies } from "next/headers";
 import { db } from "./db";
+import { allowedAccount, sessionCookieName } from "./config.mjs";
 import { PolicyError } from "./policy";
 export function hashPassword(password: string) {
   if (password.length < 14)
@@ -23,13 +24,18 @@ export function checkPassword(password: string, hash: string) {
 export const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 export async function requireUser() {
-  const token = (await cookies()).get("akquise-session")?.value;
+  const token = (await cookies()).get(sessionCookieName())?.value;
   if (!token) throw new PolicyError("Bitte anmelden.", 401);
   const session = await db.session.findUnique({
     where: { id: tokenHash(token) },
     include: { user: true },
   });
-  if (!session || session.expiresAt < new Date() || !session.user.active)
+  if (
+    !session ||
+    session.expiresAt < new Date() ||
+    !session.user.active ||
+    !allowedAccount(session.user)
+  )
     throw new PolicyError("Sitzung abgelaufen.", 401);
   return session.user;
 }
@@ -47,7 +53,7 @@ export async function login(email: string, password: string) {
       password,
       user?.passwordHash ?? `${"0".repeat(32)}:${"0".repeat(128)}`,
     );
-    if (!user?.active || !valid) {
+    if (!user?.active || !valid || !allowedAccount(user)) {
       const failures =
         (attempt?.lockedUntil && attempt.lockedUntil < new Date()
           ? 0

@@ -1,0 +1,1187 @@
+[
+  {
+    "id": "master-v7",
+    "type": "studiooneNewsletter_master_v7",
+    "name": "Master-Template · Relaunch",
+    "subject": "Studiojeker Newsletter",
+    "preheader": "We Create Visibility. Neuigkeiten von Studiojeker — Content, Marketing und KI.",
+    "note": "",
+    "fields": [
+      {
+        "name": "field_0",
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "value": "STUDIOJEKER NEWSLETTER"
+      },
+      {
+        "name": "field_1",
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "value": "1992 haben wir angefangen, Bilder zu produzieren. Heute produzieren wir Sichtbarkeit."
+      },
+      {
+        "name": "field_2",
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "value": "https://vimeo.com/1216347773"
+      },
+      {
+        "name": "field_3",
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Studiojeker Showreel auf Vimeo ansehen"
+      },
+      {
+        "name": "field_4",
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-desktop-play.jpg"
+      },
+      {
+        "name": "field_5",
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme"
+      },
+      {
+        "name": "field_6",
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/baseballer-mobile-play.jpg"
+      },
+      {
+        "name": "field_7",
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Baseballer – Zuschnitt aus der Studiojeker Originalaufnahme"
+      },
+      {
+        "name": "field_8",
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Studiojeker entwickelt sich weiter."
+      },
+      {
+        "name": "field_9",
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Was mit Fotografie begann, ist heute weit mehr: Wir verbinden Strategie, Content Creation und Digital Marketing – von Foto, Film und 3D bis zu Social Media und digitalen Kampagnen."
+      },
+      {
+        "name": "field_10",
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Unser Ziel ist dabei dasselbe geblieben: Kommunikation zu schaffen, die wirkt."
+      },
+      {
+        "name": "field_11",
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Heute denken wir jedoch konsequent einen Schritt weiter. Denn guter Content allein reicht nicht. Er muss gesehen werden."
+      },
+      {
+        "name": "field_12",
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Deshalb verstehen wir uns als Visibility Partner unserer Kunden – von der ersten Idee über die Content-Produktion bis zur Distribution und laufenden Betreuung."
+      },
+      {
+        "name": "field_13",
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/"
+      },
+      {
+        "name": "field_14",
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "→ Das neue Studiojeker entdecken"
+      },
+      {
+        "name": "field_15",
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "value": "https://cdn.sanity.io/images/tgx6e6jg/production/64a906ed2ca0239a6f72f34846a8c16d3178fc6a-1344x752.png"
+      },
+      {
+        "name": "field_16",
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "value": "Content Creation × AI – Motorradfahrer"
+      },
+      {
+        "name": "field_17",
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "CONTENT CREATION × AI"
+      },
+      {
+        "name": "field_18",
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Neue Möglichkeiten. Gleicher Anspruch an Qualität."
+      },
+      {
+        "name": "field_19",
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Künstliche Intelligenz verändert die Möglichkeiten der Content-Produktion fundamental. Wir haben deshalb KI konsequent in unsere Produktionsprozesse integriert."
+      },
+      {
+        "name": "field_20",
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Wir nutzen sie für Konzeption und Storyboarding, Bild- und Videoproduktion, Bildbearbeitung, 3D-Visualisierung und Animation – gezielt dort, wo sie kreative Möglichkeiten erweitert, Prozesse beschleunigt oder Produktionen effizienter macht."
+      },
+      {
+        "name": "field_21",
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Dabei ersetzt KI für uns weder Kreativität noch Erfahrung. Sie erweitert unseren Werkzeugkasten."
+      },
+      {
+        "name": "field_22",
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Entscheidend ist nicht, wie ein Bild oder ein Film entsteht. Entscheidend ist das Resultat."
+      },
+      {
+        "name": "field_23",
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/ki/"
+      },
+      {
+        "name": "field_24",
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "→ Studiojeker × KI entdecken"
+      },
+      {
+        "name": "field_25",
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Content. Distribution. Visibility."
+      },
+      {
+        "name": "field_26",
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Mit unserem neuen Auftritt rücken wir auch Digital & Social Media Marketing stärker ins Zentrum."
+      },
+      {
+        "name": "field_27",
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Denn wir möchten nicht nur Content für unsere Kunden produzieren. Wir möchten dafür sorgen, dass er die richtigen Menschen erreicht."
+      },
+      {
+        "name": "field_28",
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Dafür verbinden wir unsere vier Kompetenzbereiche:"
+      },
+      {
+        "name": "field_29",
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_30",
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg"
+      },
+      {
+        "name": "field_31",
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_32",
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_33",
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_34",
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_35",
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/business.jpg"
+      },
+      {
+        "name": "field_36",
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "value": "Business Communication"
+      },
+      {
+        "name": "field_37",
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_38",
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "value": "Business Communication"
+      },
+      {
+        "name": "field_39",
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_40",
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/product.jpg"
+      },
+      {
+        "name": "field_41",
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "value": "Product Communication"
+      },
+      {
+        "name": "field_42",
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_43",
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "value": "Product Communication"
+      },
+      {
+        "name": "field_44",
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_45",
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v6-final/assets/architecture.jpg"
+      },
+      {
+        "name": "field_46",
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "value": "Architecture & Real Estate"
+      },
+      {
+        "name": "field_47",
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_48",
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "value": "Architecture & Real Estate"
+      },
+      {
+        "name": "field_49",
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Von der einzelnen Produktion bis zur kontinuierlichen Content-Betreuung im Abo."
+      },
+      {
+        "name": "field_50",
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Willkommen beim neuen Studiojeker."
+      },
+      {
+        "name": "field_51",
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/"
+      },
+      {
+        "name": "field_52",
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "→ Neue Website entdecken"
+      },
+      {
+        "name": "field_53",
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "value": "https://cdn.sanity.io/images/tgx6e6jg/production/deda31179cf7b34940743be1023a719709128520-1667x979.jpg"
+      },
+      {
+        "name": "field_54",
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "value": "Studiojeker Filmproduktion – Rennfahrer"
+      }
+    ]
+  },
+  {
+    "id": "newsletter-02",
+    "type": "studiooneNewsletter_newsletter_02",
+    "name": "Newsletter 02 · Visibility",
+    "subject": "Gute Inhalte verdienen Sichtbarkeit.",
+    "preheader": "Warum gute Bilder allein nicht genügen – und was Studiojeker heute anders macht.",
+    "note": "",
+    "fields": [
+      {
+        "name": "field_0",
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "value": "STUDIOJEKER NEWSLETTER NR. 2"
+      },
+      {
+        "name": "field_1",
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "value": "Gute Inhalte verdienen Sichtbarkeit."
+      },
+      {
+        "name": "field_2",
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/#home-showreel-title"
+      },
+      {
+        "name": "field_3",
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Studiojeker Showreel auf der Startseite ansehen"
+      },
+      {
+        "name": "field_4",
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-desktop-play.jpg"
+      },
+      {
+        "name": "field_5",
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Studiojeker Showreel – Rennfahrer mit Helm"
+      },
+      {
+        "name": "field_6",
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/helmet-mobile-play.jpg"
+      },
+      {
+        "name": "field_7",
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Studiojeker Showreel – Rennfahrer mit Helm"
+      },
+      {
+        "name": "field_8",
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Von der Idee bis zur Sichtbarkeit"
+      },
+      {
+        "name": "field_9",
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Ein starkes Foto. Ein überzeugender Film. Eine kreative Visualisierung."
+      },
+      {
+        "name": "field_10",
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "All das kann begeistern. Entscheidend ist aber, dass die richtigen Menschen diese Inhalte auch sehen."
+      },
+      {
+        "name": "field_11",
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Genau hier setzt die neue Ausrichtung von Studiojeker an."
+      },
+      {
+        "name": "field_12",
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Wir verbinden Marketingstrategie, Content-Produktion und digitale Distribution. Damit aus Bildern, Filmen und Geschichten eine Kommunikation entsteht, die Unternehmen langfristig sichtbar macht."
+      },
+      {
+        "name": "field_13",
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/"
+      },
+      {
+        "name": "field_14",
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "→ Studiojeker entdecken"
+      },
+      {
+        "name": "field_15",
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3fbe99d5f3aa7a6bb4b37b09f942df9fb7ef0d6f/mailchimp/assets/nora-jeker-visibility.jpg"
+      },
+      {
+        "name": "field_16",
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "value": "Nora Jeker, Geschäftsführerin von Studiojeker"
+      },
+      {
+        "name": "field_17",
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "STUDIOJEKER"
+      },
+      {
+        "name": "field_18",
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Ein neuer Abschnitt für Studiojeker"
+      },
+      {
+        "name": "field_19",
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Mit Nora Jeker als Geschäftsführerin und Spezialistin für Digital Marketing stärken wir die strategische Beratung und die kontinuierliche Begleitung unserer Kunden."
+      },
+      {
+        "name": "field_20",
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Martin Jeker bringt seine langjährige Erfahrung in der visuellen Produktion, Projektleitung und im Einsatz neuer KI-Technologien ein."
+      },
+      {
+        "name": "field_21",
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Gemeinsam verbinden wir kreative Erfahrung mit digitalem Know-how."
+      },
+      {
+        "name": "field_22",
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Nora Jeker und das Studiojeker-Team"
+      },
+      {
+        "name": "field_23",
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/contact"
+      },
+      {
+        "name": "field_24",
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "→ Persönliches Gespräch vereinbaren"
+      },
+      {
+        "name": "field_25",
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Strategie. Content. Distribution."
+      },
+      {
+        "name": "field_26",
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Ob Social Media, Unternehmenskommunikation, Produktinszenierung oder Architektur:"
+      },
+      {
+        "name": "field_27",
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Wir denken die Wirkung unserer Inhalte von Anfang an mit."
+      },
+      {
+        "name": "field_28",
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Unsere vier Kompetenzbereiche:"
+      },
+      {
+        "name": "field_29",
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_30",
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg"
+      },
+      {
+        "name": "field_31",
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_32",
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_33",
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_34",
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_35",
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-business.jpg"
+      },
+      {
+        "name": "field_36",
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "value": "Studiojeker Business Communication – Familie vor einem Helikopter"
+      },
+      {
+        "name": "field_37",
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_38",
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "value": "Business Communication"
+      },
+      {
+        "name": "field_39",
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_40",
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg"
+      },
+      {
+        "name": "field_41",
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "value": "Studiojeker Produktfotografie – Metallbauteile"
+      },
+      {
+        "name": "field_42",
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_43",
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "value": "Product Communication"
+      },
+      {
+        "name": "field_44",
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_45",
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-architecture.jpg"
+      },
+      {
+        "name": "field_46",
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "value": "Studiojeker Architekturvisualisierung – Wohnraum"
+      },
+      {
+        "name": "field_47",
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_48",
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "value": "Architecture & Real Estate"
+      },
+      {
+        "name": "field_49",
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Gerne zeigen wir Ihnen, wie sich Ihre Kommunikation gezielt weiterentwickeln lässt."
+      },
+      {
+        "name": "field_50",
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Was bedeutet Sichtbarkeit für Ihr Unternehmen?"
+      },
+      {
+        "name": "field_51",
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/contact"
+      },
+      {
+        "name": "field_52",
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "→ Persönliches Gespräch vereinbaren"
+      },
+      {
+        "name": "field_53",
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/contact-business-portrait.jpg"
+      },
+      {
+        "name": "field_54",
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "value": "Studiojeker Businessportrait – Mann im Anzug"
+      }
+    ]
+  },
+  {
+    "id": "newsletter-03",
+    "type": "studiooneNewsletter_newsletter_03",
+    "name": "Newsletter 03 · Sichtbarkeit im Abo",
+    "subject": "Sichtbarkeit im Abo. Damit Ihr Unternehmen präsent bleibt.",
+    "preheader": "Professioneller Content, regelmässig geplant, produziert und veröffentlicht.",
+    "note": "Angebotsbedingungen und Gültigkeit vor Versand prüfen und freigeben.",
+    "fields": [
+      {
+        "name": "field_0",
+        "key": "meta_left.text.1",
+        "region": "Ausgabe",
+        "kind": "text",
+        "value": "STUDIOJEKER NEWSLETTER NR. 3 · 11. NOVEMBER 2026"
+      },
+      {
+        "name": "field_1",
+        "key": "hero_headline.text.1",
+        "region": "Hero",
+        "kind": "text",
+        "value": "Einmal auffallen ist gut. Sichtbar bleiben ist besser."
+      },
+      {
+        "name": "field_2",
+        "key": "hero_image_desktop.link.1",
+        "region": "Hero",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/content-abo/"
+      },
+      {
+        "name": "field_3",
+        "key": "hero_image_desktop.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Sichtbarkeit im Abo bei Studiojeker entdecken"
+      },
+      {
+        "name": "field_4",
+        "key": "hero_image_desktop.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-desktop.jpg"
+      },
+      {
+        "name": "field_5",
+        "key": "hero_image_desktop.alt.2",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Frau im blauen Mantel – Sichtbarkeit in Bewegung"
+      },
+      {
+        "name": "field_6",
+        "key": "hero_image_mobile.image.1",
+        "region": "Hero",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-mobile.jpg"
+      },
+      {
+        "name": "field_7",
+        "key": "hero_image_mobile.alt.1",
+        "region": "Hero",
+        "kind": "alt",
+        "value": "Frau im blauen Mantel – Sichtbarkeit in Bewegung"
+      },
+      {
+        "name": "field_8",
+        "key": "intro_headline.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Sichtbarkeit im Abo"
+      },
+      {
+        "name": "field_9",
+        "key": "intro_body.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Ihre Produkte entwickeln sich. Ihr Unternehmen verändert sich. Neue Projekte entstehen."
+      },
+      {
+        "name": "field_10",
+        "key": "intro_body.text.2",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Aber erfährt Ihre Zielgruppe auch davon?"
+      },
+      {
+        "name": "field_11",
+        "key": "intro_body.text.3",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Ein einzelner Social-Media-Beitrag, ein Imagefilm oder ein professionelles Fotoshooting kann viel bewirken. Nachhaltige Sichtbarkeit entsteht jedoch durch regelmässige, relevante Kommunikation."
+      },
+      {
+        "name": "field_12",
+        "key": "intro_body.text.4",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "Mit unseren Content-Abos begleiten wir Unternehmen kontinuierlich – von der Planung über die Produktion bis zur Veröffentlichung."
+      },
+      {
+        "name": "field_13",
+        "key": "intro_cta.link.1",
+        "region": "Einleitung",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/content-abo/"
+      },
+      {
+        "name": "field_14",
+        "key": "intro_cta.text.1",
+        "region": "Einleitung",
+        "kind": "text",
+        "value": "→ Sichtbarkeit im Abo entdecken"
+      },
+      {
+        "name": "field_15",
+        "key": "ai_image.image.1",
+        "region": "Hauptartikel",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/content-eye.jpg"
+      },
+      {
+        "name": "field_16",
+        "key": "ai_image.alt.1",
+        "region": "Hauptartikel",
+        "kind": "alt",
+        "value": "Augenmotiv – Fokus auf kontinuierliche Sichtbarkeit"
+      },
+      {
+        "name": "field_17",
+        "key": "ai_eyebrow.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "SICHTBARKEIT IM ABO"
+      },
+      {
+        "name": "field_18",
+        "key": "ai_headline.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Professioneller Content. Planbar und effizient."
+      },
+      {
+        "name": "field_19",
+        "key": "ai_body_start.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Ob LinkedIn, Instagram, Facebook, Newsletter oder Website: Wir entwickeln Inhalte, die zusammenpassen und sich über mehrere Kanäle wirkungsvoll einsetzen lassen."
+      },
+      {
+        "name": "field_20",
+        "key": "ai_body_continuation.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Dabei verbinden wir langjährige Produktionserfahrung mit Digital-Marketing-Kompetenz und modernen KI-Technologien."
+      },
+      {
+        "name": "field_21",
+        "key": "ai_body_continuation.text.2",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Strategie: Themen, Botschaften und Redaktionsplanung. Content: Fotografie, Film, Animationen und Texte."
+      },
+      {
+        "name": "field_22",
+        "key": "ai_body_continuation.text.3",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "Distribution: Aufbereitung und Veröffentlichung auf den passenden Kanälen. Sie konzentrieren sich auf Ihr Kerngeschäft. Wir kümmern uns um Ihre Sichtbarkeit."
+      },
+      {
+        "name": "field_23",
+        "key": "ai_cta.link.1",
+        "region": "Hauptartikel",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/contact/"
+      },
+      {
+        "name": "field_24",
+        "key": "ai_cta.text.1",
+        "region": "Hauptartikel",
+        "kind": "text",
+        "value": "→ Persönliches Gespräch vereinbaren"
+      },
+      {
+        "name": "field_25",
+        "key": "services_headline.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Nora Jeker"
+      },
+      {
+        "name": "field_26",
+        "key": "services_body.text.1",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Ihre Ansprechpartnerin für digitale Sichtbarkeit."
+      },
+      {
+        "name": "field_27",
+        "key": "services_body.text.2",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Nora Jeker begleitet Sie als Geschäftsführerin und Spezialistin für Digital Marketing bei der Entwicklung Ihrer Content-Strategie und der Umsetzung Ihrer laufenden Kommunikation."
+      },
+      {
+        "name": "field_28",
+        "key": "services_body.text.3",
+        "region": "Kompetenzen",
+        "kind": "text",
+        "value": "Unsere Kompetenzbereiche für Ihre laufende Kommunikation:"
+      },
+      {
+        "name": "field_29",
+        "key": "service_digital_image.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_30",
+        "key": "service_digital_image.image.1",
+        "region": "Digital Marketing",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg"
+      },
+      {
+        "name": "field_31",
+        "key": "service_digital_image.alt.1",
+        "region": "Digital Marketing",
+        "kind": "alt",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_32",
+        "key": "service_digital_title.link.1",
+        "region": "Digital Marketing",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/digital-marketing/"
+      },
+      {
+        "name": "field_33",
+        "key": "service_digital_title.text.1",
+        "region": "Digital Marketing",
+        "kind": "text",
+        "value": "Digital & Social Media Marketing"
+      },
+      {
+        "name": "field_34",
+        "key": "service_business_image.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_35",
+        "key": "service_business_image.image.1",
+        "region": "Business Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-business.jpg"
+      },
+      {
+        "name": "field_36",
+        "key": "service_business_image.alt.1",
+        "region": "Business Communication",
+        "kind": "alt",
+        "value": "Business Communication – Frau im schwarzen Anzug"
+      },
+      {
+        "name": "field_37",
+        "key": "service_business_title.link.1",
+        "region": "Business Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/business-communication/"
+      },
+      {
+        "name": "field_38",
+        "key": "service_business_title.text.1",
+        "region": "Business Communication",
+        "kind": "text",
+        "value": "Business Communication"
+      },
+      {
+        "name": "field_39",
+        "key": "service_product_image.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_40",
+        "key": "service_product_image.image.1",
+        "region": "Product Communication",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg"
+      },
+      {
+        "name": "field_41",
+        "key": "service_product_image.alt.1",
+        "region": "Product Communication",
+        "kind": "alt",
+        "value": "Studiojeker Produktfotografie – Metallbauteile"
+      },
+      {
+        "name": "field_42",
+        "key": "service_product_title.link.1",
+        "region": "Product Communication",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/product-communication/"
+      },
+      {
+        "name": "field_43",
+        "key": "service_product_title.text.1",
+        "region": "Product Communication",
+        "kind": "text",
+        "value": "Product Communication"
+      },
+      {
+        "name": "field_44",
+        "key": "service_architecture_image.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_45",
+        "key": "service_architecture_image.image.1",
+        "region": "Architecture",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-architecture.jpg"
+      },
+      {
+        "name": "field_46",
+        "key": "service_architecture_image.alt.1",
+        "region": "Architecture",
+        "kind": "alt",
+        "value": "Visuelles Cyan-Motiv in einer Berglandschaft"
+      },
+      {
+        "name": "field_47",
+        "key": "service_architecture_title.link.1",
+        "region": "Architecture",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/services/architecture/"
+      },
+      {
+        "name": "field_48",
+        "key": "service_architecture_title.text.1",
+        "region": "Architecture",
+        "kind": "text",
+        "value": "Architecture & Real Estate"
+      },
+      {
+        "name": "field_49",
+        "key": "contact_body.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Wir analysieren Ihren digitalen Auftritt und zeigen Ihnen in einem 30-minütigen Gespräch drei konkrete Möglichkeiten, Ihre Sichtbarkeit zu verbessern. Unverbindlich, individuell und persönlich mit Nora Jeker. Angebot gültig bis 30. November 2026, vorbehaltlich finaler Freigabe. Ein Gespräch pro Unternehmen nach Terminvereinbarung."
+      },
+      {
+        "name": "field_50",
+        "key": "contact_headline.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "Ihre persönliche Visibility-Analyse. Kostenlos."
+      },
+      {
+        "name": "field_51",
+        "key": "contact_cta.link.1",
+        "region": "Kontakt",
+        "kind": "link",
+        "value": "https://www.studiojeker.ch/contact/"
+      },
+      {
+        "name": "field_52",
+        "key": "contact_cta.text.1",
+        "region": "Kontakt",
+        "kind": "text",
+        "value": "→ Kostenlose Visibility-Analyse anfragen"
+      },
+      {
+        "name": "field_53",
+        "key": "contact_image.image.1",
+        "region": "Kontakt",
+        "kind": "image",
+        "value": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/nora-contact.jpg"
+      },
+      {
+        "name": "field_54",
+        "key": "contact_image.alt.1",
+        "region": "Kontakt",
+        "kind": "alt",
+        "value": "Nora Jeker – Ihre Ansprechpartnerin für digitale Sichtbarkeit"
+      }
+    ]
+  }
+]

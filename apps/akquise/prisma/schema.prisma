@@ -35,17 +35,26 @@ enum DeliveryStatus {
   SENT
   REPLIED
   FAILED
+  SENDING
+  UNKNOWN
+  TEST_SENT
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  passwordHash String
-  active       Boolean    @default(true)
-  sessions     Session[]
-  approvals    Approval[]
-  audits       Audit[]
+  studioContext      String              @default("")
+  studioContextRevision Int               @default(1)
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  passwordHash       String
+  active             Boolean             @default(true)
+  sessions           Session[]
+  approvals          Approval[]
+  audits             Audit[]
+  plannedDrafts      Draft[]             @relation("DraftOwner")
+  campaigns          Campaign[]          @relation("CampaignOwner")
+  marketingContents  MarketingContent[]  @relation("ContentOwner")
+  marketingApprovals MarketingApproval[] @relation("MarketingReviewer")
 }
 
 model Session {
@@ -53,6 +62,8 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 model LoginAttempt {
@@ -62,33 +73,37 @@ model LoginAttempt {
 }
 
 model Contact {
-  id                 String        @id @default(cuid())
+  organizationId     String             @default("studiojeker")
+  organization       StudioOrganization @relation(fields: [organizationId], references: [id])
+  id                 String             @id @default(cuid())
   organisation       String
-  industry           String        @default("")
-  region             String        @default("")
+  industry           String             @default("")
+  region             String             @default("")
   firstName          String
   lastName           String
-  position           String        @default("")
-  email              String        @unique
-  personKey          String        @unique
-  website            String        @default("")
-  sourceUrl          String        @default("")
+  position           String             @default("")
+  email              String             @default("")
+  personKey          String             @unique
+  website            String             @default("")
+  sourceUrl          String             @default("")
   verifiedAt         DateTime?
-  confidence         String        @default("UNCONFIRMED")
-  hook               String        @default("")
-  service            String        @default("")
-  legalCategory      String        @default("UNASSESSED")
-  publicAuthority    Boolean       @default(false)
-  newsletterConsent  Boolean       @default(false)
-  newsletterEvidence String        @default("")
-  status             ContactStatus @default(NEW)
-  owner              String        @default("")
-  notes              String        @default("")
-  revision           Int           @default(1)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  confidence         String             @default("UNCONFIRMED")
+  hook               String             @default("")
+  service            String             @default("")
+  legalCategory      String             @default("UNASSESSED")
+  publicAuthority    Boolean            @default(false)
+  newsletterConsent  Boolean            @default(false)
+  newsletterEvidence String             @default("")
+  status             ContactStatus      @default(NEW)
+  owner              String             @default("")
+  notes              String             @default("")
+  revision           Int                @default(1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   drafts             Draft[]
   legalReviews       LegalReview[]
+
+  @@index([email])
 }
 
 model LegalReview {
@@ -104,15 +119,23 @@ model LegalReview {
 }
 
 model Draft {
-  id         String         @id @default(cuid())
-  contactId  String
-  contact    Contact        @relation(fields: [contactId], references: [id])
-  version    Int            @default(1)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  versions   DraftVersion[]
-  approvals  Approval[]
-  deliveries Delivery[]
+  organizationId   String             @default("studiojeker")
+  organization     StudioOrganization @relation(fields: [organizationId], references: [id])
+  campaignId       String?
+  campaign         Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  ownerId          String?
+  owner            User?              @relation("DraftOwner", fields: [ownerId], references: [id])
+  scheduledAt      DateTime?
+  planningRevision Int                @default(1)
+  id               String             @id @default(cuid())
+  contactId        String
+  contact          Contact            @relation(fields: [contactId], references: [id])
+  version          Int                @default(1)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  versions         DraftVersion[]
+  approvals        Approval[]
+  deliveries       Delivery[]
 }
 
 model DraftVersion {
@@ -152,18 +175,58 @@ model Suppression {
 }
 
 model Delivery {
-  id             String         @id @default(cuid())
-  draftId        String
-  draft          Draft          @relation(fields: [draftId], references: [id])
-  version        Int
-  recipient      String
-  hash           String
-  status         DeliveryStatus
-  messageId      String         @unique
-  idempotencyKey String         @unique
-  attempts       Int            @default(1)
-  error          String?
-  createdAt      DateTime       @default(now())
+  id                 String         @id @default(cuid())
+  draftId            String
+  draft              Draft          @relation(fields: [draftId], references: [id])
+  version            Int
+  recipient          String
+  hash               String
+  status             DeliveryStatus
+  messageId          String         @unique
+  idempotencyKey     String         @unique
+  mode               String         @default("LOCAL")
+  envelopeRecipients String[]       @default([])
+  completedAt        DateTime?
+  attempts           Int            @default(1)
+  error              String?
+  createdAt          DateTime       @default(now())
+
+  @@index([mode, createdAt])
+  @@index([recipient, status])
+}
+
+// Explicitly selected immutable versions, never an implicit send of all contacts.
+model MailQueueItem {
+  id String @id @default(cuid())
+  draftId String
+  version Int
+  hash String
+  userId String
+  recipient String
+  subject String
+  status String @default("QUEUED")
+  error String?
+  deliveryId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([draftId, version])
+  @@index([status, createdAt])
+}
+
+model MailSchedule {
+  id String @id @default("studiojeker")
+  enabled Boolean @default(false)
+  dailyLimit Int @default(25)
+  weekdaysOnly Boolean @default(true)
+  startHour Int @default(9)
+  endHour Int @default(17)
+  intervalMinutes Int @default(15)
+  revision Int @default(1)
+  activatedBy String?
+  lastClaimAt DateTime?
+  heartbeatAt DateTime?
+  pauseReason String?
+  updatedAt DateTime @updatedAt
 }
 
 model InboundMessage {
@@ -183,4 +246,385 @@ model Audit {
   entityId  String
   detail    Json
   createdAt DateTime @default(now())
+}
+
+// Hub content uses immutable snapshots; publication records never imply API delivery.
+enum ContentKind {
+  SOCIAL
+  NEWSLETTER
+}
+
+enum EditorialStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  DONE
+}
+
+model Campaign {
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  id             String             @id @default(cuid())
+  title          String
+  goal           String
+  audience       String
+  startsAt       DateTime
+  endsAt         DateTime
+  ownerId        String
+  owner          User               @relation("CampaignOwner", fields: [ownerId], references: [id])
+  revision       Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  contents       MarketingContent[]
+  drafts         Draft[]
+
+  @@index([customerId])
+}
+
+model MarketingContent {
+  studioSeriesId String?
+  studioSeries   StudioSeries?       @relation(fields: [studioSeriesId], references: [id])
+  organizationId String              @default("studiojeker")
+  organization   StudioOrganization  @relation(fields: [organizationId], references: [id])
+  id             String              @id @default(cuid())
+  kind           ContentKind
+  title          String
+  version        Int                 @default(1)
+  status         EditorialStatus     @default(DRAFT)
+  campaignId     String?
+  campaign       Campaign?           @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  ownerId        String
+  owner          User                @relation("ContentOwner", fields: [ownerId], references: [id])
+  scheduledAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  versions       MarketingVersion[]
+  approvals      MarketingApproval[]
+  publications   ManualPublication[]
+  exports        NewsletterExport[]
+  mailchimpTransfers MailchimpTransfer[]
+
+  @@index([campaignId, scheduledAt])
+}
+
+model MarketingVersion {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  payload   Json
+  hash      String
+  authorId  String
+  createdAt DateTime         @default(now())
+
+  @@unique([contentId, version])
+}
+
+model MarketingApproval {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  hash      String
+  userId    String
+  user      User             @relation("MarketingReviewer", fields: [userId], references: [id])
+  status    ApprovalStatus
+  createdAt DateTime         @default(now())
+}
+
+model ManualPublication {
+  id          String           @id @default(cuid())
+  contentId   String
+  content     MarketingContent @relation(fields: [contentId], references: [id])
+  version     Int
+  channel     String
+  publishedAt DateTime
+  url         String           @default("")
+  userId      String
+  createdAt   DateTime         @default(now())
+
+  @@unique([contentId, version, channel])
+}
+
+model NewsletterExport {
+  id        String           @id @default(cuid())
+  contentId String
+  content   MarketingContent @relation(fields: [contentId], references: [id])
+  version   Int
+  userId    String
+  format    String           @default("HTML_AND_TEXT")
+  createdAt DateTime         @default(now())
+}
+
+// A version can be transferred once. UNKNOWN requires manual reconciliation
+// because a timed-out create request may have succeeded remotely.
+model MailchimpTransfer {
+  id         String           @id @default(cuid())
+  contentId  String
+  content    MarketingContent @relation(fields: [contentId], references: [id])
+  version    Int
+  hash       String
+  audienceId String
+  userId     String
+  status     String           @default("PENDING")
+  remoteId   String?
+  webId      Int?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([contentId, version])
+}
+
+// Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.
+model StudioOrganization {
+  id            String             @id
+  name          String
+  brand         Json
+  createdAt     DateTime           @default(now())
+  library       LibraryItem[]
+  brandRevision Int                @default(1)
+  series        StudioSeries[]
+  assets        StudioAsset[]
+  jobs          StudioJob[]
+  contacts      Contact[]
+  drafts        Draft[]
+  campaigns     Campaign[]
+  contents      MarketingContent[]
+  customers     Customer[]
+}
+
+// Internal customer record. Customers are never User accounts and cannot sign in.
+model Customer {
+  knowledge      Json               @default("{}")
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  name           String
+  website        String             @default("")
+  contactName    String             @default("")
+  contactEmail   String             @default("")
+  notes          String             @default("")
+  status         String             @default("ACTIVE")
+  revision       Int                @default(1)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  campaigns      Campaign[]
+  series         StudioSeries[]
+
+  @@index([organizationId, name])
+}
+
+// Concepts keep immutable content versions; approval is tied to a version.
+model StrategyConcept {
+  id String @id @default(cuid())
+  organizationId String @default("studiojeker")
+  seriesId String @unique
+  series StudioSeries @relation(fields: [seriesId], references: [id])
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions StrategyVersion[]
+  @@index([organizationId, updatedAt])
+}
+
+model StrategyVersion {
+  id String @id @default(cuid())
+  conceptId String
+  concept StrategyConcept @relation(fields: [conceptId], references: [id])
+  version Int
+  payload Json
+  createdBy String
+  createdAt DateTime @default(now())
+  approvedBy String?
+  approvedAt DateTime?
+  handoffCampaignId String? @unique
+  @@unique([conceptId, version])
+}
+
+model StudioSeries {
+  concept StrategyConcept?
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  title          String
+  briefing       Json
+  ownerId        String
+  createdAt      DateTime           @default(now())
+  contents       MarketingContent[]
+  jobs           StudioJob[]
+
+  @@index([customerId])
+}
+
+model StudioAsset {
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  libraryItem    LibraryItem?
+  objectKey      String             @unique
+  name           String
+  mime           String
+  size           Int
+  sha256         String
+  kind           String
+  width          Int?
+  height         Int?
+  userId         String
+  deletedAt      DateTime?
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
+model StudioJob {
+  id                String             @id @default(cuid())
+  organizationId    String             @default("studiojeker")
+  organization      StudioOrganization @relation(fields: [organizationId], references: [id])
+  seriesId          String?
+  series            StudioSeries?      @relation(fields: [seriesId], references: [id], onDelete: Restrict)
+  requestKey        String             @unique
+  kind              String
+  status            String             @default("QUEUED")
+  input             Json
+  result            Json?
+  model             String
+  reserveUsd        Float
+  usage             Json?
+  error             String?
+  providerRequestId String?
+  userId            String
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime           @default(now())
+
+  @@index([organizationId, status, createdAt])
+}
+
+model DriveConnection {
+  userId String @id
+  encryptedToken String
+  email String
+  folderId String?
+  folderName String?
+  updatedAt DateTime @updatedAt
+}
+
+model DriveOAuthState {
+  id String @id
+  userId String
+  sessionId String
+  verifier String
+  expiresAt DateTime
+}
+
+model SocialOAuthState {
+  id        String   @id
+  provider  String
+  userId    String
+  sessionId String
+  expiresAt DateTime
+}
+
+model SocialConnection {
+  id             String   @id @default(cuid())
+  provider       String
+  accountId      String
+  accountName    String
+  encryptedToken String
+  expiresAt      DateTime?
+  ownerId        String
+  updatedAt      DateTime @updatedAt
+
+  @@unique([provider, accountId])
+  @@index([ownerId, provider])
+}
+
+model LibraryItem {
+  id               String             @id @default(cuid())
+  organizationId   String             @default("studiojeker")
+  organization     StudioOrganization @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  assetId          String?            @unique
+  asset            StudioAsset?       @relation(fields: [assetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  kind             String
+  title            String
+  description      String             @default("")
+  source           String             @default("")
+  rights           String             @default("")
+  tags             String[]           @default([])
+  campaignId       String?
+  text             String             @default("")
+  url              String             @default("")
+  thumbnailAssetId String?
+  parentAssetId    String?
+  revision         Int                @default(1)
+  archivedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+// Versioned website drafts; public hosting is separate from internal editing.
+model WebsiteProject {
+  id String @id @default(cuid())
+  organizationId String @default("studiojeker")
+  customerId String?
+  name String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions WebsiteVersion[]
+  publication WebsitePublication?
+  @@index([organizationId, updatedAt])
+}
+
+model WebsitePublication {
+  id String @id @default(cuid())
+  projectId String @unique
+  project WebsiteProject @relation(fields: [projectId], references: [id])
+  slug String @unique
+  version Int
+  revision Int @default(1)
+  payload Json
+  media Json
+  active Boolean @default(true)
+  publishedBy String
+  publishedAt DateTime @default(now())
+}
+model WebsiteVersion {
+  id String @id @default(cuid())
+  projectId String
+  project WebsiteProject @relation(fields: [projectId], references: [id])
+  version Int
+  payload Json
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([projectId, version])
+}
+
+// ChatGPT connector settings. Token stays in env; this row tracks scopes and revoke/access.
+model GptIntegration {
+  id           String    @id
+  scopes       Json      @default("{\"projects\":true,\"campaigns\":true,\"concepts\":true,\"content\":true}")
+  revokedAt    DateTime?
+  lastAccessAt DateTime?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+}
+
+// Explicit content grants for the read-only ChatGPT connector.
+model GptShare {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  sharedBy   String
+  sharedAt   DateTime @default(now())
+
+  @@unique([entityType, entityId])
+  @@index([entityType, sharedAt])
 }

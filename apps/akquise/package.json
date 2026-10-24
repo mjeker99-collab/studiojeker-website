@@ -5,34 +5,45 @@
   "scripts": {
     "dev": "next dev --webpack --hostname 0.0.0.0 --port 3100",
     "build": "next build --webpack",
-    "start": "next start --port 3100",
+    "start": "node scripts/start-production.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import tsx tests/config.test.ts && node --import tsx tests/policy.test.ts && node render/config.test.mjs && node --import tsx tests/hub.test.ts && node --import tsx tests/studio.test.ts && node --import tsx tests/library.test.ts && node --import tsx tests/browser-credentials.test.ts && node --import tsx tests/cms.test.ts && node --import tsx tests/concepts.test.ts && node --import tsx tests/mail-clock.test.ts && node --import tsx tests/contact-preparation.test.ts && node --import tsx tests/sheet-master.test.ts && node --import tsx tests/customer-assistant.test.ts && node --import tsx tests/websites.test.ts && node --import tsx tests/gpt-connector.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
-    "user:create": "tsx --env-file=.env scripts/create-user.ts",
-    "db:local": "tsx --env-file=.env scripts/local-postgres.ts",
-    "test:integration": "tsx --env-file=.env --test tests/integration/*.test.ts",
+    "user:create": "tsx --env-file-if-exists=.env scripts/create-user.ts",
+    "db:local": "node --env-file=.env --import tsx scripts/local-postgres.ts",
+    "test:integration": "node --env-file=.env --import tsx tests/integration/workflow.test.ts && node --env-file=.env --import tsx tests/integration/library.test.ts && node --env-file=.env --import tsx tests/integration/cms.test.ts && node --env-file=.env --import tsx tests/integration/concepts.test.ts && node --env-file=.env --import tsx tests/integration/mail-schedule.test.ts && node --env-file=.env --import tsx tests/integration/customer-assistant.test.ts && node --env-file=.env --import tsx tests/integration/websites.test.ts && node --env-file=.env --import tsx tests/integration/gpt-connector.test.ts",
     "test:browser": "playwright test",
-    "format": "prettier --write app lib scripts tests *.ts *.mjs *.json docs/*.md README.md && prisma format"
+    "test:browser:isolated": "node --env-file=.env --import tsx scripts/review-browser.ts",
+    "format": "prettier --write app lib scripts tests *.ts *.mjs *.json docs/*.md README.md && prisma format",
+    "user:reset": "tsx --env-file-if-exists=.env scripts/reset-password.ts",
+    "data:inventory": "tsx --env-file-if-exists=.env scripts/data-inventory.ts",
+    "release:package": "node scripts/package-release.mjs",
+    "storage:check": "tsx --env-file-if-exists=.env scripts/check-storage.ts",
+    "smtp:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-smtp.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1152.0",
     "@prisma/client": "6.19.0",
+    "archiver": "8.0.0",
     "csv-parse": "^7.0.3",
     "exceljs": "^4.4.0",
     "google-auth-library": "^10.5.0",
+    "jszip": "3.10.2",
     "next": "^16.4.1",
     "nodemailer": "^10.1.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "0.35.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.58.0",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/archiver": "8.0.0",
     "@types/node": "^22.19.0",
     "@types/nodemailer": "^7.0.9",
     "@types/react": "^19.2.0",
@@ -53,5 +64,8 @@
     "exceljs": {
       "uuid": "^11.1.1"
     }
+  },
+  "engines": {
+    "node": ">=22.9.0 <23 || >=24 <25"
   }
 }

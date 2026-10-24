@@ -9,9 +9,10 @@ import {
   messageHash,
   normalizeEmail,
 } from "./policy";
-import { generateDraft } from "./generation";
+import { generateDraft, importedDraft } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { randomUUID } from "node:crypto";
+import { allowedAccount } from "./config.mjs";
 export type Tx = Prisma.TransactionClient;
 export async function audit(
   tx: Tx,
@@ -23,7 +24,8 @@ export async function audit(
   await tx.audit.create({ data: { userId, action, entityId, detail } });
 }
 async function actor(tx: Tx, userId: string) {
-  if (!(await tx.user.findFirst({ where: { id: userId, active: true } })))
+  const user = await tx.user.findFirst({ where: { id: userId, active: true } });
+  if (!user || !allowedAccount(user))
     throw new PolicyError("Keine Berechtigung.", 403);
 }
 async function lock(tx: Tx, key: string) {
@@ -99,36 +101,37 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
-      const result = { imported: 0, duplicates: 0 };
-      for (const c of rows) {
-        const key = personKey(c.firstName, c.lastName, c.organisation);
-        const duplicate = await tx.contact.findFirst({
-          where: { OR: [{ email: c.email }, { personKey: key }] },
-        });
-        if (duplicate) {
-          result.duplicates++;
-          continue;
-        }
-        await tx.contact.create({
-          data: {
-            ...c,
-            verifiedAt: null,
-            confidence: "UNCONFIRMED",
-            status: "NEW",
-            newsletterConsent: false,
-            newsletterEvidence: "",
-            personKey: key,
-          },
-        });
-        result.imported++;
-      }
+      // One bulk insert avoids two sequential database round trips per contact.
+      // Person identity is unique; shared or missing mailboxes are permitted.
+      const created = await tx.contact.createMany({
+        data: rows.map((c) => ({
+          ...c,
+          publicAuthority:
+            c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
+          verifiedAt: null,
+          confidence: "UNCONFIRMED" as const,
+          status: "NEW" as const,
+          newsletterConsent: false,
+          newsletterEvidence: "",
+          personKey: personKey(c.firstName, c.lastName, c.organisation),
+        })),
+        skipDuplicates: true,
+      });
+      const result = {
+        imported: created.count,
+        duplicates: rows.length - created.count,
+      };
       await audit(tx, userId, "CONTACT_IMPORT", "import", result);
       return result;
     },
     { timeout: 20000 },
   );
 }
-export async function newDraft(userId: string, contactId: string) {
+export async function newDraft(
+  userId: string,
+  contactId: string,
+  reuseCurrent = false,
+) {
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "contact:" + contactId);
@@ -136,6 +139,23 @@ export async function newDraft(userId: string, contactId: string) {
     if (await tx.suppression.findUnique({ where: { email: c.email } }))
       throw new PolicyError("Adresse auf Sperrliste.");
     const generated = await generateDraft(c);
+    if (reuseCurrent) {
+      const drafts = await tx.draft.findMany({
+        where: { contactId },
+        include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        orderBy: { createdAt: "desc" },
+      });
+      const current = drafts.find((d) => {
+        const v = d.versions[0];
+        return (
+          v?.contactRevision === c.revision &&
+          v.version === d.version &&
+          v.recipient === c.email &&
+          v.hash === messageHash(v.recipient, v.subject, v.body)
+        );
+      });
+      if (current) return current;
+    }
     const draft = await tx.draft.create({ data: { contactId } });
     await tx.draftVersion.create({
       data: {
@@ -154,7 +174,7 @@ export async function newDraft(userId: string, contactId: string) {
     });
     await audit(tx, userId, "DRAFT_CREATED", draft.id, {
       version: 1,
-      provider: "local-template",
+      provider: importedDraft(c.notes) ? "imported-notes" : "local-template",
     });
     return draft;
   });
@@ -207,6 +227,11 @@ export async function reviewDraft(
   version: number,
   decision: "PENDING" | "APPROVED" | "REJECTED",
   read: boolean,
+  batch?: {
+    hash: string;
+    contactRevision: number;
+    legal?: { rationale: string; procurementReviewed: boolean };
+  },
 ) {
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
@@ -221,6 +246,25 @@ export async function reviewDraft(
     const v = await tx.draftVersion.findUniqueOrThrow({
       where: { draftId_version: { draftId: id, version } },
     });
+    if (batch) {
+      if (decision !== "APPROVED" || !read)
+        throw new PolicyError("Gemeinsame Prüfung bestätigen.");
+      if (v.hash !== batch.hash || d.contact.revision !== batch.contactRevision)
+        throw new PolicyError("Prüfvorschau veraltet. Neu laden.", 409);
+      if (
+        await tx.delivery.findFirst({
+          where: {
+            recipient: v.recipient,
+            status: {
+              in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
+            },
+          },
+        })
+      )
+        throw new PolicyError(
+          "Bereits versandt oder Zustellung in Bearbeitung.",
+        );
+    }
     if (decision !== "REJECTED") {
       verifiedContact(d.contact);
       if (
@@ -232,11 +276,52 @@ export async function reviewDraft(
         throw new PolicyError("Adresse auf Sperrliste.");
     }
     if (decision === "APPROVED") {
+      if (v.hash !== messageHash(v.recipient, v.subject, v.body))
+        throw new PolicyError(
+          "Signatur geändert. Nachricht als neue Version speichern und erneut prüfen.",
+          409,
+        );
       if (!read) throw new PolicyError("Vollständiges Lesen bestätigen.");
-      const legal = await tx.legalReview.findFirst({
+      let legal = await tx.legalReview.findFirst({
         where: { contactId: d.contactId },
         orderBy: { createdAt: "desc" },
       });
+      // Common evidence is an explicit human decision, committed atomically
+      // with this exact message approval. Existing current reviews are retained.
+      let needsLegal = false;
+      try {
+        legalAllowed(legal, d.contact.revision, d.contact.publicAuthority);
+      } catch {
+        needsLegal = true;
+      }
+      if (needsLegal && batch?.legal) {
+        const evidence = batch.legal;
+        if (
+          evidence.rationale.trim().length < 15 ||
+          evidence.rationale.length > 4000
+        )
+          throw new PolicyError("Begründung der Versandprüfung fehlt.");
+        if (d.contact.publicAuthority && !evidence.procurementReviewed)
+          throw new PolicyError("Beschaffungsrecht separat prüfen.");
+        legal = await tx.legalReview.create({
+          data: {
+            contactId: d.contactId,
+            contactRevision: d.contact.revision,
+            allowed: true,
+            rationale: evidence.rationale.trim(),
+            procurementReviewed: evidence.procurementReviewed,
+            userId,
+          },
+        });
+        await invalidate(tx, d.contactId, userId);
+        await audit(tx, userId, "LEGAL_REVIEW", d.contactId, {
+          allowed: true,
+          rationale: evidence.rationale.trim(),
+          revision: d.contact.revision,
+          procurementReviewed: evidence.procurementReviewed,
+          source: "global-review",
+        });
+      }
       legalAllowed(legal, d.contact.revision, d.contact.publicAuthority);
     }
     await tx.approval.updateMany({

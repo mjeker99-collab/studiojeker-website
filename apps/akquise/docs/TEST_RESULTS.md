@@ -1,5 +1,7 @@
 # Prüfergebnisse – 15. Oktober 2026
 
+> Historischer Stand der lokalen V1. Die Produktionsvorbereitung vom 16. Oktober ist in PRODUCTION.md und PRODUCTION_TEST_RESULTS.md dokumentiert; deren Konfigurations- und Versandregeln ersetzen die ursprüngliche dauerhafte SMTP-Sperre.
+
 Alle Kontakte und Zugangsdaten der Tests sind synthetisch. Kein SMTP-Verbindungsversuch, keine echten E-Mails, kein produktives Deployment.
 
 | Prüfung                         | Ergebnis                                                                                     |

@@ -1,11 +1,38 @@
+import { dashboardState } from "@/lib/dashboard";
+import { websiteList, websiteState, websiteVersion, websiteMutation } from "@/lib/websites/service";
+import { websiteExport } from "@/lib/websites/publication";
+import { assistCustomer } from "@/lib/customer-assistant/service";
+import { conceptState, conceptMutation } from "@/lib/concepts/service";
+import { sendInternalSmtpTest } from "@/lib/smtp-test";
+import { conceptInput } from "@/lib/concepts/input";
+import { conceptDocx, conceptHtml } from "@/lib/concepts/export";
+import { cmsState, importSanityNewsletter } from "@/lib/cms/service";
+import {
+  libraryState,
+  saveLibraryItem,
+  archiveItem,
+  saveBrand,
+} from "@/lib/library/service";
+import { studioState } from "@/lib/studio/service";
+import { studioMutation } from "@/lib/studio/api";
+import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
+import { logoBytes } from "@/lib/studio/config";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  mailScheduleState,
+  mailScheduleMutation,
+} from "../../../lib/mail-schedule";
 import { cookies } from "next/headers";
 import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { login, requireUser, tokenHash } from "@/lib/auth";
-import { PolicyError, assertExternalSendingAllowed } from "@/lib/policy";
+import { PolicyError, messageHash } from "@/lib/policy";
+import { appOrigin, sessionCookieName, readMailConfig } from "@/lib/config.mjs";
+import { dispatchApproved } from "@/lib/delivery";
 import { parseImport } from "@/lib/import";
+import { prepareContacts } from "@/lib/contact-preparation-service";
+import { mailReview } from "@/lib/mail-review";
 import {
   saveContact,
   importContacts,
@@ -17,7 +44,30 @@ import {
   simulate,
   audit,
 } from "@/lib/workflow";
+import { hubState, hubMutation } from "@/lib/hub/api";
+import { customerState, saveCustomer } from "@/lib/customers";
+import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
+import {
+  begin as beginSocial,
+  disconnect as disconnectSocial,
+  status as socialStatus,
+} from "@/lib/social/service";
+import {
+  beginDrive,
+  chooseDriveFolder,
+  disconnectDrive,
+  driveStatus,
+  listDriveFiles,
+  driveImagePreview,
+} from "@/lib/drive/service";
+import {
+  gptConnectorStatus,
+  updateGptScopes,
+  revokeGptAccess,
+  restoreGptAccess,
+  setGptShare,
+} from "@/lib/gpt-connector/settings";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const draftSchema = z
@@ -54,9 +104,9 @@ async function boundedBody(req: NextRequest, max: number) {
   }
   return Buffer.concat(chunks);
 }
-async function jsonBody(req: NextRequest) {
+async function jsonBody(req: NextRequest, max = 64000) {
   try {
-    return JSON.parse((await boundedBody(req, 64000)).toString("utf8"));
+    return JSON.parse((await boundedBody(req, max)).toString("utf8"));
   } catch (e) {
     if (e instanceof PolicyError) throw e;
     throw new PolicyError("Ungültiges JSON.");
@@ -70,8 +120,7 @@ async function handler(
     const { path } = await context.params;
     const route = path.join("/");
     if (req.method !== "GET") {
-      const expected = new URL(process.env.APP_URL ?? "http://localhost:3100")
-        .origin;
+      const expected = appOrigin();
       if (req.headers.get("origin") !== expected)
         throw new PolicyError("Ungültiger Anfrage-Ursprung.", 403);
     }
@@ -85,7 +134,7 @@ async function handler(
         .parse(await jsonBody(req));
       const result = await login(data.email, data.password);
       if ("error" in result) throw new PolicyError(result.error!, 401);
-      (await cookies()).set("akquise-session", result.token!, {
+      (await cookies()).set(sessionCookieName(), result.token!, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -95,12 +144,249 @@ async function handler(
       return NextResponse.json({ ok: true });
     }
     const user = await requireUser();
+    if (route === "dashboard" && req.method === "GET") {
+      return NextResponse.json(await dashboardState(), { headers: { "Cache-Control": "no-store, private" } });
+    }
+    if (path[0] === "websites" && req.method === "GET") {
+      const headers = { "Cache-Control": "no-store, private", "X-Content-Type-Options": "nosniff" };
+      if (path.length === 1) return NextResponse.json(await websiteList(user.id), {headers});
+      if (path.length === 2) return NextResponse.json(await websiteState(user.id,path[1]), {headers});
+      if (path.length === 3 && ["export","version"].includes(path[2])) {
+        const version=z.coerce.number().int().positive().parse(req.nextUrl.searchParams.get("version"));
+        const document=await websiteVersion(user.id,path[1],version);
+        if(path[2] === "version") return NextResponse.json(document,{headers});
+        return new NextResponse(new Uint8Array(await websiteExport(user.id, document)),{headers:{...headers,"Content-Type":"application/zip","Content-Disposition":`attachment; filename="website-v${version}.zip"`}});
+      }
+      throw new PolicyError("Nicht gefunden.",404);
+    }
+    if (route === "mail-schedule" && req.method === "GET")
+      return NextResponse.json(await mailScheduleState(), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (path[0] === "concepts" && req.method === "GET") {
+      if (path.length === 1)
+        return NextResponse.json(await conceptState(user.id), {
+          headers: { "Cache-Control": "no-store" },
+        });
+      if (path.length === 2)
+        return NextResponse.json(await conceptState(user.id, path[1]), {
+          headers: { "Cache-Control": "no-store" },
+        });
+      if (path.length === 3 && ["docx", "print"].includes(path[2])) {
+        const state = await conceptState(user.id, path[1]);
+        if (!("versions" in state))
+          throw new PolicyError("Konzept fehlt.", 404);
+        const version = Number(req.nextUrl.searchParams.get("version"));
+        const snapshot = state.versions.find((v) => v.version === version);
+        if (!snapshot) throw new PolicyError("Version nicht gefunden.", 404);
+        const payload = conceptInput.parse(snapshot.payload);
+        const customer = payload.customerId
+          ? await db.customer.findFirst({
+              where: { id: payload.customerId, organizationId: "studiojeker" },
+              select: { name: true },
+            })
+          : null;
+        const approver = snapshot.approvedBy
+          ? await db.user.findUnique({
+              where: { id: snapshot.approvedBy },
+              select: { name: true },
+            })
+          : null;
+        const meta = {
+          version,
+          customer: customer?.name || "Studiojeker",
+          status: snapshot.approvedAt ? "Freigegeben" : "Entwurf",
+          author: approver?.name || "",
+        };
+        const headers = {
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+        };
+        if (path[2] === "print")
+          return new NextResponse(conceptHtml(payload, meta), {
+            headers: {
+              ...headers,
+              "Content-Type": "text/html; charset=utf-8",
+              "Content-Security-Policy":
+                "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'self'",
+            },
+          });
+        return new NextResponse(
+          new Uint8Array(await conceptDocx(payload, meta)),
+          {
+            headers: {
+              ...headers,
+              "Content-Type":
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "Content-Disposition": `attachment; filename="konzept-v${version}.docx"`,
+            },
+          },
+        );
+      }
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
+    if (route === "cms/state" && req.method === "GET")
+      return NextResponse.json(await cmsState(user.id));
+    if (route === "cms/import" && req.method === "POST")
+      return NextResponse.json(
+        await importSanityNewsletter(user.id, await jsonBody(req)),
+      );
+    if (route === "social/status" && req.method === "GET")
+      return NextResponse.json(await socialStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (
+      path[0] === "social" &&
+      path[1] === "connect" &&
+      path.length === 3 &&
+      req.method === "POST"
+    ) {
+      const provider = path[2];
+      if (provider !== "meta" && provider !== "linkedin")
+        throw new PolicyError("Unbekannter Anbieter.", 404);
+      const session = (await cookies()).get(sessionCookieName())!.value;
+      const auth = await beginSocial(user.id, tokenHash(session), provider);
+      const response = NextResponse.json(
+        { url: auth.url },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+      response.cookies.set(`studio-social-${provider}`, auth.state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: `/api/social/${provider}`,
+        maxAge: 600,
+      });
+      return response;
+    }
+    if (route === "social/disconnect" && req.method === "POST") {
+      const input = z
+        .object({
+          provider: z.enum(["FACEBOOK", "INSTAGRAM", "LINKEDIN"]),
+          accountId: z.string().min(1).max(200),
+        })
+        .strict()
+        .parse(await jsonBody(req));
+      return NextResponse.json(
+        await disconnectSocial(user.id, input.provider, input.accountId),
+      );
+    }
+    if (route === "drive/status" && req.method === "GET")
+      return NextResponse.json(await driveStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "drive/files" && req.method === "GET")
+      return NextResponse.json(
+        await listDriveFiles(
+          user.id,
+          req.nextUrl.searchParams.get("pageToken") || undefined,
+          req.nextUrl.searchParams.get("folderId") || undefined,
+        ),
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    if (
+      path[0] === "drive" &&
+      path[1] === "preview" &&
+      path.length === 3 &&
+      req.method === "GET"
+    ) {
+      const image = await driveImagePreview(user.id, path[2]);
+      return new NextResponse(new Uint8Array(image.bytes), {
+        headers: {
+          "Content-Type": image.mime,
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+        },
+      });
+    }
+    if (route === "drive/connect" && req.method === "POST") {
+      const session = (await cookies()).get(sessionCookieName())!.value;
+      const auth = await beginDrive(user.id, tokenHash(session));
+      const result = NextResponse.json(
+        { url: auth.url },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+      result.cookies.set("studio-drive-state", auth.state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/drive",
+        maxAge: 600,
+      });
+      return result;
+    }
+    if (route === "drive/disconnect" && req.method === "POST")
+      return NextResponse.json(await disconnectDrive(user.id));
+    if (route === "drive/folder" && req.method === "POST")
+      return NextResponse.json(
+        await chooseDriveFolder(user.id, await jsonBody(req)),
+      );
+    if (route === "library/state" && req.method === "GET")
+      return NextResponse.json(await libraryState(user.id));
+    if (route === "studio/state" && req.method === "GET")
+      return NextResponse.json(await studioState(user.id));
+    if (route === "studio/logo" && req.method === "GET")
+      return new NextResponse(new Uint8Array(logoBytes()), {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "no-store, private",
+        },
+      });
+    if (
+      path[0] === "studio" &&
+      path[1] === "assets" &&
+      path.length === 3 &&
+      req.method === "GET"
+    ) {
+      const { asset, bytes } = await readAsset(user.id, path[2]);
+      return new NextResponse(new Uint8Array(bytes), {
+        headers: {
+          "Content-Type": asset.mime,
+          "Cache-Control": "no-store, private",
+          "X-Content-Type-Options": "nosniff",
+          "Content-Security-Policy": "default-src 'none'; sandbox",
+          "Content-Disposition": `${req.nextUrl.searchParams.has("download") || !asset.mime.startsWith("image/") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(asset.name)}`,
+        },
+      });
+    }
+    if (route === "studio/upload" && req.method === "POST") {
+      const kind =
+        req.headers.get("x-studio-kind") === "FONT"
+          ? "FONT"
+          : req.headers.get("x-studio-kind") === "DOCUMENT"
+            ? "DOCUMENT"
+            : "ORIGINAL";
+      if (req.headers.get("x-rights-confirmed") !== "true")
+        throw new PolicyError("Nutzungsrechte an der Datei bestätigen.");
+      const bytes = await boundedBody(req, MAX_UPLOAD);
+      const a = await storeAsset(
+        user.id,
+        bytes,
+        decodeURIComponent(req.headers.get("x-file-name") || "datei"),
+        kind,
+      );
+      return NextResponse.json(a);
+    }
+    if (route === "hub/state" && req.method === "GET")
+      return NextResponse.json(await hubState());
+    if (route === "customers/state" && req.method === "GET")
+      return NextResponse.json(await customerState(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "hub/mailchimp/audiences" && req.method === "GET")
+      return NextResponse.json(await mailchimpAudiences(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "integrations/gpt/status" && req.method === "GET")
+      return NextResponse.json(await gptConnectorStatus(user.id), {
+        headers: { "Cache-Control": "no-store" },
+      });
     if (route === "logout" && req.method === "POST") {
       const jar = await cookies();
-      const token = jar.get("akquise-session")?.value;
+      const token = jar.get(sessionCookieName())?.value;
       if (token)
         await db.session.deleteMany({ where: { id: tokenHash(token) } });
-      jar.delete("akquise-session");
+      jar.delete(sessionCookieName());
       return NextResponse.json({ ok: true });
     }
     if (route === "state" && req.method === "GET") {
@@ -139,13 +425,23 @@ async function handler(
       return NextResponse.json({
         user: { id: user.id, name: user.name },
         contacts,
-        drafts,
+        drafts: drafts.map((d) => ({
+          ...d,
+          versions: d.versions.map((v) => ({
+            ...v,
+            signatureCurrent:
+              v.hash === messageHash(v.recipient, v.subject, v.body),
+          })),
+        })),
         deliveries,
         suppressions,
         audits,
         users,
-        externalSending: false,
-        generator: "Lokale Vorlage · KI-Schnittstelle vorbereitet",
+        externalSending: readMailConfig().smtpAllowed,
+        mailMode: readMailConfig().mode,
+        smtpPort: readMailConfig().port || null,
+        smtpSecure: readMailConfig().secure,
+        generator: "Importierter Mailtext, sonst lokale Vorlage",
       });
     }
     if (req.method !== "POST") throw new PolicyError("Nicht gefunden.", 404);
@@ -166,12 +462,68 @@ async function handler(
       return NextResponse.json(await importContacts(user.id, rows));
     }
     if (route === "contacts/sheets") {
-      const rows = await readSheetContacts();
+      const rows = await readSheetContacts(user.id);
       return NextResponse.json(await importContacts(user.id, rows));
     }
-    if (Number(req.headers.get("content-length")) > 64000)
+    const maxJsonBytes =
+      path[0] === "contacts" && path[1] === "preparation"
+        ? 2 * 1024 * 1024
+        : ["concepts", "websites"].includes(path[0])
+          ? 512000
+          : 64000;
+    if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
-    const body: unknown = await jsonBody(req);
+    const body: unknown = await jsonBody(req, maxJsonBytes);
+    if (path[0] === "websites") return NextResponse.json(await websiteMutation(user.id,path,body), {headers:{"Cache-Control":"no-store"}});
+    if (path[0] === "mail-review" && path.length === 2)
+      return NextResponse.json(await mailReview(user.id, path[1], body), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (
+      path[0] === "contacts" &&
+      path[1] === "preparation" &&
+      path.length === 3
+    )
+      return NextResponse.json(await prepareContacts(user.id, path[2], body), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (path[0] === "mail-schedule" && path.length === 2)
+      return NextResponse.json(
+        await mailScheduleMutation(user.id, path[1], body),
+      );
+    if (route === "smtp/test")
+      return NextResponse.json(await sendInternalSmtpTest(user.id, body));
+    if (path[0] === "concepts")
+      return NextResponse.json(await conceptMutation(user.id, path, body));
+    if (route === "customers/assist")
+      return NextResponse.json(await assistCustomer(user.id, body), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "customers")
+      return NextResponse.json(await saveCustomer(user.id, body));
+    if (path[0] === "customers" && path.length === 2)
+      return NextResponse.json(await saveCustomer(user.id, body, path[1]));
+    if (route === "library/item")
+      return NextResponse.json(await saveLibraryItem(user.id, body));
+    if (route === "library/archive")
+      return NextResponse.json(await archiveItem(user.id, body));
+    if (route === "library/brand")
+      return NextResponse.json(await saveBrand(user.id, body));
+    if (path[0] === "studio")
+      return NextResponse.json(await studioMutation(user.id, path, body));
+    if (path[0] === "hub") {
+      const result = await hubMutation(user.id, path, body);
+      if (result !== null) return NextResponse.json(result);
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
+    if (route === "integrations/gpt/scopes")
+      return NextResponse.json(await updateGptScopes(user.id, body));
+    if (route === "integrations/gpt/revoke")
+      return NextResponse.json(await revokeGptAccess(user.id));
+    if (route === "integrations/gpt/restore")
+      return NextResponse.json(await restoreGptAccess(user.id));
+    if (route === "integrations/gpt/share")
+      return NextResponse.json(await setGptShare(user.id, body));
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }
@@ -251,10 +603,21 @@ async function handler(
       return NextResponse.json(await simulate(user.id, d.draftId, d.version));
     }
     if (route === "send") {
-      await audit(db, user.id, "SEND_BLOCKED", "v1", {
-        reason: "External sending disabled",
-      });
-      assertExternalSendingAllowed();
+      if (!readMailConfig().smtpAllowed) {
+        await audit(db, user.id, "SEND_BLOCKED", "configuration", {});
+        throw new PolicyError("Externer E-Mail-Versand ist deaktiviert.", 403);
+      }
+      const d = z
+        .object({
+          draftId: z.string(),
+          version: z.number().int().positive(),
+          confirmDispatch: z.literal(true),
+        })
+        .strict()
+        .parse(body);
+      return NextResponse.json(
+        await dispatchApproved(user.id, d.draftId, d.version),
+      );
     }
     throw new PolicyError("Nicht gefunden.", 404);
   } catch (error) {
