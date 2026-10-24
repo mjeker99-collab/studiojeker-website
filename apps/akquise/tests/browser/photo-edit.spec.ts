@@ -155,9 +155,13 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     .getByRole("button", { name: /Content-Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
-  await chat
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
+  if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
+    await chat
+      .getByText("Projekte öffnen oder neues Gespräch beginnen", {
+        exact: true,
+      })
+      .click();
+  }
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("photos");
   await chat
     .getByRole("button", { name: "Darauf antworten", exact: true })
@@ -266,9 +270,13 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Content-Studio/ })
     .click();
-  await chat
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
+  if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
+    await chat
+      .getByText("Projekte öffnen oder neues Gespräch beginnen", {
+        exact: true,
+      })
+      .click();
+  }
   await chat.getByLabel("Gespräch / Content-Serie").selectOption("photos");
   await expect(
     chat.getByAltText("Ausgangsbild vor der Bearbeitung"),

@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private authenticated image routes. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
@@ -22,6 +22,7 @@ export default function StudioChat({
   refresh,
   initialRequest,
   hasUnsavedContent = false,
+  onProjectAssigned,
 }: {
   state: State;
   refresh: () => Promise<void>;
@@ -31,22 +32,64 @@ export default function StudioChat({
     intent?: "EDIT";
     sourceAssetId?: string;
     contentId?: string;
+    campaignId?: string;
+    customerId?: string;
   };
   hasUnsavedContent?: boolean;
+  onProjectAssigned?: () => void;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
-  const [campaignId, setCampaignId] = useState("");
-  const [customerId, setCustomerId] = useState("");
+  const [campaignId, setCampaignId] = useState(
+    initialRequest?.campaignId || "",
+  );
+  const [customerId, setCustomerId] = useState(
+    initialRequest?.customerId || "",
+  );
   const [useProjectMemory, setUseProjectMemory] = useState(true);
-  const activeSeries = state.series.find((s) => s.id === seriesId);
-  const activeCustomerId = activeSeries?.customerId || customerId || null;
+  const [error, setError] = useState("");
+  const [selectedState, setSelectedState] = useState<State | null>(null);
+  useEffect(() => {
+    if (!seriesId) return;
+    const controller = new AbortController();
+    fetch(`/api/studio/state?seriesId=${encodeURIComponent(seriesId)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || "Projekt konnte nicht geladen werden.");
+        if (!controller.signal.aborted) setSelectedState(data);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      });
+    return () => controller.abort();
+  }, [seriesId, state]);
+  const scopedState = selectedState?.series.some((s) => s.id === seriesId)
+    ? selectedState
+    : null;
+  const projectState = scopedState
+    ? {
+        ...state,
+        jobs: scopedState.jobs,
+        series: [
+          ...scopedState.series,
+          ...state.series.filter((s) => s.id !== seriesId),
+        ],
+      }
+    : state;
+  const activeSeries = projectState.series.find((s) => s.id === seriesId);
+  const activeCustomerId = activeSeries
+    ? activeSeries.customerId
+    : customerId || null;
   const [message, setMessage] = useState(initialRequest?.message || "");
   const [mediaIntent, setMediaIntent] = useState<
     "TEXT" | "IMAGE" | "VIDEO" | "EDIT"
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [projectNotice, setProjectNotice] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [referenceIds, setReferenceIds] = useState<string[]>(
     initialRequest?.sourceAssetId ? [initialRequest.sourceAssetId] : [],
@@ -58,7 +101,7 @@ export default function StudioChat({
   const [uploadRights, setUploadRights] = useState(false);
   const [copiedJob, setCopiedJob] = useState("");
   const [replyToJobId, setReplyToJobId] = useState("");
-  const replyToJob = state.jobs.find((job) => job.id === replyToJobId);
+  const replyToJob = projectState.jobs.find((job) => job.id === replyToJobId);
   const replyToText = (replyToJob?.result as { reply?: string } | undefined)
     ?.reply;
   const images = state.assets.filter((a) =>
@@ -101,7 +144,7 @@ export default function StudioChat({
       setBusy(false);
     }
   }
-  const jobs = state.jobs
+  const jobs = projectState.jobs
     .filter(
       (j) =>
         (j.kind === "CHAT" ||
@@ -142,7 +185,9 @@ export default function StudioChat({
       let id = seriesId;
       if (!id) {
         const series = await post("series", {
-          title: message.trim().slice(0, 80),
+          title:
+            state.campaigns.find((c) => c.id === campaignId)?.title ||
+            message.trim().slice(0, 80),
           topic: message.trim().slice(0, 2000),
           offer: "",
           goal: "Im Gespräch klären",
@@ -172,7 +217,7 @@ export default function StudioChat({
             : {}),
         contentId: editingImage
           ? contentId ||
-            state.series.find((s) => s.id === id)?.contents[0]?.id ||
+            projectState.series.find((s) => s.id === id)?.contents[0]?.id ||
             null
           : null,
         requestKey: crypto.randomUUID(),
@@ -323,6 +368,82 @@ export default function StudioChat({
           "Studiojeker"}
         {state.assistantUser?.name ? ` · ${state.assistantUser.name}` : ""}
       </p>
+      <StudioProjects
+        key={seriesId}
+        state={projectState}
+        seriesId={seriesId}
+        customerId={customerId}
+        campaignId={campaignId}
+        busy={busy}
+        onAssign={async (data) => {
+          if (!activeSeries) return;
+          setBusy(true);
+          setError("");
+          setProjectNotice("");
+          try {
+            await post(`series/${seriesId}/assignment`, {
+              ...data,
+              expectedTitle: activeSeries.title,
+              expectedCustomerId: activeSeries.customerId,
+              expectedCampaignId:
+                (activeSeries.briefing as { campaignId?: string | null })
+                  .campaignId || null,
+            });
+            await refresh();
+            onProjectAssigned?.();
+            setProjectNotice("Projektname und Zuordnung gespeichert.");
+          } catch (e) {
+            setError(
+              e instanceof Error ? e.message : "Zuordnung fehlgeschlagen.",
+            );
+            throw e;
+          } finally {
+            setBusy(false);
+          }
+        }}
+        onSeries={(id) => {
+          if (id === seriesId) return;
+          if (
+            (message.trim() || hasUnsavedContent) &&
+            !window.confirm(
+              "Projekt wechseln? Ungesendete Eingaben werden verworfen. Gespeicherte Gespräche bleiben erhalten.",
+            )
+          )
+            return;
+          setSeriesId(id);
+          setMessage("");
+          setProjectNotice("");
+          setMediaIntent("TEXT");
+          setConfirmed(false);
+          setReferenceIds([]);
+          setDriveImages([]);
+          setError("");
+          setContentId("");
+          setReplyToJobId("");
+          setCustomerId("");
+          setCampaignId("");
+        }}
+        onCustomer={(id) => {
+          setCustomerId(id);
+          setCampaignId("");
+          setConfirmed(false);
+        }}
+        onCampaign={(id) => {
+          setCampaignId(id);
+          setConfirmed(false);
+        }}
+        refresh={() => {
+          setError("");
+          void refresh().catch(() =>
+            setError("Status konnte nicht geladen werden."),
+          );
+        }}
+      />
+      {projectNotice && (
+        <p className="notice" role="status">
+          {projectNotice}
+        </p>
+      )}
       <div
         className="studio-chat-transcript"
         hidden={!jobs.length}
@@ -795,40 +916,6 @@ export default function StudioChat({
         </details>
         {editingImage && submission}
       </form>
-      <StudioProjects
-        state={state}
-        seriesId={seriesId}
-        customerId={customerId}
-        campaignId={campaignId}
-        busy={busy}
-        onSeries={(id) => {
-          setSeriesId(id);
-          setMediaIntent("TEXT");
-          setConfirmed(false);
-          setReferenceIds([]);
-          setDriveImages([]);
-          setError("");
-          setContentId("");
-          setReplyToJobId("");
-          setCustomerId("");
-          setCampaignId("");
-        }}
-        onCustomer={(id) => {
-          setCustomerId(id);
-          setCampaignId("");
-          setConfirmed(false);
-        }}
-        onCampaign={(id) => {
-          setCampaignId(id);
-          setConfirmed(false);
-        }}
-        refresh={() => {
-          setError("");
-          void refresh().catch(() =>
-            setError("Status konnte nicht geladen werden."),
-          );
-        }}
-      />
       <StudioKnowledge
         state={state}
         customerId={activeCustomerId}

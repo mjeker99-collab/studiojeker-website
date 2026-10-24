@@ -127,10 +127,14 @@ export default function Hub({
   section,
   userId,
   initialCampaignId,
+  onCampaignAssistant,
+  projectRevision = 0,
 }: {
   section: string;
   userId: string;
   initialCampaignId?: string;
+  onCampaignAssistant?: (id: string) => void;
+  projectRevision?: number;
 }) {
   const [templateId, setTemplateId] = useState("master-v7");
   const [mailchimp, setMailchimp] = useState<{
@@ -205,6 +209,23 @@ export default function Hub({
       });
     return () => controller.abort();
   }, [initialCampaignId]);
+  useEffect(() => {
+    if (!projectRevision) return;
+    const controller = new AbortController();
+    fetch("/api/hub/state", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(
+            data.error || "Kampagnen konnten nicht aktualisiert werden.",
+          );
+        if (!controller.signal.aborted) setData(data);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setError(error.message);
+      });
+    return () => controller.abort();
+  }, [projectRevision]);
   useEffect(() => {
     if (section !== "Newsletter" && section !== "Einstellungen") return;
     const controller = new AbortController();
@@ -618,6 +639,15 @@ export default function Hub({
                 >
                   Kampagne bearbeiten
                 </button>
+                {onCampaignAssistant && (
+                  <button
+                    type="button"
+                    className="ai-button"
+                    onClick={() => onCampaignAssistant(c.id)}
+                  >
+                    Mit GPT weiterarbeiten
+                  </button>
+                )}
                 <details>
                   <summary>Zugeordnete Inhalte</summary>
                   {data.contents
@@ -649,6 +679,15 @@ export default function Hub({
       {campaignForm && (
         <section className="panel padded hub-editor">
           <h2>{campaign ? "Kampagne bearbeiten" : "Neue Kampagne"}</h2>
+          {campaign && onCampaignAssistant && (
+            <button
+              type="button"
+              className="ai-button"
+              onClick={() => onCampaignAssistant(campaign.id)}
+            >
+              Mit GPT weiterarbeiten
+            </button>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
