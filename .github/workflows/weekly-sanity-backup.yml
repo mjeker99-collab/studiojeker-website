@@ -38,6 +38,17 @@ jobs:
           mkdir -p ../backups
           npx sanity dataset export production "../backups/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz" --overwrite
           test -s "../backups/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
+      - name: Upload to private Exoscale backup bucket
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXOSCALE_BACKUP_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXOSCALE_BACKUP_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ch-dk-2
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "::error::Missing Exoscale access key"; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "::error::Missing Exoscale secret key"; exit 1; }
+          F="backups/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
+          aws --endpoint-url https://sos-ch-dk-2.exo.io s3 cp "$F" "s3://studiojeker-backups/website/sanity/$(date -u +%Y-%m-%d)/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
       - name: Store weekly backup (90 days)
         uses: actions/upload-artifact@v4
         with:
