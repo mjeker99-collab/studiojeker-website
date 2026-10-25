@@ -56,6 +56,39 @@ export function gptConnectorOpenApi() {
           responses: { "200": jsonObject, ...errorResponses },
         },
       },
+      "/api/integrations/gpt/website/drafts/{key}": {
+        get: {
+          operationId: "getWebsiteDraft",
+          summary: "Read current Sanity website draft and revision; read-only",
+          security: [{ connectorBearer: [] }],
+          parameters: [{
+            name: "key", in: "path", required: true,
+            schema: { type: "string", minLength: 1, maxLength: 100 },
+          }],
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+        patch: {
+          operationId: "updateWebsiteDraft",
+          summary: "Update existing Sanity draft fields only; optimistic revision required and no publishing",
+          security: [{ writeBearer: [] }],
+          parameters: [{
+            name: "key", in: "path", required: true,
+            schema: { type: "string", minLength: 1, maxLength: 100 },
+          }],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: {
+              type: "object", additionalProperties: false,
+              required: ["revision", "values"],
+              properties: {
+                revision: { type: "string", minLength: 1, maxLength: 200 },
+                values: { type: "object", additionalProperties: true },
+              },
+            } } },
+          },
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
       "/api/integrations/gpt/website/drafts": {
         post: {
           operationId: "createWebsiteDraft",
