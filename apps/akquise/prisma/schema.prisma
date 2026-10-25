@@ -41,6 +41,7 @@ enum DeliveryStatus {
 }
 
 model User {
+  projectDrafts ProjectDraft[]
   studioContext      String              @default("")
   studioContextRevision Int               @default(1)
   id                 String              @id @default(cuid())
@@ -261,6 +262,14 @@ enum EditorialStatus {
   DONE
 }
 
+// Separates Social publishing posts from Content Studio drafts and GPT dialog stubs.
+// Existing rows are classified additively; nothing is deleted.
+enum ContentWorkspace {
+  SOCIAL_POST
+  CONTENT_DRAFT
+  GPT_DIALOG
+}
+
 model Campaign {
   customerId     String?
   customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -290,6 +299,7 @@ model MarketingContent {
   organization   StudioOrganization  @relation(fields: [organizationId], references: [id])
   id             String              @id @default(cuid())
   kind           ContentKind
+  workspace      ContentWorkspace    @default(SOCIAL_POST)
   title          String
   version        Int                 @default(1)
   status         EditorialStatus     @default(DRAFT)
@@ -307,6 +317,7 @@ model MarketingContent {
   mailchimpTransfers MailchimpTransfer[]
 
   @@index([campaignId, scheduledAt])
+  @@index([kind, workspace, status])
 }
 
 model MarketingVersion {
@@ -605,6 +616,21 @@ model WebsiteVersion {
   createdBy String
   createdAt DateTime @default(now())
   @@unique([projectId, version])
+}
+
+// User-owned resumable workspaces; separate from approvals and publication.
+model ProjectDraft {
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  area      String
+  title     String
+  payload   Json
+  revision  Int      @default(1)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([userId, area, updatedAt])
 }
 
 // ChatGPT connector settings. Tokens stay in env; this row tracks scopes and revoke/access.

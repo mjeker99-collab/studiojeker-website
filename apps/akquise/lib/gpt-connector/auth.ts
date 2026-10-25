@@ -49,7 +49,7 @@ export function verifyConnectorBearer(req: Request) {
 /** Write endpoints require the dedicated write token (never the read-only token). */
 export function verifyWriteBearer(req: Request) {
   const writeToken = process.env.CHATGPT_CONNECTOR_WRITE_TOKEN ?? "";
-  if (!writeToken.trim())
+  if (!writeToken.trim() || writeToken === process.env.CHATGPT_CONNECTOR_TOKEN)
     throw new PolicyError(
       "Schreib-Token ist nicht konfiguriert. ChatGPT darf keine Entwürfe speichern.",
       503,
@@ -94,10 +94,16 @@ export async function requireGptConnector(
     where: { id: "studiojeker" },
   });
   if (!settings || settings.revokedAt)
-    throw new PolicyError("ChatGPT-Zugriff ist widerrufen oder nicht aktiv.", 403);
+    throw new PolicyError(
+      "ChatGPT-Zugriff ist widerrufen oder nicht aktiv.",
+      403,
+    );
   const scopes = parseScopes(settings.scopes);
   if (!scopes[scope])
-    throw new PolicyError("Dieser Inhaltsbereich ist nicht freigeschaltet.", 403);
+    throw new PolicyError(
+      "Dieser Inhaltsbereich ist nicht freigeschaltet.",
+      403,
+    );
 
   const path = new URL(req.url).pathname;
   const actorId = await auditActorId();
@@ -133,7 +139,10 @@ export async function requireGptWrite(req: Request) {
     where: { id: "studiojeker" },
   });
   if (!settings || settings.revokedAt)
-    throw new PolicyError("ChatGPT-Zugriff ist widerrufen oder nicht aktiv.", 403);
+    throw new PolicyError(
+      "ChatGPT-Zugriff ist widerrufen oder nicht aktiv.",
+      403,
+    );
   const scopes = parseScopes(settings.scopes);
   if (!scopes.write_drafts)
     throw new PolicyError(
@@ -159,7 +168,11 @@ export async function requireGptWrite(req: Request) {
         userId: actorId,
         action: "GPT_CONNECTOR_WRITE",
         entityId: path.slice(0, 200),
-        detail: { method: req.method, scope: "write_drafts", source: "chatgpt" },
+        detail: {
+          method: req.method,
+          scope: "write_drafts",
+          source: "chatgpt",
+        },
       },
     });
   });

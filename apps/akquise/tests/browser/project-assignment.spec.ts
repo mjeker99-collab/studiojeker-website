@@ -95,6 +95,7 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
           },
         },
       });
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     return route.fulfill({ json: { connections: [], configured: {} } });
   });
   await page.goto("/");
@@ -130,7 +131,7 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
     .getByRole("combobox", { name: "Kampagne", exact: true })
     .selectOption("campaign");
   await entry.getByRole("button", { name: "Zuordnung sichern" }).click();
-  await expect(entry.getByRole("status")).toContainText(
+  await expect(entry.locator('.notice[role="status"]')).toContainText(
     "Zuordnung gespeichert",
   );
   await expect(entry.getByRole("log")).toContainText(savedJob.result.reply);

@@ -3,7 +3,7 @@ import { db } from "../db";
 import { PolicyError } from "../policy";
 import { contentInput, type ContentInput } from "../hub/input";
 import { newsletterText } from "../hub/newsletter-template";
-import { saveContent } from "../hub/workflow";
+import { saveContent, saveContentInTx } from "../hub/workflow";
 import { audit, type Tx } from "../workflow";
 import {
   blankWebsite,
@@ -44,7 +44,12 @@ async function assertMarketingWriteTarget(
       select: { id: true },
     });
     if (!campaign) throw new PolicyError("Kampagne nicht gefunden.", 404);
-    if (await hasWriteGrant("CAMPAIGN", campaignId)) allowed = true;
+    if (!(await hasWriteGrant("CAMPAIGN", campaignId)))
+      throw new PolicyError(
+        "Schreibzugriff für diese Kampagne ist nicht freigegeben.",
+        403,
+      );
+    allowed = true;
   }
   if (seriesId) {
     const series = await db.studioSeries.findFirst({
@@ -52,7 +57,12 @@ async function assertMarketingWriteTarget(
       select: { id: true },
     });
     if (!series) throw new PolicyError("Projekt nicht gefunden.", 404);
-    if (await hasWriteGrant("SERIES", seriesId)) allowed = true;
+    if (!(await hasWriteGrant("SERIES", seriesId)))
+      throw new PolicyError(
+        "Schreibzugriff für dieses Projekt ist nicht freigegeben.",
+        403,
+      );
+    allowed = true;
   }
   if (!allowed)
     throw new PolicyError(
@@ -68,12 +78,12 @@ function contentSummary(payload: unknown) {
   > | null;
   if (!clean || typeof clean !== "object") return { draft: null };
   const newsletter = clean.newsletter as
-    | { templateId?: string; fields?: Record<string, string> }
-    | undefined;
+    { templateId?: string; fields?: Record<string, string> } | undefined;
   return {
     title: typeof clean.title === "string" ? clean.title : undefined,
     subject: typeof clean.subject === "string" ? clean.subject : undefined,
-    preheader: typeof clean.preheader === "string" ? clean.preheader : undefined,
+    preheader:
+      typeof clean.preheader === "string" ? clean.preheader : undefined,
     body: typeof clean.body === "string" ? clean.body : undefined,
     audience: typeof clean.audience === "string" ? clean.audience : undefined,
     variants: Array.isArray(clean.variants) ? clean.variants : undefined,
@@ -193,7 +203,10 @@ function mergeWebsiteDocument(
 
 export function assertDraftBodySize(req: Request, rawText: string) {
   const headerLen = Number(req.headers.get("content-length") || 0);
-  if (headerLen > MAX_DRAFT_BODY_BYTES || Buffer.byteLength(rawText) > MAX_DRAFT_BODY_BYTES)
+  if (
+    headerLen > MAX_DRAFT_BODY_BYTES ||
+    Buffer.byteLength(rawText) > MAX_DRAFT_BODY_BYTES
+  )
     throw new PolicyError("Anfrage zu gross.", 413);
 }
 
@@ -241,11 +254,7 @@ export async function createDraft(
       });
       if (!project) throw new PolicyError("Website nicht gefunden.", 404);
       const current = validatedDocument.parse(project.versions[0].payload);
-      const doc = mergeWebsiteDocument(
-        current,
-        input.website!,
-        input.title,
-      );
+      const doc = mergeWebsiteDocument(current, input.website!, input.title);
       const result = await db.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"website:" + project.id}))`;
         const fresh = await tx.websiteProject.findUniqueOrThrow({
@@ -330,15 +339,27 @@ export async function createDraft(
   await assertMarketingWriteTarget(campaignId, seriesId);
 
   const payload = toMarketingPayload(actorId, input, input.kind, campaignId);
-  const saved = await saveContent(actorId, payload);
-  // Link to series without inventing a full studio snapshot (Hub-managed).
-  if (seriesId && saved.studioSeriesId !== seriesId) {
-    await db.marketingContent.update({
-      where: { id: saved.id },
-      data: { studioSeriesId: seriesId },
-    });
-  }
-  await db.$transaction(async (tx) => {
+  const saved = await db.$transaction(async (tx) => {
+    if (input.idempotencyKey) {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"gpt-create:" + input.idempotencyKey}))`;
+      const previous = await tx.gptIdempotency.findUnique({
+        where: { key: input.idempotencyKey },
+      });
+      if (previous) return { id: previous.draftId, replay: true };
+    }
+    const saved = await saveContentInTx(
+      tx,
+      actorId,
+      payload,
+      undefined,
+      undefined,
+      input.kind === "SOCIAL" ? { workspace: "CONTENT_DRAFT" } : undefined,
+    );
+    if (seriesId)
+      await tx.marketingContent.update({
+        where: { id: saved.id },
+        data: { studioSeriesId: seriesId },
+      });
     await audit(tx, actorId, "GPT_DRAFT_CREATED", saved.id, {
       version: saved.version,
       kind: saved.kind,
@@ -347,9 +368,18 @@ export async function createDraft(
       seriesId,
     });
     if (input.idempotencyKey)
-      await rememberIdempotency(tx, input.idempotencyKey, "MARKETING", saved.id);
+      await rememberIdempotency(
+        tx,
+        input.idempotencyKey,
+        "MARKETING",
+        saved.id,
+      );
+    return { id: saved.id, replay: false };
   });
-  return getDraft(saved.id, "MARKETING");
+  return {
+    ...(await getDraft(saved.id, "MARKETING")),
+    ...(saved.replay ? { idempotentReplay: true } : {}),
+  };
 }
 
 export async function updateDraft(
@@ -430,11 +460,7 @@ export async function updateDraft(
     throw new PolicyError("Keine erlaubten Felder zum Aktualisieren.", 400);
 
   const current = validatedDocument.parse(website.versions[0].payload);
-  const doc = mergeWebsiteDocument(
-    current,
-    input.website ?? {},
-    input.title,
-  );
+  const doc = mergeWebsiteDocument(current, input.website ?? {}, input.title);
   await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"website:" + website.id}))`;
     const fresh = await tx.websiteProject.findUniqueOrThrow({
@@ -467,6 +493,7 @@ export async function updateDraft(
 export async function getDraft(
   id: string,
   hint?: "MARKETING" | "WEBSITE_REVIEW",
+  allowWriteGrant = true,
 ) {
   if (hint !== "WEBSITE_REVIEW") {
     const content = await db.marketingContent.findFirst({
@@ -502,15 +529,19 @@ export async function getDraft(
           }))) ||
         (await db.gptShare.findUnique({
           where: {
-            entityType_entityId: { entityType: "CONTENT", entityId: content.id },
+            entityType_entityId: {
+              entityType: "CONTENT",
+              entityId: content.id,
+            },
           },
         })) ||
-        (content.campaignId &&
+        (allowWriteGrant &&
+          content.campaignId &&
           (await hasWriteGrant("CAMPAIGN", content.campaignId))) ||
-        (content.studioSeriesId &&
+        (allowWriteGrant &&
+          content.studioSeriesId &&
           (await hasWriteGrant("SERIES", content.studioSeriesId)));
-      if (!readable)
-        throw new PolicyError("Entwurf nicht freigegeben.", 404);
+      if (!readable) throw new PolicyError("Entwurf nicht freigegeben.", 404);
 
       return {
         id: content.id,
@@ -542,7 +573,7 @@ export async function getDraft(
     include: { versions: { orderBy: { version: "desc" }, take: 1 } },
   });
   if (!website) throw new PolicyError("Entwurf nicht gefunden.", 404);
-  if (!(await hasWriteGrant("WEBSITE", website.id)))
+  if (!allowWriteGrant || !(await hasWriteGrant("WEBSITE", website.id)))
     throw new PolicyError("Entwurf nicht freigegeben.", 404);
   const publication = await db.websitePublication.findUnique({
     where: { projectId: website.id },

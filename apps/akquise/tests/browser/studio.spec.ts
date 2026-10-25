@@ -62,7 +62,9 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     mimeType: "image/png",
     buffer: image,
   });
-  await expect(page.getByRole("status")).toContainText("privat gespeichert");
+  await expect(page.locator('.notice[role="status"]')).toContainText(
+    "privat gespeichert",
+  );
   await page.getByRole("button", { name: "Neues Briefing" }).click();
   await page
     .getByLabel("Serientitel", { exact: true })
@@ -138,7 +140,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator('.notice[role="status"]')).toContainText(
     "Neue Version gespeichert",
   );
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -263,9 +265,10 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByRole("button", { name: "Mit GPT arbeiten", exact: true })
     .click();
-  await page
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
+  if (!(await page.getByLabel("Gespräch / Content-Serie").isVisible()))
+    await page
+      .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
+      .click();
   await page
     .locator(".studio-chat")
     .getByRole("button", { name: "Status aktualisieren", exact: true })

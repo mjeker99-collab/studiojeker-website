@@ -1,5 +1,6 @@
 "use client";
 import StudioChat from "./StudioChat";
+import ProjectSave from "../projects/ProjectSave";
 import GraphicsEditor from "./GraphicsEditor";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
 import {
@@ -329,6 +330,52 @@ export default function ContentStudio({
         />
       </div>
       <div hidden={!editorOpen}>
+        <ProjectSave
+          area="Content-Editor"
+          identity={editing?.id || ""}
+          suggestedTitle={form?.title || brief.title || "Content-Projekt"}
+          busy={busy}
+          value={{
+            nativeId: editing?.id || "",
+            nativeVersion: editing?.version || 0,
+            brief,
+            creating,
+            seriesId,
+            form,
+            refs,
+            libraryRefs,
+            format,
+            encoding,
+          }}
+          restore={async (draft) => {
+            const latest: State = await api("studio/state");
+            const content = latest.series
+              .flatMap((s) => s.contents)
+              .find((c) => c.id === draft.nativeId);
+            if (draft.nativeId && !content)
+              throw new Error(
+                "Beitrag nicht mehr in der Projektliste. Bitte bestehende Serie öffnen.",
+              );
+            setState(latest);
+            setEditing(
+              content ? { ...content, version: draft.nativeVersion } : null,
+            );
+            setBrief(draft.brief);
+            setCreating(draft.creating);
+            setSeriesId(draft.seriesId);
+            setForm(draft.form);
+            setRefs(draft.refs);
+            setLibraryRefs(draft.libraryRefs);
+            setFormat(draft.format);
+            setEncoding(draft.encoding);
+            setRead(false);
+            setRights(false);
+            setTransfer(false);
+            setCosts(false);
+            setPreview("");
+          }}
+        />
+
         <section aria-label="Arbeitsbereiche im Content-Studio">
           <h2>Ein Content-Studio. Drei Arbeitsbereiche.</h2>
           <p>

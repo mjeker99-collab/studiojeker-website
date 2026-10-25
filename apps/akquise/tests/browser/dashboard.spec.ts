@@ -698,9 +698,6 @@ test("Dashboard opens the selected campaign, content conversation and website wi
       exact: true,
     })
     .click();
-  await page
-    .getByText("Projekte öffnen oder neues Gespräch beginnen", { exact: true })
-    .click();
   await expect(
     page.getByRole("combobox", { name: /Gespräch \/ Content-Serie/ }),
   ).toHaveValue(series.id);

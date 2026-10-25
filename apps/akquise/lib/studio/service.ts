@@ -23,6 +23,7 @@ import {
   generatedPostSchema,
   type StudioSnapshot,
 } from "./input";
+import { workspaceForBriefing } from "../hub/workspace";
 import { publicConfig, studioConfig, logoHash } from "./config";
 import { readAsset, storeAsset } from "./assets";
 import { openAIProvider, ProviderFailure, type AIProvider } from "./provider";
@@ -218,11 +219,14 @@ export async function createSeries(actor: string, raw: unknown) {
         }))
       )
         throw new PolicyError("Bibliotheksreferenz nicht zugänglich.", 403);
+      const workspace = workspaceForBriefing(brief);
+      const storedBrief = { ...brief };
+      delete storedBrief.workspace;
       const series = await tx.studioSeries.create({
         data: {
           title: brief.title,
           customerId: brief.customerId,
-          briefing: json(brief),
+          briefing: json(storedBrief),
           ownerId: actor,
           organizationId: ORG,
         },
@@ -278,6 +282,9 @@ export async function createSeries(actor: string, raw: unknown) {
               scheduledAt: null,
             })),
           }),
+          undefined,
+          undefined,
+          { workspace },
         );
       }
       await audit(tx, actor, "STUDIO_SERIES_CREATED", series.id, {

@@ -2,8 +2,12 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export async function GET() {
   try {
+    await db.$queryRaw`SELECT "lastWriteAccessAt" FROM "GptIntegration" LIMIT 0`;
+    await db.$queryRaw`SELECT "entityId" FROM "GptWriteGrant" LIMIT 0`;
+    await db.$queryRaw`SELECT "key" FROM "GptIdempotency" LIMIT 0`;
+    await db.$queryRaw`SELECT "revision" FROM "ProjectDraft" LIMIT 0`;
     await db.$queryRaw`SELECT "mode" FROM "Delivery" LIMIT 0`;
-    await db.$queryRaw`SELECT "version" FROM "MarketingContent" LIMIT 0`;
+    await db.$queryRaw`SELECT "version", "workspace" FROM "MarketingContent" LIMIT 0`;
     await db.$queryRaw`SELECT "planningRevision" FROM "Draft" LIMIT 0`;
     await db.$queryRaw`SELECT "status" FROM "StudioJob" LIMIT 0`;
     await db.$queryRaw`SELECT "revision" FROM "LibraryItem" LIMIT 0`;

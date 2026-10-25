@@ -14,6 +14,7 @@ import {
   recordPublication,
   completeContent,
   planDraft,
+  promoteToSocialPost,
 } from "./workflow";
 import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
@@ -179,6 +180,10 @@ export async function hubMutation(
     const d = z.object({ version }).strict().parse(body);
     await completeContent(actor, id, d.version);
     return { ok: true };
+  }
+  if (path[1] === "promote-social" && path.length === 3) {
+    const d = z.object({ version }).strict().parse(body);
+    return promoteToSocialPost(actor, id, d.version);
   }
   if (path[1] === "export" && path.length === 3) {
     const d = z.object({ version }).strict().parse(body);

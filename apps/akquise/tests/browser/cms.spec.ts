@@ -9,6 +9,8 @@ test("CMS overview, responsive controls, import status and provider failure", as
   let cmsRequests = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path === "/api/mailchimp/templates")
+      return route.fulfill({ json: { connected: false, templates: [] } });
     if (path === "/api/state")
       return route.fulfill({
         json: {

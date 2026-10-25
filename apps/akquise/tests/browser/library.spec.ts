@@ -17,6 +17,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   const nav = page.getByRole("navigation", { name: "Hauptnavigation" });
+  page.once("dialog", dialog => dialog.accept());
   await nav.getByRole("button", { name: /Bibliothek/ }).click();
   await expect(
     page.getByRole("heading", { name: "Bibliothek", exact: true, level: 2 }),
@@ -144,7 +145,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator('.notice[role="status"]')).toContainText(
     "Neue Version gespeichert",
   );
   await page
@@ -157,9 +158,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
   await page
     .getByRole("button", { name: "Version speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "Neue Version gespeichert",
-  );
+  await expect(page.getByRole("status").filter({ hasText: "Neue Version gespeichert" })).toBeVisible();
   await page.setViewportSize({ width: 1180, height: 820 });
   await nav.getByRole("button", { name: /Bibliothek/ }).click();
   await expect(

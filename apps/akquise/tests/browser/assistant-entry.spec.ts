@@ -12,6 +12,7 @@ test("GPT entry points preserve input and require an explicit confirmed request"
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (request.method() !== "GET") writes.push(path);
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/state")
       return route.fulfill({
         json: {
@@ -66,6 +67,10 @@ test("GPT entry points preserve input and require an explicit confirmed request"
     return route.fulfill({
       json: { connections: [], configured: { meta: false, linkedin: false } },
     });
+  });
+  page.on("dialog", async (dialog) => {
+    expect(dialog.message()).toBe("Ungesicherte Projektänderungen verwerfen?");
+    await dialog.accept();
   });
   await page.goto("/");
   for (const section of ["Kampagnen", "Social Media"]) {

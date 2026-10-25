@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import NewsletterImageField from "./NewsletterImageField";
 import {
   getNewsletterTemplate,
   renderNewsletter,
@@ -21,7 +22,7 @@ export function NewsletterFields({
     text: "Text",
     image: "Bild-URL",
     alt: "Bild-/Linkbeschreibung",
-    link: "Ziel-Link",
+    link: "Landingpage / Video-Link",
   };
   return (
     <section className="newsletter-fields" aria-label="Newsletter-Bausteine">
@@ -51,6 +52,21 @@ export function NewsletterFields({
                         fields: { ...value.fields, [slot.key]: e.target.value },
                       })
                     }
+                  />
+                ) : slot.kind === "link" ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <input type="url" inputMode="url" required maxLength={2000} placeholder="https://www.studiojeker.ch/… oder https://vimeo.com/…" value={value.fields[slot.key]} onChange={(e) => change({ ...value, fields: { ...value.fields, [slot.key]: e.target.value } })} />
+                    <div className="actions">
+                      <button type="button" className="secondary" onClick={() => change({ ...value, fields: { ...value.fields, [slot.key]: "https://www.studiojeker.ch/content-abo/" } })}>Landingpage Abo</button>
+                      <button type="button" className="secondary" onClick={() => change({ ...value, fields: { ...value.fields, [slot.key]: "https://vimeo.com/1216349266" } })}>Social-Media-Showreel</button>
+                      {/^https:\/\//.test(value.fields[slot.key]) && <a href={value.fields[slot.key]} target="_blank" rel="noopener noreferrer">Link in neuem Tab prüfen ↗</a>}
+                    </div>
+                    <small className="muted">Vimeo- und Landingpage-Links werden als anklickbare Links im Newsletter verwendet. Videos nicht direkt in E-Mails einbetten.</small>
+                  </div>
+                ) : slot.kind === "image" ? (
+                  <NewsletterImageField
+                    value={value.fields[slot.key]}
+                    onChange={(url) => change({ ...value, fields: { ...value.fields, [slot.key]: url } })}
                   />
                 ) : (
                   <input

@@ -24,9 +24,10 @@ async function authorizeDraftRead(req: Request) {
   const writeToken = process.env.CHATGPT_CONNECTOR_WRITE_TOKEN ?? "";
   if (bearerMatches(writeToken, actual)) {
     await requireGptWrite(req);
-    return;
+    return true;
   }
   await requireGptConnector(req, "content");
+  return false;
 }
 
 export async function GET(
@@ -34,9 +35,9 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    await authorizeDraftRead(req);
+    const allowWriteGrant = await authorizeDraftRead(req);
     const { id } = await ctx.params;
-    return gptJson(await getDraft(id));
+    return gptJson(await getDraft(id, undefined, allowWriteGrant));
   } catch (error) {
     return gptError(error);
   }

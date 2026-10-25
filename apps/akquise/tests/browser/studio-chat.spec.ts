@@ -55,9 +55,9 @@ test("Content chat is accessible on iPad and phone and disabled without provider
   await page
     .getByRole("button", { name: "Meine Vorgaben speichern", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "Deine Vorgaben sind gespeichert",
-  );
+  await expect(
+    page.locator(".studio-knowledge").getByRole("status"),
+  ).toContainText("Deine Vorgaben sind gespeichert");
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
