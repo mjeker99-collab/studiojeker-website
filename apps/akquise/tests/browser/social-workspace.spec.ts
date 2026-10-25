@@ -191,6 +191,32 @@ test("Social Media list hides GPT dialogs until promote", async ({ page }) => {
   await expect(page.locator('[data-content-id="dialog-1"]')).toBeVisible();
 });
 
+test("Dialogverwaltung iPad: Löschen-Button und Mehrfachauswahl sichtbar", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 1366 });
+  const items = [
+    content("post-ipad", "Publishing Post", "SOCIAL_POST"),
+    content("dialog-ipad", "iPad Dialog", "GPT_DIALOG"),
+  ];
+  await mockHub(page, items);
+  await page.goto("/");
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Social Media/ })
+    .click();
+  const promote = page.getByRole("region", {
+    name: "Zur Übernahme in Social Media",
+  });
+  await expect(promote.getByText("Alle auswählen")).toBeVisible();
+  await expect(
+    promote.getByRole("button", { name: "«iPad Dialog» löschen" }),
+  ).toBeVisible();
+  await expect(
+    promote.getByRole("button", { name: "Ausgewählte löschen" }),
+  ).toBeVisible();
+});
+
 test("Dialogverwaltung: löschen mit Sicherheitsabfrage und Archivfilter", async ({
   page,
 }) => {
