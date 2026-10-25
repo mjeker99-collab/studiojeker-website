@@ -14,6 +14,15 @@ import { conceptInput } from "@/lib/concepts/input";
 import { conceptDocx, conceptHtml } from "@/lib/concepts/export";
 import { cmsState, importSanityNewsletter } from "@/lib/cms/service";
 import {
+  siteCmsOverview,
+  siteCmsPage,
+  siteCmsPublish,
+  siteCmsReplaceMedia,
+  siteCmsRequestReview,
+  siteCmsSaveDraft,
+} from "@/lib/site-cms/service";
+import { siteCmsSuggest } from "@/lib/site-cms/suggest";
+import {
   libraryState,
   saveLibraryItem,
   archiveItem,
@@ -280,6 +289,16 @@ async function handler(
       return NextResponse.json(
         await importSanityNewsletter(user.id, await jsonBody(req)),
       );
+    if (path[0] === "site-cms" && req.method === "GET") {
+      const headers = { "Cache-Control": "no-store, private" };
+      if (path.length === 2 && path[1] === "overview")
+        return NextResponse.json(await siteCmsOverview(user.id), { headers });
+      if (path.length === 3 && path[1] === "pages")
+        return NextResponse.json(await siteCmsPage(user.id, path[2]), {
+          headers,
+        });
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
     if (route === "social/status" && req.method === "GET")
       return NextResponse.json(await socialStatus(user.id), {
         headers: { "Cache-Control": "no-store" },
@@ -523,9 +542,11 @@ async function handler(
     const maxJsonBytes =
       path[0] === "contacts" && path[1] === "preparation"
         ? 2 * 1024 * 1024
-        : ["concepts", "websites"].includes(path[0])
-          ? 512000
-          : 64000;
+        : path[0] === "site-cms" && path[1] === "media"
+          ? 6_500_000
+          : ["concepts", "websites"].includes(path[0])
+            ? 512000
+            : 64000;
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
@@ -533,6 +554,30 @@ async function handler(
       return NextResponse.json(await websiteMutation(user.id, path, body), {
         headers: { "Cache-Control": "no-store" },
       });
+    if (path[0] === "site-cms" && path.length === 2) {
+      const headers = { "Cache-Control": "no-store" };
+      if (path[1] === "save")
+        return NextResponse.json(await siteCmsSaveDraft(user.id, body), {
+          headers,
+        });
+      if (path[1] === "review")
+        return NextResponse.json(await siteCmsRequestReview(user.id, body), {
+          headers,
+        });
+      if (path[1] === "publish")
+        return NextResponse.json(await siteCmsPublish(user.id, body), {
+          headers,
+        });
+      if (path[1] === "suggest")
+        return NextResponse.json(await siteCmsSuggest(user.id, body), {
+          headers,
+        });
+      if (path[1] === "media")
+        return NextResponse.json(await siteCmsReplaceMedia(user.id, body), {
+          headers,
+        });
+      throw new PolicyError("Nicht gefunden.", 404);
+    }
     if (path[0] === "mail-review" && path.length === 2)
       return NextResponse.json(await mailReview(user.id, path[1], body), {
         headers: { "Cache-Control": "no-store" },

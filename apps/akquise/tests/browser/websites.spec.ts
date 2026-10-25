@@ -71,6 +71,17 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
           mailMode: "disabled",
         },
       });
+    if (path === "/api/site-cms/overview")
+      return route.fulfill({
+        json: {
+          studioUrl: "https://studiojeker.sanity.studio/structure",
+          stagingUrl: "https://staging2026.studiojeker.ch",
+          liveUrl: "https://www.studiojeker.ch",
+          publishAllowed: false,
+          writeConfigured: false,
+          pages: [],
+        },
+      });
     if (path === "/api/websites" && request.method() === "GET")
       return route.fulfill({
         json: {
@@ -175,6 +186,10 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Website/ })
+    .click();
+  await page
+    .getByRole("navigation", { name: "Website-Bereiche" })
+    .getByRole("button", { name: "Neue Website / Landingpage erstellen" })
     .click();
   const studio = page.getByRole("region", {
     name: "Website-Studio",

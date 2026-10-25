@@ -73,25 +73,68 @@ test("CMS overview, responsive controls, import status and provider failure", as
     }
     return route.fulfill({ json: {} });
   });
+  await page.route("**/api/site-cms/overview", async (route) =>
+    route.fulfill({
+      json: {
+        studioUrl: "https://studiojeker.sanity.studio/structure",
+        stagingUrl: "https://staging2026.studiojeker.ch",
+        liveUrl: "https://www.studiojeker.ch",
+        publishAllowed: false,
+        writeConfigured: false,
+        pages: [
+          {
+            key: "homepage",
+            title: "Homepage",
+            path: "/",
+            exists: true,
+            hasDraft: false,
+            source: "published",
+            updatedAt: "2026-10-25T12:00:00Z",
+            stagingUrl: "https://staging2026.studiojeker.ch/",
+            liveUrl: "https://www.studiojeker.ch/",
+            studioUrl: "https://studiojeker.sanity.studio/structure/homepage",
+          },
+        ],
+      },
+    }),
+  );
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Website/ })
     .click();
-  const website = page.getByRole("region", { name: "Website-Verwaltung" });
+  const areas = page.getByRole("navigation", { name: "Website-Bereiche" });
   await expect(
-    website.getByRole("heading", { name: "Website-Inhalte verwalten" }),
+    areas.getByRole("button", { name: "Bestehende Website verwalten" }),
   ).toBeVisible();
   await expect(
-    website.getByRole("link", { name: "Website bearbeiten ↗" }),
+    areas.getByRole("button", {
+      name: "Neue Website / Landingpage erstellen",
+    }),
+  ).toBeVisible();
+  const website = page.getByRole("region", { name: "Bestehende Website" });
+  await expect(
+    website.getByRole("heading", { name: "Bestehende Website verwalten" }),
+  ).toBeVisible();
+  await expect(
+    website.getByRole("link", { name: "Sanity Studio öffnen ↗" }),
   ).toHaveAttribute("target", "_blank");
+  await expect(
+    website.getByRole("button", { name: "Bearbeiten" }),
+  ).toBeVisible();
   await expect(
     website.getByRole("button", { name: "Als neuen Entwurf übernehmen" }),
   ).toHaveCount(0);
   expect(cmsRequests).toBe(0);
   expect(
-    (await new AxeBuilder({ page }).include(".cms-panel").analyze()).violations,
+    (await new AxeBuilder({ page }).include(".site-cms").analyze()).violations,
   ).toEqual([]);
+  await areas
+    .getByRole("button", { name: "Neue Website / Landingpage erstellen" })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Website-Studio" }),
+  ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Newsletter/ })

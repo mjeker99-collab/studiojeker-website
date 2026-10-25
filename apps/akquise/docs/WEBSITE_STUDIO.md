@@ -1,6 +1,6 @@
 # Website-Studio
 
-Der Bereich Website enthält einen persistenten Editor für neue statische Websites und weiterhin den separaten Sanity-Einstieg für studiojeker.ch.
+Der Bereich Website enthält zwei klar getrennte Bereiche: **Bestehende Website verwalten** (studiojeker.ch über Sanity, siehe `SITE_CMS.md`) und **Neue Website / Landingpage erstellen** (dieser Editor). Die Erstellung neuer Websites bleibt unverändert.
 
 ## Ablauf
 
