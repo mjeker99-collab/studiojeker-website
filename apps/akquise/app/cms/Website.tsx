@@ -1,37 +1,41 @@
+"use client";
+import { useState } from "react";
+import ExistingWebsite from "./ExistingWebsite";
 import WebsiteBuilder from "./WebsiteBuilder";
+
 export default function Website({
   initialProjectId,
 }: {
   initialProjectId?: string;
 }) {
+  const [area, setArea] = useState<"existing" | "new">(
+    initialProjectId ? "new" : "existing",
+  );
   return (
     <>
-      <WebsiteBuilder initialProjectId={initialProjectId} />
-      <section className="panel cms-panel" aria-label="Website-Verwaltung">
-        <h2>Website-Inhalte verwalten</h2>
-        <p>Texte, Bilder und Projekte von studiojeker.ch bearbeiten.</p>
-        <div className="actions">
-          <a
-            href="https://studiojeker.sanity.studio/structure"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Website bearbeiten ↗
-          </a>
-          <a
-            href="https://studiojeker.ch"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Website ansehen ↗
-          </a>
-        </div>
-        <p className="muted">
-          Der Editor öffnet in einem neuen Tab und verwendet deine
-          Sanity-Anmeldung. Änderungen werden nach der Bereitstellung der
-          Website sichtbar.
-        </p>
-      </section>
+      <nav className="hub-subnav" aria-label="Website-Bereiche">
+        <button
+          type="button"
+          className={area === "existing" ? "" : "secondary"}
+          aria-pressed={area === "existing"}
+          onClick={() => setArea("existing")}
+        >
+          Bestehende Website verwalten
+        </button>
+        <button
+          type="button"
+          className={area === "new" ? "" : "secondary"}
+          aria-pressed={area === "new"}
+          onClick={() => setArea("new")}
+        >
+          Neue Website / Landingpage erstellen
+        </button>
+      </nav>
+      {area === "existing" ? (
+        <ExistingWebsite />
+      ) : (
+        <WebsiteBuilder initialProjectId={initialProjectId} />
+      )}
     </>
   );
 }

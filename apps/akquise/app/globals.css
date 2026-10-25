@@ -1582,6 +1582,19 @@ pre {
 .cms-panel .actions a { display: inline-flex; align-items: center; min-height: 44px; }
 .cms-document { padding: 20px 0; border-top: 1px solid #d6dadd; overflow-wrap: anywhere; }
 .cms-panel .actions { flex-wrap: wrap; gap: 12px; }
+.site-cms .eyebrow { color: #1f639c; font-weight: 600; margin: 0 0 8px; }
+.site-cms-list { display: grid; gap: 0; }
+.site-cms-editor { margin-top: 8px; min-width: 0; }
+.site-cms-field { border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 16px 0; min-width: 0; }
+.site-cms-field legend { font-weight: 700; padding: 0 6px; }
+.site-cms-field textarea, .site-cms-field input[type="file"] { width: 100%; max-width: 100%; }
+.site-cms-thumb { display: block; width: min(100%, 320px); height: auto; margin: 12px 0; border: 1px solid var(--line); background: #fff; }
+.site-cms-suggestion { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; }
+.site-cms-actions { margin-top: 24px; align-items: center; }
+.site-cms-confirm { display: inline-flex; gap: 10px; align-items: center; min-height: 44px; }
+@media (max-width: 700px) {
+  .site-cms-field, .site-cms-suggestion { padding: 12px; }
+}
 
 /* Concept workspace follows the existing StudioONE controls and typography. */
 .concept-columns { display:grid; grid-template-columns:minmax(0, 0.9fr) minmax(0, 1.1fr); gap:24px; align-items:start; margin-top:24px; }

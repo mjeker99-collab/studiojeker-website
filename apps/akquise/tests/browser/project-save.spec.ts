@@ -114,6 +114,12 @@ for (const workspace of [
         .getByRole("button", { name: workspace.nav, exact: true })
         .click();
     await open();
+    if (workspace.nav === "Website") {
+      await page
+        .getByRole("navigation", { name: "Website-Bereiche" })
+        .getByRole("button", { name: "Neue Website / Landingpage erstellen" })
+        .click();
+    }
     await page
       .getByLabel(workspace.title, { exact: true })
       .fill("Unfertiges Projekt");

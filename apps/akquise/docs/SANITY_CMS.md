@@ -2,7 +2,7 @@
 
 ## Bedienung
 
-Website öffnet das bestehende Studio (Projekt `tgx6e6jg`, Dataset `production`). Der Editor wird in einem eigenen Tab geöffnet. Der gehostete Studio-Endpunkt leitet zum Sanity Dashboard weiter und erlaubt keine Fremd-Frames (am 18.10.2026 geprüft). Sanity verwendet die persönliche Sanity-Anmeldung; StudioONE-Zugang erteilt keine Sanity-Berechtigung. Website enthält ausschliesslich Website-Zugänge und lädt keine Newsletter-Daten. Die Newsletter-Übersicht und der Import sind ausschliesslich unter Newsletter in StudioONE; dies ist keine lokal eingebettete Kopie des Sanity Editors.
+Unter **Website → Bestehende Website verwalten** bearbeitet StudioONE studiojeker.ch direkt über Sanity (Projekt `tgx6e6jg`, Dataset `production`) — siehe `SITE_CMS.md`. Zusätzlich bleibt der Link zum gehosteten Studio. Der Studio-Endpunkt erlaubt keine Fremd-Frames (am 18.10.2026 geprüft). Sanity-Login und StudioONE-Zugang bleiben getrennt. Website lädt keine Newsletter-Daten. Die Newsletter-Übersicht und der Import sind ausschliesslich unter Newsletter in StudioONE.
 
 Die Website bleibt über bestehende Schemas und den bisherigen Deploymentweg bearbeitbar. StudioONE veröffentlicht keine Website-Builds. In Sanity kommt der Bereich Newsletter mit den drei vorhandenen Layouts hinzu. Titel, Betreff, Vorschautext, Zielgruppe, Texte, Bilder und Links sind bearbeitbar. Logo, HTML-Struktur, geschützte Fusszeile und Mailchimp-Platzhalter bleiben im bewährten Renderer. Ein gewähltes Sanity-Bild hat Vorrang vor einer URL; für eine externe URL das ausgewählte Bild entfernen. Sanity-Bilder verwenden derzeit das Original, nicht den Hotspot-Ausschnitt.
 
