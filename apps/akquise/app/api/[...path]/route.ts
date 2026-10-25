@@ -73,6 +73,7 @@ import {
   revokeGptAccess,
   restoreGptAccess,
   setGptShare,
+  setGptWriteGrant,
 } from "@/lib/gpt-connector/settings";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -581,6 +582,8 @@ async function handler(
       return NextResponse.json(await restoreGptAccess(user.id));
     if (route === "integrations/gpt/share")
       return NextResponse.json(await setGptShare(user.id, body));
+    if (route === "integrations/gpt/write-grant")
+      return NextResponse.json(await setGptWriteGrant(user.id, body));
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }

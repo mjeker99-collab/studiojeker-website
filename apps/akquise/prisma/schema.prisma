@@ -633,14 +633,15 @@ model ProjectDraft {
   @@index([userId, area, updatedAt])
 }
 
-// ChatGPT connector settings. Token stays in env; this row tracks scopes and revoke/access.
+// ChatGPT connector settings. Tokens stay in env; this row tracks scopes and revoke/access.
 model GptIntegration {
-  id           String    @id
-  scopes       Json      @default("{\"projects\":true,\"campaigns\":true,\"concepts\":true,\"content\":true}")
-  revokedAt    DateTime?
-  lastAccessAt DateTime?
-  updatedAt    DateTime  @updatedAt
-  updatedBy    String?
+  id               String    @id
+  scopes           Json      @default("{\"projects\":true,\"campaigns\":true,\"concepts\":true,\"content\":true,\"write_drafts\":false}")
+  revokedAt        DateTime?
+  lastAccessAt     DateTime?
+  lastWriteAccessAt DateTime?
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?
 }
 
 // Explicit content grants for the read-only ChatGPT connector.
@@ -653,4 +654,26 @@ model GptShare {
 
   @@unique([entityType, entityId])
   @@index([entityType, sharedAt])
+}
+
+// Explicit write grants for ChatGPT draft writes (separate from read shares).
+model GptWriteGrant {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  grantedBy  String
+  grantedAt  DateTime @default(now())
+
+  @@unique([entityType, entityId])
+  @@index([entityType, grantedAt])
+}
+
+// Idempotency keys for ChatGPT draft creates (avoid duplicate drafts).
+model GptIdempotency {
+  key       String   @id
+  draftKind String
+  draftId   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

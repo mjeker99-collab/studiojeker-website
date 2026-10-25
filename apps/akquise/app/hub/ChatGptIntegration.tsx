@@ -15,10 +15,14 @@ async function request(path: string, body?: unknown) {
 }
 
 const scopeLabels: Array<{ key: keyof GptScopes; label: string }> = [
-  { key: "campaigns", label: "Kampagnen" },
-  { key: "projects", label: "Projekte (Content-Serien)" },
-  { key: "concepts", label: "Konzepte" },
-  { key: "content", label: "Redaktionelle Inhalte / Suche" },
+  { key: "campaigns", label: "Kampagnen (lesen)" },
+  { key: "projects", label: "Projekte / Content-Serien (lesen)" },
+  { key: "concepts", label: "Konzepte (lesen)" },
+  { key: "content", label: "Redaktionelle Inhalte / Suche (lesen)" },
+  {
+    key: "write_drafts",
+    label: "Entwürfe speichern (write_drafts – standardmässig aus)",
+  },
 ];
 
 function formatAccess(value: string | null) {
@@ -65,11 +69,12 @@ export default function ChatGptIntegration() {
     >
       <h2 id="chatgpt-integration-heading">KI-Integrationen → ChatGPT</h2>
       <p>
-        Read-only-Schnittstelle für ChatGPT. Nur explizit freigegebene
-        Kampagnen, Projekte, Konzepte und redaktionelle Entwürfe sind lesbar.
-        Keine Kontakte, Zugangsdaten, SMTP-Einstellungen oder Versandfunktionen.
-        Zugangsschlüssel werden ausschliesslich als Server-Umgebungsvariable
-        verwaltet und hier nicht angezeigt.
+        ChatGPT-Schnittstelle für StudioONE. Lesen nur mit expliziten
+        Freigaben. Schreiben von redaktionellen Entwürfen nur mit separatem
+        Schreib-Token, aktivem <code>write_drafts</code>-Schalter und
+        Schreibfreigaben je Kampagne/Projekt. Kein Publizieren, kein Versand,
+        kein Löschen, keine CRM-Daten. Zugangsschlüssel bleiben
+        Server-Umgebungsvariablen und werden hier nicht angezeigt.
       </p>
       {error && (
         <p role="alert" className="error">
@@ -81,16 +86,28 @@ export default function ChatGptIntegration() {
       {status && (
         <>
           <dl>
-            <dt>Verbindungsstatus</dt>
+            <dt>Lesestatus</dt>
             <dd>
               {!status.tokenConfigured
-                ? "Token in Render nicht konfiguriert"
+                ? "Read-Token in Render nicht konfiguriert"
                 : status.revoked
                   ? "Widerrufen"
-                  : "Bereit (Connector-Token server-seitig hinterlegt)"}
+                  : "Bereit (Read-Token server-seitig hinterlegt)"}
             </dd>
-            <dt>Letzter erfolgreicher Zugriff</dt>
+            <dt>Schreibstatus</dt>
+            <dd>
+              {!status.writeTokenConfigured
+                ? "Schreib-Token nicht konfiguriert (Schreiben deaktiviert)"
+                : status.revoked
+                  ? "Widerrufen"
+                  : status.writeDraftsEnabled
+                    ? "Bereit (write_drafts aktiv)"
+                    : "Token vorhanden, write_drafts noch aus"}
+            </dd>
+            <dt>Letzter Lesezugriff</dt>
             <dd>{formatAccess(status.lastAccessAt)}</dd>
+            <dt>Letzter Schreibzugriff</dt>
+            <dd>{formatAccess(status.lastWriteAccessAt)}</dd>
             <dt>OpenAPI</dt>
             <dd>
               <code>/api/integrations/gpt/openapi</code>
@@ -98,7 +115,7 @@ export default function ChatGptIntegration() {
           </dl>
 
           <fieldset disabled={busy}>
-            <legend>Aktivierte Inhaltsbereiche</legend>
+            <legend>Aktivierte Bereiche</legend>
             {scopeLabels.map(({ key, label }) => (
               <label key={key} style={{ display: "block" }}>
                 <input
@@ -111,7 +128,11 @@ export default function ChatGptIntegration() {
                     };
                     void act(
                       () => request("integrations/gpt/scopes", scopes),
-                      "Inhaltsbereiche aktualisiert.",
+                      key === "write_drafts"
+                        ? e.target.checked
+                          ? "Schreibzugriff für Entwürfe aktiviert."
+                          : "Schreibzugriff für Entwürfe deaktiviert."
+                        : "Inhaltsbereiche aktualisiert.",
                     );
                   }}
                 />{" "}
@@ -119,6 +140,12 @@ export default function ChatGptIntegration() {
               </label>
             ))}
           </fieldset>
+          {status.scopes.write_drafts && (
+            <p role="note">
+              Schreibzugriff speichert nur Entwürfe (Status DRAFT). Freigabe,
+              Versand und Website-Publish bleiben manuell in StudioONE.
+            </p>
+          )}
 
           <div className="actions" style={{ marginTop: "1rem" }}>
             {status.revoked ? (
@@ -146,19 +173,18 @@ export default function ChatGptIntegration() {
                   )
                 }
               >
-                Zugriff widerrufen
+                Zugriff sofort widerrufen
               </button>
             )}
           </div>
 
-          <h3>Freigegebene Inhalte</h3>
+          <h3>Freigegebene Inhalte (Lesen)</h3>
           <p>
-            Ohne Freigabe liefert die Schnittstelle keine Datensätze. Freigaben
-            betreffen nur Lesen.
+            Ohne Lesefreigabe liefert die Schnittstelle keine Datensätze.
+            Lesefreigaben berechtigen nicht zum Schreiben.
           </p>
           <ShareGroup
             title="Kampagnen"
-            entityType="CAMPAIGN"
             items={status.shareCandidates.campaigns}
             busy={busy}
             onToggle={(entityId, shared) =>
@@ -175,7 +201,6 @@ export default function ChatGptIntegration() {
           />
           <ShareGroup
             title="Projekte"
-            entityType="SERIES"
             items={status.shareCandidates.projects}
             busy={busy}
             onToggle={(entityId, shared) =>
@@ -192,7 +217,6 @@ export default function ChatGptIntegration() {
           />
           <ShareGroup
             title="Konzepte"
-            entityType="CONCEPT"
             items={status.shareCandidates.concepts}
             busy={busy}
             onToggle={(entityId, shared) =>
@@ -209,7 +233,6 @@ export default function ChatGptIntegration() {
           />
           <ShareGroup
             title="Redaktionelle Inhalte"
-            entityType="CONTENT"
             items={status.shareCandidates.contents}
             busy={busy}
             onToggle={(entityId, shared) =>
@@ -221,6 +244,79 @@ export default function ChatGptIntegration() {
                     shared,
                   }),
                 shared ? "Inhalt freigegeben." : "Freigabe entfernt.",
+              )
+            }
+          />
+
+          <h3>Schreibfreigaben (Entwürfe)</h3>
+          <p>
+            Zusätzlich zu <code>write_drafts</code> und dem Schreib-Token.
+            ChatGPT darf nur in freigegebenen Kampagnen, Projekten oder
+            Website-Review-Entwürfen speichern.
+          </p>
+          <ShareGroup
+            title="Kampagnen (Schreiben)"
+            items={status.writeCandidates.campaigns.map((c) => ({
+              id: c.id,
+              title: c.title,
+              shared: c.granted,
+            }))}
+            busy={busy}
+            onToggle={(entityId, granted) =>
+              void act(
+                () =>
+                  request("integrations/gpt/write-grant", {
+                    entityType: "CAMPAIGN",
+                    entityId,
+                    granted,
+                  }),
+                granted
+                  ? "Schreibfreigabe für Kampagne gesetzt."
+                  : "Schreibfreigabe entfernt.",
+              )
+            }
+          />
+          <ShareGroup
+            title="Projekte (Schreiben)"
+            items={status.writeCandidates.projects.map((c) => ({
+              id: c.id,
+              title: c.title,
+              shared: c.granted,
+            }))}
+            busy={busy}
+            onToggle={(entityId, granted) =>
+              void act(
+                () =>
+                  request("integrations/gpt/write-grant", {
+                    entityType: "SERIES",
+                    entityId,
+                    granted,
+                  }),
+                granted
+                  ? "Schreibfreigabe für Projekt gesetzt."
+                  : "Schreibfreigabe entfernt.",
+              )
+            }
+          />
+          <ShareGroup
+            title="Website-Review (Schreiben)"
+            items={status.writeCandidates.websites.map((c) => ({
+              id: c.id,
+              title: c.title,
+              shared: c.granted,
+            }))}
+            busy={busy}
+            onToggle={(entityId, granted) =>
+              void act(
+                () =>
+                  request("integrations/gpt/write-grant", {
+                    entityType: "WEBSITE",
+                    entityId,
+                    granted,
+                  }),
+                granted
+                  ? "Schreibfreigabe für Website gesetzt."
+                  : "Schreibfreigabe entfernt.",
               )
             }
           />

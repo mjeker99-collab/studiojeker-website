@@ -6,10 +6,7 @@ import { allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
 import { audit, type Tx } from "../workflow";
 import { campaignInput, contentInput, type ContentInput } from "./input";
-import {
-  canPromoteToSocial,
-  type ContentWorkspace,
-} from "./workspace";
+import { canPromoteToSocial, type ContentWorkspace } from "./workspace";
 export const contentHash = (payload: ContentInput) => {
   // PostgreSQL JSONB may reorder record keys. Canonicalize the new newsletter
   // fields only, preserving the existing hash format for legacy content.
@@ -124,11 +121,16 @@ export async function saveContentInTx(
     : null;
   if (old && (old.version !== expectedVersion || old.kind !== payload.kind))
     throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
-  if (old?.studioSeriesId && old.studioSeriesId !== payload.studio?.seriesId)
-    throw new PolicyError(
-      "Studio-Zuordnung darf nicht entfernt oder geändert werden.",
-      409,
-    );
+  if (old?.studioSeriesId && old.studioSeriesId !== payload.studio?.seriesId) {
+    const previous = await tx.marketingVersion.findUniqueOrThrow({
+      where: { contentId_version: { contentId: old.id, version: old.version } },
+    });
+    if (payload.studio || (previous.payload as { studio?: unknown }).studio)
+      throw new PolicyError(
+        "Studio-Zuordnung darf nicht entfernt oder geändert werden.",
+        409,
+      );
+  }
   const version = (old?.version ?? 0) + 1;
   const workspace: ContentWorkspace | undefined = old
     ? undefined
@@ -139,7 +141,7 @@ export async function saveContentInTx(
           : "SOCIAL_POST"
         : "SOCIAL_POST");
   const data = {
-    studioSeriesId: payload.studio?.seriesId,
+    studioSeriesId: payload.studio?.seriesId || old?.studioSeriesId,
     title: payload.title,
     kind: payload.kind,
     ...(workspace ? { workspace } : {}),

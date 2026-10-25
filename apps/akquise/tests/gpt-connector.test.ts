@@ -7,6 +7,8 @@ import {
 } from "../lib/gpt-connector/sanitize";
 import { gptConnectorOpenApi } from "../lib/gpt-connector/openapi";
 import { defaultScopes } from "../lib/gpt-connector/types";
+import { parseScopes } from "../lib/gpt-connector/auth";
+import { gptDraftCreateInput, gptDraftUpdateInput } from "../lib/gpt-connector/draft-input";
 
 test("sanitize strips secrets, credentials and contact fields", () => {
   const cleaned = sanitizeEditorialPayload({
@@ -65,22 +67,72 @@ test("searchableText concatenates nested editorial fields", () => {
   assert.equal(redactEmails("a@b.ch und c@d.ch"), "[redacted-email] und [redacted-email]");
 });
 
-test("OpenAPI describes only GET connector paths with bearer auth", () => {
+test("OpenAPI describes read and controlled draft write paths", () => {
   process.env.APP_URL = "http://localhost:3100";
   const spec = gptConnectorOpenApi();
   assert.equal(spec.openapi, "3.1.0");
   assert.ok(spec.paths["/api/integrations/gpt/campaigns"].get);
   assert.ok(spec.paths["/api/integrations/gpt/projects"].get);
   assert.ok(spec.paths["/api/integrations/gpt/content/search"].get);
+  assert.ok(spec.paths["/api/integrations/gpt/drafts"].post);
+  assert.ok(spec.paths["/api/integrations/gpt/drafts/{id}"].patch);
+  assert.ok(spec.paths["/api/integrations/gpt/drafts/{id}"].get);
   assert.equal(
     (spec.paths["/api/integrations/gpt/campaigns"] as { post?: unknown }).post,
     undefined,
   );
   assert.ok(spec.components.securitySchemes.connectorBearer);
+  assert.ok(spec.components.securitySchemes.writeBearer);
   assert.deepEqual(defaultScopes(), {
     projects: true,
     campaigns: true,
     concepts: true,
     content: true,
+    write_drafts: false,
   });
+});
+
+test("write_drafts is opt-in and legacy scopes stay read-only", () => {
+  assert.equal(parseScopes({ projects: true, campaigns: true }).write_drafts, false);
+  assert.equal(
+    parseScopes({
+      projects: true,
+      campaigns: true,
+      concepts: true,
+      content: true,
+      write_drafts: true,
+    }).write_drafts,
+    true,
+  );
+  assert.equal(parseScopes({ write_drafts: "yes" }).write_drafts, false);
+});
+
+test("draft input allowlist rejects forbidden fields and status changes", () => {
+  assert.equal(
+    gptDraftCreateInput.safeParse({
+      kind: "NEWSLETTER",
+      title: "x",
+      campaignId: "c1",
+      subject: "s",
+      body: "b",
+      audience: "a",
+      status: "APPROVED",
+    }).success,
+    false,
+  );
+  assert.equal(
+    gptDraftUpdateInput.safeParse({
+      expectedVersion: 1,
+      status: "PUBLISHED",
+      delete: true,
+    }).success,
+    false,
+  );
+  assert.equal(
+    gptDraftUpdateInput.safeParse({
+      expectedVersion: 1,
+      subject: "Neuer Betreff",
+    }).success,
+    true,
+  );
 });
