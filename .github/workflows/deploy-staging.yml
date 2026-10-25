@@ -313,6 +313,35 @@ jobs:
           done
           echo "Staging deployment verification completed successfully"
 
+      - name: Publish verified deployment status
+        env:
+          METANET_FTP_SERVER: ${{ secrets.METANET_FTP_SERVER }}
+          METANET_FTP_USERNAME: ${{ secrets.METANET_FTP_USERNAME }}
+          METANET_FTP_PASSWORD: ${{ secrets.METANET_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # Publish a public, credential-free manifest only AFTER checks pass.
+          # This is the exact deployment SHA, not a claim of production release.
+          mkdir -p /tmp/staging-deploy-status
+          node -e 'const fs=require("node:fs");const value={service:"studiojeker-website",environment:"staging",status:"verified",commit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,verifiedAt:new Date().toISOString(),checks:["homepage-http-200","content-abo-http-200"]};fs.writeFileSync("/tmp/staging-deploy-status/deploy-status.json",JSON.stringify(value,null,2)+"\\n")'
+          # FTP credentials are never logged. Upload to web root, same target as static export.
+          lftp <<EOF
+          set cmd:fail-exit true
+          set ssl:verify-certificate true
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ftp:ssl-protect-list true
+          set ftp:passive-mode true
+          set ftp:prefer-epsv false
+          set net:timeout 60
+          set net:max-retries 3
+          open -u "$METANET_FTP_USERNAME","$METANET_FTP_PASSWORD" "ftp://$METANET_FTP_SERVER:21"
+          lcd /tmp/staging-deploy-status
+          put -O . deploy-status.json
+          bye
+          EOF
+          echo "Published public staging manifest: /deploy-status.json"
+
       - name: Record deployment outcome
         if: always()
         run: |
