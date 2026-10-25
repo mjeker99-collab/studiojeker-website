@@ -5,6 +5,9 @@ import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
+import DialogManager, {
+  type DialogManagerItem,
+} from "../dialogs/DialogManager";
 import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
 async function post(path: string, body: unknown) {
@@ -92,7 +95,11 @@ export default function StudioChat({
         c.kind === "SOCIAL" &&
         (c.workspace === "GPT_DIALOG" || c.workspace === "CONTENT_DRAFT"),
     ) || [];
-  async function promoteSocial(contentId: string, version: number) {
+  async function promoteSocial(
+    contentId: string,
+    version: number,
+    nextCampaignId?: string | null,
+  ) {
     setBusy(true);
     setError("");
     setProjectNotice("");
@@ -100,7 +107,14 @@ export default function StudioChat({
       const r = await fetch(`/api/hub/promote-social/${contentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version }),
+        body: JSON.stringify({
+          version,
+          ...(nextCampaignId !== undefined
+            ? { campaignId: nextCampaignId }
+            : campaignId
+              ? { campaignId }
+              : {}),
+        }),
         signal: AbortSignal.timeout(30000),
       });
       const data = await r.json();
@@ -116,6 +130,53 @@ export default function StudioChat({
           ? e.message
           : "Übernahme in Social Media fehlgeschlagen.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function manageSeriesDialogs(
+    action: "archive" | "restore" | "delete",
+    items: DialogManagerItem[],
+  ) {
+    setBusy(true);
+    setError("");
+    setProjectNotice("");
+    try {
+      const r = await fetch("/api/hub/dialogs/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          items: items.map((item) => ({
+            id: item.id,
+            version: item.version,
+          })),
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const data = await r.json();
+      if (!r.ok)
+        throw new Error(
+          data.error ||
+            (action === "delete"
+              ? "Löschen fehlgeschlagen."
+              : "Dialogaktion fehlgeschlagen."),
+        );
+      await refresh();
+      setProjectNotice(
+        action === "delete"
+          ? items.length === 1
+            ? `Dialog «${items[0].title}» gelöscht.`
+            : `${items.length} Dialoge gelöscht.`
+          : action === "archive"
+            ? "Dialog archiviert."
+            : "Dialog wiederhergestellt.",
+      );
+    } catch (e) {
+      const text =
+        e instanceof Error ? e.message : "Dialogaktion fehlgeschlagen.";
+      setError(text);
+      throw new Error(text);
     } finally {
       setBusy(false);
     }
@@ -440,28 +501,27 @@ export default function StudioChat({
       />
 
       {!!dialogContents.length && (
-        <div
-          className="studio-chat-promote"
-          role="region"
-          aria-label="Social Media Übernahme"
-        >
-          <p>
-            GPT-Dialoge und Content-Entwürfe erscheinen nicht automatisch unter
-            Social Media. Explizit übernehmen, wenn der Beitrag publishing-reif
-            ist.
-          </p>
-          {dialogContents.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="ai-button"
-              disabled={busy}
-              onClick={() => void promoteSocial(c.id, c.version)}
-            >
-              «{c.title}» in Social Media übernehmen
-            </button>
-          ))}
-        </div>
+        <DialogManager
+          compact
+          items={dialogContents}
+          busy={busy}
+          canManage
+          heading="Dialoge dieses Projekts"
+          regionLabel="Dialogverwaltung im GPT-Projekt"
+          description="GPT-Dialoge und Content-Entwürfe erscheinen nicht automatisch unter Social Media. Explizit übernehmen, archivieren oder löschen."
+          emptyLabel="Keine aktiven Dialoge in diesem Projekt."
+          campaignName={(id) =>
+            state.campaigns.find((c) => c.id === id)?.title || "Ohne Kampagne"
+          }
+          campaigns={state.campaigns.map((c) => ({
+            id: c.id,
+            title: c.title,
+          }))}
+          onPromote={(c, nextCampaignId) =>
+            void promoteSocial(c.id, c.version, nextCampaignId)
+          }
+          onManage={manageSeriesDialogs}
+        />
       )}
       <p className="muted">
         Für{" "}

@@ -16,6 +16,7 @@ import {
   planDraft,
   promoteToSocialPost,
 } from "./workflow";
+import { manageDialogs } from "./dialogs";
 import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
 const version = z.number().int().positive();
@@ -182,8 +183,17 @@ export async function hubMutation(
     return { ok: true };
   }
   if (path[1] === "promote-social" && path.length === 3) {
-    const d = z.object({ version }).strict().parse(body);
-    return promoteToSocialPost(actor, id, d.version);
+    const d = z
+      .object({
+        version,
+        campaignId: z.string().min(1).nullable().optional(),
+      })
+      .strict()
+      .parse(body);
+    return promoteToSocialPost(actor, id, d.version, d.campaignId);
+  }
+  if (path.join("/") === "hub/dialogs/manage") {
+    return manageDialogs(actor, body);
   }
   if (path[1] === "export" && path.length === 3) {
     const d = z.object({ version }).strict().parse(body);

@@ -15,12 +15,14 @@ import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
 import SocialMediaField from "./SocialMediaField";
 import ChatGptIntegration from "./ChatGptIntegration";
+import DialogManager from "../dialogs/DialogManager";
 import { useEffect, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
 import { displayTime, zurichInput, zurichInstant } from "@/lib/hub/time";
 import {
   canPromoteToSocial,
+  isManagedDialog,
   isSocialPublishingPost,
   workspaceLabels,
 } from "@/lib/hub/workspace";
@@ -336,12 +338,52 @@ export default function Hub({
     if (section === "Newsletter") return c.kind === "NEWSLETTER";
     return true;
   });
-  const promotable = data.contents.filter(
+  const managedDialogs = data.contents.filter(
     (c) =>
-      canPromoteToSocial(c) &&
+      isManagedDialog(c) &&
       (!campaignFilter || c.campaignId === campaignFilter) &&
       (!owner || c.ownerId === owner),
   );
+  async function manageDialogs(
+    action: "archive" | "restore" | "delete",
+    items: { id: string; version: number; title: string }[],
+  ) {
+    const message =
+      action === "delete"
+        ? items.length === 1
+          ? `Dialog «${items[0].title}» gelöscht.`
+          : `${items.length} Dialoge gelöscht.`
+        : action === "archive"
+          ? items.length === 1
+            ? `Dialog «${items[0].title}» archiviert.`
+            : `${items.length} Dialoge archiviert.`
+          : items.length === 1
+            ? `Dialog «${items[0].title}» wiederhergestellt.`
+            : `${items.length} Dialoge wiederhergestellt.`;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await post("dialogs/manage", {
+        action,
+        items: items.map((item) => ({
+          id: item.id,
+          version: item.version,
+        })),
+      });
+      await refresh();
+      setNotice(message);
+    } catch (e) {
+      const text =
+        e instanceof Error
+          ? e.message
+          : "Dialogaktion fehlgeschlagen. Bitte erneut versuchen.";
+      setError(text);
+      throw new Error(text);
+    } finally {
+      setBusy(false);
+    }
+  }
   const socialChannelOptions = Object.entries(channelLabels).filter(([key]) =>
     section === "Social Media"
       ? channels.includes(key as (typeof channels)[number])
@@ -597,57 +639,31 @@ export default function Hub({
               Versand.
             </p>
           </section>
-          {!!promotable.length && (
-            <section
-              className="panel padded social-promote"
-              aria-label="Zur Übernahme in Social Media"
-            >
-              <h2>Zur Übernahme</h2>
-              <p>
-                Content-Entwürfe und GPT-Dialoge bleiben gespeichert. Übernahme
-                verschiebt sie nur in die Publishing-Liste – nichts wird
-                gelöscht.
-              </p>
-              <div className="hub-cards">
-                {promotable.map((c) => (
-                  <article className="panel padded" key={c.id}>
-                    <p className="eyebrow">
-                      {workspaceLabels[
-                        (c.workspace ||
-                          "CONTENT_DRAFT") as keyof typeof workspaceLabels
-                      ]}
-                    </p>
-                    <h3>{c.title}</h3>
-                    <p className="muted">
-                      {campaignName(c.campaignId)} · V{c.version}
-                    </p>
-                    <div className="actions">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          act(async () => {
-                            await post("promote-social/" + c.id, {
-                              version: c.version,
-                            });
-                          }, "In Social Media übernommen.")
-                        }
-                      >
-                        In Social Media übernehmen
-                      </button>
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => edit(c)}
-                      >
-                        Vorher öffnen
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
+          <DialogManager
+            items={managedDialogs}
+            campaignName={(id) => campaignName(id ?? null)}
+            campaigns={data.campaigns.map((c) => ({
+              id: c.id,
+              title: c.title,
+            }))}
+            busy={busy}
+            canManage
+            onPromote={(c, campaignId) =>
+              act(async () => {
+                await post("promote-social/" + c.id, {
+                  version: c.version,
+                  ...(campaignId !== undefined
+                    ? { campaignId }
+                    : {}),
+                });
+              }, "In Social Media übernommen.")
+            }
+            onOpen={(c) => {
+              const full = data.contents.find((item) => item.id === c.id);
+              if (full) edit(full);
+            }}
+            onManage={manageDialogs}
+          />
         </>
       )}
       {section === "Übersicht" && (

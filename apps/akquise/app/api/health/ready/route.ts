@@ -7,7 +7,7 @@ export async function GET() {
     await db.$queryRaw`SELECT "key" FROM "GptIdempotency" LIMIT 0`;
     await db.$queryRaw`SELECT "revision" FROM "ProjectDraft" LIMIT 0`;
     await db.$queryRaw`SELECT "mode" FROM "Delivery" LIMIT 0`;
-    await db.$queryRaw`SELECT "version", "workspace" FROM "MarketingContent" LIMIT 0`;
+    await db.$queryRaw`SELECT "version", "workspace", "archivedAt" FROM "MarketingContent" LIMIT 0`;
     await db.$queryRaw`SELECT "planningRevision" FROM "Draft" LIMIT 0`;
     await db.$queryRaw`SELECT "status" FROM "StudioJob" LIMIT 0`;
     await db.$queryRaw`SELECT "revision" FROM "LibraryItem" LIMIT 0`;

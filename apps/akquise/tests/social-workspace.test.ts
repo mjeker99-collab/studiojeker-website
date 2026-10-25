@@ -2,10 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   canPromoteToSocial,
+  isManagedDialog,
   isSocialPublishingPost,
   workspaceForBriefing,
   workspaceLabels,
 } from "../lib/hub/workspace";
+import { dialogManageInput } from "../lib/hub/dialog-input";
 
 test("Social publishing list excludes GPT dialogs and content drafts", () => {
   assert.equal(
@@ -46,6 +48,43 @@ test("Only drafts and GPT dialogs can be promoted into Social Media", () => {
   assert.equal(
     canPromoteToSocial({ kind: "NEWSLETTER", workspace: "CONTENT_DRAFT" }),
     false,
+  );
+  assert.equal(
+    canPromoteToSocial({
+      kind: "SOCIAL",
+      workspace: "GPT_DIALOG",
+      archivedAt: new Date(),
+    }),
+    false,
+  );
+  assert.equal(isManagedDialog({ kind: "SOCIAL", workspace: "GPT_DIALOG" }), true);
+  assert.equal(
+    isManagedDialog({ kind: "SOCIAL", workspace: "SOCIAL_POST" }),
+    false,
+  );
+});
+
+test("Dialog manage input accepts archive restore and delete batches", () => {
+  const parsed = dialogManageInput.parse({
+    action: "delete",
+    items: [
+      { id: "dialog-1", version: 1 },
+      { id: "dialog-2", version: 3 },
+    ],
+  });
+  assert.equal(parsed.action, "delete");
+  assert.equal(parsed.items.length, 2);
+  assert.throws(() =>
+    dialogManageInput.parse({
+      action: "delete",
+      items: [],
+    }),
+  );
+  assert.throws(() =>
+    dialogManageInput.parse({
+      action: "purge",
+      items: [{ id: "x", version: 1 }],
+    }),
   );
 });
 
