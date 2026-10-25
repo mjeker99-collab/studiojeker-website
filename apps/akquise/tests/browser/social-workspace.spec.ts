@@ -216,19 +216,23 @@ test("Dialogverwaltung: löschen mit Sicherheitsabfrage und Archivfilter", async
   ).toHaveCount(0);
   await expect(page.locator('[data-content-id="post-keep"]')).toBeVisible();
 
-  await promote.getByRole("button", { name: "Archivieren" }).click();
+  await promote.getByRole("button", { name: "Archivieren", exact: true }).click();
   const archiveConfirm = page.getByRole("alertdialog");
   await expect(archiveConfirm).toContainText("Archiv-Dialog");
-  await archiveConfirm.getByRole("button", { name: "Archivieren" }).click();
+  await archiveConfirm
+    .getByRole("button", { name: "Archivieren", exact: true })
+    .click();
   await expect(page.getByRole("status")).toHaveText(/archiviert/i);
   await promote.getByRole("button", { name: "Archiv", exact: true }).click();
   await expect(
     promote.getByRole("heading", { name: "Archiv-Dialog" }),
   ).toBeVisible();
-  await promote.getByRole("button", { name: "Wiederherstellen" }).click();
+  await promote
+    .getByRole("button", { name: "Wiederherstellen", exact: true })
+    .click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Wiederherstellen" })
+    .getByRole("button", { name: "Wiederherstellen", exact: true })
     .click();
   await expect(page.getByRole("status")).toHaveText(/wiederhergestellt/i);
   await promote.getByRole("button", { name: "Aktiv", exact: true }).click();
