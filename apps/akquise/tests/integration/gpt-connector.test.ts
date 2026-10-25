@@ -397,6 +397,7 @@ test("Write drafts: auth, grants, create/read, locking, idempotency, no side eff
   });
   const linked = await drafts.createDraft(actor, {
     ...createBody,
+    title: "Projektgebundener Testentwurf",
     seriesId: ungrantedSeries.id,
     idempotencyKey: "linked-series-draft-test",
   });
