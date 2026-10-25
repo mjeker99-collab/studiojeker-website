@@ -267,6 +267,7 @@ export default function AssistantEntry({
             {chatRequest && (
               <StudioChat
                 key={chatKey}
+                projectArea={section}
                 state={state}
                 refresh={refresh}
                 onProjectAssigned={onProjectAssigned}

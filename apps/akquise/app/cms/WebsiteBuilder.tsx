@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import ProjectSave from "../projects/ProjectSave";
 import {
   blankWebsite,
   blankPage,
@@ -147,11 +148,17 @@ export default function WebsiteBuilder({
         ? { version: project.version, document: doc }
         : { customerId, document: doc },
     );
+    const pendingMessage = message;
     await load(result.id);
-    if (!project && doc.briefing.startsWith("Grundtemplate:"))
+    if (
+      !pendingMessage.trim() &&
+      !project &&
+      doc.briefing.startsWith("Grundtemplate:")
+    )
       setMessage(
         "Personalisiere diese Vorlage für den gewählten Kunden und das Ziel im Briefing. Erhalte die Seitenstruktur und frage nach fehlenden Angaben.",
       );
+    if (pendingMessage.trim()) setMessage(pendingMessage);
     await reloadList();
     setStatus("Website als neue Version gespeichert.");
   }
@@ -239,6 +246,39 @@ export default function WebsiteBuilder({
           Neue Website
         </button>
       </div>
+
+      <ProjectSave
+        area="Website-Studio"
+        identity={project?.id || ""}
+        suggestedTitle={doc.name || "Neue Website"}
+        busy={busy}
+        value={{
+          nativeId: project?.id || "",
+          nativeVersion: project?.version || 0,
+          doc,
+          customerId,
+          pageIndex,
+          message,
+          previewJob,
+          proposalPage,
+          mobile,
+        }}
+        restore={async (draft) => {
+          const next = draft.nativeId
+            ? await api<Project>(`/${draft.nativeId}`)
+            : null;
+          setProject(next ? { ...next, version: draft.nativeVersion } : null);
+          setDoc(draft.doc);
+          setCustomerId(draft.customerId);
+          setPageIndex(draft.pageIndex);
+          setMessage(draft.message);
+          setPreviewJob(draft.previewJob);
+          setProposalPage(draft.proposalPage);
+          setMobile(draft.mobile);
+          setConsent(false);
+          setRestoreVersion("");
+        }}
+      />
       {!project && (
         <WebsiteTemplates
           disabled={busy}
@@ -419,6 +459,7 @@ export default function WebsiteBuilder({
         <label>
           Dein Auftrag an GPT
           <textarea
+            aria-label="Dein Auftrag an GPT"
             rows={3}
             maxLength={6000}
             value={message}

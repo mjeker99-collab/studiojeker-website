@@ -16,7 +16,6 @@ export default function MailchimpTemplates() {
   const [expanded, setExpanded] = useState(false);
 
   function refresh(signal?: AbortSignal) {
-    if (!signal) { setBusy(true); setError(""); }
     return fetch("/api/mailchimp/templates", { cache: "no-store", signal })
       .then(async (response) => {
         const body = await response.json();
@@ -67,7 +66,7 @@ export default function MailchimpTemplates() {
             {connected ? `${templates.length} Vorlagen gefunden · Nur Lesezugriff` : "Vorlagen des verbundenen Mailchimp-Kontos"}
           </p>
         </div>
-        <button type="button" className="secondary" disabled={busy} onClick={() => void refresh()}>
+        <button type="button" className="secondary" disabled={busy} onClick={() => { setBusy(true); setError(""); void refresh(); }}>
           {busy ? "Laden…" : "↻ Aktualisieren"}
         </button>
       </div>

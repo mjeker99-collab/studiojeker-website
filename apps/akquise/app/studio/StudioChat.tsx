@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private authenticated image routes. */
 import { useEffect, useState } from "react";
+import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
@@ -22,6 +23,7 @@ export default function StudioChat({
   refresh,
   initialRequest,
   hasUnsavedContent = false,
+  projectArea = "Content-Studio",
   onProjectAssigned,
 }: {
   state: State;
@@ -36,6 +38,7 @@ export default function StudioChat({
     customerId?: string;
   };
   hasUnsavedContent?: boolean;
+  projectArea?: string;
   onProjectAssigned?: () => void;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
@@ -109,7 +112,9 @@ export default function StudioChat({
       setProjectNotice("Beitrag in Social Media übernommen.");
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Übernahme in Social Media fehlgeschlagen.",
+        e instanceof Error
+          ? e.message
+          : "Übernahme in Social Media fehlgeschlagen.",
       );
     } finally {
       setBusy(false);
@@ -121,6 +126,7 @@ export default function StudioChat({
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
+
   const [projectNotice, setProjectNotice] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [referenceIds, setReferenceIds] = useState<string[]>(
@@ -394,8 +400,51 @@ export default function StudioChat({
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
       <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
+      <ProjectSave
+        area={projectArea}
+        identity={seriesId}
+        suggestedTitle={
+          activeSeries?.title ||
+          message.trim().slice(0, 80) ||
+          `${projectArea} Projekt`
+        }
+        busy={busy}
+        value={{
+          nativeId: seriesId,
+          campaignId,
+          customerId,
+          message,
+          mediaIntent,
+          contentId,
+          referenceIds,
+          driveImages,
+          replyToJobId,
+          useProjectMemory,
+        }}
+        restore={async (draft) => {
+          await refresh();
+          setSeriesId(draft.nativeId);
+          setCampaignId(draft.campaignId);
+          setCustomerId(draft.customerId);
+          setMessage(draft.message);
+          setMediaIntent(draft.mediaIntent);
+          setContentId(draft.contentId);
+          setReferenceIds(draft.referenceIds);
+          setDriveImages(draft.driveImages);
+          setReplyToJobId(draft.replyToJobId);
+          setUseProjectMemory(draft.useProjectMemory);
+          setConfirmed(false);
+          setUploadRights(false);
+          setError("");
+        }}
+      />
+
       {!!dialogContents.length && (
-        <div className="studio-chat-promote" role="region" aria-label="Social Media Übernahme">
+        <div
+          className="studio-chat-promote"
+          role="region"
+          aria-label="Social Media Übernahme"
+        >
           <p>
             GPT-Dialoge und Content-Entwürfe erscheinen nicht automatisch unter
             Social Media. Explizit übernehmen, wenn der Beitrag publishing-reif

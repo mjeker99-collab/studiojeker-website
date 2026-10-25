@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export async function GET() {
   try {
+    await db.$queryRaw`SELECT "revision" FROM "ProjectDraft" LIMIT 0`;
     await db.$queryRaw`SELECT "mode" FROM "Delivery" LIMIT 0`;
     await db.$queryRaw`SELECT "version", "workspace" FROM "MarketingContent" LIMIT 0`;
     await db.$queryRaw`SELECT "planningRevision" FROM "Draft" LIMIT 0`;
