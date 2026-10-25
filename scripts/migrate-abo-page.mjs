@@ -263,6 +263,144 @@ async function main() {
         "A fixed monthly budget. A clearly defined scope of work.",
       ),
     },
+    packagesSection: {
+      label: locString("Pakete", "Packages"),
+      headline: locString("Sichtbarkeit im Abo.", "Visibility as a subscription."),
+      introduction: locText(
+        "Drei klare Optionen — von regelmässigem Content für kleinere Unternehmen bis zur massgeschneiderten Partnerschaft. Leistungsumfang und Preis sind im CMS editierbar.",
+        "Three clear options — from regular content for smaller businesses to a tailored partnership. Scope and pricing are defined together and can be adjusted in the CMS.",
+      ),
+      vatNote: locString(
+        "zzgl. MWST (Ausweisung zur Prüfung)",
+        "excl. VAT (disclosure under review)",
+      ),
+      packages: [
+        {
+          _key: key(),
+          _type: "aboPackage",
+          id: "start",
+          name: locString("Visibility Start", "Visibility Start"),
+          price: locString("CHF 650.–", "CHF 650.–"),
+          priceSuffix: locString("/Monat", "/month"),
+          summary: locText(
+            "Für kleine Unternehmen mit Bedarf an regelmässiger Content-Planung — ohne eigenes Content-Team.",
+            "For small businesses that want regular content planning without building an in-house team.",
+          ),
+          features: [
+            ["Regelmässige Content-Planung", "Regular content planning"],
+            ["Social-Media-Inhalte", "Social media content"],
+            ["Texte", "Copywriting"],
+            ["Bildbearbeitung", "Image editing"],
+          ].map(([de, en]) => ({
+            _key: key(),
+            _type: "aboPackageFeature",
+            label: locString(de, en),
+          })),
+          highlighted: false,
+          sortOrder: 0,
+          cta: {
+            _type: "ctaField",
+            label: locString("Start anfragen", "Request Start"),
+            href: "/contact",
+          },
+        },
+        {
+          _key: key(),
+          _type: "aboPackage",
+          id: "plus",
+          name: locString("Visibility Plus", "Visibility Plus"),
+          price: locString("CHF 1’250.–", "CHF 1’250.–"),
+          priceSuffix: locString("/Monat", "/month"),
+          summary: locText(
+            "Für KMU mit erweiterter Redaktionsplanung, mehr Content-Formaten und mehreren Kanälen.",
+            "For SMEs that need extended editorial planning across more formats and channels.",
+          ),
+          features: [
+            ["Erweiterte Redaktionsplanung", "Extended editorial planning"],
+            ["Mehr Content-Formate", "More content formats"],
+            ["Bild und Video", "Image and video"],
+            ["Mehrere Kanäle", "Multiple channels"],
+          ].map(([de, en]) => ({
+            _key: key(),
+            _type: "aboPackageFeature",
+            label: locString(de, en),
+          })),
+          highlighted: true,
+          sortOrder: 1,
+          cta: {
+            _type: "ctaField",
+            label: locString("Plus anfragen", "Request Plus"),
+            href: "/contact",
+          },
+        },
+        {
+          _key: key(),
+          _type: "aboPackage",
+          id: "individual",
+          name: locString("Visibility Individuell", "Visibility Individuell"),
+          price: locString("Preis auf Anfrage", "Price on request"),
+          priceSuffix: locString("", ""),
+          summary: locText(
+            "Massgeschneiderte Strategie, Kampagnen und Content-Produktion — optional mit Erfolgsanalysen.",
+            "For businesses that need a tailored strategy, campaigns and production — with optional performance reviews.",
+          ),
+          features: [
+            ["Massgeschneiderte Strategie", "Tailored strategy"],
+            ["Kampagnen", "Campaigns"],
+            ["Content-Produktion", "Content production"],
+            ["Optionale Erfolgsanalysen", "Optional performance analysis"],
+          ].map(([de, en]) => ({
+            _key: key(),
+            _type: "aboPackageFeature",
+            label: locString(de, en),
+          })),
+          highlighted: false,
+          sortOrder: 2,
+          cta: {
+            _type: "ctaField",
+            label: locString("Individuell anfragen", "Request Individuell"),
+            href: "/contact",
+          },
+        },
+      ],
+    },
+    promoSection: {
+      enabled: true,
+      startDate: "2026-10-28",
+      endDate: "2026-11-30",
+      label: locString("Aktion", "Limited offer"),
+      headline: locString(
+        "Einführungsangebot für neue Abos",
+        "Launch offer for new subscriptions",
+      ),
+      text: locText(
+        "Vom 28.10.2026 bis 30.11.2026: Recherche und Konzeption kostenlos sowie der erste Abomonat kostenlos.",
+        "From 28 October to 30 November 2026: research and concept free of charge, and the first subscription month free of charge.",
+      ),
+      terms: [
+        [
+          "Recherche und Konzeption kostenlos",
+          "Research and concept free of charge",
+        ],
+        [
+          "Erster Abomonat kostenlos",
+          "First subscription month free of charge",
+        ],
+        [
+          "Mindestlaufzeit 6 Monate, danach monatlich kündbar",
+          "Minimum term 6 months, then cancellable monthly",
+        ],
+      ].map(([de, en]) => ({
+        _key: key(),
+        _type: "aboPromoTerm",
+        label: locString(de, en),
+      })),
+      cta: {
+        _type: "ctaField",
+        label: locString("Aktion nutzen", "Claim the offer"),
+        href: "/contact",
+      },
+    },
     showreelSection: {
       label: locString("Showreel", "Showreel"),
       headline: locString(

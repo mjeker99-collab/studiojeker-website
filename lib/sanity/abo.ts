@@ -42,6 +42,29 @@ export type SanityAboCta = {
   href?: string | null;
 } | null;
 
+export type SanityAboPackageFeature = {
+  _key?: string;
+  label?: SanityLocalizedString;
+} | null;
+
+export type SanityAboPackage = {
+  _key?: string;
+  id?: string | null;
+  name?: SanityLocalizedString;
+  price?: SanityLocalizedString;
+  priceSuffix?: SanityLocalizedString;
+  summary?: SanityLocalizedText;
+  features?: SanityAboPackageFeature[] | null;
+  highlighted?: boolean | null;
+  cta?: SanityAboCta;
+  sortOrder?: number | null;
+} | null;
+
+export type SanityAboPromoTerm = {
+  _key?: string;
+  label?: SanityLocalizedString;
+} | null;
+
 export type SanityAbo = {
   _id?: string | null;
   heroSection?: {
@@ -72,6 +95,23 @@ export type SanityAbo = {
     items?: SanityAboScopeItem[] | null;
     closing?: SanityLocalizedText;
     highlight?: SanityLocalizedText;
+  } | null;
+  packagesSection?: {
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    introduction?: SanityLocalizedText;
+    vatNote?: SanityLocalizedString;
+    packages?: SanityAboPackage[] | null;
+  } | null;
+  promoSection?: {
+    enabled?: boolean | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    label?: SanityLocalizedString;
+    headline?: SanityLocalizedString;
+    text?: SanityLocalizedText;
+    terms?: SanityAboPromoTerm[] | null;
+    cta?: SanityAboCta;
   } | null;
   showreelSection?: {
     label?: SanityLocalizedString;
@@ -143,6 +183,40 @@ export const aboQuery = groq`*[_id == $id && _type == "abo"][0]{
     },
     closing${localizedTextProjection},
     highlight${localizedTextProjection}
+  },
+  packagesSection{
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    introduction${localizedTextProjection},
+    vatNote${localizedStringProjection},
+    packages[]{
+      _key,
+      id,
+      name${localizedStringProjection},
+      price${localizedStringProjection},
+      priceSuffix${localizedStringProjection},
+      summary${localizedTextProjection},
+      features[]{
+        _key,
+        label${localizedStringProjection}
+      },
+      highlighted,
+      cta${ctaProjection},
+      sortOrder
+    }
+  },
+  promoSection{
+    enabled,
+    startDate,
+    endDate,
+    label${localizedStringProjection},
+    headline${localizedStringProjection},
+    text${localizedTextProjection},
+    terms[]{
+      _key,
+      label${localizedStringProjection}
+    },
+    cta${ctaProjection}
   },
   showreelSection{
     label${localizedStringProjection},

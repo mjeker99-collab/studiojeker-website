@@ -3,6 +3,28 @@ import type { HomepageBenefit, HomepageMedia } from "@/types/homepage";
 import { getAboPath, localizePathname } from "@/lib/i18n/config";
 import { showreels } from "@/lib/content/showreels";
 
+export type AboPackage = {
+  id: string;
+  name: string;
+  price: string;
+  priceSuffix: string;
+  summary: string;
+  features: string[];
+  highlighted: boolean;
+  cta: { label: string; href: string };
+};
+
+export type AboPromoContent = {
+  enabled: boolean;
+  startDate: string;
+  endDate: string;
+  label: string;
+  headline: string;
+  text: string;
+  terms: string[];
+  cta: { label: string; href: string };
+};
+
 export type AboPageContent = {
   seo: {
     title: string;
@@ -41,6 +63,15 @@ export type AboPageContent = {
     closing: string;
     highlight: string;
   };
+  packages: {
+    label: string;
+    headline: string;
+    introduction: string;
+    /** MWST note — marked for editorial review until final VAT wording is approved. */
+    vatNote: string;
+    items: AboPackage[];
+  };
+  promo: AboPromoContent;
   showreel: {
     label: string;
     headline: string;
@@ -58,11 +89,17 @@ export type AboPageContent = {
   };
 };
 
+/** Default promo window (Zurich calendar days, inclusive). */
+export const ABO_PROMO_DEFAULT_WINDOW = {
+  startDate: "2026-10-28",
+  endDate: "2026-11-30",
+} as const;
+
 /**
  * Local fallback for the Content-Abo landing page.
  * DE path: `/content-abo` (no `/de` prefix — project language logic).
  * EN path: `/en/content-subscription`.
- * No package prices in V1.
+ * Package prices and scope are CMS-editable; local values are fallbacks only.
  */
 export function getAboPageContent(locale: Locale): AboPageContent {
   const contact = localizePathname("/contact", locale);
@@ -82,7 +119,7 @@ export function getAboPageContent(locale: Locale): AboPageContent {
       seo: {
         title: "Visibility Subscription | Studiojeker",
         description:
-          "Continuous content for website, social media and digital communication — planned, produced and delivered by Studiojeker.",
+          "Visibility Start, Plus or Individuell: continuous content for website, social media and digital communication — planned and produced by Studiojeker.",
       },
       hero: {
         label: "Visibility subscription",
@@ -181,6 +218,78 @@ export function getAboPageContent(locale: Locale): AboPageContent {
           "The subscription is assembled according to communication need, frequency and production scope.",
         highlight: "A fixed monthly budget. A clearly defined scope of work.",
       },
+      packages: {
+        label: "Packages",
+        headline: "Visibility as a subscription.",
+        introduction:
+          "Three clear options — from regular content for smaller businesses to a tailored partnership. Scope and pricing are defined together and can be adjusted in the CMS.",
+        vatNote: "excl. VAT (disclosure under review)",
+        items: [
+          {
+            id: "start",
+            name: "Visibility Start",
+            price: "CHF 650.–",
+            priceSuffix: "/month",
+            summary:
+              "For small businesses that want regular content planning without building an in-house team.",
+            features: [
+              "4 posts per month on up to 2 channels",
+              "Editing existing customer materials",
+              "Copywriting, planning and publishing",
+              "One revision per post, short monthly report",
+              "No new photo/video production",
+            ],
+            highlighted: false,
+            cta: { label: "Request Start", href: contact },
+          },
+          {
+            id: "plus",
+            name: "Visibility Plus",
+            price: "CHF 1’250.–",
+            priceSuffix: "/month",
+            summary:
+              "For SMEs that need extended editorial planning across more formats and channels.",
+            features: [
+              "8 posts per month on up to 3 channels",
+              "2 hours of content production per month",
+              "Copywriting, planning and publishing",
+              "One revision per post, extended report",
+            ],
+            highlighted: true,
+            cta: { label: "Request Plus", href: contact },
+          },
+          {
+            id: "individual",
+            name: "Visibility Individuell",
+            price: "Price on request",
+            priceSuffix: "",
+            summary:
+              "For businesses that need a tailored strategy, campaigns and production — with optional performance reviews.",
+            features: [
+              "Tailored strategy",
+              "Campaigns",
+              "Content production",
+              "Optional performance analysis",
+            ],
+            highlighted: false,
+            cta: { label: "Request Individuell", href: contact },
+          },
+        ],
+      },
+      promo: {
+        enabled: true,
+        startDate: ABO_PROMO_DEFAULT_WINDOW.startDate,
+        endDate: ABO_PROMO_DEFAULT_WINDOW.endDate,
+        label: "Limited offer",
+        headline: "Launch offer for new subscriptions",
+        text: "From 28 October to 30 November 2026: research and concept free of charge, and the first subscription month free of charge.",
+        terms: [
+          "Research and concept free of charge",
+          "First subscription month free of charge",
+          "Minimum term 6 months, then cancellable monthly",
+        ],
+        cta: { label: "Claim the offer", href: contact },
+      },
       showreel: {
         label: "Showreel",
         headline: "One partner. All disciplines",
@@ -202,7 +311,7 @@ export function getAboPageContent(locale: Locale): AboPageContent {
     seo: {
       title: "Sichtbarkeit im Abo | Studiojeker",
       description:
-        "Kontinuierlicher Content für Website, Social Media und digitale Kommunikation — planbar produziert von Studiojeker.",
+        "Visibility Start, Plus oder Individuell: kontinuierlicher Content für Website, Social Media und digitale Kommunikation — planbar von Studiojeker.",
     },
     hero: {
       label: "Sichtbarkeit im Abo",
@@ -300,6 +409,78 @@ export function getAboPageContent(locale: Locale): AboPageContent {
       closing:
         "Das Abo wird entsprechend Kommunikationsbedarf, Frequenz und Produktionsumfang zusammengestellt.",
       highlight: "Ein fixes monatliches Budget. Ein klar definierter Leistungsumfang.",
+    },
+    packages: {
+      label: "Pakete",
+      headline: "Sichtbarkeit im Abo.",
+      introduction:
+        "Drei klare Optionen — von regelmässigem Content für kleinere Unternehmen bis zur massgeschneiderten Partnerschaft. Leistungsumfang und Preis sind im CMS editierbar.",
+      vatNote: "zzgl. MWST (Ausweisung zur Prüfung)",
+      items: [
+        {
+          id: "start",
+          name: "Visibility Start",
+          price: "CHF 650.–",
+          priceSuffix: "/Monat",
+          summary:
+            "Für kleine Unternehmen mit Bedarf an regelmässiger Content-Planung — ohne eigenes Content-Team.",
+          features: [
+            "4 Posts pro Monat auf bis zu 2 Kanälen",
+            "Redaktionsplanung, Texte, Publikation",
+            "Vorhandene Bilder und Videos optimieren",
+            "Keine neue Foto-/Videoproduktion",
+            "1 Korrekturschleife pro Post, Kurzbericht",
+          ],
+          highlighted: false,
+          cta: { label: "Start anfragen", href: contact },
+        },
+        {
+          id: "plus",
+          name: "Visibility Plus",
+          price: "CHF 1’250.–",
+          priceSuffix: "/Monat",
+          summary:
+            "Für KMU mit erweiterter Redaktionsplanung, mehr Content-Formaten und mehreren Kanälen.",
+          features: [
+            "8 Posts pro Monat auf bis zu 3 Kanälen",
+            "2 Stunden Content-Produktion pro Monat",
+            "Redaktionsplanung, Texte, Publikation",
+            "1 Korrekturschleife pro Post, erweiterter Bericht",
+          ],
+          highlighted: true,
+          cta: { label: "Plus anfragen", href: contact },
+        },
+        {
+          id: "individual",
+          name: "Visibility Individuell",
+          price: "Preis auf Anfrage",
+          priceSuffix: "",
+          summary:
+            "Massgeschneiderte Strategie, Kampagnen und Content-Produktion — optional mit Erfolgsanalysen.",
+          features: [
+            "Massgeschneiderte Strategie",
+            "Kampagnen",
+            "Content-Produktion",
+            "Optionale Erfolgsanalysen",
+          ],
+          highlighted: false,
+          cta: { label: "Individuell anfragen", href: contact },
+        },
+      ],
+    },
+    promo: {
+      enabled: true,
+      startDate: ABO_PROMO_DEFAULT_WINDOW.startDate,
+      endDate: ABO_PROMO_DEFAULT_WINDOW.endDate,
+      label: "Aktion",
+      headline: "Einführungsangebot für neue Abos",
+      text: "Vom 28.10.2026 bis 30.11.2026: Recherche und Konzeption kostenlos sowie der erste Abomonat kostenlos.",
+      terms: [
+        "Recherche und Konzeption kostenlos",
+        "Erster Abomonat kostenlos",
+        "Mindestlaufzeit 6 Monate, danach monatlich kündbar",
+      ],
+      cta: { label: "Aktion nutzen", href: contact },
     },
     showreel: {
       label: "Showreel",

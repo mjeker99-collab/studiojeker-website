@@ -38,6 +38,33 @@ const doc: SanityAbo = {
     steps: base.process.steps.map((step, i) => ({ id: step.id, number: `0${4 - i}`, title: text, description: text })),
   },
   scopeSection: { headline: text, introduction: text, items: [{ label: text }], closing: text, highlight: text },
+  packagesSection: {
+    label: text,
+    headline: text,
+    introduction: text,
+    vatNote: text,
+    packages: base.packages.items.map((pkg) => ({
+      id: pkg.id,
+      name: text,
+      price: text,
+      priceSuffix: text,
+      summary: text,
+      features: [{ label: text }],
+      highlighted: pkg.highlighted,
+      cta,
+      sortOrder: pkg.id === "plus" ? 0 : 1,
+    })),
+  },
+  promoSection: {
+    enabled: true,
+    startDate: "2026-10-28",
+    endDate: "2026-11-30",
+    label: text,
+    headline: text,
+    text,
+    terms: [{ label: text }],
+    cta,
+  },
   showreelSection: { label: text, headline: text, text, cta, media: { mediaType: "image", image: poster } },
   closingSection: { label: text, headline: text, text, cta },
   seoSection: { title: text, description: text, ogImage: image },
@@ -50,10 +77,21 @@ for (const value of [
   ...content.benefits.items.flatMap((item) => [item.title, item.description]),
   content.process.headline, ...content.process.steps.flatMap((step) => [step.title, step.description]),
   content.scope.headline, content.scope.introduction, ...content.scope.items, content.scope.closing, content.scope.highlight,
+  content.packages.label, content.packages.headline, content.packages.introduction, content.packages.vatNote,
+  ...content.packages.items.flatMap((pkg) => [pkg.name, pkg.price, pkg.priceSuffix, pkg.summary, ...pkg.features, pkg.cta.label]),
+  content.promo.label, content.promo.headline, content.promo.text, ...content.promo.terms, content.promo.cta.label,
   content.showreel.label, content.showreel.headline, content.showreel.body, content.showreel.cta.label,
   content.closing.label, content.closing.headline, content.closing.text, content.closing.cta.label,
   content.seo.title, content.seo.description,
 ]) assert.equal(value, "CMS DE");
+assert.equal(content.promo.startDate, "2026-10-28");
+assert.equal(content.promo.endDate, "2026-11-30");
+assert.equal(content.packages.items[0].id, "plus", "package sortOrder prefers Plus first when set");
+assert.deepEqual(
+  mergeSanityAbo(base, {}, "de").packages.items.map((pkg) => pkg.id),
+  ["start", "plus", "individual"],
+  "absent packages section keeps local Start / Plus / Individuell fallback",
+);
 assert.deepEqual(content.process.steps.map((step) => step.number), ["04", "03", "02", "01"]);
 assert.deepEqual(content.problem.body, ["Absatz 1", "Absatz 2"]);
 assert.deepEqual([content.hero.primaryCta.href, content.showreel.cta.href, content.closing.cta.href], ["/contact", "/contact", "/contact"]);

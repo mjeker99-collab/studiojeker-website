@@ -16,6 +16,8 @@ export const abo = defineType({
     { name: "benefits", title: "Benefits" },
     { name: "process", title: "Process" },
     { name: "scope", title: "Scope" },
+    { name: "packages", title: "Packages" },
+    { name: "promo", title: "Promotion" },
     { name: "showreel", title: "Showreel" },
     { name: "cta", title: "Closing CTA" },
     { name: "seo", title: "SEO" },
@@ -202,7 +204,6 @@ export const abo = defineType({
       type: "object",
       group: "scope",
       options: { collapsible: true },
-      description: "No package prices in V1.",
       fields: [
         defineField({
           name: "headline",
@@ -248,6 +249,224 @@ export const abo = defineType({
           name: "highlight",
           title: "Highlighted Statement",
           type: "localizedText",
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "packagesSection",
+      title: "Package Comparison",
+      type: "object",
+      group: "packages",
+      options: { collapsible: true, collapsed: false },
+      description:
+        "Drei Visibility-Pakete mit editierbarem Leistungsumfang und Preis. Keine konkreten Stückzahlen erfinden.",
+      fields: [
+        defineField({
+          name: "label",
+          title: "Eyebrow",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "introduction",
+          title: "Introduction",
+          type: "localizedText",
+        }),
+        defineField({
+          name: "vatNote",
+          title: "VAT / MWST Note",
+          type: "localizedString",
+          description:
+            "MWST-Hinweis an den Preisen. Ausweisung zur Prüfung markieren, bis die finale Formulierung freigegeben ist.",
+        }),
+        defineField({
+          name: "packages",
+          title: "Packages",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "object",
+              name: "aboPackage",
+              fields: [
+                defineField({
+                  name: "id",
+                  title: "Package ID",
+                  type: "string",
+                  description: "Stable key (start, plus, individual).",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "name",
+                  title: "Name",
+                  type: "localizedString",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "price",
+                  title: "Price Label",
+                  type: "localizedString",
+                  description:
+                    "Display price, e.g. CHF 650.– or Preis auf Anfrage. Editable in Studio.",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "priceSuffix",
+                  title: "Price Suffix",
+                  type: "localizedString",
+                  description: "Optional period label, e.g. /Monat.",
+                }),
+                defineField({
+                  name: "summary",
+                  title: "Summary",
+                  type: "localizedText",
+                  description:
+                    "Short positioning (audience + focus). No invented quantities.",
+                }),
+                defineField({
+                  name: "features",
+                  title: "Scope Features",
+                  type: "array",
+                  of: [
+                    defineArrayMember({
+                      type: "object",
+                      name: "aboPackageFeature",
+                      fields: [
+                        defineField({
+                          name: "label",
+                          title: "Feature",
+                          type: "localizedString",
+                          validation: (Rule) => Rule.required(),
+                        }),
+                      ],
+                      preview: {
+                        select: { title: "label.de" },
+                        prepare({ title }) {
+                          return { title: title || "Feature" };
+                        },
+                      },
+                    }),
+                  ],
+                }),
+                defineField({
+                  name: "highlighted",
+                  title: "Highlighted",
+                  type: "boolean",
+                  description: "Visually emphasize this package (e.g. Plus).",
+                  initialValue: false,
+                }),
+                defineField({
+                  name: "cta",
+                  title: "Contact CTA",
+                  type: "ctaField",
+                  description: "Default destination: /contact",
+                }),
+                defineField({
+                  name: "sortOrder",
+                  title: "Sort Order",
+                  type: "number",
+                  description: "Lower numbers appear first.",
+                  validation: (Rule) => Rule.integer().min(0),
+                }),
+              ],
+              preview: {
+                select: {
+                  titleDe: "name.de",
+                  priceDe: "price.de",
+                  id: "id",
+                },
+                prepare({ titleDe, priceDe, id }) {
+                  return {
+                    title: titleDe || id || "Package",
+                    subtitle: priceDe || undefined,
+                  };
+                },
+              },
+            }),
+          ],
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "promoSection",
+      title: "Limited Promotion",
+      type: "object",
+      group: "promo",
+      options: { collapsible: true },
+      description:
+        "Zeitlich begrenzte Aktion. Frontend zeigt den Block nur innerhalb von Start–Ende (Europe/Zurich, inklusiv).",
+      fields: [
+        defineField({
+          name: "enabled",
+          title: "Enabled",
+          type: "boolean",
+          initialValue: true,
+          description: "When off, the promo never renders — regardless of dates.",
+        }),
+        defineField({
+          name: "startDate",
+          title: "Start Date",
+          type: "date",
+          description: "Inclusive. Europe/Zurich calendar day.",
+          options: { dateFormat: "DD.MM.YYYY" },
+        }),
+        defineField({
+          name: "endDate",
+          title: "End Date",
+          type: "date",
+          description: "Inclusive. Europe/Zurich calendar day.",
+          options: { dateFormat: "DD.MM.YYYY" },
+        }),
+        defineField({
+          name: "label",
+          title: "Eyebrow",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "localizedString",
+        }),
+        defineField({
+          name: "text",
+          title: "Promotion Text",
+          type: "localizedText",
+          description: "Editierbarer Promotionstext (Sanity).",
+        }),
+        defineField({
+          name: "terms",
+          title: "Terms / Highlights",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "object",
+              name: "aboPromoTerm",
+              fields: [
+                defineField({
+                  name: "label",
+                  title: "Term",
+                  type: "localizedString",
+                  validation: (Rule) => Rule.required(),
+                }),
+              ],
+              preview: {
+                select: { title: "label.de" },
+                prepare({ title }) {
+                  return { title: title || "Term" };
+                },
+              },
+            }),
+          ],
+        }),
+        defineField({
+          name: "cta",
+          title: "Contact CTA",
+          type: "ctaField",
         }),
       ],
     }),

@@ -100,6 +100,40 @@ $query = <<<GROQ
     closing{$localized},
     highlight{$localized}
   },
+  packagesSection{
+    label{$localized},
+    headline{$localized},
+    introduction{$localized},
+    vatNote{$localized},
+    packages[]{
+      _key,
+      id,
+      name{$localized},
+      price{$localized},
+      priceSuffix{$localized},
+      summary{$localized},
+      features[]{
+        _key,
+        label{$localized}
+      },
+      highlighted,
+      cta{$cta},
+      sortOrder
+    }
+  },
+  promoSection{
+    enabled,
+    startDate,
+    endDate,
+    label{$localized},
+    headline{$localized},
+    text{$localized},
+    terms[]{
+      _key,
+      label{$localized}
+    },
+    cta{$cta}
+  },
   showreelSection{
     label{$localized},
     headline{$localized},
