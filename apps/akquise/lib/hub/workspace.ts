@@ -23,8 +23,11 @@ export function isSocialPublishingPost(content: {
   );
 }
 
-/** Content that can be promoted into the Social Media publishing workspace. */
-export function canPromoteToSocial(content: {
+/**
+ * GPT dialog stubs and Content Studio drafts managed in «Zur Übernahme».
+ * Never includes Social publishing posts.
+ */
+export function isManagedDialog(content: {
   kind: string;
   workspace?: string | null;
 }): boolean {
@@ -33,6 +36,16 @@ export function canPromoteToSocial(content: {
     content.kind === "SOCIAL" &&
     (workspace === "CONTENT_DRAFT" || workspace === "GPT_DIALOG")
   );
+}
+
+/** Content that can be promoted into the Social Media publishing workspace. */
+export function canPromoteToSocial(content: {
+  kind: string;
+  workspace?: string | null;
+  archivedAt?: Date | string | null;
+}): boolean {
+  if (content.archivedAt) return false;
+  return isManagedDialog(content);
 }
 
 /**

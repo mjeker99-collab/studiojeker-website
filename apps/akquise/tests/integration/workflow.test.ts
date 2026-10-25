@@ -1386,6 +1386,122 @@ test("Social workspace: GPT-Dialoge bleiben erhalten und erscheinen erst nach Ü
     /Content-Entwürfe und GPT-Dialoge/,
   );
 });
+test("Dialogverwaltung: archivieren, wiederherstellen, löschen ohne Nebenwirkungen", async () => {
+  const { manageDialogs } = await import("../../lib/hub/dialogs");
+  const campaign = await hub.saveCampaign(martin, {
+    title: "Kampagne Dialogschutz",
+    goal: "Sichtbarkeit",
+    audience: "B2B",
+    startsAt: "2026-10-01T08:00:00.000Z",
+    endsAt: "2026-10-31T18:00:00.000Z",
+    ownerId: martin,
+    customerId: null,
+  });
+  const series = await studio.createSeries(martin, {
+    title: "Dialog zum Löschen",
+    topic: "Ideen",
+    offer: "",
+    goal: "Im Gespräch klären",
+    audience: "Im Gespräch klären",
+    tone: "Persönlich",
+    channels: ["LINKEDIN"],
+    count: 1,
+    formats: ["1:1"],
+    campaignId: campaign.id,
+    customerId: null,
+    referenceAssetIds: [],
+    brandRules: ["tone"],
+    workspace: "GPT_DIALOG",
+  });
+  const dialog = await db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: series.id, workspace: "GPT_DIALOG" },
+  });
+  const siblingPost = await hub.saveContent(martin, {
+    kind: "SOCIAL",
+    title: "Unabhängiger Social Post",
+    ownerId: martin,
+    campaignId: campaign.id,
+    scheduledAt: null,
+    subject: "",
+    preheader: "",
+    body: "",
+    audience: "",
+    variants: [
+      {
+        channel: "LINKEDIN",
+        text: "Bleibt erhalten",
+        link: "",
+        cta: "",
+        mediaType: "NONE",
+        mediaUrl: "",
+        mediaReference: "",
+        scheduledAt: null,
+      },
+    ],
+  });
+  await manageDialogs(martin, {
+    action: "archive",
+    items: [{ id: dialog.id, version: dialog.version }],
+  });
+  const archived = await db.marketingContent.findUniqueOrThrow({
+    where: { id: dialog.id },
+  });
+  assert.ok(archived.archivedAt);
+  await assert.rejects(
+    hub.promoteToSocialPost(martin, dialog.id, dialog.version),
+    /Archivierte Dialoge/,
+  );
+  await manageDialogs(martin, {
+    action: "restore",
+    items: [{ id: dialog.id, version: dialog.version }],
+  });
+  assert.equal(
+    (
+      await db.marketingContent.findUniqueOrThrow({
+        where: { id: dialog.id },
+      })
+    ).archivedAt,
+    null,
+  );
+  await manageDialogs(martin, {
+    action: "delete",
+    items: [{ id: dialog.id, version: dialog.version }],
+  });
+  assert.equal(
+    await db.marketingContent.findUnique({ where: { id: dialog.id } }),
+    null,
+  );
+  assert.ok(
+    await db.studioSeries.findUnique({ where: { id: series.id } }),
+    "Studio-Projekt bleibt erhalten",
+  );
+  assert.ok(
+    await db.campaign.findUnique({ where: { id: campaign.id } }),
+    "Kampagne bleibt erhalten",
+  );
+  assert.equal(
+    (
+      await db.marketingContent.findUniqueOrThrow({
+        where: { id: siblingPost.id },
+      })
+    ).workspace,
+    "SOCIAL_POST",
+  );
+  await assert.rejects(
+    manageDialogs(martin, {
+      action: "delete",
+      items: [{ id: siblingPost.id, version: siblingPost.version }],
+    }),
+    /kein GPT-Dialog|Content-Entwurf/,
+  );
+  await assert.rejects(
+    manageDialogs("unbekannt", {
+      action: "delete",
+      items: [{ id: siblingPost.id, version: 1 }],
+    }),
+    /Berechtigung/,
+  );
+});
 test("Studio: geschützte Assets, falsche Typen, fremde Organisation und Hash-Manipulation", async () => {
   await assert.rejects(
     studioAssets.storeAsset(
