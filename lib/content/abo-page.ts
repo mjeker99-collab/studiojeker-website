@@ -233,10 +233,11 @@ export function getAboPageContent(locale: Locale): AboPageContent {
             summary:
               "For small businesses that want regular content planning without building an in-house team.",
             features: [
-              "Regular content planning",
-              "Social media content",
-              "Copywriting",
-              "Image editing",
+              "4 posts per month on up to 2 channels",
+              "Editing existing customer materials",
+              "Copywriting, planning and publishing",
+              "One revision per post, short monthly report",
+              "No new photo/video production",
             ],
             highlighted: false,
             cta: { label: "Request Start", href: contact },
@@ -249,10 +250,10 @@ export function getAboPageContent(locale: Locale): AboPageContent {
             summary:
               "For SMEs that need extended editorial planning across more formats and channels.",
             features: [
-              "Extended editorial planning",
-              "More content formats",
-              "Image and video",
-              "Multiple channels",
+              "8 posts per month on up to 3 channels",
+              "2 hours of content production per month",
+              "Copywriting, planning and publishing",
+              "One revision per post, extended report",
             ],
             highlighted: true,
             cta: { label: "Request Plus", href: contact },
@@ -424,10 +425,11 @@ export function getAboPageContent(locale: Locale): AboPageContent {
           summary:
             "Für kleine Unternehmen mit Bedarf an regelmässiger Content-Planung — ohne eigenes Content-Team.",
           features: [
-            "Regelmässige Content-Planung",
-            "Social-Media-Inhalte",
-            "Texte",
-            "Bildbearbeitung",
+            "4 Posts pro Monat auf bis zu 2 Kanälen",
+            "Redaktionsplanung, Texte, Publikation",
+            "Vorhandene Bilder und Videos optimieren",
+            "Keine neue Foto-/Videoproduktion",
+            "1 Korrekturschleife pro Post, Kurzbericht",
           ],
           highlighted: false,
           cta: { label: "Start anfragen", href: contact },
@@ -440,10 +442,10 @@ export function getAboPageContent(locale: Locale): AboPageContent {
           summary:
             "Für KMU mit erweiterter Redaktionsplanung, mehr Content-Formaten und mehreren Kanälen.",
           features: [
-            "Erweiterte Redaktionsplanung",
-            "Mehr Content-Formate",
-            "Bild und Video",
-            "Mehrere Kanäle",
+            "8 Posts pro Monat auf bis zu 3 Kanälen",
+            "2 Stunden Content-Produktion pro Monat",
+            "Redaktionsplanung, Texte, Publikation",
+            "1 Korrekturschleife pro Post, erweiterter Bericht",
           ],
           highlighted: true,
           cta: { label: "Plus anfragen", href: contact },
