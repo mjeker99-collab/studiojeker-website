@@ -1413,13 +1413,31 @@ export default function Hub({
                     </label>
                   )}
                   {editing.mailchimpTransfers.map((t) => (
-                    <p key={t.id}>
-                      V{t.version}:{" "}
-                      {t.status === "DRAFT"
-                        ? "Entwurf übertragen"
-                        : "Übertragung ungeklärt – Mailchimp prüfen"}
-                      {t.remoteId && ` · Kampagne ${t.remoteId}`}
-                    </p>
+                    <div key={t.id}>
+                      <p>
+                        V{t.version}:{" "}
+                        {t.status === "DRAFT"
+                          ? "Entwurf übertragen"
+                          : "Übertragung ungeklärt – Mailchimp prüfen"}
+                        {t.remoteId && ` · Kampagne ${t.remoteId}`}
+                      </p>
+                      {t.status === "DRAFT" && t.remoteId && (
+                        <button type="button" className="secondary" disabled={busy || dirty}
+                          onClick={() => act(async () => {
+                            if (!window.confirm("Testmail ausschliesslich an deine eigene StudioONE-Anmeldeadresse senden?")) return;
+                            const response = await fetch("/api/mailchimp/test", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ transferId: t.id }),
+                            });
+                            const result = await response.json();
+                            if (!response.ok) throw new Error(result.error || "Mailchimp-Test fehlgeschlagen.");
+                            window.alert(`Testmail angefordert an ${result.recipient}. Bitte in deinem Posteingang prüfen.`);
+                          }, "Mailchimp-Testmail angefordert. Kein Newsletter an die Audience versandt.")}>
+                          Testmail an mich senden
+                        </button>
+                      )}
+                    </div>
                   ))}
                   {mailchimp?.connected && (
                     <button
