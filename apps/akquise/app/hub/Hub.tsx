@@ -948,6 +948,20 @@ export default function Hub({
                   ))}
                 </select>
               </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12, margin: "16px 0" }}>
+                {newsletterLibrary.map((template) => (
+                  <button type="button" key={template.id}
+                    aria-pressed={template.id === templateId}
+                    className={template.id === templateId ? "" : "secondary"}
+                    onClick={() => { setTemplateId(template.id); setShowOriginal(true); }}
+                    style={{ textAlign: "left", padding: 16, borderRadius: 12, border: template.id === templateId ? "2px solid #00c8ff" : "1px solid #ccd5da" }}>
+                    <span style={{ display: "block", fontSize: 24, marginBottom: 8 }} aria-hidden="true">✉</span>
+                    <strong style={{ display: "block" }}>{template.name}</strong>
+                    <small style={{ display: "block", marginTop: 8 }}>{template.note || "Studiojeker Newsletter-Vorlage"}</small>
+                    <small style={{ display: "block", marginTop: 8 }}>{template.id === templateId ? "✓ Ausgewählt" : "Zur Vorschau auswählen"}</small>
+                  </button>
+                ))}
+              </div>
               <div className="actions">
                 <button
                   type="button"
