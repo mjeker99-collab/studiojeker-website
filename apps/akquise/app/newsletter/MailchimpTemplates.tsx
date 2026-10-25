@@ -16,8 +16,7 @@ export default function MailchimpTemplates() {
   const [expanded, setExpanded] = useState(false);
 
   function refresh(signal?: AbortSignal) {
-    setBusy(true);
-    setError("");
+    if (!signal) { setBusy(true); setError(""); }
     return fetch("/api/mailchimp/templates", { cache: "no-store", signal })
       .then(async (response) => {
         const body = await response.json();
