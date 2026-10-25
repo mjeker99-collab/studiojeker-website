@@ -30,12 +30,52 @@ export function gptConnectorOpenApi() {
     openapi: "3.1.0",
     info: {
       title: "StudioONE ChatGPT Connector",
-      version: "1.1.0",
+      version: "1.2.0",
       description:
         "Read access to explicitly shared StudioONE projects, campaigns, concepts and editorial drafts. Optional controlled write access for editorial drafts only (no publish, send, delete or CRM). Write endpoints require CHATGPT_CONNECTOR_WRITE_TOKEN, write_drafts scope, and explicit write grants. Tokens are never embedded in this document.",
     },
     servers: [{ url: server }],
     paths: {
+      "/api/integrations/gpt/website/pages": {
+        get: {
+          operationId: "listWebsitePages",
+          summary: "List existing Studiojeker Sanity website pages and draft status",
+          security: [{ connectorBearer: [] }],
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
+      "/api/integrations/gpt/website/pages/{key}": {
+        get: {
+          operationId: "getWebsitePage",
+          summary: "Read a Sanity website page, editable fields and draft state (never publishes)",
+          security: [{ connectorBearer: [] }],
+          parameters: [{
+            name: "key", in: "path", required: true,
+            schema: { type: "string", minLength: 1, maxLength: 100 },
+          }],
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
+      "/api/integrations/gpt/website/drafts": {
+        post: {
+          operationId: "createWebsiteDraft",
+          summary: "Save allowed Sanity website fields to a draft only. Requires dedicated write token and explicit authorization. No publishing.",
+          security: [{ writeBearer: [] }],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: {
+              type: "object", additionalProperties: false,
+              required: ["pageKey", "revision", "values"],
+              properties: {
+                pageKey: { type: "string", minLength: 1, maxLength: 100 },
+                revision: { type: "string", maxLength: 200, description: "Revision returned by getWebsitePage; optimistic locking" },
+                values: { type: "object", additionalProperties: true, description: "Only allowlisted page fields; validated server-side" },
+              },
+            } } },
+          },
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
       "/api/integrations/gpt/projects": {
         get: {
           operationId: "listProjects",
