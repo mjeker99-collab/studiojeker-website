@@ -37,6 +37,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/state")
       return route.fulfill({
         json: {

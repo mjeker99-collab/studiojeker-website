@@ -55,6 +55,7 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
   await page.route("**/api/**", async (route) => {
     const request = route.request(),
       path = new URL(request.url()).pathname;
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/state")
       return route.fulfill({
         json: {

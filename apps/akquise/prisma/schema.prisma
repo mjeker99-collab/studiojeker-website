@@ -41,6 +41,7 @@ enum DeliveryStatus {
 }
 
 model User {
+  projectDrafts ProjectDraft[]
   studioContext      String              @default("")
   studioContextRevision Int               @default(1)
   id                 String              @id @default(cuid())
@@ -615,6 +616,21 @@ model WebsiteVersion {
   createdBy String
   createdAt DateTime @default(now())
   @@unique([projectId, version])
+}
+
+// User-owned resumable workspaces; separate from approvals and publication.
+model ProjectDraft {
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  area      String
+  title     String
+  payload   Json
+  revision  Int      @default(1)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([userId, area, updatedAt])
 }
 
 // ChatGPT connector settings. Token stays in env; this row tracks scopes and revoke/access.
