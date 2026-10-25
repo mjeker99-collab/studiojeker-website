@@ -27,10 +27,15 @@ auch daraus lässt sich kein Render-Status ableiten.
 | #143 Content-Studio          | integriert | feat/akquise-render-frankfurt     |
 | #144 STUDIOONE-Logo          | offen      | feat/akquise-render-frankfurt     |
 
-Aktueller vollständiger Render-Branch: `feat/akquise-render-frankfurt`, Commit
-`0742d73fa0c9c26b9820f707d809d3da366f4745`. Die früheren Hub-/Content-Studio-Featurebranches
-sind keine dauerhafte Deploymentempfehlung. Insbesondere der #143-Featurebranch wurde
-nach Integration entfernt. Logo #144 ist noch nicht enthalten. Kein automatischer Merge.
+**Aktueller Deploy-Branch (Soll):** `feat/akquise-production-readiness`
+(Root `apps/akquise`, Service `studiojeker-akquise`). Auto-Deploy aus.
+Historische GitHub-Deployments (Okt 2026) zeigten zeitweise
+`feat/akquise-render-frankfurt` — dieser Branch ist entfernt. Settings müssen auf
+`feat/akquise-production-readiness` zeigen, sonst fehlen Merges wie PR #201 trotz
+grünem GitHub-CI («Akquise isolated checks (no deployment)»).
+
+Nach Deploy: `/api/health/live` liefert `deploy.branch` / `deploy.commit`
+(Render-Env, keine Secrets). Dialog-Spalten: `npm run verify:dialogs` in der Shell.
 
 main-Head zum Prüfzeitpunkt: `ace2c4d1dc60519b9dccccefccd2cdf62eff9ec1`.
 `apps/akquise/package.json` auf main liefert GitHub 404. Ein App-Service, der dort
