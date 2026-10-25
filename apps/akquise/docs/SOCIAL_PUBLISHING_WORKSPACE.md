@@ -38,13 +38,23 @@ Studiojeker-Website.
 Übernahme: `POST /api/hub/promote-social/:id` mit `{ version }`. Keine
 Versionserhöhung, keine Freigabe-Invalidierung, keine Datenlöschung.
 
+Dialogverwaltung: `POST /api/hub/dialogs/manage` mit
+`{ action: "archive"|"restore"|"delete", items: [{ id, version }] }`.
+Nur `GPT_DIALOG` / `CONTENT_DRAFT`. Archivierung setzt `archivedAt`.
+Löschen entfernt ausschliesslich den gewählten Content und seine
+Versions-/Freigabe-Kinder. Kampagnen, Studio-Projekte, Medien und
+`SOCIAL_POST`-Zeilen bleiben erhalten. Gemeinsame UI:
+`app/dialogs/DialogManager.tsx` (Social Media «Zur Übernahme» und
+StudioChat / Kampagnen-GPT).
+
 ## Funktionen
 
 - Vorschau je Kanal, Bibliotheksmedien, Bearbeitung, Status- und
   Veröffentlichungsfilter
 - Kontextbezogener GPT-Assistent (bestehender Einstieg); neue Chats → `GPT_DIALOG`
 - Freigabe und manueller Veröffentlichungsnachweis nur für `SOCIAL_POST`
-- Cyan-Aktionsbuttons (`--cyan` / Primärbuttons)
+- Cyan-Aktionsbuttons (`--cyan` / Primärbuttons); zurückhaltende `.danger`-Löschen-Buttons
+- Dialog-Mehrfachauswahl, Archiv-Filter, Sicherheitsabfrage vor Löschen
 - Kampagnen und Newsletter unverändert nutzbar
 
 ## Deployment (Render)

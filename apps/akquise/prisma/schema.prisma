@@ -307,6 +307,8 @@ model MarketingContent {
   ownerId        String
   owner          User                @relation("ContentOwner", fields: [ownerId], references: [id])
   scheduledAt    DateTime?
+  // Soft archive for GPT dialogs / Content Studio drafts only. Social posts stay unarchived.
+  archivedAt     DateTime?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   versions       MarketingVersion[]
@@ -317,6 +319,7 @@ model MarketingContent {
 
   @@index([campaignId, scheduledAt])
   @@index([kind, workspace, status])
+  @@index([archivedAt])
 }
 
 model MarketingVersion {

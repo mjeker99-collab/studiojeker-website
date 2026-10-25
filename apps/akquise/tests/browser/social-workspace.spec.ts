@@ -36,6 +36,7 @@ function content(
   id: string,
   title: string,
   workspace: "SOCIAL_POST" | "GPT_DIALOG" | "CONTENT_DRAFT",
+  archivedAt: string | null = null,
 ) {
   return {
     id,
@@ -47,6 +48,7 @@ function content(
     campaignId: null,
     ownerId: user.id,
     scheduledAt: null,
+    archivedAt,
     versions: [{ version: 1, payload: socialPayload(title) }],
     approvals: [],
     publications: [],
@@ -121,6 +123,27 @@ async function mockHub(page: Page, contents: ReturnType<typeof content>[]) {
       item.workspace = "SOCIAL_POST";
       return route.fulfill({ json: item });
     }
+    if (path === "/api/hub/dialogs/manage") {
+      const body = request.postDataJSON() as {
+        action: "archive" | "restore" | "delete";
+        items: { id: string; version: number }[];
+      };
+      for (const item of body.items) {
+        const index = contents.findIndex((c) => c.id === item.id);
+        if (index < 0)
+          return route.fulfill({
+            status: 404,
+            json: { error: "Dialog nicht gefunden." },
+          });
+        const row = contents[index];
+        if (body.action === "archive") row.archivedAt = new Date().toISOString();
+        else if (body.action === "restore") row.archivedAt = null;
+        else contents.splice(index, 1);
+      }
+      return route.fulfill({
+        json: { ok: true, action: body.action, results: body.items },
+      });
+    }
     return route.fulfill({
       json: { connections: [], configured: { meta: false, linkedin: false } },
     });
@@ -161,4 +184,55 @@ test("Social Media list hides GPT dialogs until promote", async ({ page }) => {
     .click();
   await expect(page.getByRole("status")).toHaveText(/übernommen/i);
   await expect(page.locator('[data-content-id="dialog-1"]')).toBeVisible();
+});
+
+test("Dialogverwaltung: löschen mit Sicherheitsabfrage und Archivfilter", async ({
+  page,
+}) => {
+  const items = [
+    content("post-keep", "Publishing Post", "SOCIAL_POST"),
+    content("dialog-del", "Löschbarer Dialog", "GPT_DIALOG"),
+    content("dialog-arch", "Archiv-Dialog", "GPT_DIALOG"),
+  ];
+  await mockHub(page, items);
+  await page.goto("/");
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Social Media/ })
+    .click();
+  const promote = page.getByRole("region", {
+    name: "Zur Übernahme in Social Media",
+  });
+  await expect(
+    promote.getByRole("heading", { name: "Löschbarer Dialog" }),
+  ).toBeVisible();
+  await promote.getByRole("button", { name: "«Löschbarer Dialog» löschen" }).click();
+  const confirm = page.getByRole("alertdialog");
+  await expect(confirm).toContainText("Löschbarer Dialog");
+  await confirm.getByRole("button", { name: "Endgültig löschen" }).click();
+  await expect(page.getByRole("status")).toHaveText(/gelöscht/i);
+  await expect(
+    promote.getByRole("heading", { name: "Löschbarer Dialog" }),
+  ).toHaveCount(0);
+  await expect(page.locator('[data-content-id="post-keep"]')).toBeVisible();
+
+  await promote.getByRole("button", { name: "Archivieren" }).click();
+  const archiveConfirm = page.getByRole("alertdialog");
+  await expect(archiveConfirm).toContainText("Archiv-Dialog");
+  await archiveConfirm.getByRole("button", { name: "Archivieren" }).click();
+  await expect(page.getByRole("status")).toHaveText(/archiviert/i);
+  await promote.getByRole("button", { name: "Archiv", exact: true }).click();
+  await expect(
+    promote.getByRole("heading", { name: "Archiv-Dialog" }),
+  ).toBeVisible();
+  await promote.getByRole("button", { name: "Wiederherstellen" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Wiederherstellen" })
+    .click();
+  await expect(page.getByRole("status")).toHaveText(/wiederhergestellt/i);
+  await promote.getByRole("button", { name: "Aktiv", exact: true }).click();
+  await expect(
+    promote.getByRole("heading", { name: "Archiv-Dialog" }),
+  ).toBeVisible();
 });

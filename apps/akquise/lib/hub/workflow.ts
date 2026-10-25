@@ -187,6 +187,11 @@ export async function promoteToSocialPost(
     });
     if (content.version !== expectedVersion)
       throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
+    if (content.archivedAt)
+      throw new PolicyError(
+        "Archivierte Dialoge zuerst wiederherstellen, danach übernehmen.",
+        409,
+      );
     if (!canPromoteToSocial(content))
       throw new PolicyError(
         "Nur Content-Entwürfe und GPT-Dialoge können in Social Media übernommen werden.",

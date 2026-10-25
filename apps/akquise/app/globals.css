@@ -1164,6 +1164,112 @@ pre {
   margin: 0 0 8px;
   font-size: 1.05rem;
 }
+.dialog-manager-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.dialog-manager-header h2 {
+  margin: 0 0 8px;
+}
+.dialog-manager-header p {
+  margin: 0;
+  max-width: 52rem;
+}
+.dialog-manager-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dialog-manager-filters button {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+.dialog-manager-toolbar {
+  margin: 0 0 14px;
+  align-items: center;
+}
+.dialog-manager-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-right: 8px;
+}
+.dialog-manager-select-all input {
+  width: auto;
+  display: inline-block;
+}
+.dialog-manager-card-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.dialog-manager-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dialog-manager-check {
+  margin-top: 4px;
+}
+.dialog-manager-check input {
+  width: auto;
+  display: inline-block;
+}
+.dialog-manager-trash {
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dialog-manager-trash svg {
+  flex-shrink: 0;
+}
+.dialog-manager-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #15171966;
+}
+.dialog-manager-confirm-inner {
+  width: min(100%, 440px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px #15171924;
+}
+.dialog-manager-confirm-inner h3 {
+  margin-top: 0;
+}
+.dialog-manager-confirm-list {
+  margin: 0 0 8px;
+  padding-left: 1.2rem;
+}
+.dialog-manager-compact {
+  border-left-color: var(--cyan);
+}
+.dialog-manager-compact .dialog-manager-trash span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.dialog-manager-compact .dialog-manager-trash {
+  position: relative;
+}
 .social-media-field {
   display: grid;
   gap: 12px;
