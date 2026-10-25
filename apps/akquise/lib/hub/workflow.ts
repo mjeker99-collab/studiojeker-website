@@ -172,12 +172,14 @@ export async function saveContentInTx(
 /**
  * Move a Content Studio draft or GPT dialog stub into the Social publishing list.
  * Does not delete data, bump content versions, or invalidate approvals.
- * Campaign links stay as already stored on the content / series.
+ * Campaign: optional override, else keep content.campaignId, else inherit from
+ * StudioSeries briefing — so GPT dialogs land on the intended campaign.
  */
 export async function promoteToSocialPost(
   actor: string,
   id: string,
   expectedVersion: number,
+  campaignId?: string | null,
 ) {
   return db.$transaction(async (tx) => {
     await hubActor(tx, actor);
@@ -197,13 +199,45 @@ export async function promoteToSocialPost(
         "Nur Content-Entwürfe und GPT-Dialoge können in Social Media übernommen werden.",
         409,
       );
+
+    let nextCampaignId = content.campaignId;
+    if (campaignId !== undefined) nextCampaignId = campaignId;
+    else if (!nextCampaignId && content.studioSeriesId) {
+      const series = await tx.studioSeries.findUnique({
+        where: { id: content.studioSeriesId },
+        select: { briefing: true },
+      });
+      const fromBrief =
+        series &&
+        typeof series.briefing === "object" &&
+        series.briefing &&
+        "campaignId" in series.briefing
+          ? ((series.briefing as { campaignId?: string | null }).campaignId ??
+            null)
+          : null;
+      if (fromBrief) nextCampaignId = fromBrief;
+    }
+    if (nextCampaignId) {
+      const campaign = await tx.campaign.findFirst({
+        where: { id: nextCampaignId, organizationId: "studiojeker" },
+      });
+      if (!campaign)
+        throw new PolicyError("Kampagne nicht zugänglich.", 403);
+    }
+
     const updated = await tx.marketingContent.update({
       where: { id },
-      data: { workspace: "SOCIAL_POST" },
+      data: {
+        workspace: "SOCIAL_POST",
+        ...(nextCampaignId !== content.campaignId
+          ? { campaignId: nextCampaignId }
+          : {}),
+      },
     });
     await audit(tx, actor, "SOCIAL_POST_PROMOTED", id, {
       from: content.workspace,
-      campaignId: content.campaignId,
+      campaignId: updated.campaignId,
+      previousCampaignId: content.campaignId,
       version: content.version,
     });
     return updated;

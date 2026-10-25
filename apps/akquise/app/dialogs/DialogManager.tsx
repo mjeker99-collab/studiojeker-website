@@ -25,11 +25,15 @@ type ConfirmState = {
 export type DialogManagerProps = {
   items: DialogManagerItem[];
   campaignName?: (campaignId: string | null | undefined) => string;
+  campaigns?: { id: string; title: string }[];
   busy?: boolean;
   /** When false, destructive controls stay hidden (unauthorized session). */
   canManage?: boolean;
   showPromote?: boolean;
-  onPromote?: (item: DialogManagerItem) => void | Promise<void>;
+  onPromote?: (
+    item: DialogManagerItem,
+    campaignId?: string | null,
+  ) => void | Promise<void>;
   onOpen?: (item: DialogManagerItem) => void;
   onManage: (
     action: "archive" | "restore" | "delete",
@@ -177,6 +181,7 @@ function ConfirmDialog({
 export default function DialogManager({
   items,
   campaignName = () => "Ohne Kampagne",
+  campaigns = [],
   busy = false,
   canManage = true,
   showPromote = true,
@@ -193,6 +198,9 @@ export default function DialogManager({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [localError, setLocalError] = useState("");
+  const [promoteCampaign, setPromoteCampaign] = useState<
+    Record<string, string>
+  >({});
 
   const managed = items.filter(isManagedDialog);
   const visible = managed.filter((item) =>
@@ -386,13 +394,45 @@ export default function DialogManager({
                   </button>
                 )}
               </div>
+              {!archiveView && showPromote && onPromote && !!campaigns.length && (
+                <label className="dialog-manager-campaign">
+                  Kampagne bei Übernahme
+                  <select
+                    value={
+                      promoteCampaign[c.id] ?? c.campaignId ?? ""
+                    }
+                    disabled={busy}
+                    onChange={(e) =>
+                      setPromoteCampaign((prev) => ({
+                        ...prev,
+                        [c.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Ohne Kampagne</option>
+                    {campaigns.map((campaign) => (
+                      <option key={campaign.id} value={campaign.id}>
+                        {campaign.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <div className="actions">
                 {!archiveView && showPromote && onPromote && (
                   <button
                     type="button"
                     className={compact ? "ai-button" : undefined}
                     disabled={busy}
-                    onClick={() => void onPromote(c)}
+                    onClick={() => {
+                      // Explicit select change → pass value (incl. null).
+                      // Otherwise omit so the API keeps content / inherits series.
+                      const chosen =
+                        promoteCampaign[c.id] !== undefined
+                          ? promoteCampaign[c.id] || null
+                          : undefined;
+                      void onPromote(c, chosen);
+                    }}
                   >
                     {compact
                       ? `«${c.title}» in Social Media übernehmen`

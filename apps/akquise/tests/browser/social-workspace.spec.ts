@@ -45,7 +45,7 @@ function content(
     title,
     version: 1,
     status: "DRAFT",
-    campaignId: null,
+    campaignId: null as string | null,
     ownerId: user.id,
     scheduledAt: null,
     archivedAt,
@@ -120,7 +120,12 @@ async function mockHub(page: Page, contents: ReturnType<typeof content>[]) {
     if (path.startsWith("/api/hub/promote-social/")) {
       const id = path.split("/").pop()!;
       const item = contents.find((c) => c.id === id)!;
+      const body = request.postDataJSON() as {
+        version: number;
+        campaignId?: string | null;
+      };
       item.workspace = "SOCIAL_POST";
+      if (body.campaignId !== undefined) item.campaignId = body.campaignId;
       return route.fulfill({ json: item });
     }
     if (path === "/api/hub/dialogs/manage") {

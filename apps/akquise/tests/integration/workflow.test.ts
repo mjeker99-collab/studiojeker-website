@@ -1386,6 +1386,65 @@ test("Social workspace: GPT-Dialoge bleiben erhalten und erscheinen erst nach Ü
     /Content-Entwürfe und GPT-Dialoge/,
   );
 });
+test("Social workspace: Übernahme erbt Kampagne aus dem GPT-Projekt", async () => {
+  const campaign = await hub.saveCampaign(martin, {
+    title: "Kampagne für GPT-Übernahme",
+    goal: "Reichweite",
+    audience: "B2B",
+    startsAt: "2026-10-01T08:00:00.000Z",
+    endsAt: "2026-10-31T18:00:00.000Z",
+    ownerId: martin,
+    customerId: null,
+  });
+  const series = await studio.createSeries(martin, {
+    title: "GPT mit Kampagne",
+    topic: "Ideen",
+    offer: "",
+    goal: "Im Gespräch klären",
+    audience: "Im Gespräch klären",
+    tone: "Persönlich",
+    channels: ["LINKEDIN"],
+    count: 1,
+    formats: ["1:1"],
+    campaignId: campaign.id,
+    customerId: null,
+    referenceAssetIds: [],
+    brandRules: ["tone"],
+    workspace: "GPT_DIALOG",
+  });
+  const content = await db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: series.id },
+  });
+  // Simulate stub without content.campaignId but series briefing still linked.
+  await db.marketingContent.update({
+    where: { id: content.id },
+    data: { campaignId: null },
+  });
+  const promoted = await hub.promoteToSocialPost(martin, content.id, 1);
+  assert.equal(promoted.workspace, "SOCIAL_POST");
+  assert.equal(promoted.campaignId, campaign.id);
+  const overridden = await studio.createSeries(martin, {
+    title: "GPT ohne Kampagnenpflicht",
+    topic: "Ideen",
+    offer: "",
+    goal: "Im Gespräch klären",
+    audience: "Im Gespräch klären",
+    tone: "Persönlich",
+    channels: ["LINKEDIN"],
+    count: 1,
+    formats: ["1:1"],
+    campaignId: campaign.id,
+    customerId: null,
+    referenceAssetIds: [],
+    brandRules: ["tone"],
+    workspace: "GPT_DIALOG",
+  });
+  const other = await db.marketingContent.findFirstOrThrow({
+    where: { studioSeriesId: overridden.id },
+  });
+  const cleared = await hub.promoteToSocialPost(martin, other.id, 1, null);
+  assert.equal(cleared.campaignId, null);
+});
 test("Dialogverwaltung: archivieren, wiederherstellen, löschen ohne Nebenwirkungen", async () => {
   const { manageDialogs } = await import("../../lib/hub/dialogs");
   const campaign = await hub.saveCampaign(martin, {

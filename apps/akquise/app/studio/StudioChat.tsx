@@ -95,7 +95,11 @@ export default function StudioChat({
         c.kind === "SOCIAL" &&
         (c.workspace === "GPT_DIALOG" || c.workspace === "CONTENT_DRAFT"),
     ) || [];
-  async function promoteSocial(contentId: string, version: number) {
+  async function promoteSocial(
+    contentId: string,
+    version: number,
+    nextCampaignId?: string | null,
+  ) {
     setBusy(true);
     setError("");
     setProjectNotice("");
@@ -103,7 +107,14 @@ export default function StudioChat({
       const r = await fetch(`/api/hub/promote-social/${contentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version }),
+        body: JSON.stringify({
+          version,
+          ...(nextCampaignId !== undefined
+            ? { campaignId: nextCampaignId }
+            : campaignId
+              ? { campaignId }
+              : {}),
+        }),
         signal: AbortSignal.timeout(30000),
       });
       const data = await r.json();
@@ -502,7 +513,13 @@ export default function StudioChat({
           campaignName={(id) =>
             state.campaigns.find((c) => c.id === id)?.title || "Ohne Kampagne"
           }
-          onPromote={(c) => void promoteSocial(c.id, c.version)}
+          campaigns={state.campaigns.map((c) => ({
+            id: c.id,
+            title: c.title,
+          }))}
+          onPromote={(c, nextCampaignId) =>
+            void promoteSocial(c.id, c.version, nextCampaignId)
+          }
           onManage={manageSeriesDialogs}
         />
       )}

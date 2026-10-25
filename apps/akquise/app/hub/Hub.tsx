@@ -642,12 +642,19 @@ export default function Hub({
           <DialogManager
             items={managedDialogs}
             campaignName={(id) => campaignName(id ?? null)}
+            campaigns={data.campaigns.map((c) => ({
+              id: c.id,
+              title: c.title,
+            }))}
             busy={busy}
             canManage
-            onPromote={(c) =>
+            onPromote={(c, campaignId) =>
               act(async () => {
                 await post("promote-social/" + c.id, {
                   version: c.version,
+                  ...(campaignId !== undefined
+                    ? { campaignId }
+                    : {}),
                 });
               }, "In Social Media übernommen.")
             }
