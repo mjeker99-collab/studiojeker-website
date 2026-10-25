@@ -9,6 +9,28 @@ import {
 } from "../lib/websites/input";
 import { websiteHtml, websiteZip } from "../lib/websites/render";
 import { generateWebsite } from "../lib/websites/provider";
+import {
+  websiteTemplates,
+  createWebsiteFromTemplate,
+} from "../lib/websites/templates";
+test("Six starter templates have valid independent documents, contact links and editable placeholders", async () => {
+  assert.equal(websiteTemplates.length, 6);
+  for (const t of websiteTemplates) {
+    const doc = createWebsiteFromTemplate(t.id);
+    assert.ok(validatedDocument.safeParse(doc).success, t.name);
+    assert.equal(doc.pages.length, t.pages.length);
+    assert.ok(doc.pages.every((p) => p.sections.length > 0));
+    assert.ok(doc.pages.some((p) => p.slug === "kontakt"));
+    const zip = await JSZip.loadAsync(await websiteZip(doc));
+    for (const p of doc.pages) assert.ok(zip.file(p.slug + ".html"));
+    doc.pages[0].sections[0].body = "Changed";
+    assert.notEqual(
+      createWebsiteFromTemplate(t.id).pages[0].sections[0].body,
+      "Changed",
+    );
+  }
+  assert.throws(() => createWebsiteFromTemplate("unknown"));
+});
 const sample = () => ({
   ...structuredClone(blankWebsite),
   name: "A <script>alert(1)</script>",

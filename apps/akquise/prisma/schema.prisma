@@ -262,6 +262,14 @@ enum EditorialStatus {
   DONE
 }
 
+// Separates Social publishing posts from Content Studio drafts and GPT dialog stubs.
+// Existing rows are classified additively; nothing is deleted.
+enum ContentWorkspace {
+  SOCIAL_POST
+  CONTENT_DRAFT
+  GPT_DIALOG
+}
+
 model Campaign {
   customerId     String?
   customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -291,6 +299,7 @@ model MarketingContent {
   organization   StudioOrganization  @relation(fields: [organizationId], references: [id])
   id             String              @id @default(cuid())
   kind           ContentKind
+  workspace      ContentWorkspace    @default(SOCIAL_POST)
   title          String
   version        Int                 @default(1)
   status         EditorialStatus     @default(DRAFT)
@@ -308,6 +317,7 @@ model MarketingContent {
   mailchimpTransfers MailchimpTransfer[]
 
   @@index([campaignId, scheduledAt])
+  @@index([kind, workspace, status])
 }
 
 model MarketingVersion {
@@ -621,4 +631,26 @@ model ProjectDraft {
   createdAt DateTime @default(now())
 
   @@index([userId, area, updatedAt])
+}
+
+// ChatGPT connector settings. Token stays in env; this row tracks scopes and revoke/access.
+model GptIntegration {
+  id           String    @id
+  scopes       Json      @default("{\"projects\":true,\"campaigns\":true,\"concepts\":true,\"content\":true}")
+  revokedAt    DateTime?
+  lastAccessAt DateTime?
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?
+}
+
+// Explicit content grants for the read-only ChatGPT connector.
+model GptShare {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  sharedBy   String
+  sharedAt   DateTime @default(now())
+
+  @@unique([entityType, entityId])
+  @@index([entityType, sharedAt])
 }

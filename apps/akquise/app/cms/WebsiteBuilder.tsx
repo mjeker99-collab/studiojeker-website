@@ -12,6 +12,8 @@ import {
 import { websiteHtml } from "@/lib/websites/render";
 import type { websiteList, websiteState } from "@/lib/websites/service";
 import WebsitePublication from "./WebsitePublication";
+import WebsiteTemplates from "./WebsiteTemplates";
+import { createWebsiteFromTemplate } from "@/lib/websites/templates";
 type List = Awaited<ReturnType<typeof websiteList>>;
 type Project = Awaited<ReturnType<typeof websiteState>>;
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -148,7 +150,15 @@ export default function WebsiteBuilder({
     );
     const pendingMessage = message;
     await load(result.id);
-    setMessage(pendingMessage);
+    if (
+      !pendingMessage.trim() &&
+      !project &&
+      doc.briefing.startsWith("Grundtemplate:")
+    )
+      setMessage(
+        "Personalisiere diese Vorlage für den gewählten Kunden und das Ziel im Briefing. Erhalte die Seitenstruktur und frage nach fehlenden Angaben.",
+      );
+    if (pendingMessage.trim()) setMessage(pendingMessage);
     await reloadList();
     setStatus("Website als neue Version gespeichert.");
   }
@@ -269,6 +279,24 @@ export default function WebsiteBuilder({
           setRestoreVersion("");
         }}
       />
+      {!project && (
+        <WebsiteTemplates
+          disabled={busy}
+          choose={(id) => {
+            if (!canLeave()) return;
+            setDoc(createWebsiteFromTemplate(id));
+            setPageIndex(0);
+            setPreviewJob("");
+            setMessage(
+              "Personalisiere diese Vorlage für den gewählten Kunden und das Ziel im Briefing. Erhalte die Seitenstruktur und frage nach fehlenden Angaben.",
+            );
+            setConsent(false);
+            setStatus(
+              "Vorlage geladen. Kunde und Briefing ergänzen, Projekt speichern und anschliessend GPT beauftragen.",
+            );
+          }}
+        />
+      )}
       {error && <p role="alert">{error}</p>}
       {status && <p role="status">{status}</p>}
       {!list ? (

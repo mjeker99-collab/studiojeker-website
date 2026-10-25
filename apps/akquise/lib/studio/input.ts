@@ -37,6 +37,8 @@ export const briefingSchema = z
       .max(5)
       .optional(),
     referenceAssetIds: z.array(z.string().min(1)).max(4),
+    // Optional: GPT dialogs vs Content Studio drafts. Omitted briefs are classified.
+    workspace: z.enum(["CONTENT_DRAFT", "GPT_DIALOG"]).optional(),
   })
   .strict();
 export const studioSnapshot = z

@@ -6,6 +6,10 @@ import { allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
 import { audit, type Tx } from "../workflow";
 import { campaignInput, contentInput, type ContentInput } from "./input";
+import {
+  canPromoteToSocial,
+  type ContentWorkspace,
+} from "./workspace";
 export const contentHash = (payload: ContentInput) => {
   // PostgreSQL JSONB may reorder record keys. Canonicalize the new newsletter
   // fields only, preserving the existing hash format for legacy content.
@@ -109,6 +113,7 @@ export async function saveContentInTx(
   payload: ContentInput,
   id?: string,
   expectedVersion?: number,
+  options?: { workspace?: ContentWorkspace },
 ) {
   await hubActor(tx, actor);
   await associations(tx, payload.ownerId, payload.campaignId);
@@ -125,10 +130,19 @@ export async function saveContentInTx(
       409,
     );
   const version = (old?.version ?? 0) + 1;
+  const workspace: ContentWorkspace | undefined = old
+    ? undefined
+    : options?.workspace ||
+      (payload.kind === "SOCIAL"
+        ? payload.studio
+          ? "CONTENT_DRAFT"
+          : "SOCIAL_POST"
+        : "SOCIAL_POST");
   const data = {
     studioSeriesId: payload.studio?.seriesId,
     title: payload.title,
     kind: payload.kind,
+    ...(workspace ? { workspace } : {}),
     ownerId: payload.ownerId,
     campaignId: payload.campaignId,
     scheduledAt: payload.scheduledAt,
@@ -155,6 +169,42 @@ export async function saveContentInTx(
   return c;
 }
 
+/**
+ * Move a Content Studio draft or GPT dialog stub into the Social publishing list.
+ * Does not delete data, bump content versions, or invalidate approvals.
+ * Campaign links stay as already stored on the content / series.
+ */
+export async function promoteToSocialPost(
+  actor: string,
+  id: string,
+  expectedVersion: number,
+) {
+  return db.$transaction(async (tx) => {
+    await hubActor(tx, actor);
+    await lock(tx, id);
+    const content = await tx.marketingContent.findUniqueOrThrow({
+      where: { id },
+    });
+    if (content.version !== expectedVersion)
+      throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
+    if (!canPromoteToSocial(content))
+      throw new PolicyError(
+        "Nur Content-Entwürfe und GPT-Dialoge können in Social Media übernommen werden.",
+        409,
+      );
+    const updated = await tx.marketingContent.update({
+      where: { id },
+      data: { workspace: "SOCIAL_POST" },
+    });
+    await audit(tx, actor, "SOCIAL_POST_PROMOTED", id, {
+      from: content.workspace,
+      campaignId: content.campaignId,
+      version: content.version,
+    });
+    return updated;
+  });
+}
+
 export async function reviewContent(
   actor: string,
   id: string,
@@ -174,6 +224,15 @@ export async function reviewContent(
     if (decision === "APPROVED" && !read)
       throw new PolicyError(
         "Vollständigen Inhalt einschliesslich aller Varianten und Medien prüfen.",
+      );
+    if (
+      decision === "APPROVED" &&
+      c.kind === "SOCIAL" &&
+      c.workspace === "GPT_DIALOG"
+    )
+      throw new PolicyError(
+        "Zuerst «In Social Media übernehmen», danach freigeben.",
+        409,
       );
     if (c.status === "DONE")
       throw new PolicyError(
@@ -250,6 +309,11 @@ export async function recordPublication(
     await hubActor(tx, actor);
     await lock(tx, id);
     const { c, payload } = await approvedContent(tx, id, version);
+    if (c.workspace !== "SOCIAL_POST")
+      throw new PolicyError(
+        "Nur Social Posts im Publishing-Workspace können manuell veröffentlicht werden.",
+        409,
+      );
     if (
       c.kind !== "SOCIAL" ||
       !payload.variants.some((v) => v.channel === channel)
