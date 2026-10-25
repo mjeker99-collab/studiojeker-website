@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
+import { deployIdentity } from "@/lib/deploy-identity";
 export const dynamic = "force-dynamic";
 export async function GET() {
+  const deploy = deployIdentity();
   try {
     await db.$queryRaw`SELECT "lastWriteAccessAt" FROM "GptIntegration" LIMIT 0`;
     await db.$queryRaw`SELECT "entityId" FROM "GptWriteGrant" LIMIT 0`;
@@ -14,12 +16,12 @@ export async function GET() {
     await db.$queryRaw`SELECT "brandRevision" FROM "StudioOrganization" LIMIT 0`;
     await db.$queryRaw`SELECT "studioContext", "studioContextRevision" FROM "User" LIMIT 0`;
     return Response.json(
-      { status: "ready" },
+      { status: "ready", deploy },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
     return Response.json(
-      { status: "unavailable" },
+      { status: "unavailable", deploy },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }

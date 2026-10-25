@@ -66,13 +66,22 @@ StudioChat / Kampagnen-GPT).
 ## Deployment (Render)
 
 Service: `studiojeker-akquise` (`apps/akquise/render.yaml`).
-`autoDeployTrigger: "off"` — nur manuelles Deploy nach Freigabe.
+**Sole deploy branch:** `feat/akquise-production-readiness` (Root `apps/akquise`).
+`autoDeployTrigger: "off"` — Merge allein deployed nichts; nur manuelles Deploy
+nach Freigabe. Der frühere Branch `feat/akquise-render-frankfurt` ist entfernt
+und darf in Settings → Build & Deploy nicht mehr als Quelle stehen.
 
 1. PR in `feat/akquise-production-readiness` mergen.
-2. Backup wie oben (PITR / `pg_dump`).
-3. Manuelles Deploy des Webdienstes `studiojeker-akquise`.
-4. `preDeployCommand` führt `node render/command.mjs migrate` aus
+2. Backup wie oben (PITR / `pg_dump`) und Erfolg prüfen.
+3. Render Settings prüfen: Branch = `feat/akquise-production-readiness`.
+4. Manuelles Deploy des Webdienstes `studiojeker-akquise` («Deploy latest commit»).
+5. `preDeployCommand` führt `node render/command.mjs migrate` aus
    (`prisma migrate deploy`, kein Seed/Reset).
-5. Healthcheck `/api/health/ready`; Login und Social-Media-Liste stichprobenartig
-   prüfen (GPT-Dialoge nicht in der Publishing-Liste; «Zur Übernahme» mit
-   Kampagnenwahl und Archivfilter).
+6. Healthcheck:
+   - `/api/health/ready` → `status: "ready"` und Spalten inkl. `archivedAt`
+   - `/api/health/live` → `deploy.branch` / `deploy.commit` (Render-Env)
+7. Optional in der Service-Shell (nur lesen):
+   `npm run verify:dialogs` — zählt SOCIAL nach workspace/Archiv, prüft Spalten.
+8. UI: Hard-Reload, Social Media → «Zur Übernahme»: Löschen / Archiv /
+   Mehrfachauswahl. Alte GPT-Stubs bleiben in der Warteschlange bis Archiv/Löschen;
+   sie dürfen nicht in der Publishing-Liste stehen.
