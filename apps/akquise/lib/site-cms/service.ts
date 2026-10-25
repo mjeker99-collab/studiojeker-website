@@ -4,6 +4,7 @@ import { PolicyError } from "../policy";
 import { hubActor } from "../hub/workflow";
 import { audit } from "../workflow";
 import {
+  getSanityReadToken,
   getSanityWriteToken,
   siteCmsLiveUrl,
   siteCmsPublishAllowed,
@@ -95,20 +96,46 @@ const editorProjection = `{
   seoSection{title{de,en},description{de,en}}
 }`;
 
-/** Fetch published + draft with the sections we may edit. */
+/**
+ * Draft reads use the read token only. Write tokens are reserved for
+ * mutations/uploads so an expired Editor token cannot break the overview.
+ */
+function canReadDrafts() {
+  return Boolean(getSanityReadToken());
+}
+
+/** Fetch published + optional draft with the sections we may edit. */
 async function fetchRawDocuments(page: SitePage) {
   const draft = draftId(page.id);
-  const docs = z
+  const publishedDocs = z
     .array(z.record(z.string(), z.unknown()))
     .parse(
-      await siteQuery(`*[_id in $ids]${editorProjection}`, {
-        ids: [page.id, draft],
-      }, { perspective: "previewDrafts" }),
+      await siteQuery(
+        `*[_id in $ids]${editorProjection}`,
+        { ids: [page.id] },
+        { perspective: "published" },
+      ),
     );
-  return {
-    draft: docs.find((doc) => doc._id === draft),
-    published: docs.find((doc) => doc._id === page.id),
-  };
+  const published = publishedDocs.find((doc) => doc._id === page.id);
+  if (!canReadDrafts()) return { draft: undefined, published };
+  try {
+    const draftDocs = z
+      .array(z.record(z.string(), z.unknown()))
+      .parse(
+        await siteQuery(
+          `*[_id in $ids]${editorProjection}`,
+          { ids: [draft] },
+          { perspective: "previewDrafts" },
+        ),
+      );
+    return {
+      draft: draftDocs.find((doc) => doc._id === draft),
+      published,
+    };
+  } catch {
+    // Invalid/missing draft access must not hide published pages.
+    return { draft: undefined, published };
+  }
 }
 
 /** Raw published document without asset dereferencing — safe to copy into a draft. */

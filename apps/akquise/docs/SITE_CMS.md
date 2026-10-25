@@ -23,9 +23,11 @@ Schemas und Document-IDs kommen aus `/studio` (Homepage-Singleton-ID, About, Con
 
 ### Tokens (nur serverseitig)
 
-- `SANITY_API_READ_TOKEN` — optional, Lesen inkl. Entwürfe
-- `SANITY_API_WRITE_TOKEN` — Editor-Token für Entwürfe, Medien, Publish
+- `SANITY_API_READ_TOKEN` — optional, Lesen von Sanity-Entwürfen (`previewDrafts`)
+- `SANITY_API_WRITE_TOKEN` — Editor-Token nur für Speichern, Medien-Upload, Publish
 - `SITE_CMS_ALLOW_PUBLISH=true` — explizite Freigabe, sonst bleibt Veröffentlichen gesperrt
+
+Veröffentlichte Seiten sind ohne Token lesbar. Write-Tokens werden **nicht** für Leseabfragen verwendet, damit ein abgelaufener Editor-Token die Übersicht nicht blockiert.
 
 Keine Tokens als `NEXT_PUBLIC_*`. Kein Schreibzugriff im Browser.
 

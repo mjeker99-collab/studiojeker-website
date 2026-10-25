@@ -73,10 +73,15 @@ export async function siteQuery(
   url.searchParams.set("perspective", options.perspective || "published");
   for (const [key, value] of Object.entries(params))
     url.searchParams.set("$" + key, JSON.stringify(value));
+  // Reads: published needs no token; drafts need a dedicated read token.
+  // Never send the write token on queries — expired Editor tokens would 401.
   const token =
-    options.perspective === "previewDrafts"
-      ? getSanityWriteToken() || getSanityReadToken()
-      : getSanityReadToken();
+    options.perspective === "previewDrafts" ? getSanityReadToken() : undefined;
+  if (options.perspective === "previewDrafts" && !token)
+    throw new PolicyError(
+      "Entwürfe benötigen SANITY_API_READ_TOKEN (serverseitig).",
+      503,
+    );
   const result = (await sanityFetch(url, {
     method: "GET",
     token,
