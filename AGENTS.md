@@ -15,6 +15,18 @@ Since 1992
 
 ---
 
+
+## STUDIOONE DELIVERY WORKFLOW (MANDATORY)
+
+Before work on StudioONE or the Studiojeker website, read and follow
+[`docs/STUDIOONE_OPERATING_AGREEMENT.md`](docs/STUDIOONE_OPERATING_AGREEMENT.md).
+The agreement defines autonomous implementation, tests, pull requests, merges,
+staging deployment verification, release approvals and concise completion reporting.
+Never bypass branch protection, credentials or production release gates.
+This workflow supplements the technical/design specifications below.
+
+---
+
 # PURPOSE
 
 This repository contains the source code for the Studiojeker website.
