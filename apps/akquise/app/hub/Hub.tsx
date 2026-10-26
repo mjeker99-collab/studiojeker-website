@@ -145,7 +145,7 @@ export default function Hub({
   onCampaignAssistant?: (id: string) => void;
   projectRevision?: number;
 }) {
-  const [templateId, setTemplateId] = useState("master-v7");
+  const [templateId, setTemplateId] = useState(newsletterLibrary[newsletterLibrary.length - 1].id);
   const [mailchimp, setMailchimp] = useState<{
     connected: boolean;
     audiences: { id: string; name: string }[];
@@ -944,69 +944,32 @@ export default function Hub({
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
-            <section className="panel padded" aria-label="Vorlagenbibliothek">
-              <h2>Vorlagen & bestehende Ausgaben</h2>
-              <p>
-                Die Originale bleiben als geschützte Vorlagen erhalten. Zum
-                Weiterarbeiten einen Entwurf erstellen oder die bestehenden
-                Ausgaben einmalig übernehmen.
-              </p>
-              <label>
-                Newsletter-Vorlage
-                <select
-                  value={templateId}
-                  onChange={(e) => setTemplateId(e.target.value)}
-                >
-                  {newsletterLibrary.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12, margin: "16px 0" }}>
-                {newsletterLibrary.map((template) => (
-                  <button type="button" key={template.id}
-                    aria-pressed={template.id === templateId}
-                    className={template.id === templateId ? "" : "secondary"}
-                    onClick={() => { setTemplateId(template.id); setShowOriginal(true); }}
-                    style={{ textAlign: "left", padding: 16, borderRadius: 12, border: template.id === templateId ? "2px solid #00c8ff" : "1px solid #ccd5da" }}>
-                    <span style={{ display: "block", fontSize: 24, marginBottom: 8 }} aria-hidden="true">✉</span>
-                    <strong style={{ display: "block" }}>{template.name}</strong>
-                    <small style={{ display: "block", marginTop: 8 }}>{template.note || "Studiojeker Newsletter-Vorlage"}</small>
-                    <small style={{ display: "block", marginTop: 8 }}>{template.id === templateId ? "✓ Ausgewählt" : "Zur Vorschau auswählen"}</small>
+            <section className="panel padded" aria-label="Newsletter-Vorlage auswählen">
+              <h2>Newsletter bearbeiten</h2>
+              <p>Wähle entweder die Grundvorlage oder die neueste Ausgabe. Ältere Versionen bleiben in der Newsletter-Übersicht erhalten.</p>
+              <div className="actions" role="group" aria-label="Vorlage auswählen">
+                {[
+                  { id: "master-v7", label: "Grundvorlage" },
+                  { id: newsletterLibrary[newsletterLibrary.length - 1].id, label: "Letzte aktualisierte Vorlage" },
+                ].map((choice) => (
+                  <button key={choice.id} type="button"
+                    className={templateId === choice.id ? "" : "secondary"}
+                    aria-pressed={templateId === choice.id}
+                    onClick={() => { setTemplateId(choice.id); setShowOriginal(false); }}>
+                    {templateId === choice.id ? "✓ " : ""}{choice.label}
                   </button>
                 ))}
               </div>
+              <p className="muted">
+                {newsletterLibrary.find((template) => template.id === templateId)?.name}
+              </p>
               <div className="actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setShowOriginal(!showOriginal)}
-                >
-                  {showOriginal
-                    ? "Originalvorschau schliessen"
-                    : "Original ansehen"}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    act(async () => {
-                      await post("newsletter/import", {});
-                    }, "Vorhandene Newsletter übernommen. Bereits importierte Ausgaben bleiben erhalten.")
-                  }
-                >
-                  Bestehende Ausgaben importieren
+                <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
+                  {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
               {showOriginal && (
-                <NewsletterPreview
-                  html={
-                    newsletterLibrary.find((t) => t.id === templateId)!.html
-                  }
-                />
+                <NewsletterPreview html={newsletterLibrary.find((template) => template.id === templateId)!.html} />
               )}
             </section>
           )}
@@ -1034,7 +997,7 @@ export default function Hub({
             >
               {" "}
               {section === "Newsletter"
-                ? "Newsletter erstellen"
+                ? "Ausgewählte Vorlage bearbeiten"
                 : "Beitrag erstellen"}{" "}
               ＋
             </button>
