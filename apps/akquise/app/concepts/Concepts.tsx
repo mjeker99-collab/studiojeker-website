@@ -199,10 +199,7 @@ export default function Concepts({
   const oldVersion = doc?.versions.find((v) => v.version === history);
   return (
     <section className="concepts" aria-label="Konzeptentwicklung">
-      <p>
-        Entwickle Kommunikations- und Marketingkonzepte im Gespräch. Übernimm
-        Vorschläge in die Kapitel und gib die geprüfte Version frei.
-      </p>
+      <p>Thema eingeben, mit GPT entwickeln und Ergebnisse ins Konzept übernehmen.</p>
       {error && (
         <p role="alert" className="error">
           {error}
@@ -261,16 +258,13 @@ export default function Concepts({
                 ))}
               </select>
             </label>
-            <button
-              className="secondary"
-              disabled={busy || !doc}
-              onClick={() => void choose(doc!.id)}
-            >
-              Neu laden
-            </button>
+            {doc && <button type="button" className="secondary" disabled={busy}
+              onClick={() => void choose(doc.id)}>Zurücksetzen</button>}
           </div>
 
-          <ProjectSave
+          <details className="concept-advanced-save">
+            <summary>Weitere Optionen: Arbeitsstand sichern oder wiederherstellen</summary>
+            <ProjectSave
             area="Konzepte"
             identity={doc?.id || ""}
             suggestedTitle={form.title || "Neues Konzept"}
@@ -298,18 +292,15 @@ export default function Concepts({
               setConsent(false);
               setReviewed(false);
             }}
-          />
+            />
+          </details>
           <div className="concept-columns">
             <section
               className="studio-chat"
               aria-labelledby="concept-chat-title"
             >
-              <h2 id="concept-chat-title">Mit GPT konzipieren</h2>
-              <p>
-                GPT fragt nach, prüft Annahmen und entwickelt mit dir einzelne
-                Kapitel. Hinterlege Angebote, Zielgruppen und Markenregeln im
-                Kundenprofil, damit GPT das passende Unternehmenswissen erhält.
-              </p>
+              <h2 id="concept-chat-title">1. Thema und Auftrag</h2>
+              <p className="muted">Beschreibe dein Vorhaben oder wähle einen Einstieg. GPT legt das Konzept automatisch an.</p>
               <div
                 className="studio-chat-controls"
                 aria-label="Einstieg in die Konzeptarbeit"
@@ -436,7 +427,7 @@ export default function Concepts({
                 ))}
               </div>
               <label>
-                Kapitel für Übernahme
+                Zielkapitel für spätere Übernahme
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value as Chapter)}
@@ -456,11 +447,12 @@ export default function Concepts({
                 }}
               >
                 <label>
-                  Deine Nachricht
+                  Was möchtest du entwickeln?
                   <textarea
                     aria-label="Deine Nachricht"
                     rows={5}
                     maxLength={4000}
+                    placeholder="Zum Beispiel: Entwickle ein Kommunikationskonzept für StudioONE."
                     value={message}
                     disabled={busy}
                     onChange={(e) => setMessage(e.target.value)}
@@ -480,7 +472,7 @@ export default function Concepts({
                 </label>
                 {(!doc || dirty) && (
                   <p className="muted">
-                    Beim Senden wird dein aktueller Konzeptstand automatisch gespeichert.
+                    Beim GPT-Start wird dein Konzept automatisch angelegt und gespeichert.
                   </p>
                 )}
                 {!index.config.connected && (
@@ -492,9 +484,7 @@ export default function Concepts({
                 {/* The primary GPT action is in the header, linked to this form. */}
               </form>
               <p className="muted">
-                GPT erhält den gespeicherten Konzeptstand und die letzten zwölf
-                erfolgreichen Gesprächsrunden. Recherchen und Quellen werden
-                nicht automatisch geprüft.
+                GPT-Vorschläge werden erst nach deiner Prüfung in die Kapitel übernommen.
               </p>
             </section>
             <section
@@ -502,7 +492,7 @@ export default function Concepts({
               aria-labelledby="concept-document-title"
             >
               <h2 id="concept-document-title">
-                Dein Konzept{doc ? ` · Version ${doc.version}` : ""}
+                2. Dein Konzept{doc ? ` · Version ${doc.version}` : ""}
               </h2>
               <p role="status">
                 {dirty
