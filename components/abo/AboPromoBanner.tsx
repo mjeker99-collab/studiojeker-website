@@ -34,7 +34,10 @@ function subscribeToPreviewHash(onStoreChange: () => void): () => void {
 export function AboPromoBanner({ promo }: AboPromoBannerProps) {
   const getSnapshot = useCallback(() => {
     // `#promo-preview` lets editors verify the block outside the date window.
-    if (window.location.hash === "#promo-preview") return true;
+    // Staging is an editorial preview: show the campaign before its launch date.
+    // Production continues to honor the configured Switzerland date window.
+    const isStaging = window.location.hostname === "staging2026.studiojeker.ch";
+    if (isStaging || window.location.hash === "#promo-preview") return true;
     return isAboPromoActive(promo);
   }, [promo]);
   const active = useSyncExternalStore(
