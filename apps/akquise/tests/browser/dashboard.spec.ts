@@ -259,6 +259,23 @@ for (const width of [390, 768, 1440]) {
     });
     await common.getByLabel("Prüfstatus").selectOption("VERIFIED");
     await common.getByLabel("Verifikationsdatum").fill("2026-01-02");
+    // Saving useful partial data must not require a source or create a draft.
+    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel
+      .getByRole("button", { name: "Änderungen speichern", exact: true })
+      .click();
+    await expect(
+      panel.getByText("2 Kontakte gespeichert · 0 nicht gespeichert"),
+    ).toBeVisible();
+    const partial = await (await page.request.get("/api/state")).json();
+    for (const id of ids) {
+      const contact = partial.contacts.find((c: { id: string }) => c.id === id);
+      expect(contact.verifiedAt).toContain("2026-01-02");
+      expect(contact.confidence).toBe("UNCONFIRMED");
+      expect(
+        partial.drafts.filter((d: { contactId: string }) => d.contactId === id),
+      ).toHaveLength(0);
+    }
     await common
       .getByLabel("Quellen-URL")
       .fill("https://example.test/gepruefte-liste");

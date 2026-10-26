@@ -93,7 +93,7 @@ export default function ContactMailFlow({
       aria-busy={loading || busy}
     >
       <h2>{ids.length} Mails vorbereiten</h2>
-      <button className="secondary" disabled={busy} onClick={back}>
+      <button className="secondary" disabled={busy || editing} onClick={back}>
         Zurück zur Auswahl
       </button>
       {loading ? (
@@ -122,7 +122,7 @@ export default function ContactMailFlow({
                 Vorhandene aktuelle Entwürfe werden weiterverwendet. Es werden
                 noch keine Mails versandt.
               </p>
-              {changes.length > 0 && (
+              {changes.length > 0 && !editing && (
                 <>
                   <details>
                     <summary>
@@ -179,7 +179,7 @@ export default function ContactMailFlow({
                   </label>
                 </>
               )}
-              {!results.length && (
+              {!results.length && !editing && (
                 <button
                   disabled={
                     busy ||
