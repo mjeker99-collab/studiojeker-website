@@ -115,12 +115,9 @@ for (const workspace of [
         .click();
     await open();
     if (workspace.area === "Konzepte") {
-      await page
-        .getByText(
-          "Weitere Optionen: Arbeitsstand sichern oder wiederherstellen",
-          { exact: true },
-        )
-        .click();
+      await page.locator("details.concept-advanced-save").evaluate((el) => {
+        (el as HTMLDetailsElement).open = true;
+      });
     }
     if (workspace.nav === "Website") {
       await page
