@@ -2418,7 +2418,9 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
   const { importNewsletters, duplicateNewsletter } =
     await import("../../lib/hub/newsletter-library");
   const first = await importNewsletters(martin);
-  assert.equal(first.imported, 3);
+  const { newsletterLibrary } = await import("../../lib/hub/newsletter-template");
+  assert.equal(first.imported, newsletterLibrary.length);
+  assert.equal(first.ids.length, newsletterLibrary.length);
   assert.equal((await importNewsletters(nora)).imported, 0);
   const original = await db.marketingContent.findUniqueOrThrow({
     where: { id: first.ids[1] },
