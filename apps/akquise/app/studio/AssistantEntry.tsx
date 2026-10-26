@@ -97,11 +97,16 @@ export default function AssistantEntry({
 
   useEffect(() => {
     if (!initialTask) return;
-    setChatKey((key) => key + 1);
-    setProjectId("");
-    setCampaignId("");
-    setChatRequest({ seriesId: "", message: initialTask.prompt, campaignId: "", customerId: "" });
-    setOpen(true);
+    let active = true;
+    Promise.resolve().then(() => {
+      if (!active) return;
+      setChatKey((key) => key + 1);
+      setProjectId("");
+      setCampaignId("");
+      setChatRequest({ seriesId: "", message: initialTask.prompt, campaignId: "", customerId: "" });
+      setOpen(true);
+    });
+    return () => { active = false; };
   }, [initialTask]);
   useEffect(() => {
     if (!campaignRequest) return;
