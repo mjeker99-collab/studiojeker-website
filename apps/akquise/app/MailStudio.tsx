@@ -395,6 +395,7 @@ export default function MailStudio({
                       .filter((id): id is string => Boolean(id)),
                   );
                   setPreparing(true);
+                  setPreparationStarted(true);
                   setStep(1);
                   setRead(false);
                   setDispatch(false);
