@@ -161,7 +161,7 @@ export default function App() {
   function startDashboardTask(prompt: string, section: string) {
     const next = section === "Social Media" ? "Social Media" : "Kampagnen";
     navigate({ section: next });
-    setDashboardTask({ prompt, section: next, request: Date.now() });
+    setDashboardTask(previous => ({ prompt, section: next, request: (previous?.request ?? 0) + 1 }));
   }
   function navigate(target: DashboardTarget) {
     if (

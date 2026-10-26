@@ -19,7 +19,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .click();
   const editor = page.getByRole("region", { name: "Konzeptentwicklung" });
   await expect(
-    editor.getByRole("heading", { name: "Mit GPT konzipieren" }),
+    editor.getByRole("heading", { name: "1. Thema und Auftrag" }),
   ).toBeVisible();
   await editor
     .getByRole("button", { name: "Kampagne planen", exact: true })
@@ -43,7 +43,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByRole("button", { name: "Konzept speichern", exact: true })
     .click();
   await expect(
-    editor.getByRole("heading", { name: "Dein Konzept · Version 1" }),
+    editor.getByRole("heading", { name: "2. Dein Konzept · Version 1" }),
   ).toBeVisible();
   await page.reload();
   await page
@@ -118,7 +118,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByRole("button", { name: "Als neue Version speichern" })
     .click();
   await expect(
-    editor.getByRole("heading", { name: "Dein Konzept · Version 2" }),
+    editor.getByRole("heading", { name: "2. Dein Konzept · Version 2" }),
   ).toBeVisible();
   await expect(
     editor.getByRole("button", { name: "Version 2 freigeben" }),
