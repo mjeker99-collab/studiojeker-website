@@ -136,14 +136,28 @@ export default function Concepts({
     });
   }
   async function send() {
-    if (!doc || dirty || !consent || !message.trim()) return;
+    if (!consent || !message.trim() || !index?.config.connected || pending || busy) return;
     await action(async () => {
+      // Save the current editor state first, including brand-new concepts.
+      // Do not reload the form here: that would overwrite the user's prompt.
+      const active: Document = dirty || !doc
+        ? await (async () => {
+            const saved = await api(
+              doc ? `concepts/${doc.id}` : "concepts",
+              doc ? { version: doc.version, data: form } : form,
+            );
+            return api(`concepts/${saved.id}`);
+          })()
+        : doc;
+      setDoc(active);
+      setHistory(active.version);
+      setIndex(await api("concepts"));
       let queued = false;
       try {
         const job = await api("studio/jobs", {
-          seriesId: doc.seriesId,
+          seriesId: active.seriesId,
           kind: "CHAT",
-          conceptVersion: doc.version,
+          conceptVersion: active.version,
           message: message.trim(),
           contentId: null,
           requestKey: crypto.randomUUID(),
@@ -164,7 +178,7 @@ export default function Concepts({
         );
       } finally {
         // Preserve the saved editor state; fetching the complete conversation also recovers after a network timeout.
-        const next: Document = await api(`concepts/${doc.id}`);
+        const next: Document = await api(`concepts/${active.id}`);
         setDoc(next);
       }
     });
@@ -205,6 +219,18 @@ export default function Concepts({
       ) : (
         <>
           <div className="studio-chat-controls">
+            <button
+              type="submit"
+              form="concept-gpt-message"
+              className="primary"
+              disabled={
+                busy || !consent || !message.trim() ||
+                !index.config.connected || pending
+              }
+              aria-label="Mit GPT entwickeln"
+            >
+              {busy ? "Wird verarbeitet …" : "✦ Mit GPT entwickeln"}
+            </button>
             <label>
               Konzept auswählen
               <select
@@ -409,6 +435,7 @@ export default function Concepts({
                 </select>
               </label>
               <form
+                id="concept-gpt-message"
                 onSubmit={(e) => {
                   e.preventDefault();
                   void send();
@@ -438,9 +465,8 @@ export default function Concepts({
                   pro Nachricht.
                 </label>
                 {(!doc || dirty) && (
-                  <p>
-                    Konzept zuerst speichern, damit GPT mit dem aktuellen Stand
-                    arbeitet.
+                  <p className="muted">
+                    Beim Senden wird dein aktueller Konzeptstand automatisch gespeichert.
                   </p>
                 )}
                 {!index.config.connected && (
@@ -449,19 +475,7 @@ export default function Concepts({
                     muss aktiviert sein.
                   </p>
                 )}
-                <button
-                  disabled={
-                    busy ||
-                    !doc ||
-                    dirty ||
-                    !consent ||
-                    !message.trim() ||
-                    !index.config.connected ||
-                    pending
-                  }
-                >
-                  {busy ? "Wird verarbeitet …" : "An GPT senden"}
-                </button>
+                {/* The primary GPT action is in the header, linked to this form. */}
               </form>
               <p className="muted">
                 GPT erhält den gespeicherten Konzeptstand und die letzten zwölf
