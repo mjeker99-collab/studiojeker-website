@@ -76,7 +76,16 @@ export default function MailStudio({
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
   const [skipped, setSkipped] = useState<string[]>([]);
-  const [preparing, setPreparing] = useState(true);
+  const [preparing, setPreparing] = useState(
+    !drafts.some((d) =>
+      contacts.some(
+        (c) =>
+          c.id === d.contactId &&
+          !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status),
+      ),
+    ),
+  );
+  const [batchSize, setBatchSize] = useState(25);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const contactOptions = contacts.filter(
     (c) =>
@@ -188,8 +197,9 @@ export default function MailStudio({
     setResults([]);
     setStep(2);
   }
-  async function preview() {
-    const data = await api("preview", { ids: selected });
+  async function preview(ids = selected) {
+    setSelected(ids);
+    const data = await api("preview", { ids });
     setRows(data.rows);
     setIncluded(
       data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
@@ -275,20 +285,21 @@ export default function MailStudio({
           </p>
         )}
       </div>
-      <MailSchedule
-        key={scheduleRevision}
-        drafts={drafts}
-        openDraft={openDraft}
-        compact={step !== 3}
-        readyCount={candidates.length}
-        onQueueChange={setQueuedIds}
-      />
       {step === 1 && preparing && (
         <section
           className="panel"
           aria-label="Kontakte im Mail-Studio vorbereiten"
         >
           <h3>Kontakte vorbereiten</h3>
+          {candidates.length > 0 && (
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() => setPreparing(false)}
+            >
+              Zu den {candidates.length} vorhandenen Mails
+            </button>
+          )}
           <label>
             Kontakte suchen
             <input value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -354,19 +365,11 @@ export default function MailStudio({
       )}
       {step === 1 && !preparing && (
         <section className="panel" aria-label="Mailauswahl">
-          <h3>Welche Mails möchtest du vorbereiten?</h3>
+          <h3>{visible.length} persönliche Mails vorhanden</h3>
           <p>
-            Vorhandene persönliche Entwürfe auswählen oder weitere Kontakte
-            vorbereiten.
+            Diese Entwürfe sind bereits vorbereitet. Öffne die gewünschte Menge
+            direkt zur gemeinsamen Freigabe.
           </p>
-          <button
-            onClick={() => {
-              setPreparing(true);
-              setSearch("");
-            }}
-          >
-            Kontakte auswählen und vorbereiten
-          </button>
           <label>
             Mails suchen
             <input
@@ -376,59 +379,79 @@ export default function MailStudio({
             />
           </label>
           <div className="actions">
-            <button
-              disabled={busy || !visible.length}
-              onClick={() => setSelected(visible.slice(0, 25).map((d) => d.id))}
-            >
-              Erste 25 angezeigte Mails auswählen
-            </button>
-            <button
-              disabled={busy || !visible.length}
-              onClick={() =>
-                setSelected(visible.slice(0, 200).map((d) => d.id))
-              }
-            >
-              Alle angezeigten Mails auswählen (max. 200)
-            </button>
-            <button disabled={busy} onClick={() => setSelected([])}>
-              Auswahl leeren
-            </button>
-          </div>
-          {visible.map((d) => (
-            <label className="check mail-selection" key={d.id}>
-              <input
-                type="checkbox"
-                checked={selected.includes(d.id)}
+            {[25, 50, 100].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                className="secondary"
+                aria-pressed={batchSize === amount}
                 disabled={busy}
-                onChange={(e) =>
-                  setSelected((old) =>
-                    e.target.checked
-                      ? [...old, d.id]
-                      : old.filter((id) => id !== d.id),
-                  )
-                }
-              />
-              <span>
-                {contacts.find((c) => c.id === d.contactId)?.organisation} ·{" "}
-                {d.versions[0].recipient}
-                <br />
-                {d.versions[0].subject} ·{" "}
-                {d.approvals.find((a) => a.version === d.version)?.status ===
-                "APPROVED"
-                  ? "Freigegeben"
-                  : "Zur Prüfung"}
-              </span>
-            </label>
-          ))}
-          {!visible.length && (
-            <p>Noch keine passenden Entwürfe. Zuerst Kontakte vorbereiten.</p>
-          )}
+                onClick={() => setBatchSize(amount)}
+              >
+                {amount} Mails
+              </button>
+            ))}
+          </div>
           <button
-            disabled={busy || !selected.length || selected.length > 200}
-            onClick={() => void run(preview)}
+            disabled={busy || !visible.length}
+            onClick={() =>
+              void run(() =>
+                preview(visible.slice(0, batchSize).map((d) => d.id)),
+              )
+            }
           >
-            {selected.length} Mails gemeinsam prüfen
+            {busy
+              ? "Mails werden geladen …"
+              : `${Math.min(batchSize, visible.length)} Mails gemeinsam freigeben →`}
           </button>
+          <button
+            className="secondary"
+            disabled={busy}
+            onClick={() => {
+              setPreparing(true);
+              setSearch("");
+            }}
+          >
+            Weitere Kontakte auswählen
+          </button>
+          <details>
+            <summary>Einzelne Entwürfe auswählen (optional)</summary>
+            {visible.map((d) => (
+              <label className="check mail-selection" key={d.id}>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(d.id)}
+                  disabled={busy}
+                  onChange={(e) =>
+                    setSelected((old) =>
+                      e.target.checked
+                        ? [...old, d.id]
+                        : old.filter((id) => id !== d.id),
+                    )
+                  }
+                />
+                <span>
+                  {contacts.find((c) => c.id === d.contactId)?.organisation} ·{" "}
+                  {d.versions[0].recipient}
+                  <br />
+                  {d.versions[0].subject} ·{" "}
+                  {d.approvals.find((a) => a.version === d.version)?.status ===
+                  "APPROVED"
+                    ? "Freigegeben"
+                    : "Zur Prüfung"}
+                </span>
+              </label>
+            ))}
+            {!visible.length && (
+              <p>Noch keine passenden Entwürfe. Zuerst Kontakte vorbereiten.</p>
+            )}
+            <button
+              disabled={busy || !selected.length || selected.length > 200}
+              onClick={() => void run(() => preview())}
+            >
+              {selected.length} Mails gemeinsam prüfen
+            </button>
+          </details>
         </section>
       )}
       {skipped.length > 0 && (
@@ -455,7 +478,7 @@ export default function MailStudio({
           <button
             className="secondary"
             disabled={busy}
-            onClick={() => void run(preview)}
+            onClick={() => void run(() => preview())}
           >
             Prüfvorschau neu laden
           </button>
@@ -668,6 +691,14 @@ export default function MailStudio({
           )}
         </section>
       )}
+      <MailSchedule
+        key={scheduleRevision}
+        drafts={drafts}
+        openDraft={openDraft}
+        compact={step !== 3}
+        readyCount={candidates.length}
+        onQueueChange={setQueuedIds}
+      />
     </section>
   );
 }
