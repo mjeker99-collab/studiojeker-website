@@ -22,6 +22,8 @@ export function getSanityWriteToken(): string | undefined {
  * Explicit gate for publishing Sanity drafts to the production dataset.
  * Default off so StudioONE never publishes studiojeker.ch without ops approval.
  */
-export function siteCmsPublishAllowed(): boolean {
-  return process.env.SITE_CMS_ALLOW_PUBLISH?.trim() === "true";
+export function siteCmsPublishAllowed(pageKey?: string): boolean {
+  if (process.env.SITE_CMS_ALLOW_PUBLISH?.trim() === "true") return true;
+  // Narrow, explicit exception for the already approved Content-Abo page.
+  return pageKey === "abo" && process.env.SITE_CMS_ABO_ALLOW_PUBLISH?.trim() === "true";
 }
