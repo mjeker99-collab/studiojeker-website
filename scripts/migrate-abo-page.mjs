@@ -309,7 +309,7 @@ async function main() {
           _type: "aboPackage",
           id: "plus",
           name: locString("Visibility Plus", "Visibility Plus"),
-          price: locString("CHF 1’250.–", "CHF 1’250.–"),
+          price: locString("CHF 1’150.–", "CHF 1’150.–"),
           priceSuffix: locString("/Monat", "/month"),
           summary: locText(
             "Für KMU mit erweiterter Redaktionsplanung, mehr Content-Formaten und mehreren Kanälen.",
