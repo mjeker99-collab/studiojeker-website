@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
-import ContactMailFlow from "./ContactMailFlow";
+import type { ContactPreparation } from "../lib/contact-preparation";
 
 type Draft = {
   id: string;
@@ -75,11 +75,12 @@ export default function MailStudio({
   const [error, setError] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
-  const [preparationStarted, setPreparationStarted] = useState(false);
+  const [skipped, setSkipped] = useState<string[]>([]);
   const [preparing, setPreparing] = useState(true);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const contactOptions = contacts.filter(
     (c) =>
+      !drafts.some((d) => d.contactId === c.id && queuedIds.includes(d.id)) &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       `${c.organisation} ${c.firstName} ${c.lastName} ${c.email}`
         .toLowerCase()
@@ -127,6 +128,65 @@ export default function MailStudio({
     } finally {
       setBusy(false);
     }
+  }
+  async function prepareBatch() {
+    setSkipped([]);
+    async function preparation(action: string, body: unknown) {
+      const response = await fetch(`/api/contacts/preparation/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          data.error || "Vorbereitung fehlgeschlagen. Bitte erneut versuchen.",
+        );
+      return data;
+    }
+    const previewData = await preparation("preview", { ids: contactIds });
+    const proposals: ContactPreparation[] = previewData.contacts;
+    const ready = proposals.filter((r) => r.ready);
+    const deferred = proposals
+      .filter((r) => !r.ready)
+      .map((r) => `${r.organisation}: ${r.issues.join(" · ")}`);
+    setSkipped(deferred);
+    if (!ready.length) {
+      throw new Error(
+        "Für diese Auswahl fehlen noch verwendbare Rechercheangaben. Es wurden keine Mails versandt. Du kannst eine andere Gruppe auswählen; die offenen Kontakte bleiben zurückgestellt.",
+      );
+    }
+    const prepared = await preparation("prepare", {
+      confirmed: true,
+      contacts: ready.map((r) => ({ id: r.id, revision: r.revision })),
+    });
+    const successful = prepared.results.filter(
+      (r: Result & { draftId?: string }) => r.ok && r.draftId,
+    );
+    setSkipped([
+      ...deferred,
+      ...prepared.results
+        .filter((r: Result) => !r.ok)
+        .map((r: Result) => r.message),
+    ]);
+    await refresh();
+    if (!successful.length)
+      throw new Error(
+        "Keine Nachricht konnte vorbereitet werden. Die übrigen Kontakte bleiben unverändert.",
+      );
+    const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
+    const data = await api("preview", { ids });
+    setSelected(ids);
+    setRows(data.rows);
+    setIncluded(
+      data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
+    );
+    setRead(false);
+    setDispatch(false);
+    setLegal(false);
+    setProcurement(false);
+    setResults([]);
+    setStep(2);
   }
   async function preview() {
     const data = await api("preview", { ids: selected });
@@ -177,9 +237,12 @@ export default function MailStudio({
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel">
         <h2>Persönliche E-Mails versenden</h2>
-        <p>1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben</p>
+        <p>
+          1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben
+        </p>
         <div className="actions" aria-label="Arbeitsschritte">
           <button
+            className="secondary"
             disabled={busy}
             aria-pressed={step === 1}
             onClick={() => {
@@ -190,6 +253,7 @@ export default function MailStudio({
             1 · Auswahl
           </button>
           <button
+            className="secondary"
             disabled={busy || !rows.length}
             aria-pressed={step === 2}
             onClick={() => setStep(2)}
@@ -197,6 +261,7 @@ export default function MailStudio({
             2 · Mails prüfen
           </button>
           <button
+            className="secondary"
             disabled={busy}
             aria-pressed={step === 3}
             onClick={() => setStep(3)}
@@ -218,7 +283,7 @@ export default function MailStudio({
         readyCount={candidates.length}
         onQueueChange={setQueuedIds}
       />
-      {step === 1 && preparing && !preparationStarted && (
+      {step === 1 && preparing && (
         <section
           className="panel"
           aria-label="Kontakte im Mail-Studio vorbereiten"
@@ -228,67 +293,64 @@ export default function MailStudio({
             Kontakte suchen
             <input value={search} onChange={(e) => setSearch(e.target.value)} />
           </label>
-          <p>Wähle 25 oder 50 Kontakte. StudioONE prüft die Daten und bereitet persönliche Nachrichten vor. Vor dem Versand bestätigst du die fertigen Mails.</p>
+          <p>
+            Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
+            automatisch übernommen und persönliche Mails vorbereitet.
+            Unvollständige Kontakte werden zurückgestellt.
+          </p>
           <div className="actions">
-            <button type="button" className="secondary" disabled={!contactOptions.length} onClick={() => setContactIds(contactOptions.slice(0, 25).map((c) => c.id))}>
-              25 Kontakte auswählen
-            </button>
-            <button type="button" className="secondary" disabled={!contactOptions.length} onClick={() => setContactIds(contactOptions.slice(0, 50).map((c) => c.id))}>
-              50 Kontakte auswählen
-            </button>
-            <button
-              disabled={!contactIds.length || contactIds.length > 200}
-              onClick={() => setPreparationStarted(true)}
-            >
-              {contactIds.length} Kontakte prüfen und Mails vorbereiten →
-            </button>
-          </div>
-          <details><summary>Auswahl einzeln anpassen ({contactIds.length} ausgewählt)</summary>
-          {contactOptions.map((c) => (
-            <label className="check mail-selection" key={c.id}>
-              <input
-                type="checkbox"
-                checked={contactIds.includes(c.id)}
-                onChange={(e) =>
-                  setContactIds((old) =>
-                    e.target.checked
-                      ? [...old, c.id]
-                      : old.filter((id) => id !== c.id),
+            {[25, 50, 100].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                className="secondary"
+                disabled={busy || !contactOptions.length}
+                aria-pressed={
+                  contactIds.length === Math.min(amount, contactOptions.length)
+                }
+                onClick={() =>
+                  setContactIds(
+                    contactOptions.slice(0, amount).map((c) => c.id),
                   )
                 }
-              />
-              <span>
-                {c.organisation} · {c.firstName} {c.lastName} · {c.email}
-              </span>
-            </label>
-          ))}
+              >
+                {amount} Kontakte auswählen
+              </button>
+            ))}
+            <button
+              disabled={busy || !contactIds.length || contactIds.length > 200}
+              onClick={() => void run(prepareBatch)}
+            >
+              {busy
+                ? "Mails werden vorbereitet …"
+                : `${contactIds.length} persönliche Mails vorbereiten →`}
+            </button>
+          </div>
+          <details>
+            <summary>
+              Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
+            </summary>
+            {contactOptions.map((c) => (
+              <label className="check mail-selection" key={c.id}>
+                <input
+                  type="checkbox"
+                  disabled={busy}
+                  checked={contactIds.includes(c.id)}
+                  onChange={(e) =>
+                    setContactIds((old) =>
+                      e.target.checked
+                        ? [...old, c.id]
+                        : old.filter((id) => id !== c.id),
+                    )
+                  }
+                />
+                <span>
+                  {c.organisation} · {c.firstName} {c.lastName} · {c.email}
+                </span>
+              </label>
+            ))}
           </details>
         </section>
-      )}
-      {step === 1 && preparing && preparationStarted && (
-        <ContactMailFlow
-          ids={contactIds}
-          contacts={contacts}
-          refresh={refresh}
-          back={() => setPreparationStarted(false)}
-          onReady={(ids) => {
-            setSelected(ids);
-            void run(async () => {
-              const data = await api("preview", { ids });
-              setRows(data.rows);
-              setIncluded(
-                data.rows
-                  .filter((r: Row) => !r.issues.length)
-                  .map((r: Row) => r.id),
-              );
-              setRead(false);
-              setDispatch(false);
-              setLegal(false);
-              setResults([]);
-              setStep(2);
-            });
-          }}
-        />
       )}
       {step === 1 && !preparing && (
         <section className="panel" aria-label="Mailauswahl">
@@ -300,7 +362,6 @@ export default function MailStudio({
           <button
             onClick={() => {
               setPreparing(true);
-              setPreparationStarted(false);
               setSearch("");
             }}
           >
@@ -370,6 +431,19 @@ export default function MailStudio({
           </button>
         </section>
       )}
+      {skipped.length > 0 && (
+        <details className="panel">
+          <summary>
+            {skipped.length} Kontakte zurückgestellt – übrige Mails können
+            weitergehen
+          </summary>
+          <ul>
+            {skipped.map((reason, i) => (
+              <li key={i}>{reason}</li>
+            ))}
+          </ul>
+        </details>
+      )}
       {step === 2 && (
         <section className="panel" aria-label="Globale Mailprüfung">
           <h3>{rows.length} Nachrichten in der Prüfvorschau</h3>
@@ -378,38 +452,35 @@ export default function MailStudio({
             Signatur prüfen. Nachrichten können aus der gemeinsamen Freigabe
             ausgeschlossen werden.
           </p>
-          <button disabled={busy} onClick={() => void run(preview)}>
+          <button
+            className="secondary"
+            disabled={busy}
+            onClick={() => void run(preview)}
+          >
             Prüfvorschau neu laden
           </button>
           {rows.some((r) => r.issues.length) && (
             <div className="panel-note">
               <p>
                 {rows.filter((r) => r.issues.length).length} Kontakte benötigen
-                Ergänzungen. Die übrigen Mails können separat eingeplant werden.
+                Ergänzungen und werden zurückgestellt. Die übrigen Mails sind
+                ausgewählt.
               </p>
-              <button
-                disabled={busy}
-                onClick={() => {
-                  setContactIds(
-                    rows
-                      .filter((r) => r.issues.length)
-                      .map((r) => drafts.find((d) => d.id === r.id)?.contactId)
-                      .filter((id): id is string => Boolean(id)),
-                  );
-                  setPreparing(true);
-                  setPreparationStarted(true);
-                  setStep(1);
-                  setRead(false);
-                  setDispatch(false);
-                }}
-              >
-                Fehlende Angaben gemeinsam bearbeiten
-              </button>
             </div>
           )}
+          <p>
+            <strong>
+              {chosen.length} Mails bereit ·{" "}
+              {skipped.length + rows.filter((r) => r.issues.length).length}{" "}
+              zurückgestellt
+            </strong>
+          </p>
           {rows.map((r) => (
-            <article className="mail-review-message" key={r.id}>
-              <h4>{r.organisation}</h4>
+            <details className="mail-review-message" key={r.id}>
+              <summary>
+                {r.organisation} · {r.recipient} — {r.subject}
+                {r.issues.length ? " · Zurückgestellt" : ""}
+              </summary>
               <p>
                 Empfänger: {r.recipient} · Version {r.version}
               </p>
@@ -466,7 +537,7 @@ export default function MailStudio({
                 />
                 {r.recipient} gemeinsam freigeben
               </label>
-            </article>
+            </details>
           ))}
           {missingLegal.length > 0 && (
             <fieldset>
@@ -525,22 +596,15 @@ export default function MailStudio({
             <input
               type="checkbox"
               disabled={busy || !chosen.length}
-              checked={read}
-              onChange={(e) => setRead(e.target.checked)}
+              checked={read && dispatch}
+              onChange={(e) => {
+                setRead(e.target.checked);
+                setDispatch(e.target.checked);
+              }}
             />
-            Ich habe alle {chosen.length} ausgewählten Nachrichten mit
-            Empfänger, Betreff und Signatur vollständig gelesen und geprüft.
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={dispatch}
-              disabled={busy || !chosen.length}
-              onChange={(e) => setDispatch(e.target.checked)}
-            />
-            Diese {chosen.length} Mails nach der Freigabe automatisch einplanen.
-            Bei aktiver Automatik beginnt der echte Versand im gespeicherten
-            Zeitfenster.
+            Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
+            Empfänger, Betreff und Signatur frei und bestätige den automatischen
+            Versand nach dem angezeigten Zeitplan.
           </label>
           <button
             disabled={!canApprove}
