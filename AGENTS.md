@@ -27,6 +27,16 @@ This workflow supplements the technical/design specifications below.
 
 ---
 
+## STUDIOONE UX GUIDELINE (MANDATORY)
+
+For all StudioONE development and any StudioONE integration, follow
+[`docs/STUDIOONE_UX_GUIDELINES.md`](docs/STUDIOONE_UX_GUIDELINES.md).
+The KMU-first five principles, two-minute onboarding test, single primary action,
+AI-assisted drafting, autosave and explicit publication approval are binding.
+Preserve Studiojeker Pro functionality while keeping KMU workflows simple.
+
+---
+
 # PURPOSE
 
 This repository contains the source code for the Studiojeker website.
