@@ -136,7 +136,17 @@ export default function Concepts({
     });
   }
   async function send() {
-    if (!consent || !message.trim() || !index?.config.connected || pending || busy) return;
+    if (busy || pending || !index?.config.connected) return;
+    if (!message.trim()) {
+      setError("Beschreibe zuerst, was du entwickeln möchtest.");
+      document.getElementById("concept-message")?.focus();
+      return;
+    }
+    if (!consent) {
+      setError("Bitte bestätige zuerst die Weitergabe der Angaben an GPT.");
+      document.getElementById("concept-consent")?.focus();
+      return;
+    }
     await action(async () => {
       // Workspace snapshots are not native concepts. New concepts need a
       // title even if the user started in the GPT chat, not the editor.
@@ -232,12 +242,11 @@ export default function Concepts({
               form="concept-gpt-message"
               className="primary"
               disabled={
-                busy || !consent || !message.trim() ||
-                !index.config.connected || pending
+                busy || !index.config.connected || pending
               }
               aria-label="Mit GPT entwickeln"
             >
-              {busy ? "Wird verarbeitet …" : "✦ Mit GPT entwickeln"}
+              {busy ? "Konzept wird bearbeitet …" : "✦ Mit GPT entwickeln"}
             </button>
             <label>
               Konzept auswählen
@@ -449,7 +458,8 @@ export default function Concepts({
                 <label>
                   Was möchtest du entwickeln?
                   <textarea
-                    aria-label="Deine Nachricht"
+                    id="concept-message"
+                    aria-label="Was möchtest du entwickeln?"
                     rows={5}
                     maxLength={4000}
                     placeholder="Zum Beispiel: Entwickle ein Kommunikationskonzept für StudioONE."
@@ -461,14 +471,14 @@ export default function Concepts({
                 <label className="check">
                   <input
                     type="checkbox"
+                    id="concept-consent"
                     checked={consent}
                     disabled={busy}
                     onChange={(e) => setConsent(e.target.checked)}
                   />
-                  Konzept, Kundenname, Website, Kundennotizen,
-                  Unternehmenswissen und Gespräch an OpenAI übermitteln.
-                  Budgetreservierung: USD {index.config.textReserve.toFixed(2)}{" "}
-                  pro Nachricht.
+                  Ich bin einverstanden, dass mein Konzept und die benötigten
+                  Kundenangaben an GPT übermittelt werden. Kostenlimit pro
+                  Anfrage: USD {index.config.textReserve.toFixed(2)}.
                 </label>
                 {(!doc || dirty) && (
                   <p className="muted">
@@ -496,7 +506,7 @@ export default function Concepts({
               </h2>
               <p role="status">
                 {dirty
-                  ? "Ungespeicherte Änderungen"
+                  ? "Entwurf – Änderungen werden beim GPT-Start automatisch gespeichert"
                   : current?.approvedAt
                     ? `Freigegeben von ${name(current.approvedBy)}`
                     : "Entwurf"}
@@ -505,12 +515,16 @@ export default function Concepts({
                 onSubmit={(e) => {
                   e.preventDefault();
                   void action(async () => {
+                    const payload = {
+                      ...form,
+                      title: form.title.trim() || "Neues Kommunikationskonzept",
+                    };
                     const saved = await api(
                       doc ? `concepts/${doc.id}` : "concepts",
-                      doc ? { version: doc.version, data: form } : form,
+                      doc ? { version: doc.version, data: payload } : payload,
                     );
                     await load(saved.id);
-                    setNotice("Neue Konzeptversion gespeichert.");
+                    setNotice("Konzept gespeichert. Du kannst mit GPT weiterarbeiten.");
                   });
                 }}
               >
@@ -593,8 +607,8 @@ export default function Concepts({
                       />
                     </label>
                   ))}
-                  <button disabled={!dirty || !form.title.trim()}>
-                    {doc ? "Als neue Version speichern" : "Konzept speichern"}
+                  <button type="submit" className="secondary" disabled={!dirty}>
+                    {doc ? "Änderungen speichern" : "Entwurf speichern"}
                   </button>
                 </fieldset>
               </form>
