@@ -736,6 +736,7 @@ export default function App() {
                   return (
                     <button
                       className="draft-row"
+                      disabled={busy}
                       key={d.id}
                       onClick={() => openDraft(d)}
                     >
