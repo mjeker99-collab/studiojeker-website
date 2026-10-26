@@ -22,10 +22,15 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
     .click();
   // The simplified UI intentionally hides the one-time template import.
   // Seed the synthetic newsletter sources through the authenticated API.
-  const imported = await page.request.post("/api/hub/newsletter/import", {
-    data: {},
+  const imported = await page.evaluate(async () => {
+    const response = await fetch("/api/hub/newsletter/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    return response.ok;
   });
-  expect(imported.ok()).toBe(true);
+  expect(imported).toBe(true);
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
