@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type {
   ContactPreparation as Proposal,
   PreparationFields,
 } from "../lib/contact-preparation";
+
+import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
 
 type Result = { id: string; ok: boolean; message: string; revision?: number };
 type Edit = { id: string; revision: number; values: PreparationFields };
@@ -26,6 +28,8 @@ function Fields({
   change: (values: PreparationFields) => void;
   shared?: boolean;
 }) {
+  const sourceHintId = useId();
+  const sourceError = sourceUrlIssue(values.sourceUrl ?? "");
   return (
     <div className="form-grid">
       <label>
@@ -65,11 +69,25 @@ function Fields({
       <label>
         Quellen-URL
         <input
-          type="url"
+          type="text"
+          inputMode="url"
+          aria-label="Quellen-URL"
+          aria-describedby={sourceHintId}
+          aria-invalid={!!sourceError}
+          placeholder="firma.ch/team"
+          onBlur={() => {
+            const normalized = normalizeSourceUrl(values.sourceUrl ?? "");
+            if (normalized !== (values.sourceUrl ?? ""))
+              change({ sourceUrl: normalized });
+          }}
           value={values.sourceUrl ?? ""}
           maxLength={4000}
           onChange={(e) => change({ sourceUrl: e.target.value })}
         />
+        <span id={sourceHintId} className={sourceError ? "error" : "muted"}>
+          {sourceError ||
+            "Fundstelle der Kontaktadresse, z. B. die Teamseite des Unternehmens. https:// wird automatisch ergänzt."}
+        </span>
       </label>
       <label>
         Dokumentierter Anknüpfungspunkt
@@ -106,6 +124,17 @@ export default function ContactPreparation({
   }
   async function save() {
     if (!confirmed || busy) return;
+    const invalid =
+      sourceUrlIssue(shared.sourceUrl ?? "") ||
+      Object.values(edits)
+        .map((edit) => sourceUrlIssue(edit.values.sourceUrl ?? ""))
+        .find(Boolean);
+    if (invalid) {
+      setError(
+        "Bitte die markierte Quellenadresse korrigieren. Deine Eingaben bleiben erhalten.",
+      );
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -143,6 +172,10 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
+  const unconfirmed = proposals.filter(
+    (p) =>
+      (edits[p.id]?.values.confidence ?? p.values.confidence) === "UNCONFIRMED",
+  ).length;
   return (
     <section
       className="contact-preparation"
@@ -156,6 +189,14 @@ export default function ContactPreparation({
         Gemeinsame Angaben einmal eintragen. Vorhandene Angaben bleiben
         erhalten; Ausnahmen kannst du unten pro Kontakt bearbeiten.
       </p>
+      {unconfirmed > 0 && !shared.confidence && (
+        <p role="status">
+          Bei {unconfirmed} Kontakten fehlt die Bestätigung der Adressprüfung.
+          Wenn du diese persönlichen Adressen geprüft hast, wähle unten
+          «Persönliche Adresse verifiziert». «Aus vorhandenen Angaben
+          übernehmen» lässt unbestätigte Adressen unverändert.
+        </p>
+      )}
       <fieldset disabled={busy}>
         <legend>Gemeinsame Angaben für die Auswahl</legend>
         <p>

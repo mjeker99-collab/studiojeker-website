@@ -259,6 +259,19 @@ for (const width of [390, 768, 1440]) {
     });
     await common.getByLabel("Prüfstatus").selectOption("VERIFIED");
     await common.getByLabel("Verifikationsdatum").fill("2026-01-02");
+    await expect(
+      panel.getByText(/Bei 2 Kontakten fehlt die Bestätigung/),
+    ).toBeHidden();
+    await common.getByLabel("Quellen-URL").fill("keine adresse");
+    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel
+      .getByRole("button", { name: "Änderungen speichern", exact: true })
+      .click();
+    await expect(panel.getByRole("alert")).toContainText(
+      "Bitte die markierte Quellenadresse korrigieren",
+    );
+    await expect(common.getByLabel("Quellen-URL")).toHaveValue("keine adresse");
+    await common.getByLabel("Quellen-URL").fill("");
     // Saving useful partial data must not require a source or create a draft.
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await panel
@@ -276,9 +289,7 @@ for (const width of [390, 768, 1440]) {
         partial.drafts.filter((d: { contactId: string }) => d.contactId === id),
       ).toHaveLength(0);
     }
-    await common
-      .getByLabel("Quellen-URL")
-      .fill("https://example.test/gepruefte-liste");
+    await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
       name: "Änderungen speichern",
       exact: true,
@@ -289,7 +300,7 @@ for (const width of [390, 768, 1440]) {
     const row = panel.getByRole("group", { name: "Angaben für Eva Muster" });
     await row
       .getByLabel("Quellen-URL")
-      .fill("https://example.test/individueller-beleg");
+      .fill("example.test/individueller-beleg");
     await expect(prepare).toBeDisabled();
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     expect(
