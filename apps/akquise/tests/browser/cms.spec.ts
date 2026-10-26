@@ -133,7 +133,7 @@ test("CMS overview, responsive controls, import status and provider failure", as
     .getByRole("button", { name: "Neue Website / Landingpage erstellen" })
     .click();
   await expect(
-    page.getByRole("region", { name: "Website-Studio" }),
+    page.getByRole("region", { name: "Website-Studio", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })

@@ -139,6 +139,12 @@ for (const workspace of [
     const draftId = await toolbar.getByLabel("Projekt öffnen").inputValue();
     await page.reload();
     await open();
+    if (workspace.nav === "Website") {
+      await page
+        .getByRole("navigation", { name: "Website-Bereiche" })
+        .getByRole("button", { name: "Neue Website / Landingpage erstellen" })
+        .click();
+    }
     await toolbar.getByLabel("Projekt öffnen").selectOption(draftId);
     await expect(page.getByLabel(workspace.title, { exact: true })).toHaveValue(
       "Unfertiges Projekt",

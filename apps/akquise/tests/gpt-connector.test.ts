@@ -77,6 +77,20 @@ test("OpenAPI describes read and controlled draft write paths", () => {
   assert.ok(spec.paths["/api/integrations/gpt/drafts"].post);
   assert.ok(spec.paths["/api/integrations/gpt/drafts/{id}"].patch);
   assert.ok(spec.paths["/api/integrations/gpt/drafts/{id}"].get);
+  assert.ok(spec.paths["/api/integrations/gpt/website/pages"].get);
+  assert.ok(spec.paths["/api/integrations/gpt/website/pages/{key}"].get);
+  assert.ok(spec.paths["/api/integrations/gpt/website/drafts"].post);
+  assert.ok(spec.paths["/api/integrations/gpt/website/drafts/{key}"].patch);
+  assert.ok(spec.paths["/api/integrations/gpt/website/reviews/{key}"].post);
+  assert.ok(spec.paths["/api/integrations/gpt/website/publish/{key}"].post);
+  assert.deepEqual(
+    spec.paths["/api/integrations/gpt/website/publish/{key}"].post.security,
+    [{ writeBearer: [] }],
+  );
+  const publishSchema = spec.paths["/api/integrations/gpt/website/publish/{key}"].post
+    .requestBody.content["application/json"].schema;
+  assert.deepEqual(publishSchema.required, ["revision", "confirmed"]);
+  assert.deepEqual(publishSchema.properties.confirmed.enum, [true]);
   assert.equal(
     (spec.paths["/api/integrations/gpt/campaigns"] as { post?: unknown }).post,
     undefined,

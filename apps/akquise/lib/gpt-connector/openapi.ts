@@ -30,7 +30,7 @@ export function gptConnectorOpenApi() {
     openapi: "3.1.0",
     info: {
       title: "StudioONE ChatGPT Connector",
-      version: "1.2.0",
+      version: "1.3.0",
       description:
         "Read access to explicitly shared StudioONE projects, campaigns, concepts and editorial drafts. Optional controlled write access for editorial drafts only (no publish, send, delete or CRM). Write endpoints require CHATGPT_CONNECTOR_WRITE_TOKEN, write_drafts scope, and explicit write grants. Tokens are never embedded in this document.",
     },
@@ -106,6 +106,39 @@ export function gptConnectorOpenApi() {
               },
             } } },
           },
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
+      "/api/integrations/gpt/website/reviews/{key}": {
+        post: {
+          operationId: "requestWebsiteReview",
+          summary: "Request review of the exact Sanity draft revision; no publishing",
+          security: [{ writeBearer: [] }],
+          parameters: [{ name: "key", in: "path", required: true,
+            schema: { type: "string", minLength: 1, maxLength: 40 } }],
+          requestBody: { required: true, content: { "application/json": { schema: {
+            type: "object", additionalProperties: false,
+            required: ["revision"],
+            properties: { revision: { type: "string", minLength: 1, maxLength: 200 },
+              note: { type: "string", maxLength: 500 } },
+          } } } },
+          responses: { "200": jsonObject, ...errorResponses },
+        },
+      },
+      "/api/integrations/gpt/website/publish/{key}": {
+        post: {
+          operationId: "publishWebsitePage",
+          summary: "Publish a reviewed Sanity draft ONLY after explicit user confirmation and matching revision. Never invoke automatically.",
+          description: "Sensitive action: obtain explicit user approval for this exact page and revision. Requires enabled server-side SITE_CMS_ALLOW_PUBLISH and a matching review audit.",
+          security: [{ writeBearer: [] }],
+          parameters: [{ name: "key", in: "path", required: true,
+            schema: { type: "string", minLength: 1, maxLength: 40 } }],
+          requestBody: { required: true, content: { "application/json": { schema: {
+            type: "object", additionalProperties: false,
+            required: ["revision", "confirmed"],
+            properties: { revision: { type: "string", minLength: 1, maxLength: 200 },
+              confirmed: { type: "boolean", enum: [true] } },
+          } } } },
           responses: { "200": jsonObject, ...errorResponses },
         },
       },
