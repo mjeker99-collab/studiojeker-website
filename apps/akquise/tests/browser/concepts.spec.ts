@@ -25,7 +25,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByRole("button", { name: "Kampagne planen", exact: true })
     .click();
   await expect(
-    editor.getByLabel("Deine Nachricht", { exact: true }),
+    editor.getByLabel("Was möchtest du entwickeln?", { exact: true }),
   ).toHaveValue(/Zeitraum und Budget/);
   await expect(
     editor.getByRole("button", { name: "Mit GPT entwickeln", exact: true }),

@@ -24,7 +24,7 @@ test("Project save restores an unsent campaign after reload and keeps conflicts 
     name: "Projekt sichern · Kampagnen",
     exact: true,
   });
-  const prompt = page.getByLabel("Deine Nachricht", { exact: true });
+  const prompt = page.getByLabel("Was möchtest du entwickeln?", { exact: true });
   const title = `Gesichertes Testprojekt ${Date.now()}`;
   await toolbar.getByLabel("Name der Sicherung", { exact: true }).fill(title);
   await prompt.fill("Kampagne zum Relaunch – noch nicht an GPT gesendet.");
@@ -88,7 +88,7 @@ for (const workspace of [
     nav: "Strategie & Konzepte",
     area: "Konzepte",
     title: "Titel",
-    message: "Deine Nachricht",
+    message: "Was möchtest du entwickeln?",
   },
   {
     nav: "Website",
@@ -115,12 +115,9 @@ for (const workspace of [
         .click();
     await open();
     if (workspace.area === "Konzepte") {
-      await page
-        .getByText(
-          "Weitere Optionen: Arbeitsstand sichern oder wiederherstellen",
-          { exact: true },
-        )
-        .click();
+      await page.locator("details.concept-advanced-save").evaluate((el) => {
+        (el as HTMLDetailsElement).open = true;
+      });
     }
     if (workspace.nav === "Website") {
       await page
