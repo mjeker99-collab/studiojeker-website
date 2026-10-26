@@ -947,22 +947,29 @@ export default function Hub({
             <section className="panel padded" aria-label="Newsletter-Vorlage auswählen">
               <h2>Newsletter bearbeiten</h2>
               <p>Wähle entweder die Grundvorlage oder die neueste Ausgabe. Ältere Versionen bleiben in der Newsletter-Übersicht erhalten.</p>
-              <div className="actions" role="group" aria-label="Vorlage auswählen">
-                {[
-                  { id: "master-v7", label: "Grundvorlage" },
-                  { id: newsletterLibrary[newsletterLibrary.length - 1].id, label: "Letzte aktualisierte Vorlage" },
-                ].map((choice) => (
-                  <button key={choice.id} type="button"
-                    className={templateId === choice.id ? "" : "secondary"}
-                    aria-pressed={templateId === choice.id}
-                    onClick={() => { setTemplateId(choice.id); setShowOriginal(false); }}>
-                    {templateId === choice.id ? "✓ " : ""}{choice.label}
-                  </button>
-                ))}
+              <div className="actions" role="group" aria-label="Newsletter-Bearbeitung starten">
+                <button type="button" className="secondary" onClick={() => {
+                  setTemplateId("master-v7");
+                  setShowOriginal(false);
+                  setEditing(null);
+                  const fresh = newContent("NEWSLETTER", userId);
+                  const template = newsletterLibrary.find((item) => item.id === "master-v7")!;
+                  fresh.newsletter = newsletterDefaults("master-v7");
+                  fresh.title = template.name + " · Entwurf";
+                  fresh.subject = template.subject;
+                  fresh.preheader = template.preheader;
+                  fresh.body = newsletterText(fresh.newsletter);
+                  setForm(fresh);
+                }}>Grundvorlage bearbeiten</button>
+                <button type="button" disabled={!data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
+                  const latest = data?.contents
+                    .filter((item) => item.kind === "NEWSLETTER")
+                    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+                  if (latest) edit(latest);
+                  setShowOriginal(false);
+                }}>Letzte gespeicherte Version bearbeiten</button>
               </div>
-              <p className="muted">
-                {newsletterLibrary.find((template) => template.id === templateId)?.name}
-              </p>
+              <p className="muted">Die neueste gespeicherte Newsletter-Version wird geöffnet. Ältere Versionen bleiben in der Übersicht erhalten.</p>
               <div className="actions">
                 <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
                   {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
