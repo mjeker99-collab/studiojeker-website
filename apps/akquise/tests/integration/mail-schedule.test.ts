@@ -287,3 +287,35 @@ test("Stale Einstellungen und Serverlimit werden abgewiesen", async () => {
   process.env.DAILY_SEND_LIMIT = "20";
   await assert.rejects(start(25), /Serverlimit/);
 });
+
+test("Gemeinsame Freigabe und Einplanung verlangt Bestätigung und bleibt versionsgebunden", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { d } = await prepared();
+  const preview = await mailReview(user, "preview", { ids: [d.id] });
+  if (!("rows" in preview) || !preview.rows) throw new Error("Vorschau fehlt");
+  const { id, version, hash, contactRevision } = preview.rows[0];
+  const body = { items: [{ id, version, hash, contactRevision }], read: true };
+  await assert.rejects(
+    mailReview(user, "approve-and-enqueue", body),
+    /bestätigen/,
+  );
+  assert.equal(await db.mailQueueItem.count(), 0);
+  const result = await mailReview(user, "approve-and-enqueue", {
+    ...body,
+    confirmDispatch: true,
+  });
+  assert.ok("results" in result && result.results?.[0].ok);
+  assert.equal(
+    await db.mailQueueItem.count({
+      where: { draftId: d.id, version, status: "QUEUED" },
+    }),
+    1,
+  );
+  assert.equal(await db.delivery.count(), 0);
+  await mailReview(user, "approve-and-enqueue", {
+    ...body,
+    confirmDispatch: true,
+  });
+  assert.equal(await db.mailQueueItem.count({ where: { draftId: d.id } }), 1);
+  assert.equal((await mailScheduleState()).schedule.enabled, false);
+});

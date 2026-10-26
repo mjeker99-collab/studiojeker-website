@@ -41,3 +41,29 @@ test("Versandfenster inklusive Start, exklusive Ende, Wochenende wählbar", () =
     true,
   );
 });
+
+test("Nächster Slot berücksichtigt Tageslimit, Wochenende, Intervall und Zeitumstellung", async () => {
+  const { nextMailSlot } = await import("../lib/mail-clock");
+  const s = {
+    weekdaysOnly: true,
+    startHour: 8,
+    endHour: 17,
+    intervalMinutes: 5,
+  };
+  assert.equal(
+    nextMailSlot(s, true, new Date("2026-10-23T08:00:00Z"))?.toISOString(),
+    "2026-10-26T07:00:00.000Z",
+  );
+  assert.equal(
+    nextMailSlot(s, false, new Date("2026-10-26T06:45:00Z"))?.toISOString(),
+    "2026-10-26T07:00:00.000Z",
+  );
+  assert.equal(
+    nextMailSlot(
+      { ...s, lastClaimAt: "2026-10-26T09:00:00Z" },
+      false,
+      new Date("2026-10-26T09:01:00Z"),
+    )?.toISOString(),
+    "2026-10-26T09:05:00.000Z",
+  );
+});

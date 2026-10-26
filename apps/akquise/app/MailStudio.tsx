@@ -58,6 +58,9 @@ export default function MailStudio({
   refresh: () => Promise<void>;
   openDraft: (id: string) => void;
 }) {
+  const [scheduleRevision, setScheduleRevision] = useState(0);
+  const [queuedIds, setQueuedIds] = useState<string[]>([]);
+  const [dispatch, setDispatch] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
@@ -87,6 +90,7 @@ export default function MailStudio({
     seen.add(d.contactId);
     const c = contacts.find((c) => c.id === d.contactId);
     return (
+      !queuedIds.includes(d.id) &&
       c &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       d.versions[0]
@@ -103,6 +107,7 @@ export default function MailStudio({
   const canApprove =
     chosen.length > 0 &&
     read &&
+    dispatch &&
     !busy &&
     chosen.every((r) => !r.issues.length) &&
     (!missingLegal.length ||
@@ -127,6 +132,7 @@ export default function MailStudio({
       data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
     );
     setRead(false);
+    setDispatch(false);
     setLegal(false);
     setProcurement(false);
     setResults([]);
@@ -136,7 +142,7 @@ export default function MailStudio({
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel">
         <h2>Mail-Studio</h2>
-        <p>Kontakte vorbereiten → gemeinsam prüfen → Versand planen</p>
+        <p>Kontakte auswählen → Mails prüfen → freigeben und einplanen</p>
         <div className="actions" aria-label="Arbeitsschritte">
           <button
             disabled={busy}
@@ -153,7 +159,7 @@ export default function MailStudio({
             aria-pressed={step === 2}
             onClick={() => setStep(2)}
           >
-            2 · Globale Prüfung
+            2 · Mails prüfen
           </button>
           <button
             disabled={busy}
@@ -169,6 +175,14 @@ export default function MailStudio({
           </p>
         )}
       </div>
+      <MailSchedule
+        key={scheduleRevision}
+        drafts={drafts}
+        openDraft={openDraft}
+        compact={step !== 3}
+        readyCount={candidates.length}
+        onQueueChange={setQueuedIds}
+      />
       {step === 1 && preparing && (
         <section
           className="panel"
@@ -290,7 +304,11 @@ export default function MailStudio({
                 {contacts.find((c) => c.id === d.contactId)?.organisation} ·{" "}
                 {d.versions[0].recipient}
                 <br />
-                {d.versions[0].subject} · Version {d.version}
+                {d.versions[0].subject} ·{" "}
+                {d.approvals.find((a) => a.version === d.version)?.status ===
+                "APPROVED"
+                  ? "Freigegeben"
+                  : "Zur Prüfung"}
               </span>
             </label>
           ))}
@@ -316,6 +334,31 @@ export default function MailStudio({
           <button disabled={busy} onClick={() => void run(preview)}>
             Prüfvorschau neu laden
           </button>
+          {rows.some((r) => r.issues.length) && (
+            <div className="panel-note">
+              <p>
+                {rows.filter((r) => r.issues.length).length} Kontakte benötigen
+                Ergänzungen. Die übrigen Mails können separat eingeplant werden.
+              </p>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setContactIds(
+                    rows
+                      .filter((r) => r.issues.length)
+                      .map((r) => drafts.find((d) => d.id === r.id)?.contactId)
+                      .filter((id): id is string => Boolean(id)),
+                  );
+                  setPreparing(true);
+                  setStep(1);
+                  setRead(false);
+                  setDispatch(false);
+                }}
+              >
+                Fehlende Angaben gemeinsam bearbeiten
+              </button>
+            </div>
+          )}
           {rows.map((r) => (
             <article className="mail-review-message" key={r.id}>
               <h4>{r.organisation}</h4>
@@ -440,11 +483,23 @@ export default function MailStudio({
             Ich habe alle {chosen.length} ausgewählten Nachrichten mit
             Empfänger, Betreff und Signatur vollständig gelesen und geprüft.
           </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={dispatch}
+              disabled={busy || !chosen.length}
+              onChange={(e) => setDispatch(e.target.checked)}
+            />
+            Diese {chosen.length} Mails nach der Freigabe automatisch einplanen.
+            Bei aktiver Automatik beginnt der echte Versand im gespeicherten
+            Zeitfenster.
+          </label>
           <button
             disabled={!canApprove}
             onClick={() =>
               void run(async () => {
-                const data = await api("approve", {
+                const data = await api("approve-and-enqueue", {
+                  confirmDispatch: true,
                   read: true,
                   items: chosen.map(
                     ({ id, version, hash, contactRevision }) => ({
@@ -465,6 +520,8 @@ export default function MailStudio({
                     : {}),
                 });
                 setResults(data.results);
+                setDispatch(false);
+                setScheduleRevision((v) => v + 1);
                 setRead(false);
                 setLegal(false);
                 setIncluded((old) =>
@@ -477,14 +534,14 @@ export default function MailStudio({
               })
             }
           >
-            {chosen.length} Nachrichten gemeinsam freigeben
+            {chosen.length} Mails freigeben und einplanen
           </button>
           {results.length > 0 && (
             <div role="status">
               <p>
-                {results.filter((r) => r.ok).length} freigegeben ·{" "}
-                {results.filter((r) => !r.ok).length} noch offen. Noch keine
-                Mails versandt.
+                {results.filter((r) => r.ok).length} freigegeben und eingeplant
+                · {results.filter((r) => !r.ok).length} noch offen. Der Versand
+                folgt dem gespeicherten Zeitplan.
               </p>
               <ul>
                 {results.map((r) => (
@@ -499,7 +556,6 @@ export default function MailStudio({
           )}
         </section>
       )}
-      {step === 3 && <MailSchedule drafts={drafts} openDraft={openDraft} />}
     </section>
   );
 }

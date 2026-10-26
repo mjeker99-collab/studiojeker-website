@@ -42,3 +42,37 @@ export function insideMailWindow(
     local.minute < schedule.endHour * 60
   );
 }
+
+// Estimate only: the worker rechecks quota, approvals and suppression before sending.
+export function nextMailSlot(
+  schedule: {
+    weekdaysOnly: boolean;
+    startHour: number;
+    endHour: number;
+    intervalMinutes: number;
+    lastClaimAt?: Date | string | null;
+  },
+  exhausted: boolean,
+  now = new Date(),
+) {
+  const earliest = Math.max(
+    now.getTime(),
+    schedule.lastClaimAt
+      ? new Date(schedule.lastClaimAt).getTime() +
+          schedule.intervalMinutes * 60000
+      : 0,
+  );
+  let candidate = new Date(earliest);
+  const today = localMailTime(now).date;
+  for (let hour = 0; hour < 8 * 24; hour++) {
+    if (
+      (!exhausted || localMailTime(candidate).date !== today) &&
+      insideMailWindow(schedule, candidate)
+    )
+      return candidate;
+    candidate = new Date(
+      (Math.floor(candidate.getTime() / 3600000) + 1) * 3600000,
+    );
+  }
+  return null;
+}

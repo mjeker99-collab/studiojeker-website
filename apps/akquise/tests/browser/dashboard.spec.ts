@@ -77,7 +77,7 @@ for (const width of [390, 768, 1440]) {
       panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
     ).toBeVisible();
     const approve = panel.getByRole("button", {
-      name: "2 Nachrichten gemeinsam freigeben",
+      name: "2 Mails freigeben und einplanen",
       exact: true,
     });
     await expect(approve).toBeDisabled();
@@ -86,6 +86,7 @@ for (const width of [390, 768, 1440]) {
       .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
     await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
     await panel.getByLabel(/Ich habe alle 2 ausgewählten Nachrichten/).check();
+    await panel.getByLabel(/Diese 2 Mails nach der Freigabe/).check();
     await expect(approve).toBeEnabled();
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
@@ -104,7 +105,7 @@ for (const width of [390, 768, 1440]) {
     ).toBe(true);
     await approve.click();
     await expect(panel.getByRole("status")).toContainText(
-      "2 freigegeben · 0 noch offen. Noch keine Mails versandt.",
+      "2 freigegeben und eingeplant · 0 noch offen.",
     );
     const state = await (await page.request.get("/api/state")).json();
     expect(
@@ -440,6 +441,17 @@ for (const [name, width, height] of [
           .getByRole("navigation", { name: "Hauptnavigation" })
           .getByRole("button", { name: /Kontakte/ })
           .click();
+      if (["E-Mail-Entwürfe", "Freigaben"].includes(section)) {
+        const nav = page.getByRole("navigation", {
+          name: "Akquise-Navigation",
+        });
+        if (
+          !(await nav
+            .getByRole("button", { name: section, exact: true })
+            .isVisible())
+        )
+          await nav.getByText("Weitere Ansichten", { exact: true }).click();
+      }
       await page
         .getByRole("navigation", {
           name:
@@ -529,6 +541,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Zulässigkeit dokumentieren" })
     .click();
   await expect(dialog).not.toBeVisible();
+  await page.getByText("Weitere Ansichten", { exact: true }).click();
   await page
     .getByRole("navigation", { name: "Akquise-Navigation" })
     .getByRole("button", { name: /E-Mail-Entwürfe/ })
