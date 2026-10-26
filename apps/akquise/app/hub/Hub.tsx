@@ -145,7 +145,7 @@ export default function Hub({
   onCampaignAssistant?: (id: string) => void;
   projectRevision?: number;
 }) {
-  const [templateId, setTemplateId] = useState("master-v7");
+  const [templateId, setTemplateId] = useState(newsletterLibrary[newsletterLibrary.length - 1].id);
   const [mailchimp, setMailchimp] = useState<{
     connected: boolean;
     audiences: { id: string; name: string }[];
@@ -944,69 +944,39 @@ export default function Hub({
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
-            <section className="panel padded" aria-label="Vorlagenbibliothek">
-              <h2>Vorlagen & bestehende Ausgaben</h2>
-              <p>
-                Die Originale bleiben als geschützte Vorlagen erhalten. Zum
-                Weiterarbeiten einen Entwurf erstellen oder die bestehenden
-                Ausgaben einmalig übernehmen.
-              </p>
-              <label>
-                Newsletter-Vorlage
-                <select
-                  value={templateId}
-                  onChange={(e) => setTemplateId(e.target.value)}
-                >
-                  {newsletterLibrary.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12, margin: "16px 0" }}>
-                {newsletterLibrary.map((template) => (
-                  <button type="button" key={template.id}
-                    aria-pressed={template.id === templateId}
-                    className={template.id === templateId ? "" : "secondary"}
-                    onClick={() => { setTemplateId(template.id); setShowOriginal(true); }}
-                    style={{ textAlign: "left", padding: 16, borderRadius: 12, border: template.id === templateId ? "2px solid #00c8ff" : "1px solid #ccd5da" }}>
-                    <span style={{ display: "block", fontSize: 24, marginBottom: 8 }} aria-hidden="true">✉</span>
-                    <strong style={{ display: "block" }}>{template.name}</strong>
-                    <small style={{ display: "block", marginTop: 8 }}>{template.note || "Studiojeker Newsletter-Vorlage"}</small>
-                    <small style={{ display: "block", marginTop: 8 }}>{template.id === templateId ? "✓ Ausgewählt" : "Zur Vorschau auswählen"}</small>
-                  </button>
-                ))}
+            <section className="panel padded" aria-label="Newsletter-Vorlage auswählen">
+              <h2>Newsletter bearbeiten</h2>
+              <p>Wähle entweder die Grundvorlage oder die neueste Ausgabe. Ältere Versionen bleiben in der Newsletter-Übersicht erhalten.</p>
+              <div className="actions" role="group" aria-label="Newsletter-Bearbeitung starten">
+                <button type="button" className="secondary" onClick={() => {
+                  setTemplateId("master-v7");
+                  setShowOriginal(false);
+                  setEditing(null);
+                  const fresh = newContent("NEWSLETTER", userId);
+                  const template = newsletterLibrary.find((item) => item.id === "master-v7")!;
+                  fresh.newsletter = newsletterDefaults("master-v7");
+                  fresh.title = template.name + " · Entwurf";
+                  fresh.subject = template.subject;
+                  fresh.preheader = template.preheader;
+                  fresh.body = newsletterText(fresh.newsletter);
+                  setForm(fresh);
+                }}>Grundvorlage bearbeiten</button>
+                <button type="button" disabled={!data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
+                  const latest = data?.contents
+                    .filter((item) => item.kind === "NEWSLETTER")
+                    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+                  if (latest) edit(latest);
+                  setShowOriginal(false);
+                }}>Letzte gespeicherte Version bearbeiten</button>
               </div>
+              <p className="muted">Die neueste gespeicherte Newsletter-Version wird geöffnet. Ältere Versionen bleiben in der Übersicht erhalten.</p>
               <div className="actions">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setShowOriginal(!showOriginal)}
-                >
-                  {showOriginal
-                    ? "Originalvorschau schliessen"
-                    : "Original ansehen"}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    act(async () => {
-                      await post("newsletter/import", {});
-                    }, "Vorhandene Newsletter übernommen. Bereits importierte Ausgaben bleiben erhalten.")
-                  }
-                >
-                  Bestehende Ausgaben importieren
+                <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
+                  {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
               {showOriginal && (
-                <NewsletterPreview
-                  html={
-                    newsletterLibrary.find((t) => t.id === templateId)!.html
-                  }
-                />
+                <NewsletterPreview html={newsletterLibrary.find((template) => template.id === templateId)!.html} />
               )}
             </section>
           )}
@@ -1034,7 +1004,7 @@ export default function Hub({
             >
               {" "}
               {section === "Newsletter"
-                ? "Newsletter erstellen"
+                ? "Ausgewählte Vorlage bearbeiten"
                 : "Beitrag erstellen"}{" "}
               ＋
             </button>
