@@ -34,8 +34,6 @@ export function AboPackagesSection({
           <p className={styles.packagesIntro}>{packages.introduction}</p>
         </Reveal>
 
-        <AboPromoBanner promo={promo} />
-
         <div className={styles.packageGrid}>
           {packages.items.map((pkg, index) => (
             <Reveal
@@ -78,6 +76,7 @@ export function AboPackagesSection({
             </Reveal>
           ))}
         </div>
+        <AboPromoBanner promo={promo} />
       </Container>
     </section>
   );
