@@ -245,7 +245,7 @@ export function getAboPageContent(locale: Locale): AboPageContent {
           {
             id: "plus",
             name: "Visibility Plus",
-            price: "CHF 1’250.–",
+            price: "CHF 1’150.–",
             priceSuffix: "/month",
             summary:
               "For SMEs that need extended editorial planning across more formats and channels.",
@@ -437,7 +437,7 @@ export function getAboPageContent(locale: Locale): AboPageContent {
         {
           id: "plus",
           name: "Visibility Plus",
-          price: "CHF 1’250.–",
+          price: "CHF 1’150.–",
           priceSuffix: "/Monat",
           summary:
             "Für KMU mit erweiterter Redaktionsplanung, mehr Content-Formaten und mehreren Kanälen.",
