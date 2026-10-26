@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { ContactPreparation as Proposal } from "../lib/contact-preparation";
-import ContactPreparation from "./ContactPreparation";
+
 
 type Result = { id: string; ok: boolean; message: string; draftId?: string };
 async function request(action: string, body: unknown) {
@@ -38,8 +38,6 @@ export default function ContactMailFlow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editorRows, setEditorRows] = useState<Proposal[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -92,8 +90,8 @@ export default function ContactMailFlow({
       aria-label="Ausgewählte Mails vorbereiten"
       aria-busy={loading || busy}
     >
-      <h2>{ids.length} Mails vorbereiten</h2>
-      <button className="secondary" disabled={busy || editing} onClick={back}>
+      <h2>Automatische Prüfung für {ids.length} Kontakte</h2>
+      <button className="secondary" disabled={busy} onClick={back}>
         Zurück zur Auswahl
       </button>
       {loading ? (
@@ -118,16 +116,13 @@ export default function ContactMailFlow({
                   benötigen Angaben
                 </strong>
               </p>
-              <p>
-                Vorhandene aktuelle Entwürfe werden weiterverwendet. Es werden
-                noch keine Mails versandt.
-              </p>
-              {changes.length > 0 && !editing && (
+              <p>StudioONE verwendet vorhandene Angaben und Entwürfe. Kontakte mit ungeklärten Angaben werden zurückgestellt. Es wird noch nichts versandt.</p>
+              {gaps.length > 0 && <p className="panel-note">{gaps.length} Kontakte sind aktuell nicht bereit und werden bei diesem Durchgang übersprungen. Du musst sie nicht einzeln korrigieren.</p>}
+              {changes.length > 0 && (
                 <>
                   <details>
                     <summary>
-                      Vorhandene Angaben für {changes.length} Kontakte
-                      übernehmen
+                      Automatisch vorgeschlagene Ergänzungen ansehen ({changes.length})
                     </summary>
                     {changes.map((r) => (
                       <article key={r.id}>
@@ -174,16 +169,14 @@ export default function ContactMailFlow({
                       checked={confirmed}
                       onChange={(e) => setConfirmed(e.target.checked)}
                     />
-                    Ich habe die vorgeschlagenen Angaben aus den vorhandenen
-                    Notizen geprüft und bestätige ihre Richtigkeit.
+                    Ich bestätige die Verwendung der angezeigten Angaben aus bereits vorhandenen Notizen für diese Gruppe.
                   </label>
                 </>
               )}
-              {!results.length && !editing && (
+              {!results.length && (
                 <button
                   disabled={
                     busy ||
-                    editing ||
                     !ready.length ||
                     (changes.length > 0 && !confirmed)
                   }
@@ -191,36 +184,6 @@ export default function ContactMailFlow({
                 >
                   {ready.length} Mails prüfen →
                 </button>
-              )}
-              {(gaps.length > 0 || editing) && (
-                <>
-                  <button
-                    className="secondary"
-                    disabled={busy || editing}
-                    onClick={() => {
-                      setEditorRows(gaps);
-                      setEditing(true);
-                    }}
-                  >
-                    {gaps.length} Kontakte ergänzen
-                  </button>
-                  {editing && (
-                    <ContactPreparation
-                      initialProposals={editorRows}
-                      refresh={async () => {
-                        await refresh();
-                        const fresh = await request("preview", { ids });
-                        setRows(fresh.contacts);
-                        setConfirmed(false);
-                      }}
-                      onDone={() => {
-                        setEditing(false);
-                        if (ready.length && changes.length === 0)
-                          void prepare();
-                      }}
-                    />
-                  )}
-                </>
               )}
             </>
           )}
