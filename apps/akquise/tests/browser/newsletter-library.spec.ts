@@ -20,14 +20,17 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Newsletter/ })
     .click();
+  // The simplified UI intentionally hides the one-time template import.
+  // Seed the synthetic newsletter sources through the authenticated API.
+  const imported = await page.request.post("/api/hub/newsletter/import", {
+    data: {},
+  });
+  expect(imported.ok()).toBe(true);
+  await page.reload();
   await page
-    .getByRole("button", { name: "Bestehende Ausgaben importieren" })
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Newsletter/ })
     .click();
-  await expect(
-    page
-      .getByRole("status")
-      .filter({ hasText: "Vorhandene Newsletter übernommen" }),
-  ).toContainText("Vorhandene Newsletter übernommen");
   const source = page.locator("article[data-content-id]").filter({
     has: page.getByRole("heading", {
       name: "Newsletter 02 · Visibility",
