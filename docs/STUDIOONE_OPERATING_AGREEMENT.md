@@ -7,6 +7,13 @@
 - KI-Assistent: übernimmt nach Möglichkeit eigenständig Analyse, Codeänderung, Tests, PR, Konfliktbehebung, Merge, Staging-Deployment und technische Prüfung.
 - Nur wenn ein Zugriffsrecht, eine Sicherheitsregel oder eine Entscheidung tatsächlich Eingreifen erfordert, stellt der Assistent **eine konkrete, zielgerichtete Rückfrage**. Keine routinemässigen Screenshot-, Merge- oder Deploy-Aufgaben an den Auftraggeber delegieren.
 
+## Auftraggeber gibt Ziele vor – technische Ausführung ist delegiert
+- Der Auftraggeber liefert Anforderungen und prüft bei Bedarf das fachliche Ergebnis; er ist **nicht** für PR-Freigaben, Tests, Merge-Klicks, Deployment oder routinemässige technische Kontrollen zuständig.
+- Für **StudioONE-Anwendungsänderungen** besteht die ausdrückliche generelle Beauftragung, sichere, getestete Änderungen nach bestandenen Prüfungen eigenständig zu mergen, über den korrekt zugeordneten Render-Service auszurollen und die Live-Version zu kontrollieren. Dafür keine erneuten Standard-Rückfragen stellen.
+- Bei fehlgeschlagenen Prüfungen Fehler selbstständig analysieren, beheben und erneut testen; die Prüfung nicht umgehen. Wenn ein tatsächlicher Zugriffs- oder Sicherheitsblocker verbleibt, diesen knapp und konkret melden.
+- Abschlussberichte enthalten das Ergebnis in Alltagssprache: **umgesetzt / live verifiziert / noch blockiert**. Keine technischen To-dos an den Auftraggeber delegieren.
+- Davon ausgenommen bleiben externe Marketingveröffentlichungen und Mailversand im Namen von Kunden, Datenlöschungen, Berechtigungsänderungen und wesentliche produktive Website-Änderungen: die jeweiligen Freigabegrenzen weiter beachten.
+
 ## Standardablauf pro Auftrag
 1. Bestehenden Stand direkt in StudioONE, Repository, Sanity und Deploy-System prüfen; keine Annahmen als geprüft darstellen.
 2. Änderung in einem passenden Branch oder via gesicherte Entwurfs-API umsetzen. Vorhandene Implementierungen erweitern statt duplizieren.
