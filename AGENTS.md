@@ -37,6 +37,20 @@ Preserve Studiojeker Pro functionality while keeping KMU workflows simple.
 
 ---
 
+## STUDIOONE FAST DELIVERY POLICY (MANDATORY — 26 OCTOBER 2026)
+
+**Deliver working results quickly; avoid endless test-and-review loops.** The client supplies goals and feedback, not technical approvals, test execution, PR merges or Render operations.
+
+- Prioritise small, valuable, immediately usable increments. Implement first, then run proportionate, time-boxed technical checks.
+- Do not block a useful release indefinitely on non-critical browser, cosmetic or test-fixture failures. Diagnose and fix them separately; document remaining issues accurately.
+- Never bypass branch protection or mandatory checks. Critical safeguards for data loss, wrong email recipients, unauthorised mail dispatch, security and destructive operations remain mandatory.
+- Handle code, fixes, PRs, merge, deployment and live verification autonomously wherever permissions and release gates allow. Do not ask the client to click buttons.
+- Report only meaningful outcomes: what works live, what remains blocked and why. Never claim live until verified.
+- For Mail-Studio: users choose 25/50 contacts in bulk, receive personalised drafts and a group summary, then approve dispatch once; no compulsory individual corrections. Incomplete or legally unapproved contacts are excluded, never fabricated or silently sent.
+- At the beginning of each working day, reread this policy and the StudioONE UX and operating agreements before making development decisions.
+
+---
+
 # PURPOSE
 
 This repository contains the source code for the Studiojeker website.
