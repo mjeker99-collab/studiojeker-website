@@ -19,3 +19,6 @@ Laufzeitverhalten des GPT-Agenten.
 - Nach Änderungen Build/Tests, Render-Deploy und `/api/health/ready` kontrollieren.
 - Meldungen unterscheiden: committed, merged, deploy initiated, live, verified.
 - Probleme selbst diagnostizieren; nur tatsächlich erforderliche Entscheidung vorlegen.
+
+## Bedienbarkeit
+Vor Änderungen an Benutzerabläufen die bereichsübergreifende Prüfung und Abnahmekriterien in `docs/UX_FLOW_REVIEW_2026-10-26.md` berücksichtigen: klare Hauptaktion, erhaltene Auswahl, nur tatsächliche Lücken abfragen, konkrete Rückmeldung und nächste Aktion. Produktive Freigaben bleiben ausdrücklich und versionsgebunden.

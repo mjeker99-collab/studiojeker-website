@@ -1791,3 +1791,5 @@ button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); 
 .mail-schedule .panel-note {
   overflow-wrap: anywhere;
 }
+
+.mail-selection-bar { position: sticky; bottom: 0; z-index: 5; background: white; border-top: 1px solid #cbd5d9; padding: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }

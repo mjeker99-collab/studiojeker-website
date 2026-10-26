@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
-import ContactPreparation from "./ContactPreparation";
+import ContactMailFlow from "./ContactMailFlow";
 
 type Draft = {
   id: string;
@@ -41,11 +41,13 @@ async function api(action: string, body: unknown) {
   return data;
 }
 export default function MailStudio({
+  initialDraftIds = [],
   drafts,
   contacts,
   refresh,
   openDraft,
 }: {
+  initialDraftIds?: string[];
   drafts: Draft[];
   contacts: {
     id: string;
@@ -73,6 +75,7 @@ export default function MailStudio({
   const [error, setError] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
+  const [preparationStarted, setPreparationStarted] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const contactOptions = contacts.filter(
@@ -138,6 +141,38 @@ export default function MailStudio({
     setResults([]);
     setStep(2);
   }
+  useEffect(() => {
+    if (!initialDraftIds.length) return;
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        if (!active) return null;
+        setSelected(initialDraftIds);
+        setBusy(true);
+        setError("");
+        return api("preview", { ids: initialDraftIds });
+      })
+      .then((data) => {
+        if (!active || !data) return;
+        setRows(data.rows);
+        setIncluded(
+          data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
+        );
+        setRead(false);
+        setDispatch(false);
+        setLegal(false);
+        setStep(2);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      })
+      .finally(() => {
+        if (active) setBusy(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [initialDraftIds]);
   return (
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel">
@@ -183,7 +218,7 @@ export default function MailStudio({
         readyCount={candidates.length}
         onQueueChange={setQueuedIds}
       />
-      {step === 1 && preparing && (
+      {step === 1 && preparing && !preparationStarted && (
         <section
           className="panel"
           aria-label="Kontakte im Mail-Studio vorbereiten"
@@ -202,17 +237,10 @@ export default function MailStudio({
               Erste 25 angezeigte Kontakte auswählen
             </button>
             <button
-              onClick={() => {
-                setPreparing(false);
-                setSearch("");
-                setSelected(
-                  candidates
-                    .filter((d) => contactIds.includes(d.contactId))
-                    .map((d) => d.id),
-                );
-              }}
+              disabled={!contactIds.length || contactIds.length > 200}
+              onClick={() => setPreparationStarted(true)}
             >
-              Weiter zu den Mailentwürfen
+              {contactIds.length} Mails vorbereiten →
             </button>
           </div>
           {contactOptions.map((c) => (
@@ -233,16 +261,32 @@ export default function MailStudio({
               </span>
             </label>
           ))}
-          {!!contactIds.length && (
-            <ContactPreparation
-              key={contactIds.join(",")}
-              ids={contactIds}
-              contacts={contacts}
-              refresh={refresh}
-              begin={() => setError("")}
-            />
-          )}
         </section>
+      )}
+      {step === 1 && preparing && preparationStarted && (
+        <ContactMailFlow
+          ids={contactIds}
+          contacts={contacts}
+          refresh={refresh}
+          back={() => setPreparationStarted(false)}
+          onReady={(ids) => {
+            setSelected(ids);
+            void run(async () => {
+              const data = await api("preview", { ids });
+              setRows(data.rows);
+              setIncluded(
+                data.rows
+                  .filter((r: Row) => !r.issues.length)
+                  .map((r: Row) => r.id),
+              );
+              setRead(false);
+              setDispatch(false);
+              setLegal(false);
+              setResults([]);
+              setStep(2);
+            });
+          }}
+        />
       )}
       {step === 1 && !preparing && (
         <section className="panel" aria-label="Mailauswahl">
@@ -254,6 +298,7 @@ export default function MailStudio({
           <button
             onClick={() => {
               setPreparing(true);
+              setPreparationStarted(false);
               setSearch("");
             }}
           >
