@@ -441,6 +441,17 @@ for (const [name, width, height] of [
           .getByRole("navigation", { name: "Hauptnavigation" })
           .getByRole("button", { name: /Kontakte/ })
           .click();
+      if (["E-Mail-Entwürfe", "Freigaben"].includes(section)) {
+        const nav = page.getByRole("navigation", {
+          name: "Akquise-Navigation",
+        });
+        if (
+          !(await nav
+            .getByRole("button", { name: section, exact: true })
+            .isVisible())
+        )
+          await nav.getByText("Weitere Ansichten", { exact: true }).click();
+      }
       await page
         .getByRole("navigation", {
           name:
