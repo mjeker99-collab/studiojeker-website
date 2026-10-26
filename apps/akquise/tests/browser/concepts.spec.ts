@@ -40,7 +40,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
         `Geprüfter Testinhalt für ${title}. Offene Annahmen bleiben bezeichnet.`,
       );
   await editor
-    .getByRole("button", { name: "Konzept speichern", exact: true })
+    .getByRole("button", { name: "Entwurf speichern", exact: true })
     .click();
   await expect(
     editor.getByRole("heading", { name: "2. Dein Konzept · Version 1" }),
@@ -115,7 +115,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     .getByLabel("Botschaften, Tonalität & Leitidee", { exact: true })
     .fill("Überarbeitete Botschaft");
   await editor
-    .getByRole("button", { name: "Als neue Version speichern" })
+    .getByRole("button", { name: "Änderungen speichern" })
     .click();
   await expect(
     editor.getByRole("heading", { name: "2. Dein Konzept · Version 2" }),
