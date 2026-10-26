@@ -234,7 +234,7 @@ export async function siteCmsOverview(actor: string) {
     studioUrl: siteCmsStudioUrl,
     stagingUrl: siteCmsStagingUrl,
     liveUrl: siteCmsLiveUrl,
-    publishAllowed: siteCmsPublishAllowed(),
+    publishAllowed: siteCmsPublishAllowed("abo"),
     writeConfigured: Boolean(getSanityWriteToken()),
     pages,
   };
@@ -261,7 +261,7 @@ export async function siteCmsPage(actor: string, pageKey: string) {
     stagingUrl: `${siteCmsStagingUrl}${page.path}`,
     liveUrl: `${siteCmsLiveUrl}${page.path}`,
     studioUrl: `${siteCmsStudioUrl}/${page.type};${page.id}`,
-    publishAllowed: siteCmsPublishAllowed(),
+    publishAllowed: siteCmsPublishAllowed(page.key),
     writeConfigured: Boolean(getSanityWriteToken()),
   };
 }
@@ -339,9 +339,9 @@ export async function siteCmsRequestReview(actor: string, raw: unknown) {
 
 export async function siteCmsPublish(actor: string, raw: unknown) {
   const input = sitePublishInput.parse(raw);
-  if (!siteCmsPublishAllowed())
+  if (!siteCmsPublishAllowed(input.pageKey))
     throw new PolicyError(
-      "Veröffentlichung ist deaktiviert (SITE_CMS_ALLOW_PUBLISH). Staging und Produktion bleiben unverändert.",
+      "Veröffentlichung für diese Seite ist deaktiviert. Content-Abo benötigt SITE_CMS_ABO_ALLOW_PUBLISH=true.",
       403,
     );
   const page = findSitePage(input.pageKey)!;
