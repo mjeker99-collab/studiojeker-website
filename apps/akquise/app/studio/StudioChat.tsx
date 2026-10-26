@@ -582,8 +582,12 @@ export default function StudioChat({
           setError("");
           setContentId("");
           setReplyToJobId("");
-          setCustomerId("");
-          setCampaignId("");
+          const selected = projectState.series.find((s) => s.id === id);
+          setCustomerId(selected?.customerId || "");
+          setCampaignId(
+            (selected?.briefing as { campaignId?: string | null } | undefined)
+              ?.campaignId || "",
+          );
         }}
         onCustomer={(id) => {
           setCustomerId(id);
@@ -592,6 +596,8 @@ export default function StudioChat({
         }}
         onCampaign={(id) => {
           setCampaignId(id);
+          const selectedCampaign = state.campaigns.find((c) => c.id === id);
+          if (selectedCampaign) setCustomerId(selectedCampaign.customerId || "");
           setConfirmed(false);
         }}
         refresh={() => {

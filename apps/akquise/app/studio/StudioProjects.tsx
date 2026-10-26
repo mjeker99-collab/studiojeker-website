@@ -157,7 +157,10 @@ export default function StudioProjects({
               <option value="">Ohne Kampagne</option>
               {state.campaigns
                 .filter(
-                  (c) => (c.customerId || null) === (currentCustomer || null),
+                  (c) =>
+                    !currentCustomer ||
+                    (c.customerId || null) === currentCustomer ||
+                    (!c.customerId && !currentCustomer),
                 )
                 .map((campaign) => (
                   <option key={campaign.id} value={campaign.id}>
