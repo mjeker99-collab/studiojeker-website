@@ -282,10 +282,9 @@ export function getAboPageContent(locale: Locale): AboPageContent {
         endDate: ABO_PROMO_DEFAULT_WINDOW.endDate,
         label: "Limited offer",
         headline: "Launch offer for new subscriptions",
-        text: "From 28 October to 30 November 2026: research and concept free of charge, and the first subscription month free of charge.",
+        text: "From 28 October to 30 November 2026: research and concept free of charge when subscribing to Visibility Start or Plus.",
         terms: [
           "Research and concept free of charge",
-          "First subscription month free of charge",
           "Minimum term 6 months, then cancellable monthly",
         ],
         cta: { label: "Claim the offer", href: contact },
@@ -474,10 +473,9 @@ export function getAboPageContent(locale: Locale): AboPageContent {
       endDate: ABO_PROMO_DEFAULT_WINDOW.endDate,
       label: "Aktion",
       headline: "Einführungsangebot für neue Abos",
-      text: "Vom 28.10.2026 bis 30.11.2026: Recherche und Konzeption kostenlos sowie der erste Abomonat kostenlos.",
+      text: "Vom 28.10.2026 bis 30.11.2026: Recherche und Konzeption beim Abschluss eines Visibility-Abos kostenlos.",
       terms: [
         "Recherche und Konzeption kostenlos",
-        "Erster Abomonat kostenlos",
         "Mindestlaufzeit 6 Monate, danach monatlich kündbar",
       ],
       cta: { label: "Aktion nutzen", href: contact },
