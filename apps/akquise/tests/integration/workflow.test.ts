@@ -2417,8 +2417,9 @@ test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und e
 test("Newsletter import is idempotent; copies and edits cannot reuse approval", async () => {
   const { importNewsletters, duplicateNewsletter } =
     await import("../../lib/hub/newsletter-library");
+  const { newsletterLibrary } = await import("../../lib/hub/newsletter-template");
   const first = await importNewsletters(martin);
-  assert.equal(first.imported, 3);
+  assert.equal(first.imported, newsletterLibrary.length);
   assert.equal((await importNewsletters(nora)).imported, 0);
   const original = await db.marketingContent.findUniqueOrThrow({
     where: { id: first.ids[1] },
