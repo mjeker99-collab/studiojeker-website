@@ -12,6 +12,7 @@ import Image from "next/image";
 import Library from "./library/Library";
 import ContentStudio from "./studio/ContentStudio";
 import AssistantEntry from "./studio/AssistantEntry";
+import { routeMarketingTask, type TaskDestination } from "../lib/task-routing";
 import { useEffect, useState, type FormEvent } from "react";
 import type {
   Contact,
@@ -157,11 +158,17 @@ export default function App() {
     request: number;
   }>();
   const [projectRevision, setProjectRevision] = useState(0);
-  const [dashboardTask, setDashboardTask] = useState<{ prompt: string; section: "Kampagnen" | "Social Media"; request: number } | null>(null);
+  const [dashboardTask, setDashboardTask] = useState<{ prompt: string; section: "Kampagnen" | "Social Media" | "Website"; request: number } | null>(null);
   function startDashboardTask(prompt: string, section: string) {
-    const next = section === "Social Media" ? "Social Media" : "Kampagnen";
-    navigate({ section: next });
-    setDashboardTask(previous => ({ prompt, section: next, request: (previous?.request ?? 0) + 1 }));
+    const destination: TaskDestination = section === "auto" ? routeMarketingTask(prompt) : section as TaskDestination;
+    const assisted = destination === "Kampagnen" || destination === "Social Media" || destination === "Website";
+    navigate({ section: destination });
+    if (assisted) {
+      setDashboardTask(previous => ({ prompt, section: destination, request: (previous?.request ?? 0) + 1 }));
+    } else {
+      setDashboardTask(null);
+      setNotice("Dein Arbeitsbereich ist geöffnet. Starte hier mit deiner Aufgabe: " + prompt);
+    }
   }
   function navigate(target: DashboardTarget) {
     if (
@@ -556,7 +563,7 @@ export default function App() {
               </details>
             </nav>
           )}
-          {(tab === "Kampagnen" || tab === "Social Media") && (
+          {(tab === "Kampagnen" || tab === "Social Media" || tab === "Website") && (
             <AssistantEntry
               key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
               section={tab}
