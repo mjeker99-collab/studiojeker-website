@@ -114,6 +114,14 @@ for (const workspace of [
         .getByRole("button", { name: workspace.nav, exact: true })
         .click();
     await open();
+    if (workspace.area === "Konzepte") {
+      await page
+        .getByText(
+          "Weitere Optionen: Arbeitsstand sichern oder wiederherstellen",
+          { exact: true },
+        )
+        .click();
+    }
     if (workspace.nav === "Website") {
       await page
         .getByRole("navigation", { name: "Website-Bereiche" })
@@ -139,6 +147,14 @@ for (const workspace of [
     const draftId = await toolbar.getByLabel("Projekt öffnen").inputValue();
     await page.reload();
     await open();
+    if (workspace.area === "Konzepte") {
+      await page
+        .getByText(
+          "Weitere Optionen: Arbeitsstand sichern oder wiederherstellen",
+          { exact: true },
+        )
+        .click();
+    }
     if (workspace.nav === "Website") {
       await page
         .getByRole("navigation", { name: "Website-Bereiche" })
