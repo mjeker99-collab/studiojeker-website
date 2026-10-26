@@ -234,7 +234,7 @@ export async function siteCmsOverview(actor: string) {
     studioUrl: siteCmsStudioUrl,
     stagingUrl: siteCmsStagingUrl,
     liveUrl: siteCmsLiveUrl,
-    publishAllowed: siteCmsPublishAllowed(page.key),
+    publishAllowed: siteCmsPublishAllowed("abo"),
     writeConfigured: Boolean(getSanityWriteToken()),
     pages,
   };
