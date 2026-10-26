@@ -349,11 +349,12 @@ for (const width of [390, 768, 1440]) {
     await expect(
       page.getByRole("heading", { name: "Täglicher Mailversand" }),
     ).toBeVisible();
+    await page.getByText("Zeitplan bearbeiten", { exact: true }).click();
     await expect(page.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
       "25",
     );
     await expect(
-      page.getByRole("button", { name: "Automatik starten / aktualisieren" }),
+      page.getByRole("button", { name: "Versand starten" }),
     ).toBeDisabled();
     expect(
       await page.evaluate(
