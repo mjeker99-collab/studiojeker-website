@@ -93,7 +93,7 @@ export async function prepareContacts(
       }),
     };
   }
-  if (action === "apply" || action === "prepare") {
+  if (action === "apply" || action === "prepare" || action === "save") {
     const data = applyInput.parse(raw);
     const results = [];
     for (const item of data.contacts.filter(
@@ -114,7 +114,13 @@ export async function prepareContacts(
           shared: data.shared,
           values: item.values,
         });
-        if (!p.ready) throw new PolicyError(p.issues.join(" "));
+        if (!p.ready && action !== "save")
+          throw new PolicyError(p.issues.join(" "));
+        // Save useful partial data without marking an incomplete contact verified.
+        // The existing saveContact validation and approval invalidation still apply.
+        if (action === "save" && !p.ready && p.patch.confidence === "VERIFIED")
+          p.patch.confidence = c.confidence;
+
         if (p.changed) {
           // Explicit field allowlist; never copy Prisma fields, approvals or
           // newsletter metadata from notes into the contact update.

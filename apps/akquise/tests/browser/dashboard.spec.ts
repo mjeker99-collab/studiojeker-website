@@ -251,7 +251,9 @@ for (const width of [390, 768, 1440]) {
     await page
       .getByRole("button", { name: "2 Kontakte ergänzen", exact: true })
       .click();
-    const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });
+    const panel = page.getByRole("region", {
+      name: "2 Kontakte ergänzen und speichern",
+    });
     const common = panel.getByRole("group", {
       name: "Gemeinsame Angaben für die Auswahl",
     });
@@ -260,29 +262,19 @@ for (const width of [390, 768, 1440]) {
     await common
       .getByLabel("Quellen-URL")
       .fill("https://example.test/gepruefte-liste");
-    await panel
-      .getByRole("button", { name: "Prüfdaten aus Notizen prüfen" })
-      .click();
-    await expect(
-      panel.getByText("2 Kontakte vollständig · 0 mit offenen Angaben."),
-    ).toBeVisible();
     const prepare = panel.getByRole("button", {
-      name: "2 Kontakte übernehmen und Entwürfe vorbereiten",
+      name: "Änderungen speichern",
+      exact: true,
     });
     await expect(prepare).toBeDisabled();
-    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await expect(prepare).toBeEnabled();
-    await panel.locator("summary").filter({ hasText: names[1] }).click();
     const row = panel.getByRole("group", { name: "Angaben für Eva Muster" });
     await row
       .getByLabel("Quellen-URL")
       .fill("https://example.test/individueller-beleg");
     await expect(prepare).toBeDisabled();
-    await expect(
-      panel.getByLabel(/Ich habe die ausgewählten Angaben/),
-    ).not.toBeChecked();
-    await panel.getByRole("button", { name: "Vorschau aktualisieren" }).click();
-    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
+    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     expect(
       (await new AxeBuilder({ page }).include(".contact-preparation").analyze())
         .violations,
@@ -295,6 +287,15 @@ for (const width of [390, 768, 1440]) {
     await prepare.click();
     await expect(
       page.getByText("2 Kontakte bereit · 0 Kontakte benötigen Angaben"),
+    ).toBeVisible();
+    await expect(
+      panel.getByText("2 Kontakte gespeichert · 0 nicht gespeichert"),
+    ).toBeVisible();
+    await panel
+      .getByRole("button", { name: "Weiter zur Mailprüfung →" })
+      .click();
+    await expect(
+      page.getByRole("region", { name: "Globale Mailprüfung" }),
     ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
     for (const [i, id] of ids.entries()) {

@@ -84,125 +84,84 @@ function Fields({
   );
 }
 export default function ContactPreparation({
-  ids,
-  contacts,
+  initialProposals,
   refresh,
-  begin,
+  onDone,
 }: {
-  ids: string[];
-  contacts: {
-    id: string;
-    organisation: string;
-    firstName: string;
-    lastName: string;
-  }[];
+  initialProposals: Proposal[];
   refresh: () => Promise<void>;
-  begin: () => void;
+  onDone: () => void;
 }) {
-  const [proposals, setProposals] = useState<Proposal[] | null>(null);
+  const [proposals, setProposals] = useState(initialProposals);
   const [shared, setShared] = useState<PreparationFields>({});
   const [edits, setEdits] = useState<Record<string, Edit>>({});
-  const [chosen, setChosen] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<Result[]>([]);
-  const eligible = proposals?.filter((p) => p.ready) ?? [];
-  const name = (id: string) => {
-    const c = contacts.find((c) => c.id === id);
-    return c ? `${c.organisation} · ${c.firstName} ${c.lastName}` : "Kontakt";
-  };
   function changed() {
     setDirty(true);
     setConfirmed(false);
   }
-  async function preview(rowEdits = edits, defaults = shared) {
-    const data = await post<{ contacts: Proposal[] }>("preview", {
-      ids,
-      shared: defaults,
-      edits: Object.values(rowEdits),
-    });
-    setProposals(data.contacts);
-    setChosen(data.contacts.filter((p) => p.ready).map((p) => p.id));
-    setConfirmed(false);
-    setDirty(false);
-  }
-  async function run(work: () => Promise<void>) {
-    begin();
+  async function save() {
+    if (!confirmed || busy) return;
     setBusy(true);
     setError("");
-    setResults([]);
     try {
-      await work();
+      const data = await post<{ results: Result[] }>("save", {
+        confirmed: true,
+        shared,
+        contacts: proposals.map((p) => ({
+          id: p.id,
+          revision: p.revision,
+          values: edits[p.id]?.values,
+        })),
+      });
+      setResults(data.results);
+      const remaining = Object.fromEntries(
+        Object.entries(edits).filter(
+          ([id]) => !data.results.some((r) => r.id === id && r.ok),
+        ),
+      );
+      setEdits(remaining);
+      setDirty(Object.keys(remaining).length > 0);
+      setConfirmed(false);
+      const fresh = await post<{ contacts: Proposal[] }>("preview", {
+        ids: proposals.map((p) => p.id),
+      });
+      setProposals(fresh.contacts);
+      await refresh();
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
-          : "Anfrage fehlgeschlagen. Bitte neu laden.",
+          : "Speichern fehlgeschlagen. Deine Eingaben bleiben erhalten.",
       );
     } finally {
       setBusy(false);
     }
   }
-  async function apply(action: "apply" | "prepare") {
-    if (!proposals || dirty || !confirmed) return;
-    const data = await post<{ results: Result[] }>(action, {
-      confirmed: true,
-      shared,
-      contacts: proposals
-        .filter((p) => chosen.includes(p.id))
-        .map((p) => ({
-          id: p.id,
-          revision: p.revision,
-          values: edits[p.id]?.values,
-        })),
-    });
-    setResults(data.results);
-    // Retain only failed row corrections for retry; successful rows now have a
-    // new revision. Never discard a user's unresolved correction silently.
-    const remaining = Object.fromEntries(
-      Object.entries(edits)
-        .filter(([id]) => !data.results.some((r) => r.id === id && r.ok))
-        .map(([id, edit]) => [
-          id,
-          {
-            ...edit,
-            revision:
-              data.results.find((r) => r.id === id)?.revision ?? edit.revision,
-          },
-        ]),
-    );
-    setEdits(remaining);
-    setConfirmed(false);
-    await refresh();
-    await preview(remaining);
-  }
+  const open = proposals.filter((p) => !p.ready);
   return (
     <section
       className="contact-preparation"
       aria-labelledby="contact-preparation-title"
       aria-busy={busy}
     >
-      <h2 id="contact-preparation-title">{ids.length} Kontakte vorbereiten</h2>
+      <h2 id="contact-preparation-title">
+        {proposals.length} Kontakte ergänzen und speichern
+      </h2>
       <p>
-        Gemeinsame Angaben einmal ergänzen, Vorschau kontrollieren und
-        persönliche Entwürfe für die Auswahl vorbereiten.
+        Gemeinsame Angaben einmal eintragen. Vorhandene Angaben bleiben
+        erhalten; Ausnahmen kannst du unten pro Kontakt bearbeiten.
       </p>
-      {ids.length > 200 && (
-        <p role="alert">Bitte höchstens 200 Kontakte auswählen.</p>
-      )}
       <fieldset disabled={busy}>
         <legend>Gemeinsame Angaben für die Auswahl</legend>
         <p>
-          Nur leere Felder und unbestätigte Prüfstatus werden ergänzt.
-          Vorhandene Kontaktangaben und eindeutige Angaben aus den Notizen haben
-          Vorrang.
-        </p>
-        <p>
-          Eine gemeinsame Quelle oder ein gemeinsamer Anknüpfungspunkt muss für
-          alle betroffenen Kontakte zutreffen. Das Datum ist das tatsächliche
-          Prüfdatum.
+          Diese Angaben ergänzen leere Felder. Quelle und Anknüpfungspunkt
+          müssen für die betroffenen Kontakte zutreffen. Verwende das
+          tatsächliche Prüfdatum.
         </p>
         <Fields
           shared
@@ -213,184 +172,98 @@ export default function ContactPreparation({
           }}
         />
       </fieldset>
+      <label className="check">
+        <input
+          type="checkbox"
+          disabled={busy}
+          checked={confirmed}
+          onChange={(e) => setConfirmed(e.target.checked)}
+        />
+        Ich bestätige die eingetragenen Angaben und die unten angezeigten
+        Ergänzungen aus den Notizen.
+      </label>
       <div className="actions">
-        <button
-          disabled={busy || ids.length > 200}
-          onClick={() => run(() => preview())}
-        >
-          {proposals
-            ? "Vorschau aktualisieren"
-            : "Prüfdaten aus Notizen prüfen"}
+        <button disabled={busy || !confirmed} onClick={() => void save()}>
+          {busy ? "Wird gespeichert …" : "Änderungen speichern"}
         </button>
-        {proposals && (
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() =>
-              run(async () => {
-                setEdits({});
-                await preview({});
-              })
-            }
-          >
-            Einzelkorrekturen verwerfen und neu laden
-          </button>
-        )}
+        <button className="secondary" disabled={busy || dirty} onClick={onDone}>
+          Weiter zur Mailprüfung →
+        </button>
       </div>
+      {!confirmed && <p>Bitte die Angaben bestätigen, um sie zu speichern.</p>}
+      {dirty && <p role="status">Ungespeicherte Änderungen</p>}
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
-      {results.length > 0 && (
+      {!!results.length && (
         <div role="status">
+          <strong>
+            {results.filter((r) => r.ok).length} Kontakte gespeichert ·{" "}
+            {results.filter((r) => !r.ok).length} nicht gespeichert
+          </strong>
           <p>
-            <strong>
-              {results.filter((r) => r.ok).length} erfolgreich ·{" "}
-              {results.filter((r) => !r.ok).length} noch zu bearbeiten
-            </strong>
+            {open.length} Kontakte benötigen noch Angaben. Vollständige Kontakte
+            kannst du anschliessend gemeinsam zur Mailprüfung übernehmen.
           </p>
-          <ul>
-            {results.map((r) => (
-              <li key={r.id}>
-                <strong>{name(r.id)}:</strong> {r.message}
-              </li>
-            ))}
-          </ul>
+          {results.some((r) => !r.ok) && (
+            <ul>
+              {results
+                .filter((r) => !r.ok)
+                .map((r) => (
+                  <li key={r.id}>
+                    {proposals.find((p) => p.id === r.id)?.organisation}:{" "}
+                    {r.message}
+                  </li>
+                ))}
+            </ul>
+          )}
+          <p>Speichern erteilt keine Versandfreigabe.</p>
         </div>
       )}
-      {dirty && (
-        <p role="status">
-          Angaben geändert. Bitte die Vorschau aktualisieren und erneut
-          bestätigen.
-        </p>
-      )}
-      {proposals && (
-        <>
-          <p>
-            {eligible.length} Kontakte vollständig ·{" "}
-            {proposals.filter((p) => !p.ready).length} mit offenen Angaben.
-          </p>
-          <p className="warning">
-            Die Vorschau übernimmt dokumentierte und von dir eingegebene
-            Angaben. Sie prüft keine Websites erneut. Kontaktänderungen machen
-            frühere Freigaben ungültig. Newsletter-Einwilligung und
-            Versandfreigabe bleiben separate Schritte.
-          </p>
-          <div className="actions">
-            <button
-              className="secondary"
-              disabled={busy || dirty || !eligible.length}
-              onClick={() => {
-                setChosen(eligible.map((p) => p.id));
-                setConfirmed(false);
+      <h3>Angaben pro Kontakt</h3>
+      <p>
+        Ergänzungen aus vorhandenen Notizen sind bereits eingetragen.
+        Kontaktänderungen erfordern eine erneute Mailfreigabe.
+      </p>
+      {proposals.map((p) => (
+        <details
+          className="preparation-contact"
+          key={p.id}
+          open={!p.ready || undefined}
+        >
+          <summary>
+            {p.organisation} · {p.name} —{" "}
+            {p.ready ? "vollständig" : "Angaben offen"}
+          </summary>
+          <p>{p.email || "E-Mail-Adresse fehlt"}</p>
+          {!!p.issues.length && (
+            <p>
+              <strong>Noch zu ergänzen:</strong> {p.issues.join(" ")}
+              {dirty ? " (Stand vor dem Speichern)" : ""}
+            </p>
+          )}
+          <fieldset disabled={busy}>
+            <legend>Angaben für {p.name}</legend>
+            <Fields
+              values={{ ...p.values, ...edits[p.id]?.values }}
+              change={(values) => {
+                setEdits({
+                  ...edits,
+                  [p.id]: {
+                    id: p.id,
+                    revision: p.revision,
+                    values: { ...edits[p.id]?.values, ...values },
+                  },
+                });
+                changed();
               }}
-            >
-              Alle vollständigen Vorschläge auswählen
-            </button>
-            <button
-              className="secondary"
-              disabled={busy || !chosen.length}
-              onClick={() => {
-                setChosen([]);
-                setConfirmed(false);
-              }}
-            >
-              Vorschlagsauswahl leeren
-            </button>
-          </div>
-          <label className="check">
-            <input
-              type="checkbox"
-              disabled={busy || dirty || !chosen.length}
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
             />
-            Ich habe die ausgewählten Angaben und vorgeschlagenen
-            Anknüpfungspunkte geprüft und bestätige ihre Richtigkeit.
-          </label>
-          <div className="actions">
-            <button
-              disabled={busy || dirty || !confirmed || !chosen.length}
-              onClick={() => run(() => apply("prepare"))}
-            >
-              {chosen.length} Kontakte übernehmen und Entwürfe vorbereiten
-            </button>
-            <button
-              className="secondary"
-              disabled={busy || dirty || !confirmed || !chosen.length}
-              onClick={() => run(() => apply("apply"))}
-            >
-              {chosen.length} bestätigte Prüfdaten übernehmen
-            </button>
-          </div>
-          <p>
-            Vollständige Kontakte sind gemeinsam ausgewählt. Offene Angaben
-            lassen sich hier korrigieren; ein einzelnes Kontaktformular ist
-            dafür nicht nötig.
-          </p>
-          {proposals.map((p) => (
-            <details
-              className="preparation-contact"
-              key={p.id}
-              open={!p.ready || undefined}
-            >
-              <summary>
-                {p.organisation} · {p.name} —{" "}
-                {p.ready ? "vollständig" : "Angaben offen"}
-              </summary>
-              <p>{p.email || "E-Mail-Adresse fehlt"}</p>
-              {p.ready && (
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    disabled={busy || dirty}
-                    checked={chosen.includes(p.id)}
-                    onChange={(e) => {
-                      setChosen(
-                        e.target.checked
-                          ? [...chosen, p.id]
-                          : chosen.filter((id) => id !== p.id),
-                      );
-                      setConfirmed(false);
-                    }}
-                  />
-                  Prüfdaten übernehmen für {p.name}
-                </label>
-              )}
-              {p.issues.length > 0 && (
-                <p>
-                  <strong>Noch zu ergänzen:</strong> {p.issues.join(" ")}
-                </p>
-              )}
-              <fieldset disabled={busy}>
-                <legend>Angaben für {p.name}</legend>
-                <Fields
-                  values={{ ...p.values, ...edits[p.id]?.values }}
-                  change={(values) => {
-                    setEdits({
-                      ...edits,
-                      [p.id]: {
-                        id: p.id,
-                        revision: p.revision,
-                        values: { ...edits[p.id]?.values, ...values },
-                      },
-                    });
-                    changed();
-                  }}
-                />
-              </fieldset>
-              {p.origins.length > 0 && (
-                <ul>
-                  {p.origins.map((o, index) => (
-                    <li key={`${index}-${o}`}>{o}</li>
-                  ))}
-                </ul>
-              )}
-            </details>
-          ))}
-        </>
-      )}
+          </fieldset>
+          {!!p.origins.length && <p>{p.origins.join(" · ")}</p>}
+        </details>
+      ))}
     </section>
   );
 }
