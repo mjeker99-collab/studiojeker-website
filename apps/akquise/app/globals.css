@@ -1512,6 +1512,20 @@ pre {
 .studio-chat-controls {
   display: block;
 }
+/* Keep the concept GPT entry point in the top-right action area. */
+.concepts .studio-chat-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.concepts .studio-chat-controls label { order: 1; margin-bottom: 0; }
+.concepts .studio-chat-controls > .secondary { order: 2; }
+.concepts .studio-chat-controls > .primary { order: 3; margin-left: auto; }
+@media (max-width: 640px) {
+  .concepts .studio-chat-controls > .primary { width: 100%; margin-left: 0; }
+}
+
 .studio-chat-controls label {
   flex: 1 1 220px;
   min-width: 0;
