@@ -1,7 +1,9 @@
 /** Accept ordinary website input without inventing a source or fetching it. */
 export function normalizeSourceUrl(value: string): string {
   const text = value.trim();
-  if (!text || /^https?:\/\//i.test(text)) return text;
+  if (!text) return text;
+  if (/^https?:\/\//i.test(text))
+    return text.replace(/^https?/i, (scheme) => scheme.toLowerCase());
   if (text.startsWith("//")) return `https:${text}`;
   if (/^[^\s/:@]+\.[^\s/:@]+(?::\d+)?(?:[/?#].*)?$/u.test(text))
     return `https://${text}`;
@@ -13,6 +15,7 @@ export function sourceUrlIssue(value: string): string | null {
   try {
     const url = new URL(normalized);
     if (
+      /^https?:\/\//.test(normalized) &&
       normalized.length <= 4000 &&
       !/\s/.test(normalized) &&
       ["http:", "https:"].includes(url.protocol) &&

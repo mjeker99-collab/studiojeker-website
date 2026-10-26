@@ -207,6 +207,7 @@ test("Quellenadressen akzeptieren übliche Eingaben und erklären ungültige Wer
     ["//firma.ch/team", "https://firma.ch/team"],
     ["firma.ch:443/team", "https://firma.ch:443/team"],
     ["http://firma.ch/team", "http://firma.ch/team"],
+    ["HTTPS://firma.ch/team", "https://firma.ch/team"],
     ["", ""],
   ]) {
     assert.equal(normalizeSourceUrl(input), expected);
@@ -218,6 +219,7 @@ test("Quellenadressen akzeptieren übliche Eingaben und erklären ungültige Wer
     "mailto:test@firma.ch",
     "ftp://firma.ch",
     "https://",
+    "https:example.test",
     "https://user:password@firma.ch",
   ]) {
     assert.match(sourceUrlIssue(invalid)!, /gültige Website-Adresse/);
