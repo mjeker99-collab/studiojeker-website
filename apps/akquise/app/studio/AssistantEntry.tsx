@@ -29,10 +29,12 @@ const sections = {
 export default function AssistantEntry({
   section,
   campaignRequest,
+  initialTask,
   onProjectAssigned,
 }: {
   section: keyof typeof sections;
   campaignRequest?: { id: string; request: number };
+  initialTask?: { prompt: string; request: number };
   onProjectAssigned?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -93,6 +95,14 @@ export default function AssistantEntry({
     return () => controller.abort();
   }, [open, attempt, state, campaignRequest]);
 
+  useEffect(() => {
+    if (!initialTask) return;
+    setChatKey((key) => key + 1);
+    setProjectId("");
+    setCampaignId("");
+    setChatRequest({ seriesId: "", message: initialTask.prompt, campaignId: "", customerId: "" });
+    setOpen(true);
+  }, [initialTask]);
   useEffect(() => {
     if (!campaignRequest) return;
     document
