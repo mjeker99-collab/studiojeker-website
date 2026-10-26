@@ -76,7 +76,7 @@ export default function MailStudio({
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
   const [preparationStarted, setPreparationStarted] = useState(false);
-  const [preparing, setPreparing] = useState(false);
+  const [preparing, setPreparing] = useState(true);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const contactOptions = contacts.filter(
     (c) =>
@@ -176,8 +176,8 @@ export default function MailStudio({
   return (
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel">
-        <h2>Mail-Studio</h2>
-        <p>Kontakte auswählen → Mails prüfen → freigeben und einplanen</p>
+        <h2>Persönliche E-Mails versenden</h2>
+        <p>1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben</p>
         <div className="actions" aria-label="Arbeitsschritte">
           <button
             disabled={busy}
@@ -228,21 +228,22 @@ export default function MailStudio({
             Kontakte suchen
             <input value={search} onChange={(e) => setSearch(e.target.value)} />
           </label>
+          <p>Wähle 25 oder 50 Kontakte. StudioONE prüft die Daten und bereitet persönliche Nachrichten vor. Vor dem Versand bestätigst du die fertigen Mails.</p>
           <div className="actions">
-            <button
-              onClick={() =>
-                setContactIds(contactOptions.slice(0, 25).map((c) => c.id))
-              }
-            >
-              Erste 25 angezeigte Kontakte auswählen
+            <button type="button" className="secondary" disabled={!contactOptions.length} onClick={() => setContactIds(contactOptions.slice(0, 25).map((c) => c.id))}>
+              25 Kontakte auswählen
+            </button>
+            <button type="button" className="secondary" disabled={!contactOptions.length} onClick={() => setContactIds(contactOptions.slice(0, 50).map((c) => c.id))}>
+              50 Kontakte auswählen
             </button>
             <button
               disabled={!contactIds.length || contactIds.length > 200}
               onClick={() => setPreparationStarted(true)}
             >
-              {contactIds.length} Mails vorbereiten →
+              {contactIds.length} Kontakte prüfen und Mails vorbereiten →
             </button>
           </div>
+          <details><summary>Auswahl einzeln anpassen ({contactIds.length} ausgewählt)</summary>
           {contactOptions.map((c) => (
             <label className="check mail-selection" key={c.id}>
               <input
@@ -261,6 +262,7 @@ export default function MailStudio({
               </span>
             </label>
           ))}
+          </details>
         </section>
       )}
       {step === 1 && preparing && preparationStarted && (
