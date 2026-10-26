@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { routeMarketingTask } from "../lib/task-routing";
+assert.equal(routeMarketingTask("Ich möchte unser neues Angebot bekannt machen"), "Kampagnen");
+assert.equal(routeMarketingTask("Ich möchte eine Landingpage erstellen"), "Website");
+assert.equal(routeMarketingTask("Schreibe einen Newsletter"), "Newsletter");
+assert.equal(routeMarketingTask("Erstelle einen Instagram Post"), "Social Media");
+assert.equal(routeMarketingTask("Bitte ein Marketingkonzept"), "Strategie & Konzepte");
+assert.equal(routeMarketingTask("Neue Kontakte recherchieren"), "Kontakte/Akquise");
+assert.equal(routeMarketingTask("Ein Produktvideo erstellen"), "Content-Studio");
+console.log("Task routing OK");

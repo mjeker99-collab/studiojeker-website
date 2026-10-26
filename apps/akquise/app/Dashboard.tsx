@@ -72,7 +72,14 @@ export default function Dashboard({
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [task, setTask] = useState("");
-  const quickTasks = [{label:"Angebot bewerben",section:"Kampagnen",prompt:"Ich möchte ein Angebot bekannt machen. Hilf mir Schritt für Schritt bei der Kampagne."},{label:"Kunden gewinnen",section:"Kampagnen",prompt:"Ich möchte neue Kunden gewinnen. Hilf mir bei Zielgruppe und Massnahmen."},{label:"Social-Media-Beitrag",section:"Social Media",prompt:"Ich möchte einen Social-Media-Beitrag erstellen. Frage mich nach Thema und Kanal."},{label:"Newsletter erstellen",section:"Newsletter",prompt:""}];
+  const quickTasks = [
+    { label: "Neue Kunden gewinnen", prompt: "Ich möchte neue Kunden gewinnen." },
+    { label: "Angebot bekannt machen", prompt: "Ich möchte unser Angebot bekannt machen." },
+    { label: "Social Media erstellen", prompt: "Ich möchte einen Social Media Post erstellen." },
+    { label: "Newsletter versenden", prompt: "Ich möchte einen Newsletter erstellen." },
+    { label: "Website aktualisieren", prompt: "Ich möchte unsere Website aktualisieren." },
+    { label: "Bilder & Videos erstellen", prompt: "Ich möchte ein neues Bild erstellen." },
+  ];
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/dashboard", { cache: "no-store", signal: controller.signal })
@@ -107,33 +114,33 @@ export default function Dashboard({
         <div>
           <p className="eyebrow">DEIN MARKETING. EIN ORT.</p>
           <h2 id="dashboard-welcome-title">
-            Hallo {name.split(" ")[0]}. Was steht heute an?
+            Was möchtest du heute erledigen?
           </h2>
-          <p>Beschreibe deine Marketingaufgabe. StudioONE hilft dir Schritt für Schritt.</p>
+          <p>Beschreibe deine Aufgabe in eigenen Worten. StudioONE übernimmt die Vorarbeit.</p>
         </div>
         <button
           type="button"
           className="ai-button"
-          onClick={() => onOpen({ section: "Content-Studio" })}
+          onClick={() => document.getElementById("studio-task-input")?.focus()}
         >
-          <span aria-hidden="true">✦</span> GPT beauftragen{" "}
+          <span aria-hidden="true">✦</span> Aufgabe beschreiben{" "}
           <span aria-hidden="true">→</span>
         </button>
       </section>
       <section className="panel studio-task-start" aria-labelledby="studio-task-start-title">
-        <h2 id="studio-task-start-title">Was möchtest du heute erledigen?</h2>
-        <form onSubmit={(event) => { event.preventDefault(); if (task.trim()) onStartTask(task.trim(), "Kampagnen"); }}>
+        <h2 id="studio-task-start-title">Deine Aufgabe</h2>
+        <form onSubmit={(event) => { event.preventDefault(); if (task.trim()) onStartTask(task.trim(), "auto"); }}>
           <label htmlFor="studio-task-input">Deine Aufgabe</label>
           <textarea id="studio-task-input" rows={3} maxLength={2000}
             placeholder="Zum Beispiel: Ich möchte unser neues Angebot bekannt machen."
             value={task} onChange={(event) => setTask(event.target.value)} />
-          <button type="submit" disabled={!task.trim()}>✦ Mit GPT loslegen</button>
+          <button type="submit" disabled={!task.trim()}>✦ Aufgabe starten</button>
         </form>
         <p className="muted">Oder wähle eine häufige Aufgabe:</p>
         <div className="studio-quick-tasks">
           {quickTasks.map((item) => (
             <button type="button" className="secondary" key={item.label}
-              onClick={() => item.prompt ? onStartTask(item.prompt, item.section) : onOpen({ section: item.section })}>
+              onClick={() => { setTask(item.prompt); onStartTask(item.prompt, "auto"); }}>
               {item.label} <span aria-hidden="true">→</span>
             </button>
           ))}
