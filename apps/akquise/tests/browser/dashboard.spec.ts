@@ -164,51 +164,33 @@ for (const width of [390, 768, 1440]) {
     await page
       .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
       .check();
-    const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });
-    await panel
-      .getByRole("button", { name: "Prüfdaten aus Notizen prüfen" })
+    await page
+      .getByRole("button", { name: "2 Mails vorbereiten →", exact: true })
       .click();
-    await expect(
-      panel.getByText("1 Kontakte vollständig · 1 mit offenen Angaben."),
-    ).toBeVisible();
-    await expect(panel.getByText(/Verifikationsdatum fehlt/)).toBeVisible();
-    await panel
-      .getByRole("button", { name: "Alle vollständigen Vorschläge auswählen" })
-      .click();
-    const apply = panel.getByRole("button", {
-      name: "1 bestätigte Prüfdaten übernehmen",
+    const panel = page.getByRole("region", {
+      name: "Ausgewählte Mails vorbereiten",
     });
-    await expect(apply).toBeDisabled();
-    await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
-    expect(
-      (await new AxeBuilder({ page }).include(".contact-preparation").analyze())
-        .violations,
-    ).toEqual([]);
+    await expect(
+      panel.getByText("1 Kontakte bereit · 1 Kontakte benötigen Angaben"),
+    ).toBeVisible();
+    const prepare = panel.getByRole("button", {
+      name: "1 Mails prüfen →",
+      exact: true,
+    });
+    await expect(prepare).toBeDisabled();
+    await panel.getByLabel(/Ich habe die vorgeschlagenen Angaben/).check();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await apply.click();
-    await expect(panel.getByRole("status")).toContainText(
-      "Prüfdaten übernommen",
-    );
-    const prepare = panel.getByRole("button", {
-      name: "1 Kontakte übernehmen und Entwürfe vorbereiten",
-    });
-    for (let attempt = 0; attempt < 2; attempt++) {
-      await expect(
-        panel.getByRole("button", { name: "Vorschau aktualisieren" }),
-      ).toBeEnabled();
-      await panel.getByLabel(/Ich habe die ausgewählten Angaben/).check();
-      await prepare.click();
-      await expect(panel.getByRole("status")).toContainText(
-        "1 erfolgreich · 0 noch zu bearbeiten",
-      );
-      await expect(
-        panel.getByText("1 Kontakte vollständig · 1 mit offenen Angaben."),
-      ).toBeVisible();
-    }
+    await prepare.click();
+    await expect(
+      page
+        .getByRole("region", { name: "Globale Mailprüfung" })
+        .getByText("Persönliche Projektbilder", { exact: false }),
+    ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.contacts.find((contact: { id: string }) => contact.id === c.id)
@@ -263,6 +245,12 @@ for (const width of [390, 768, 1440]) {
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     for (const name of names)
       await page.getByLabel(`${name} auswählen`, { exact: true }).check();
+    await page
+      .getByRole("button", { name: "2 Mails vorbereiten →", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "2 Kontakte ergänzen", exact: true })
+      .click();
     const panel = page.getByRole("region", { name: "2 Kontakte vorbereiten" });
     const common = panel.getByRole("group", {
       name: "Gemeinsame Angaben für die Auswahl",
@@ -305,12 +293,9 @@ for (const width of [390, 768, 1440]) {
       ),
     ).toBe(true);
     await prepare.click();
-    await expect(panel.getByRole("status")).toContainText(
-      "2 erfolgreich · 0 noch zu bearbeiten",
-    );
     await expect(
-      panel.getByRole("button", { name: "Vorschau aktualisieren" }),
-    ).toBeEnabled();
+      page.getByText("2 Kontakte bereit · 0 Kontakte benötigen Angaben"),
+    ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
     for (const [i, id] of ids.entries()) {
       const contact = state.contacts.find((c: { id: string }) => c.id === id);

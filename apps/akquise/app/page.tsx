@@ -2,7 +2,7 @@
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
-import ContactPreparation from "./ContactPreparation";
+import ContactMailFlow from "./ContactMailFlow";
 import Hub from "./hub/Hub";
 import Dashboard, { type DashboardTarget } from "./Dashboard";
 import Website from "./cms/Website";
@@ -179,6 +179,8 @@ export default function App() {
       ? "Interner SMTP-Testmodus"
       : "Produktionsversand aktiv"
     : "Versand deaktiviert";
+  const [mailContactIds, setMailContactIds] = useState<string[]>([]);
+  const [mailDraftIds, setMailDraftIds] = useState<string[]>([]);
   async function refresh() {
     const r = await fetch("/api/state", { cache: "no-store" });
     if (r.status === 401) {
@@ -636,6 +638,7 @@ export default function App() {
           )}
           {tab === "Mail-Studio" && (
             <MailStudio
+              initialDraftIds={mailDraftIds}
               drafts={data.drafts}
               contacts={data.contacts}
               refresh={refresh}
@@ -645,11 +648,21 @@ export default function App() {
               }}
             />
           )}
-          {tab === "Kontakte" && (
+          {tab === "Kontakte" && mailContactIds.length > 0 && (
+            <ContactMailFlow
+              ids={mailContactIds}
+              contacts={data.contacts}
+              refresh={refresh}
+              back={() => setMailContactIds([])}
+              onReady={(ids) => {
+                setMailDraftIds(ids);
+                setMailContactIds([]);
+                setTab("Mail-Studio");
+              }}
+            />
+          )}
+          {tab === "Kontakte" && !mailContactIds.length && (
             <section className="panel">
-              <button onClick={() => setTab("Mail-Studio")}>
-                Weiter zur gemeinsamen Mailprüfung
-              </button>
               <div className="toolbar">
                 <label className="search">
                   Suche
@@ -700,24 +713,23 @@ export default function App() {
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
                 Importe erhalten keine Versandfreigabe.
               </div>
-              {selected.length > 0 && (
-                <ContactPreparation
-                  key={selected.join(",")}
-                  ids={selected}
-                  contacts={data.contacts}
-                  refresh={refresh}
-                  begin={() => {
-                    setError("");
-                    setNotice("");
-                  }}
-                />
-              )}
               <ContactTable
                 contacts={contacts}
                 selected={selected}
                 setSelected={setSelected}
                 open={openContact}
               />
+              {selected.length > 0 && (
+                <div className="mail-selection-bar">
+                  <strong>{selected.length} Kontakte ausgewählt</strong>
+                  <button
+                    disabled={busy || selected.length > 200}
+                    onClick={() => setMailContactIds([...selected])}
+                  >
+                    {selected.length} Mails vorbereiten →
+                  </button>
+                </div>
+              )}
             </section>
           )}
           {["E-Mail-Entwürfe", "Freigaben"].includes(tab) && (
