@@ -138,20 +138,29 @@ export default function Concepts({
   async function send() {
     if (!consent || !message.trim() || !index?.config.connected || pending || busy) return;
     await action(async () => {
+      // Workspace snapshots are not native concepts. New concepts need a
+      // title even if the user started in the GPT chat, not the editor.
+      const conceptData = {
+        ...form,
+        title: form.title.trim() ||
+          (message.includes("Redaktionsplan") ? "Redaktionsplan" :
+           message.includes("Kampagne") ? "Kampagnenkonzept" :
+           "Kommunikationskonzept"),
+      };
+      if (!form.title.trim()) setForm(conceptData);
       // Save the current editor state first, including brand-new concepts.
       // Do not reload the form here: that would overwrite the user's prompt.
       const active: Document = dirty || !doc
         ? await (async () => {
             const saved = await api(
               doc ? `concepts/${doc.id}` : "concepts",
-              doc ? { version: doc.version, data: form } : form,
+              doc ? { version: doc.version, data: conceptData } : conceptData,
             );
             return api(`concepts/${saved.id}`);
           })()
         : doc;
       setDoc(active);
       setHistory(active.version);
-      setIndex(await api("concepts"));
       let queued = false;
       try {
         const job = await api("studio/jobs", {
@@ -180,6 +189,8 @@ export default function Concepts({
         // Preserve the saved editor state; fetching the complete conversation also recovers after a network timeout.
         const next: Document = await api(`concepts/${active.id}`);
         setDoc(next);
+        // Index refresh is informational and must never prevent GPT requests.
+        void api("concepts").then(setIndex).catch(() => {});
       }
     });
   }
@@ -318,6 +329,9 @@ export default function Concepts({
                       )
                         return;
                       setMessage(starter.message);
+                      if (!form.title.trim()) {
+                        setForm({ ...form, title: starter.label });
+                      }
                     }}
                   >
                     {starter.label}
@@ -517,6 +531,7 @@ export default function Concepts({
                     <input
                       required
                       maxLength={200}
+                      placeholder="Wird beim GPT-Start automatisch ergänzt"
                       value={form.title}
                       onChange={(e) =>
                         setForm({ ...form, title: e.target.value })
