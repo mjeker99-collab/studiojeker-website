@@ -11,6 +11,8 @@ test("CMS overview, responsive controls, import status and provider failure", as
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/mailchimp/templates")
       return route.fulfill({ json: { connected: false, templates: [] } });
+    if (path === "/api/studio/state")
+      return route.fulfill({ json: { campaigns: [], series: [] } });
     if (path === "/api/state")
       return route.fulfill({
         json: {
