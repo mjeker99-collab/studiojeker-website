@@ -157,6 +157,12 @@ export default function App() {
     request: number;
   }>();
   const [projectRevision, setProjectRevision] = useState(0);
+  const [dashboardTask, setDashboardTask] = useState<{ prompt: string; section: "Kampagnen" | "Social Media"; request: number } | null>(null);
+  function startDashboardTask(prompt: string, section: string) {
+    const next = section === "Social Media" ? "Social Media" : "Kampagnen";
+    navigate({ section: next });
+    setDashboardTask({ prompt, section: next, request: Date.now() });
+  }
   function navigate(target: DashboardTarget) {
     if (
       conceptDirty &&
@@ -560,6 +566,7 @@ export default function App() {
               campaignRequest={
                 tab === "Kampagnen" ? assistantCampaign : undefined
               }
+              initialTask={dashboardTask?.section === tab ? dashboardTask : undefined}
             />
           )}
           {[
@@ -626,6 +633,7 @@ export default function App() {
           )}
           {tab === "Übersicht" && (
             <Dashboard
+            onStartTask={startDashboardTask}
               name={data.user.name}
               contacts={data.contacts.length}
               drafts={data.drafts.filter((d) => latest(d) === "DRAFT").length}
