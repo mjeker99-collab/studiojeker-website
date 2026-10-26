@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mailScheduleMutation } from "./mail-schedule";
 import { db } from "./db";
 import {
   legalAllowed,
@@ -89,7 +90,7 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
     }
     return { rows };
   }
-  if (action === "approve") {
+  if (action === "approve" || action === "approve-and-enqueue") {
     const input = z
       .object({
         items: z
@@ -98,6 +99,7 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
           .max(200)
           .refine((a) => new Set(a.map((i) => i.id)).size === a.length),
         read: z.literal(true),
+        confirmDispatch: z.literal(true).optional(),
         legal: z
           .object({
             confirmed: z.literal(true),
@@ -109,6 +111,8 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
       })
       .strict()
       .parse(raw);
+    if (action === "approve-and-enqueue" && !input.confirmDispatch)
+      throw new PolicyError("Automatischen Versand ausdrücklich bestätigen.");
     const results = [];
     for (const entry of input.items) {
       try {
@@ -116,7 +120,30 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
           ...entry,
           legal: input.legal,
         });
-        results.push({ id: entry.id, ok: true, message: "Freigegeben" });
+        if (action === "approve-and-enqueue") {
+          try {
+            const queued = await mailScheduleMutation(userId, "enqueue", {
+              confirmDispatch: true,
+              items: [{ draftId: entry.id, version: entry.version }],
+            });
+            const result =
+              "results" in queued ? queued.results?.[0] : undefined;
+            results.push({
+              id: entry.id,
+              ok: Boolean(result?.ok),
+              message: result?.ok
+                ? "Freigegeben und eingeplant"
+                : `Freigegeben; nicht eingeplant: ${result?.reason || "Status prüfen"}`,
+            });
+          } catch {
+            results.push({
+              id: entry.id,
+              ok: false,
+              message:
+                "Freigegeben; Einplanung nicht bestätigt. Versandstatus prüfen, bevor erneut eingeplant wird.",
+            });
+          }
+        } else results.push({ id: entry.id, ok: true, message: "Freigegeben" });
       } catch (e) {
         results.push({
           id: entry.id,

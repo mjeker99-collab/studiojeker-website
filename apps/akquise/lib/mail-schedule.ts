@@ -34,12 +34,19 @@ async function ensureSchedule() {
 export async function mailScheduleState() {
   const schedule = await ensureSchedule();
   const config = readMailConfig();
-  const [items, todayCount, counts] = await Promise.all([
+  const [items, todayCount, counts, todaySent] = await Promise.all([
     db.mailQueueItem.findMany({ orderBy: { createdAt: "desc" }, take: 500 }),
     db.delivery.count({
       where: { mode: "PRODUCTION", createdAt: { gte: mailDayStart() } },
     }),
     db.mailQueueItem.groupBy({ by: ["status"], _count: true }),
+    db.delivery.count({
+      where: {
+        mode: "PRODUCTION",
+        status: { in: ["SENT", "REPLIED"] },
+        completedAt: { gte: mailDayStart() },
+      },
+    }),
   ]);
   return {
     schedule,
@@ -49,6 +56,7 @@ export async function mailScheduleState() {
     ),
     items,
     todayCount,
+    todaySent,
     counts,
     serverLimit: config.dailyLimit,
     productionReady: config.smtpAllowed && config.mode === "production",
