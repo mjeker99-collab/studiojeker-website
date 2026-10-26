@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeSourceUrl, sourceUrlIssue } from "./contact-source-url";
 import { db } from "./db";
 import { contactInput } from "./import";
 import { contactPreparation } from "./contact-preparation";
@@ -12,15 +13,14 @@ const idsInput = z
 const fieldsInput = z
   .object({
     sourceUrl: z
-      .union([
-        z.literal(""),
-        z
-          .string()
-          .trim()
-          .max(4000)
-          .url()
-          .regex(/^https?:\/\//),
-      ])
+      .string()
+      .trim()
+      .max(4000, "Die Quellenadresse ist zu lang.")
+      .transform(normalizeSourceUrl)
+      .refine(
+        (value) => !sourceUrlIssue(value),
+        "Bitte eine gültige Website-Adresse eingeben, zum Beispiel firma.ch/team.",
+      )
       .optional(),
     verifiedAt: z.union([z.literal(""), z.string().datetime()]).optional(),
     confidence: z
@@ -47,6 +47,32 @@ const applyInput = z
     contacts: z.array(editInput).min(1).max(200),
   })
   .strict();
+function parsePreparation<T extends z.ZodType>(
+  schema: T,
+  raw: unknown,
+): z.infer<T> {
+  const parsed = schema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+  const fields: Record<string, string> = {
+    sourceUrl: "Quellenadresse",
+    verifiedAt: "Prüfdatum",
+    confidence: "Prüfstatus",
+    hook: "Anknüpfungspunkt",
+    confirmed: "Bestätigung",
+    revision: "Kontaktstand",
+  };
+  const messages = parsed.error.issues.map((issue) => {
+    const key = String(issue.path.at(-1));
+    if (key === "sourceUrl")
+      return "Quellenadresse: Bitte eine gültige Website-Adresse eingeben, zum Beispiel firma.ch/team.";
+    if (key === "verifiedAt")
+      return "Prüfdatum: Bitte ein gültiges Datum auswählen.";
+    if (key === "confirmed")
+      return "Bitte die Angaben vor dem Speichern bestätigen.";
+    return `${fields[key] || "Auswahl"}: Bitte die Eingabe prüfen und erneut speichern.`;
+  });
+  throw new PolicyError([...new Set(messages)].join(" "));
+}
 export async function prepareContacts(
   userId: string,
   action: string,
@@ -56,7 +82,7 @@ export async function prepareContacts(
   if (!user || !allowedAccount(user))
     throw new PolicyError("Keine Berechtigung.", 403);
   if (action === "preview") {
-    const { ids, shared, edits = [] } = previewInput.parse(raw);
+    const { ids, shared, edits = [] } = parsePreparation(previewInput, raw);
     if (
       new Set(edits.map((e) => e.id)).size !== edits.length ||
       edits.some((e) => !ids.includes(e.id))
@@ -94,7 +120,7 @@ export async function prepareContacts(
     };
   }
   if (action === "apply" || action === "prepare" || action === "save") {
-    const data = applyInput.parse(raw);
+    const data = parsePreparation(applyInput, raw);
     const results = [];
     for (const item of data.contacts.filter(
       (c, i, a) => a.findIndex((v) => v.id === c.id) === i,
@@ -169,7 +195,7 @@ export async function prepareContacts(
     return { results };
   }
   if (action === "drafts") {
-    const { ids } = idsInput.parse(raw);
+    const { ids } = parsePreparation(idsInput, raw);
     const results = [];
     for (const id of new Set(ids)) {
       try {

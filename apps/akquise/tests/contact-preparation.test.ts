@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import type { Contact } from "@prisma/client";
 import { contactPreparation } from "../lib/contact-preparation";
 
+import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
+
 const notes =
   "Prüfstatus: Persönliche Adresse und Rolle auf offizieller Website veröffentlicht\nPrüfdatum: 17.10.2026\nNewsletter-Einwilligung: Keine Einwilligung dokumentiert\nBetreff: Architektur sichtbar machen\nE-Mail-Entwurf: Guten Tag Frau Muster\n\nIhr dokumentiertes Architekturprojekt in Burgdorf.\n\nGerne zeigen wir Beispiele.\n\nFreundliche Grüsse\nNora Jeker\nHinweise: Vor Versand erneut prüfen";
 const contact = {
@@ -195,4 +197,29 @@ test("Einzelkorrekturen in der Sammelansicht ersetzen nur ausdrücklich bearbeit
     }).ready,
     false,
   );
+});
+
+test("Quellenadressen akzeptieren übliche Eingaben und erklären ungültige Werte", () => {
+  for (const [input, expected] of [
+    [" studiojeker.ch ", "https://studiojeker.ch"],
+    ["firma.ch/team?lang=de", "https://firma.ch/team?lang=de"],
+    ["www.firma.ch", "https://www.firma.ch"],
+    ["//firma.ch/team", "https://firma.ch/team"],
+    ["firma.ch:443/team", "https://firma.ch:443/team"],
+    ["http://firma.ch/team", "http://firma.ch/team"],
+    ["", ""],
+  ]) {
+    assert.equal(normalizeSourceUrl(input), expected);
+    assert.equal(sourceUrlIssue(input), null);
+  }
+  for (const invalid of [
+    "keine adresse",
+    "javascript:alert(1)",
+    "mailto:test@firma.ch",
+    "ftp://firma.ch",
+    "https://",
+    "https://user:password@firma.ch",
+  ]) {
+    assert.match(sourceUrlIssue(invalid)!, /gültige Website-Adresse/);
+  }
 });

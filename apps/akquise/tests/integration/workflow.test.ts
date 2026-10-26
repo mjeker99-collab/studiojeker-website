@@ -316,6 +316,14 @@ test("Sammelspeichern bewahrt Teilangaben ohne Freigabe und schützt vor veralte
       contacts: [{ id: c.id, revision: c.revision }],
     }),
   );
+  await assert.rejects(
+    prepareContacts(martin, "save", {
+      confirmed: true,
+      shared: { sourceUrl: "keine adresse" },
+      contacts: [{ id: c.id, revision: c.revision }],
+    }),
+    /Quellenadresse: Bitte eine gültige Website-Adresse/,
+  );
   const result = await prepareContacts(martin, "save", {
     confirmed: true,
     shared: {
@@ -343,11 +351,15 @@ test("Sammelspeichern bewahrt Teilangaben ohne Freigabe und schützt vor veralte
   assert.equal(stale.results[0].ok, false);
   const complete = await prepareContacts(martin, "save", {
     confirmed: true,
-    shared: { confidence: "VERIFIED", sourceUrl: "https://example.test/team" },
+    shared: { confidence: "VERIFIED", sourceUrl: "example.test/team" },
     contacts: [{ id: c.id, revision: saved.revision }],
   });
   assert.ok(complete.results);
   assert.equal(complete.results[0].ok, true);
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).sourceUrl,
+    "https://example.test/team",
+  );
   assert.equal(
     (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).confidence,
     "VERIFIED",
