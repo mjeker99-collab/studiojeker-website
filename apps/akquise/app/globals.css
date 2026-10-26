@@ -1761,3 +1761,33 @@ button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); 
 .website-templates{margin:24px 0}
 .website-templates iframe{width:100%;height:420px;border:1px solid #ccd5d7;background:white;margin:16px 0}
 .website-templates details{margin-bottom:20px}
+
+/* Mailversand: Status vor Einstellungen, mit Platz auf Tablet und Mobilgeräten. */
+.mail-schedule > :not(.section-head) {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+.mail-schedule-stats {
+  gap: 1rem;
+}
+.mail-schedule-stats p {
+  margin: 0;
+  padding: 1rem;
+  background: var(--surface, #f5f8f8);
+}
+.mail-schedule-stats strong {
+  font-size: 1.6rem;
+}
+.mail-schedule-settings {
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #cbd5d9;
+}
+.mail-schedule-settings summary {
+  cursor: pointer;
+  min-height: 44px;
+  font-weight: 600;
+}
+.mail-schedule .panel-note {
+  overflow-wrap: anywhere;
+}

@@ -28,7 +28,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     editor.getByLabel("Deine Nachricht", { exact: true }),
   ).toHaveValue(/Zeitraum und Budget/);
   await expect(
-    editor.getByRole("button", { name: "An GPT senden", exact: true }),
+    editor.getByRole("button", { name: "Mit GPT entwickeln", exact: true }),
   ).toBeDisabled();
   await editor
     .getByLabel("Titel", { exact: true })
@@ -57,7 +57,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     editor.getByLabel("Briefing & Ausgangslage", { exact: true }),
   ).toHaveValue(/Geprüfter Testinhalt/);
   await expect(
-    editor.getByRole("button", { name: "An GPT senden", exact: true }),
+    editor.getByRole("button", { name: "Mit GPT entwickeln", exact: true }),
   ).toBeDisabled();
   await editor
     .getByLabel("Ich habe diese Version vollständig geprüft.", { exact: true })
