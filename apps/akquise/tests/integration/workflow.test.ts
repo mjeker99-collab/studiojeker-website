@@ -302,6 +302,65 @@ test("Sammelübernahme bestätigt vorhandene Daten, erhält Einwilligungsstatus 
     /Berechtigung/,
   );
 });
+test("Sammelspeichern bewahrt Teilangaben ohne Freigabe und schützt vor veralteten Änderungen", async () => {
+  const c = await saveContact(martin, {
+    ...input("partial-save"),
+    sourceUrl: "",
+    verifiedAt: "",
+    confidence: "UNCONFIRMED",
+    hook: "",
+  });
+  await assert.rejects(
+    prepareContacts(martin, "save", {
+      confirmed: false,
+      contacts: [{ id: c.id, revision: c.revision }],
+    }),
+  );
+  const result = await prepareContacts(martin, "save", {
+    confirmed: true,
+    shared: {
+      confidence: "VERIFIED",
+      verifiedAt: "2026-01-01T00:00:00.000Z",
+      hook: "Dokumentierter Bedarf an Projektbildern.",
+    },
+    contacts: [{ id: c.id, revision: c.revision }],
+  });
+  assert.ok(result.results);
+  assert.equal(result.results[0].ok, true);
+  const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+  assert.equal(saved.hook, "Dokumentierter Bedarf an Projektbildern.");
+  assert.equal(saved.confidence, "UNCONFIRMED");
+  assert.equal(saved.newsletterConsent, false);
+  assert.equal(await db.draft.count({ where: { contactId: c.id } }), 0);
+  assert.equal(await db.approval.count({ where: { contactId: c.id } }), 0);
+  const stale = await prepareContacts(martin, "save", {
+    confirmed: true,
+    contacts: [
+      { id: c.id, revision: c.revision, values: { hook: "Veralteter Wert" } },
+    ],
+  });
+  assert.ok(stale.results);
+  assert.equal(stale.results[0].ok, false);
+  const complete = await prepareContacts(martin, "save", {
+    confirmed: true,
+    shared: { confidence: "VERIFIED", sourceUrl: "https://example.test/team" },
+    contacts: [{ id: c.id, revision: saved.revision }],
+  });
+  assert.ok(complete.results);
+  assert.equal(complete.results[0].ok, true);
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).confidence,
+    "VERIFIED",
+  );
+  assert.equal(await db.approval.count({ where: { contactId: c.id } }), 0);
+  await suppress(martin, c.email, "Synthetische Sperre");
+  const blocked = await prepareContacts(martin, "save", {
+    confirmed: true,
+    contacts: [{ id: c.id, revision: saved.revision + 1 }],
+  });
+  assert.ok(blocked.results);
+  assert.equal(blocked.results[0].ok, false);
+});
 test("25 Kontakte gemeinsam vervollständigen und Entwürfe erstellen ohne Einzelbearbeitung", async () => {
   const contacts = await Promise.all(
     Array.from({ length: 25 }, (_, i) =>
@@ -2418,7 +2477,8 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
   const { importNewsletters, duplicateNewsletter } =
     await import("../../lib/hub/newsletter-library");
   const first = await importNewsletters(martin);
-  const { newsletterLibrary } = await import("../../lib/hub/newsletter-template");
+  const { newsletterLibrary } =
+    await import("../../lib/hub/newsletter-template");
   assert.equal(first.imported, newsletterLibrary.length);
   assert.equal(first.ids.length, newsletterLibrary.length);
   assert.equal((await importNewsletters(nora)).imported, 0);

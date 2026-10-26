@@ -39,6 +39,7 @@ export default function ContactMailFlow({
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editorRows, setEditorRows] = useState<Proposal[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function ContactMailFlow({
       aria-busy={loading || busy}
     >
       <h2>{ids.length} Mails vorbereiten</h2>
-      <button className="secondary" disabled={busy} onClick={back}>
+      <button className="secondary" disabled={busy || editing} onClick={back}>
         Zurück zur Auswahl
       </button>
       {loading ? (
@@ -121,7 +122,7 @@ export default function ContactMailFlow({
                 Vorhandene aktuelle Entwürfe werden weiterverwendet. Es werden
                 noch keine Mails versandt.
               </p>
-              {changes.length > 0 && (
+              {changes.length > 0 && !editing && (
                 <>
                   <details>
                     <summary>
@@ -178,34 +179,45 @@ export default function ContactMailFlow({
                   </label>
                 </>
               )}
-              {!results.length && (
+              {!results.length && !editing && (
                 <button
                   disabled={
-                    busy || !ready.length || (changes.length > 0 && !confirmed)
+                    busy ||
+                    editing ||
+                    !ready.length ||
+                    (changes.length > 0 && !confirmed)
                   }
                   onClick={() => void prepare()}
                 >
                   {ready.length} Mails prüfen →
                 </button>
               )}
-              {gaps.length > 0 && (
+              {(gaps.length > 0 || editing) && (
                 <>
                   <button
                     className="secondary"
-                    disabled={busy}
-                    onClick={() => setEditing((v) => !v)}
+                    disabled={busy || editing}
+                    onClick={() => {
+                      setEditorRows(gaps);
+                      setEditing(true);
+                    }}
                   >
                     {gaps.length} Kontakte ergänzen
                   </button>
                   {editing && (
                     <ContactPreparation
-                      ids={gaps.map((r) => r.id)}
-                      contacts={contacts}
+                      initialProposals={editorRows}
                       refresh={async () => {
                         await refresh();
-                        setRetry((v) => v + 1);
+                        const fresh = await request("preview", { ids });
+                        setRows(fresh.contacts);
+                        setConfirmed(false);
                       }}
-                      begin={() => setError("")}
+                      onDone={() => {
+                        setEditing(false);
+                        if (ready.length && changes.length === 0)
+                          void prepare();
+                      }}
                     />
                   )}
                 </>
