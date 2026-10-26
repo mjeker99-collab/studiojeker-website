@@ -56,6 +56,8 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     const request = route.request(),
       path = new URL(request.url()).pathname;
     if (path === "/api/project-drafts") return route.fulfill({ json: [] });
+    if (path === "/api/studio/state")
+      return route.fulfill({ json: { campaigns: [], series: [] } });
     if (path === "/api/state")
       return route.fulfill({
         json: {
