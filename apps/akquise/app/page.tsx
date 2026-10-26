@@ -525,7 +525,7 @@ export default function App() {
           )}
           {acquisitionTabs.includes(tab) && (
             <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {acquisitionTabs.map((n) => (
+              {["Mail-Studio", "Kontakte", "Versandhistorie"].map((n) => (
                 <button
                   className={tab === n ? "" : "secondary"}
                   key={n}
@@ -534,6 +534,18 @@ export default function App() {
                   {n}
                 </button>
               ))}
+              <details>
+                <summary>Weitere Ansichten</summary>
+                {["E-Mail-Entwürfe", "Freigaben"].map((n) => (
+                  <button
+                    className={tab === n ? "" : "secondary"}
+                    key={n}
+                    onClick={() => setTab(n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </details>
             </nav>
           )}
           {(tab === "Kampagnen" || tab === "Social Media") && (

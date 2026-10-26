@@ -598,77 +598,98 @@ export default function MailSchedule({
               )}
             </details>
           )}
-          <details
-            open={count("FAILED") + count("BLOCKED") + count("UNKNOWN") > 0}
-          >
-            <summary>Handlungsbedarf, Warteschlange und Verlauf</summary>
-            <h3>Warteschlange und letzte Ergebnisse</h3>
-            <p className="muted">
-              Letzte 500 Einträge. Bereits gestartete Versandversuche werden nie
-              automatisch wiederholt.
-            </p>
-            {data.items
-              .slice()
-              .sort(
-                (a, b) =>
-                  Number(["FAILED", "BLOCKED", "UNKNOWN"].includes(b.status)) -
-                  Number(["FAILED", "BLOCKED", "UNKNOWN"].includes(a.status)),
-              )
-              .map((item) => (
-                <div key={item.id} className="panel-note">
-                  <strong>{item.recipient}</strong>
+          {[
+            {
+              title: "Handlungsbedarf",
+              statuses: ["FAILED", "BLOCKED", "UNKNOWN"],
+            },
+            { title: "Warteschlange", statuses: ["QUEUED", "SENDING"] },
+            {
+              title: "Verlauf",
+              statuses: ["SENT", "SKIPPED", "CANCELLED", "CLOSED"],
+            },
+          ].map((group) => {
+            const items = data.items.filter((item) =>
+              group.statuses.includes(item.status),
+            );
+            return (
+              <details
+                key={group.title}
+                open={group.title === "Handlungsbedarf" && items.length > 0}
+              >
+                <summary>
+                  {group.title} (
+                  {group.statuses.reduce(
+                    (sum, status) => sum + count(status),
+                    0,
+                  )}
+                  )
+                </summary>
+                {!items.length && <p>Keine Einträge.</p>}
+                {group.title === "Verlauf" && (
                   <p>
-                    {item.subject} · V{item.version} ·{" "}
-                    {labels[item.status] || item.status}
+                    Letzte Einträge. Versandt bedeutet vom Mailserver
+                    angenommen. Bereits gestartete Versandversuche werden nicht
+                    automatisch wiederholt.
                   </p>
-                  {item.error && <p className="error">{item.error}</p>}
-                  {["BLOCKED", "FAILED"].includes(item.status) && (
-                    <button onClick={() => openDraft(item.draftId)}>
-                      Nachricht prüfen und bearbeiten
-                    </button>
-                  )}
-                  {["QUEUED", "BLOCKED"].includes(item.status) && (
-                    <button
-                      disabled={busy}
-                      onClick={() => void mutate("cancel", { id: item.id })}
-                    >
-                      Aus Warteschlange entfernen
-                    </button>
-                  )}
-                  {item.status === "UNKNOWN" && (
-                    <div>
-                      <label>
-                        Ergebnis des manuellen Abgleichs mit
-                        Postfach/SMTP-Protokoll
-                        <textarea
-                          value={reconciliation[item.id] || ""}
-                          onChange={(e) =>
-                            setReconciliation({
-                              ...reconciliation,
-                              [item.id]: e.target.value,
+                )}
+                {items.map((item) => (
+                  <div key={item.id} className="panel-note">
+                    <strong>{item.recipient}</strong>
+                    <p>
+                      {item.subject} · V{item.version} ·{" "}
+                      {labels[item.status] || item.status}
+                    </p>
+                    {item.error && <p className="error">{item.error}</p>}
+                    {["BLOCKED", "FAILED"].includes(item.status) && (
+                      <button onClick={() => openDraft(item.draftId)}>
+                        Nachricht prüfen und bearbeiten
+                      </button>
+                    )}
+                    {["QUEUED", "BLOCKED"].includes(item.status) && (
+                      <button
+                        disabled={busy}
+                        onClick={() => void mutate("cancel", { id: item.id })}
+                      >
+                        Aus Warteschlange entfernen
+                      </button>
+                    )}
+                    {item.status === "UNKNOWN" && (
+                      <div>
+                        <label>
+                          Ergebnis des manuellen Abgleichs mit
+                          Postfach/SMTP-Protokoll
+                          <textarea
+                            value={reconciliation[item.id] || ""}
+                            onChange={(e) =>
+                              setReconciliation({
+                                ...reconciliation,
+                                [item.id]: e.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <button
+                          disabled={
+                            busy ||
+                            (reconciliation[item.id] || "").trim().length < 15
+                          }
+                          onClick={() =>
+                            void mutate("resolve", {
+                              id: item.id,
+                              rationale: reconciliation[item.id],
                             })
                           }
-                        />
-                      </label>
-                      <button
-                        disabled={
-                          busy ||
-                          (reconciliation[item.id] || "").trim().length < 15
-                        }
-                        onClick={() =>
-                          void mutate("resolve", {
-                            id: item.id,
-                            rationale: reconciliation[item.id],
-                          })
-                        }
-                      >
-                        Abgleich dokumentieren · keine Wiederholung
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-          </details>
+                        >
+                          Abgleich dokumentieren · keine Wiederholung
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </details>
+            );
+          })}
         </>
       )}
     </section>

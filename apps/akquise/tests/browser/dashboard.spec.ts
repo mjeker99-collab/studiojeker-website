@@ -530,6 +530,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Zulässigkeit dokumentieren" })
     .click();
   await expect(dialog).not.toBeVisible();
+  await page.getByText("Weitere Ansichten", { exact: true }).click();
   await page
     .getByRole("navigation", { name: "Akquise-Navigation" })
     .getByRole("button", { name: /E-Mail-Entwürfe/ })
