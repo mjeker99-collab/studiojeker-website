@@ -24,7 +24,7 @@ test("Project save restores an unsent campaign after reload and keeps conflicts 
     name: "Projekt sichern · Kampagnen",
     exact: true,
   });
-  const prompt = page.getByRole("region", { name: "Kampagnen" }).getByRole("textbox").last();
+  const prompt = page.getByLabel("Deine Nachricht", { exact: true });
   const title = `Gesichertes Testprojekt ${Date.now()}`;
   await toolbar.getByLabel("Name der Sicherung", { exact: true }).fill(title);
   await prompt.fill("Kampagne zum Relaunch – noch nicht an GPT gesendet.");
