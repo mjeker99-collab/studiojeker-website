@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dispatchApproved } from "./delivery";
 import { mailScheduleMutation } from "./mail-schedule";
 import { db } from "./db";
 import {
@@ -90,7 +91,11 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
     }
     return { rows };
   }
-  if (action === "approve" || action === "approve-and-enqueue") {
+  if (
+    action === "approve" ||
+    action === "approve-and-enqueue" ||
+    action === "approve-and-send"
+  ) {
     const input = z
       .object({
         items: z
@@ -111,8 +116,10 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
       })
       .strict()
       .parse(raw);
-    if (action === "approve-and-enqueue" && !input.confirmDispatch)
+    if (action !== "approve" && !input.confirmDispatch)
       throw new PolicyError("Automatischen Versand ausdrücklich bestätigen.");
+    if (action === "approve-and-send" && input.items.length !== 1)
+      throw new PolicyError("Sofortversand erfolgt einzeln pro Nachricht.");
     const results = [];
     for (const entry of input.items) {
       try {
@@ -120,7 +127,25 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
           ...entry,
           legal: input.legal,
         });
-        if (action === "approve-and-enqueue") {
+        if (action === "approve-and-send") {
+          const { delivery } = await dispatchApproved(
+            userId,
+            entry.id,
+            entry.version,
+          );
+          const ok =
+            delivery.status === "SENT" || delivery.status === "TEST_SENT";
+          results.push({
+            id: entry.id,
+            ok,
+            message:
+              delivery.status === "SENT"
+                ? "An Mailserver übergeben"
+                : delivery.status === "TEST_SENT"
+                  ? "Testmail an Testempfänger übergeben"
+                  : "Versand nicht bestätigt. Versandhistorie prüfen; keine automatische Wiederholung.",
+          });
+        } else if (action === "approve-and-enqueue") {
           try {
             const queued = await mailScheduleMutation(userId, "enqueue", {
               confirmDispatch: true,
