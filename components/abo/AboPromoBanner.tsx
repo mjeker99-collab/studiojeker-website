@@ -54,8 +54,8 @@ export function AboPromoBanner({ promo }: AboPromoBannerProps) {
     <Reveal className={styles.promo}>
       <div className={styles.promoInner}>
         <div className={styles.promoCopy}>
-          <SectionLabel>{promo.label}</SectionLabel>
-          <h3 className={styles.promoHeadline}>{promo.headline}</h3>
+          <p className={styles.promoEyebrow}>{promo.label}</p>
+          <h3 className={styles.promoHeadline}>Unsere Visibility Abos.</h3>\n          <p className={styles.promoOffer}>{promo.headline}</p>
           <p className={styles.promoText}>{promo.text}</p>
           <ul className={styles.promoTerms}>
             {promo.terms.map((term) => (
