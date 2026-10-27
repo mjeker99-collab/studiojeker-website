@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import "./studioone-dashboard.css";
 import type { dashboardState } from "@/lib/dashboard";
 
 type Snapshot = Awaited<ReturnType<typeof dashboardState>>;
@@ -7,7 +8,7 @@ export type DashboardTarget = { section: string; projectId?: string };
 const areas = [
   [
     "Content-Studio",
-    "Content erstellen",
+    "Content Studio",
     "Mit GPT texten, Bilder gestalten und Produktionen vorbereiten.",
     "✦",
   ],
@@ -37,7 +38,7 @@ const areas = [
   ],
   [
     "Kontakte/Akquise",
-    "Kontakte & Akquise",
+    "Kontakte",
     "Kontakte pflegen, persönliche Mails prüfen und versenden.",
     "＠",
   ],
@@ -112,11 +113,11 @@ export default function Dashboard({
         aria-labelledby="dashboard-welcome-title"
       >
         <div>
-          <p className="eyebrow">DEIN MARKETING. EIN ORT.</p>
+          <p className="eyebrow">WILLKOMMEN BEI STUDIOONE</p>
           <h2 id="dashboard-welcome-title">
-            Was möchtest du heute erledigen?
+            We create visibility.
           </h2>
-          <p>Beschreibe deine Aufgabe in eigenen Worten. StudioONE übernimmt die Vorarbeit.</p>
+          <p>Deine zentrale Plattform für Akquise, Newsletter, Social Media, Website und Content – KI-gestützt, einfach und effizient.</p>
         </div>
         <button
           type="button"
@@ -149,7 +150,7 @@ export default function Dashboard({
       </section>
       <section aria-labelledby="dashboard-areas-title">
         <div className="dashboard-section-heading">
-          <h2 id="dashboard-areas-title">Deine Arbeitsbereiche</h2>
+          <h2 id="dashboard-areas-title">Schnellzugriff</h2>
           <span className="muted">Mit einem Klick loslegen</span>
         </div>
         <div className="dashboard-areas">
@@ -196,7 +197,7 @@ export default function Dashboard({
       >
         <div className="dashboard-section-heading">
           <div>
-            <h2 id="dashboard-projects-title">Projekte & Kampagnen</h2>
+            <h2 id="dashboard-projects-title">Zuletzt verwendet</h2>
             <p className="muted">
               Deine jüngsten Projekte direkt weiterbearbeiten.
             </p>
