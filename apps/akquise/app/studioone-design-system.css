@@ -1,0 +1,17 @@
+/* StudioONE shared visual language – all workspaces. Existing behavior remains unchanged. */
+:root{--cyan:#00c5e8;--button-radius:12px;--ink:#11171b;--muted:#64727b;--line:#e0e7ea;--surface:#f4f7f8}
+body{font-family:Arial,Helvetica,sans-serif;letter-spacing:-.005em}
+.shell{background:var(--surface)}
+.sidebar{background:#101519;color:#f6fbfc;border-right:1px solid #273138}
+.sidebar button,.sidebar a{transition:background .15s,color .15s,border-color .15s}
+.sidebar button:hover,.sidebar a:hover{background:#25333a;color:#fff}
+.sidebar button:focus-visible,.sidebar a:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.panel{border-radius:16px;border-color:var(--line);box-shadow:0 3px 16px #13263008}
+button{border-radius:var(--button-radius)}
+button:not(.secondary):not(.danger):not([disabled]){transition:background .15s,transform .15s}
+button:not(.secondary):not(.danger):not([disabled]):hover{transform:translateY(-1px)}
+input:not([type="checkbox"]),select,textarea{border-radius:10px}
+h1,h2,h3{letter-spacing:-.025em}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+@media(max-width:800px){.panel{border-radius:12px}}
+@media(prefers-reduced-motion:reduce){button,.sidebar button,.sidebar a{transition:none!important;transform:none!important}}
