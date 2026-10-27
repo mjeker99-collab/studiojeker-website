@@ -1,0 +1,26 @@
+/* StudioONE visual dashboard – scoped, no changes to mail or publishing flows. */
+.dashboard-home{--one-cyan:#00c5ef;display:grid;gap:26px;max-width:1600px;margin:auto}
+.dashboard-home .dashboard-welcome{position:relative;overflow:hidden;min-height:260px;padding:clamp(28px,5vw,64px);border-radius:18px;background:linear-gradient(105deg,#fff 0%,#fff 55%,#e5faff 100%);border:1px solid #e5e8eb;display:flex;align-items:center;justify-content:space-between;gap:30px}
+.dashboard-home .dashboard-welcome:after{content:"ONE";position:absolute;right:3%;bottom:-.22em;font-size:clamp(100px,18vw,300px);font-weight:900;letter-spacing:-.1em;color:#00c5ef13;pointer-events:none}
+.dashboard-home .dashboard-welcome>div,.dashboard-home .dashboard-welcome button{position:relative;z-index:1}
+.dashboard-home .dashboard-welcome .eyebrow{letter-spacing:.32em;font-size:12px;font-weight:800;color:#31363a}
+.dashboard-home .dashboard-welcome h2{font-size:clamp(32px,4vw,62px);line-height:1.06;letter-spacing:-.045em;max-width:700px;margin:16px 0}
+.dashboard-home .dashboard-welcome p:not(.eyebrow){font-size:clamp(15px,1.5vw,19px);max-width:580px;line-height:1.55}
+.dashboard-home .studio-task-start{background:#111519;color:#fff;border:0;border-radius:16px;padding:clamp(20px,3vw,36px)}
+.dashboard-home .studio-task-start textarea{border-radius:12px;background:#22272b;color:white;border:1px solid #51585d}
+.dashboard-home .studio-task-start label,.dashboard-home .studio-task-start .muted{color:#c8d2d7}
+.dashboard-home .studio-task-start button[type=submit]{background:var(--one-cyan);color:#071116;border-radius:12px}
+.dashboard-home .studio-quick-tasks button{background:#262d32;color:#f7fafa;border:1px solid #485057;border-radius:10px}
+.dashboard-home .dashboard-section-heading h2{font-size:clamp(21px,2vw,28px);letter-spacing:-.025em}
+.dashboard-home .dashboard-areas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.dashboard-home .dashboard-area{position:relative;min-height:170px;display:flex;align-items:flex-start;flex-direction:column;justify-content:space-between;text-align:left;border-radius:15px;background:linear-gradient(145deg,#21282d,#0c1013);color:white;padding:23px;border:1px solid #343d43;transition:transform .15s,border-color .15s}
+.dashboard-home .dashboard-area:hover{transform:translateY(-2px);border-color:var(--one-cyan);background:#19262d}
+.dashboard-home .dashboard-area-icon{color:var(--one-cyan);font-size:31px}
+.dashboard-home .dashboard-area-copy{display:grid;gap:8px}
+.dashboard-home .dashboard-area-copy strong{font-size:19px}
+.dashboard-home .dashboard-area-copy span{color:#c7d0d4;line-height:1.4;font-weight:400}
+.dashboard-home .dashboard-area-arrow{position:absolute;right:18px;bottom:18px;color:var(--one-cyan)}
+.dashboard-home .dashboard-projects{border-radius:16px;background:#fff}
+.dashboard-home .dashboard-shortcuts{display:flex;flex-wrap:wrap;gap:9px}
+@media(max-width:900px){.dashboard-home .dashboard-areas{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-home .dashboard-welcome{min-height:220px}}
+@media(max-width:560px){.dashboard-home .dashboard-areas{grid-template-columns:1fr}.dashboard-home .dashboard-welcome{display:block}.dashboard-home .dashboard-welcome h2{font-size:34px}.dashboard-home .dashboard-area{min-height:145px}}
