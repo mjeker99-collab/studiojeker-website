@@ -1,8 +1,10 @@
 import type { Contact } from "@prisma/client";
 import { importedDraft } from "./generation";
+import { normalizeSourceUrl, sourceUrlIssue } from "./contact-source-url";
 import { verificationIssues } from "./policy";
 
 export type PreparationFields = Partial<{
+  email: string;
   sourceUrl: string;
   verifiedAt: string;
   confidence: Contact["confidence"];
@@ -16,18 +18,43 @@ export function contactPreparation(
   now = new Date(),
   input: { shared?: PreparationFields; values?: PreparationFields } = {},
 ) {
-  const beforeMail = c.notes.split(/^E-Mail-Entwurf:/m)[0];
-  const field = (name: string) => {
-    const values = beforeMail
-      .split(/\r?\n/)
-      .filter((line) => line.startsWith(name + ":"))
-      .map((line) => line.slice(name.length + 1).trim());
+  const normal = (value: string) =>
+    value.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
+  // Read labelled metadata only, never infer evidence from the marketing prose.
+  const beforeMail = c.notes.split(/^\s*E-Mail-Entwurf\s*:/im)[0];
+  const field = (...names: string[]) => {
+    const keys = names.map(normal);
+    const values = [
+      ...new Set(
+        beforeMail.split(/\r?\n/).flatMap((line) => {
+          const colon = line.indexOf(":");
+          return colon >= 0 && keys.includes(normal(line.slice(0, colon)))
+            ? [line.slice(colon + 1).trim()].filter(Boolean)
+            : [];
+        }),
+      ),
+    ];
     return values.length === 1 ? values[0] : "";
   };
   const patch: PreparationFields = {};
   const origins: string[] = [];
-  const source = field("Quellen-URL");
-  if (!c.sourceUrl && /^https?:\/\/\S+$/.test(source)) {
+  const notedEmail = field(
+    "Direkte E-Mail",
+    "E-Mail",
+    "E-Mail-Adresse",
+    "Geschäftliche E-Mail-Adresse",
+  )
+    .replace(/^mailto:/i, "")
+    .trim()
+    .toLowerCase();
+  if (!c.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notedEmail)) {
+    patch.email = notedEmail;
+    origins.push("E-Mail-Adresse aus eindeutig beschrifteten Rechercheangaben");
+  }
+  const source = normalizeSourceUrl(
+    field("Quellen-URL", "Quellen URL", "Quellenadresse", "Quelle"),
+  );
+  if (!c.sourceUrl && source && !sourceUrlIssue(source)) {
     try {
       new URL(source);
       patch.sourceUrl = source;
@@ -36,7 +63,11 @@ export function contactPreparation(
       /* An invalid source remains a visible gap. */
     }
   }
-  const rawDate = field("Prüfdatum");
+  const rawDate = field(
+    "Prüfdatum",
+    "Verifikationsdatum",
+    "Letzte Verifikation",
+  );
   const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(rawDate);
   const iso = match ? `${match[3]}-${match[2]}-${match[1]}` : rawDate;
   if (!c.verifiedAt && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
@@ -50,18 +81,24 @@ export function contactPreparation(
       origins.push("Datum aus Prüfdatum in den Notizen");
     }
   }
-  const status = field("Prüfstatus");
-  if (
-    c.confidence === "UNCONFIRMED" &&
-    [
-      "Persönliche Adresse und Rolle auf offizieller Website veröffentlicht",
-      "Persönliche Adresse verifiziert",
-    ].includes(status)
-  ) {
-    patch.confidence = "VERIFIED";
-    origins.push(
-      "Persönliche Adresse laut Prüfstatus in den Notizen verifiziert",
+  const status = normal(
+    field("Prüfstatus", "Vertrauensstatus", "Verifikationsstatus"),
+  );
+  const negative =
+    /nicht|unbestätigt|unverifiziert|ungeprüft|geschätzt|vermut|unklar|ausstehend|keine|allgemein|funktionsadresse|unconfirmed|estimated/.test(
+      status,
     );
+  const confirmed =
+    /^(?:verified|verifiziert|bestätigt)[.!]?$/.test(status) ||
+    /(?:persönliche|direkte|personengebundene).*?(?:verifiziert|bestätigt|auf (?:der )?offiziellen? (?:website|webseite) veröffentlicht)/.test(
+      status,
+    ) ||
+    /persönliche adresse und rolle auf offizieller website veröffentlicht/.test(
+      status,
+    );
+  if (c.confidence === "UNCONFIRMED" && !negative && confirmed) {
+    patch.confidence = "VERIFIED";
+    origins.push("Explizite Verifikation aus dem dokumentierten Prüfstatus");
   }
   if (!c.hook.trim()) {
     const explicit =
@@ -140,6 +177,7 @@ export function contactPreparation(
     {
       ...c,
       ...values,
+      email: patch.email ?? c.email,
       verifiedAt: values.verifiedAt ? new Date(values.verifiedAt) : null,
     },
     now,
@@ -149,7 +187,7 @@ export function contactPreparation(
     revision: c.revision,
     organisation: c.organisation,
     name: `${c.firstName} ${c.lastName}`,
-    email: c.email,
+    email: patch.email ?? c.email,
     values,
     patch,
     origins,
