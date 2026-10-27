@@ -341,7 +341,20 @@ export default function MailStudio({
             className="secondary"
             disabled={busy}
             aria-pressed={step === 3}
-            onClick={() => setStep(3)}
+            onClick={() =>
+              void run(async () => {
+                if (!rows.length) {
+                  if (contactIds.length) await prepareBatch();
+                  else {
+                    const ids = selected.length
+                      ? selected
+                      : visible.slice(0, batchSize).map((d) => d.id);
+                    if (ids.length) await preview(ids);
+                  }
+                }
+                setStep(3);
+              })
+            }
           >
             3 · Versand
           </button>
@@ -534,9 +547,13 @@ export default function MailStudio({
           </ul>
         </details>
       )}
-      {step === 2 && (
+      {(step === 2 || (step === 3 && rows.length > 0)) && (
         <section className="panel" aria-label="Globale Mailprüfung">
-          <h3>{rows.length} Nachrichten in der Prüfvorschau</h3>
+          <h3>
+            {step === 3
+              ? `${chosen.length} Mails zum Sofortversand`
+              : `${rows.length} Nachrichten in der Prüfvorschau`}
+          </h3>
           <p>
             Empfänger, Betreff und vollständige Nachricht einschliesslich
             Signatur prüfen. Nachrichten können aus der gemeinsamen Freigabe
@@ -704,9 +721,7 @@ export default function MailStudio({
               disabled={!canApprove}
               onClick={() => void run(() => submitMails("now"))}
             >
-              {busy && sendMode === "now"
-                ? "Versand läuft …"
-                : `${chosen.length} Mails sofort senden`}
+              {busy && sendMode === "now" ? "Versand läuft …" : "Sofort senden"}
             </button>
             <button
               className="secondary"
@@ -737,6 +752,12 @@ export default function MailStudio({
               <button onClick={() => setStep(3)}>Weiter zum Versand</button>
             </div>
           )}
+        </section>
+      )}
+      {step === 3 && !rows.length && (
+        <section className="panel">
+          <h3>Noch keine Mails für den Sofortversand ausgewählt</h3>
+          <button onClick={() => setStep(1)}>Mails auswählen</button>
         </section>
       )}
       <MailSchedule
