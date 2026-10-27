@@ -703,6 +703,19 @@ export default function App() {
                       ))}
                   </select>
                 </label>
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    action(async () => {
+                      const result = await post("contacts/sheets", {});
+                      return `Masterliste übernommen: ${result.imported ?? 0} neue Kontakte, ${result.duplicates ?? 0} bereits vorhanden. Keine Versandfreigabe erteilt.`;
+                    })
+                  }
+                >
+                  {busy ? "Import läuft …" : "Masterliste importieren"}
+                </button>
                 <label className="file-button">
                   CSV / XLSX importieren
                   <input
