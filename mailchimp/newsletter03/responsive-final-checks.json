@@ -1,0 +1,53 @@
+[
+  {
+    "width": 700,
+    "file": "final-desktop.png",
+    "imgCount": 13,
+    "failed": [],
+    "scrollW": 700,
+    "clientW": 700,
+    "overflow": false,
+    "promoLoaded": true,
+    "promoSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/eaf48c8a43824025396c65bcd01ae8c2b4d2c34b/mailchimp/newsletter03/assets/umbrella-cyan.jpg",
+    "promoNat": [
+      640,
+      800
+    ],
+    "noraInPromo": false,
+    "bodyH": 2320
+  },
+  {
+    "width": 390,
+    "file": "final-mobile.png",
+    "imgCount": 13,
+    "failed": [],
+    "scrollW": 390,
+    "clientW": 390,
+    "overflow": false,
+    "promoLoaded": true,
+    "promoSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/eaf48c8a43824025396c65bcd01ae8c2b4d2c34b/mailchimp/newsletter03/assets/umbrella-cyan.jpg",
+    "promoNat": [
+      640,
+      800
+    ],
+    "noraInPromo": false,
+    "bodyH": 3664
+  },
+  {
+    "width": 320,
+    "file": "final-320.png",
+    "imgCount": 13,
+    "failed": [],
+    "scrollW": 320,
+    "clientW": 320,
+    "overflow": false,
+    "promoLoaded": true,
+    "promoSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/eaf48c8a43824025396c65bcd01ae8c2b4d2c34b/mailchimp/newsletter03/assets/umbrella-cyan.jpg",
+    "promoNat": [
+      640,
+      800
+    ],
+    "noraInPromo": false,
+    "bodyH": 3747
+  }
+]

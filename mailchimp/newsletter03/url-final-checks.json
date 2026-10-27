@@ -1,0 +1,158 @@
+[
+  {
+    "url": "http://www.w3.org/1999/xhtml",
+    "status": 200,
+    "final": "https://www.w3.org/1999/xhtml/",
+    "ok": true
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png",
+    "status": 200,
+    "final": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_facebook.png",
+    "ok": true
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png",
+    "status": 200,
+    "final": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_instagram.png",
+    "ok": true
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png",
+    "status": 200,
+    "final": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/icon_linkedin.png",
+    "ok": true
+  },
+  {
+    "url": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png",
+    "status": 200,
+    "final": "https://cdn.jsdelivr.net/gh/mjeker99-collab/studiojeker-website@9584d5e/mailchimp/placeholders/logo.png",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/content-eye.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/content-eye.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-desktop.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-desktop.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-mobile.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/hero-mobile.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-architecture.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-architecture.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-business.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/3dccfc2291b493b64b9fb19d24feebc08e6b3869/mailchimp/newsletter03/assets/service-business.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/92009bd630e7242e455ce2de762e9ca87a8d0b97/mailchimp/assets/service-product.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/eaf48c8a43824025396c65bcd01ae8c2b4d2c34b/mailchimp/newsletter03/assets/umbrella-cyan.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/eaf48c8a43824025396c65bcd01ae8c2b4d2c34b/mailchimp/newsletter03/assets/umbrella-cyan.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+    "status": 200,
+    "final": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/gh-pages/v7-corrections/assets/digital-concert-photographer.jpg",
+    "ok": true
+  },
+  {
+    "url": "https://www.facebook.com/studiojeker/",
+    "status": 200,
+    "final": "https://www.facebook.com/studiojeker/",
+    "ok": true
+  },
+  {
+    "url": "https://www.instagram.com/studiojeker/",
+    "status": 200,
+    "final": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fstudiojeker%2F&is_from_rle",
+    "ok": true
+  },
+  {
+    "url": "https://www.linkedin.com/company/studiojeker/",
+    "status": 200,
+    "final": "https://www.linkedin.com/company/studiojeker/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/agb/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/agb/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/contact/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/contact/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/content-abo/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/content-abo/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/datenschutz/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/datenschutz/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/impressum/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/impressum/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/services/architecture/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/services/architecture/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/services/business-communication/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/services/business-communication/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/services/digital-marketing/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/services/digital-marketing/",
+    "ok": true
+  },
+  {
+    "url": "https://www.studiojeker.ch/services/product-communication/",
+    "status": 200,
+    "final": "https://www.studiojeker.ch/services/product-communication/",
+    "ok": true
+  }
+]
