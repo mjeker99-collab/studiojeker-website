@@ -44,3 +44,7 @@ Kein Versand ohne ausdrückliche Freigabe. Vor Live-Versand: Mailchimp-Testmail 
 ## Nachtrag: Content-Modul Bildersatz
 
 Das Augenmotiv neben «Professioneller Content» wurde durch das freigegebene Foto der Frau im cyanblauen Mantel ersetzt (`content-visibility.jpg`, commit `ac45e2f…`). Hero-Showreel (Auge mit Playbutton) unverändert.
+
+## Nachtrag: Hero-Videolink
+
+Hero-Bild und «→ Video abspielen» verlinken auf https://vimeo.com/1216349266.
