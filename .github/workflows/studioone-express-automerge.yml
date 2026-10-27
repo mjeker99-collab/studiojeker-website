@@ -1,19 +1,40 @@
-name: StudioONE Express – safe PR auto-merge
+name: StudioONE Express – checked PR auto-merge
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [feat/akquise-production-readiness]
-  workflow_dispatch:
 permissions:
   contents: write
   pull-requests: write
+  actions: read
 jobs:
   enable-auto-merge:
-    if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Enable auto-merge (required checks and branch protection remain enforced)
+      - name: Wait for successful StudioONE CI before enabling auto-merge
         env:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge --auto --squash "$PR_URL"
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A successful, SHA-matching CI run is mandatory, even when
+          # repository branch protection has no required checks configured.
+          for attempt in $(seq 1 30); do
+            result="$(gh run list --repo "$GH_REPO" --workflow akquise-checks.yml --commit "$HEAD_SHA" --event pull_request --json headSha,status,conclusion --limit 20 --jq '[.[] | select(.headSha == env.HEAD_SHA and .status == "completed")] | first | .conclusion // ""')"
+            if [ "$result" = "success" ]; then
+              gh pr merge --auto --squash "$PR_URL"
+              exit 0
+            fi
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ] || [ "$result" = "timed_out" ]; then
+              echo "StudioONE CI did not pass: $result"
+              exit 1
+            fi
+            sleep 30
+          done
+          echo "No successful StudioONE CI for this PR SHA; leaving PR open."
+          exit 1
