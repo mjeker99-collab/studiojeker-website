@@ -2,7 +2,7 @@
   {
     "width": 700,
     "file": "final-desktop.png",
-    "imgCount": 13,
+    "imgCount": 14,
     "failed": [],
     "scrollW": 700,
     "clientW": 700,
@@ -14,12 +14,15 @@
       800
     ],
     "noraInPromo": false,
-    "bodyH": 2320
+    "heroHref": "https://www.studiojeker.ch/#home-showreel-title",
+    "videoCta": "https://www.studiojeker.ch/#home-showreel-title",
+    "noraSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/7361ce0ff0f8d302c29c23ac7cc3ef5a15a6fbc4/mailchimp/visibility-update/assets/nora-cyan-tall.jpg",
+    "bodyH": 2554
   },
   {
     "width": 390,
     "file": "final-mobile.png",
-    "imgCount": 13,
+    "imgCount": 14,
     "failed": [],
     "scrollW": 390,
     "clientW": 390,
@@ -31,12 +34,15 @@
       800
     ],
     "noraInPromo": false,
-    "bodyH": 3664
+    "heroHref": "https://www.studiojeker.ch/#home-showreel-title",
+    "videoCta": "https://www.studiojeker.ch/#home-showreel-title",
+    "noraSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/7361ce0ff0f8d302c29c23ac7cc3ef5a15a6fbc4/mailchimp/visibility-update/assets/nora-cyan-tall.jpg",
+    "bodyH": 4162
   },
   {
     "width": 320,
     "file": "final-320.png",
-    "imgCount": 13,
+    "imgCount": 14,
     "failed": [],
     "scrollW": 320,
     "clientW": 320,
@@ -48,6 +54,9 @@
       800
     ],
     "noraInPromo": false,
-    "bodyH": 3747
+    "heroHref": "https://www.studiojeker.ch/#home-showreel-title",
+    "videoCta": "https://www.studiojeker.ch/#home-showreel-title",
+    "noraSrc": "https://raw.githubusercontent.com/mjeker99-collab/studiojeker-website/7361ce0ff0f8d302c29c23ac7cc3ef5a15a6fbc4/mailchimp/visibility-update/assets/nora-cyan-tall.jpg",
+    "bodyH": 4259
   }
 ]
