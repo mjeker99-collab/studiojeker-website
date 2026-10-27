@@ -245,8 +245,9 @@ export default function MailStudio({
   }, [initialDraftIds]);
   return (
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
-      <div className="panel">
-        <h2>Persönliche E-Mails versenden</h2>
+      <div className="panel mail-studio-intro">
+        <p className="eyebrow">DEINE KONTAKTE. PERSÖNLICH ERREICHEN.</p>
+        <h2>Wen möchtest du heute erreichen?</h2>
         <p>
           1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben
         </p>
