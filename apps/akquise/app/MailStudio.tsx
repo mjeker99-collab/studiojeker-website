@@ -73,6 +73,8 @@ export default function MailStudio({
   const [procurement, setProcurement] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [sendMode, setSendMode] = useState<"now" | "schedule">("schedule");
+  const [sendProgress, setSendProgress] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
   const [skipped, setSkipped] = useState<string[]>([]);
@@ -127,6 +129,70 @@ export default function MailStudio({
       (legal &&
         rationale.trim().length >= 15 &&
         (!publicLegal || procurement)));
+  async function submitMails(mode: "now" | "schedule") {
+    setSendMode(mode);
+    setResults([]);
+    setSendProgress("");
+    const items = chosen.map(({ id, version, hash, contactRevision }) => ({
+      id,
+      version,
+      hash,
+      contactRevision,
+    }));
+    const common = {
+      confirmDispatch: true,
+      read: true,
+      ...(missingLegal.length
+        ? {
+            legal: {
+              confirmed: true,
+              rationale,
+              procurementReviewed: procurement,
+            },
+          }
+        : {}),
+    };
+    const completed: Result[] = [];
+    try {
+      if (mode === "now") {
+        for (let index = 0; index < items.length; index++) {
+          setSendProgress(
+            `Mail ${index + 1} von ${items.length} wird versandt …`,
+          );
+          const data = await api("approve-and-send", {
+            ...common,
+            items: [items[index]],
+          });
+          completed.push(...data.results);
+          setResults([...completed]);
+          // Stop on errors or uncertain SMTP results; never automatically retry.
+          if (data.results.some((r: Result) => !r.ok)) break;
+        }
+      } else {
+        const data = await api("approve-and-enqueue", { ...common, items });
+        completed.push(...data.results);
+        setResults(completed);
+      }
+    } catch {
+      throw new Error(
+        "Versand unterbrochen. Bitte Versandhistorie prüfen, bevor du erneut sendest. Noch nicht bearbeitete Mails bleiben ausgewählt.",
+      );
+    } finally {
+      setSendProgress(
+        mode === "now"
+          ? `${completed.length} von ${items.length} Mails bearbeitet.`
+          : "",
+      );
+      setDispatch(false);
+      setRead(false);
+      setLegal(false);
+      setIncluded((old) =>
+        old.filter((id) => !completed.some((r) => r.id === id && r.ok)),
+      );
+      setScheduleRevision((v) => v + 1);
+      await refresh();
+    }
+  }
   async function run(work: () => Promise<void>) {
     setBusy(true);
     setError("");
@@ -627,57 +693,38 @@ export default function MailStudio({
               }}
             />
             Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
-            Empfänger, Betreff und Signatur frei und bestätige den automatischen
-            Versand nach dem angezeigten Zeitplan.
+            Empfänger, Betreff und Signatur zum Versand frei.
           </label>
-          <button
-            disabled={!canApprove}
-            onClick={() =>
-              void run(async () => {
-                const data = await api("approve-and-enqueue", {
-                  confirmDispatch: true,
-                  read: true,
-                  items: chosen.map(
-                    ({ id, version, hash, contactRevision }) => ({
-                      id,
-                      version,
-                      hash,
-                      contactRevision,
-                    }),
-                  ),
-                  ...(missingLegal.length
-                    ? {
-                        legal: {
-                          confirmed: true,
-                          rationale,
-                          procurementReviewed: procurement,
-                        },
-                      }
-                    : {}),
-                });
-                setResults(data.results);
-                setDispatch(false);
-                setScheduleRevision((v) => v + 1);
-                setRead(false);
-                setLegal(false);
-                setIncluded((old) =>
-                  old.filter(
-                    (id) =>
-                      !data.results.some((r: Result) => r.id === id && r.ok),
-                  ),
-                );
-                await refresh();
-              })
-            }
-          >
-            {chosen.length} Mails freigeben und einplanen
-          </button>
+          <p>
+            Sofort senden startet jetzt, auch ausserhalb des Zeitplans. Bitte
+            diese Seite bis zum Abschluss geöffnet lassen.
+          </p>
+          <div className="actions">
+            <button
+              disabled={!canApprove}
+              onClick={() => void run(() => submitMails("now"))}
+            >
+              {busy && sendMode === "now"
+                ? "Versand läuft …"
+                : `${chosen.length} Mails sofort senden`}
+            </button>
+            <button
+              className="secondary"
+              disabled={!canApprove}
+              onClick={() => void run(() => submitMails("schedule"))}
+            >
+              Nach Zeitplan einplanen
+            </button>
+          </div>
+          {sendProgress && <p role="status">{sendProgress}</p>}
           {results.length > 0 && (
             <div role="status">
               <p>
-                {results.filter((r) => r.ok).length} freigegeben und eingeplant
-                · {results.filter((r) => !r.ok).length} noch offen. Der Versand
-                folgt dem gespeicherten Zeitplan.
+                {results.filter((r) => r.ok).length}{" "}
+                {sendMode === "now"
+                  ? "an Mailserver übergeben"
+                  : "freigegeben und eingeplant"}
+                · {results.filter((r) => !r.ok).length} noch offen.
               </p>
               <ul>
                 {results.map((r) => (
