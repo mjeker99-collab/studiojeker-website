@@ -1,0 +1,26 @@
+/* StudioONE visual consistency across all workspaces. Scoped to the app shell. */
+.shell{--one-accent:#00c2df;--one-dark:#101519;--one-border:#dce5e9}
+.shell .content{background:#f4f7f8}
+.shell .page-heading{margin-bottom:24px}
+.shell .page-heading h1{font-size:clamp(29px,3vw,42px);font-weight:700;letter-spacing:-.035em}
+.shell .page-heading .eyebrow,.shell .section-head .eyebrow{font-size:11px;letter-spacing:.18em;color:#657884}
+.shell .panel,.shell .hub-card,.shell .metric,.shell .login-card{background:#fff;border:1px solid var(--one-border);border-radius:16px;box-shadow:0 3px 18px #112b3808}
+.shell .hub-card,.shell .metric{transition:border-color .15s,box-shadow .15s}
+.shell .hub-card:hover{border-color:#00bddd;box-shadow:0 6px 20px #12374312}
+.shell .section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.shell .section-head h2,.shell .panel h2{letter-spacing:-.025em}
+.shell .toolbar,.shell .hub-filters,.shell .heading-actions{gap:12px}
+.shell .secondary{background:#fff;color:#17272e;border:1px solid #b8c7cf}
+.shell .secondary:hover{background:#eef8fb}
+.shell button:not(.secondary):not(.danger):not(.quiet):not(:disabled){border-radius:11px}
+.shell input:not([type="checkbox"]),.shell select,.shell textarea{border:1px solid #c5d0d6;border-radius:10px;min-height:44px}
+.shell input:focus-visible,.shell select:focus-visible,.shell textarea:focus-visible{outline:3px solid #00bddd;outline-offset:2px}
+.shell .banner,.shell .steps{border-radius:16px}
+.shell .table-wrap{overflow-x:auto;border-radius:12px}
+.shell .modal{border-radius:18px}
+.shell .notice,.shell .warning,.shell .error{border-radius:12px}
+.shell .hub-editor,.shell .graphics-editor{min-width:0}
+.shell .hub-subnav{display:flex;gap:8px;flex-wrap:wrap}
+.shell .hub-subnav button{border-radius:11px}
+@media(max-width:800px){.shell .content{padding-inline:clamp(12px,3vw,24px)}.shell .panel{border-radius:12px}.shell .page-heading h1{font-size:30px}}
+@media(prefers-reduced-motion:reduce){.shell .hub-card,.shell .metric{transition:none}}
