@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisibilityArticle } from "@/components/visibility/VisibilityArticle";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { HomePage } from "@/components/home/HomePage";
 import { getResolvedHomepageContent } from "@/lib/content/homepage-sanity";
@@ -22,6 +23,7 @@ export default async function GermanHomePage() {
   return (
     <SiteChrome locale="de">
       <HomePage locale="de" content={content} />
+      <VisibilityArticle teaser />
     </SiteChrome>
   );
 }
