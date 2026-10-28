@@ -638,6 +638,25 @@ export default function MailStudio({
           >
             Prüfvorschau neu laden
           </button>
+          {step === 3 && (
+            <div className="panel-note" role="status">
+              <p><strong>{chosen.length} persönliche Mails für die gemeinsame Versandfreigabe ausgewählt.</strong></p>
+              <p>
+                {canApprove
+                  ? "Die Versandfreigabe ist vollständig. Du kannst den Versand jetzt auslösen."
+                  : "Vor dem Versand sind die gemeinsame rechtliche Prüfung und die ausdrückliche Versandfreigabe weiter unten erforderlich."}
+              </p>
+              <div className="actions">
+                <button
+                  type="button"
+                  disabled={busy || !chosen.length}
+                  onClick={() => document.getElementById("mailstudio-send-approval")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                >
+                  {canApprove ? `${chosen.length} Mails jetzt versenden – Freigabe anzeigen` : "Zur gemeinsamen Versandfreigabe ↓"}
+                </button>
+              </div>
+            </div>
+          )}
           {rows.some((r) => r.issues.length) && (
             <div className="panel-note">
               <p>
@@ -718,6 +737,7 @@ export default function MailStudio({
               </label>
             </details>
           ))}
+          <div id="mailstudio-send-approval" />
           {missingLegal.length > 0 && (
             <fieldset>
               <legend>
