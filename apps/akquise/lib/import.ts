@@ -1,3 +1,4 @@
+import { mapMasterSheet } from "./sheet-master";
 import { parse } from "csv-parse/sync";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
@@ -197,6 +198,7 @@ export async function parseImport(buffer: Buffer, filename: string) {
   let rows: Record<string, unknown>[];
   if (filename.toLowerCase().endsWith(".csv")) {
     rows = parse(buffer, {
+      delimiter: buffer.toString("utf8").split(/\r?\n/, 1)[0].includes(";") ? ";" : ",",
       columns: (headers: string[]) => {
         if (new Set(headers).size !== headers.length)
           throw new PolicyError("Doppelte Spaltennamen.");
@@ -207,6 +209,10 @@ export async function parseImport(buffer: Buffer, filename: string) {
       max_record_size: 32768,
       trim: true,
     });
+    if (rows.length && Object.keys(rows[0])[0] === "Person" && "E-Mail" in rows[0]) {
+      const headers = Object.keys(rows[0]);
+      return validateRows(mapMasterSheet([headers, ...rows.map(row => headers.map(h => String(row[h] ?? "")))]));
+    }
   } else if (filename.toLowerCase().endsWith(".xlsx")) {
     // Bound declared ZIP expansion before ExcelJS decompresses untrusted input.
     let expanded = 0,
@@ -230,6 +236,18 @@ export async function parseImport(buffer: Buffer, filename: string) {
         (sheet.name === "Kontakte" &&
           sheet.getCell("A1").text.trim() === "Person"),
     );
+    if (master?.name === "Kontakte") {
+      if (master.rowCount > 501 || master.columnCount > 30)
+        throw new PolicyError("Maximal 500 Zeilen und 30 Spalten.");
+      const values = Array.from({ length: master.rowCount }, (_, i) =>
+        Array.from({ length: 15 }, (_, col) => {
+          const cell = master.getRow(i + 1).getCell(col + 1);
+          if (cell.type === ExcelJS.ValueType.Formula)
+            throw new PolicyError("Formeln sind im Kontaktimport nicht erlaubt.");
+          return cell.value instanceof Date ? cell.value.toISOString().slice(0, 10) : cell.text.trim();
+        }));
+      return validateRows(mapMasterSheet(values));
+    }
     if (master) {
       if (master.rowCount > 501 || master.columnCount > 30)
         throw new PolicyError("Maximal 500 Zeilen und 30 Spalten.");
