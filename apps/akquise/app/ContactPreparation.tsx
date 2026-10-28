@@ -105,10 +105,14 @@ export default function ContactPreparation({
   initialProposals,
   refresh,
   onDone,
+  requireComplete = false,
+  onExclude,
 }: {
   initialProposals: Proposal[];
   refresh: () => Promise<void>;
   onDone: () => void;
+  requireComplete?: boolean;
+  onExclude?: (ids: string[]) => void;
 }) {
   const [proposals, setProposals] = useState(initialProposals);
   const [shared, setShared] = useState<PreparationFields>({});
@@ -161,6 +165,12 @@ export default function ContactPreparation({
       });
       setProposals(fresh.contacts);
       await refresh();
+      if (
+        requireComplete &&
+        data.results.every((r) => r.ok) &&
+        fresh.contacts.every((p) => p.ready)
+      )
+        onDone();
     } catch (e) {
       setError(
         e instanceof Error
@@ -225,9 +235,17 @@ export default function ContactPreparation({
       </label>
       <div className="actions">
         <button disabled={busy || !confirmed} onClick={() => void save()}>
-          {busy ? "Wird gespeichert …" : "Änderungen speichern"}
+          {busy
+            ? "Wird gespeichert …"
+            : requireComplete
+              ? "Angaben für alle speichern und weiter →"
+              : "Änderungen speichern"}
         </button>
-        <button className="secondary" disabled={busy || dirty} onClick={onDone}>
+        <button
+          className="secondary"
+          disabled={busy || dirty || (requireComplete && open.length > 0)}
+          onClick={onDone}
+        >
           Weiter zur Mailprüfung →
         </button>
       </div>
@@ -263,17 +281,29 @@ export default function ContactPreparation({
           <p>Speichern erteilt keine Versandfreigabe.</p>
         </div>
       )}
-      <h3>Angaben pro Kontakt</h3>
+      {requireComplete && open.length > 0 && (
+        <p role="status">
+          {open.length} Kontakte benötigen noch Angaben. Die Auswahl bleibt
+          vollständig erhalten.
+        </p>
+      )}
+      {onExclude && open.length > 0 && open.length < proposals.length && (
+        <button
+          className="secondary"
+          disabled={busy || dirty}
+          onClick={() => onExclude(open.map((p) => p.id))}
+        >
+          Bewusst nur mit {proposals.length - open.length} vollständigen
+          Kontakten fortfahren
+        </button>
+      )}
+      <h3>Details und Ausnahmen (optional)</h3>
       <p>
         Ergänzungen aus vorhandenen Notizen sind bereits eingetragen.
         Kontaktänderungen erfordern eine erneute Mailfreigabe.
       </p>
       {proposals.map((p) => (
-        <details
-          className="preparation-contact"
-          key={p.id}
-          open={!p.ready || undefined}
-        >
+        <details className="preparation-contact" key={p.id}>
           <summary>
             {p.organisation} · {p.name} —{" "}
             {p.ready ? "vollständig" : "Angaben offen"}
