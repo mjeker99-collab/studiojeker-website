@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { JWT } from "google-auth-library";
 import { validateRows } from "./import";
 import { mapMasterSheet } from "./sheet-master";
@@ -35,8 +36,37 @@ export async function readSheetContacts(actorId?: string) {
       redirect: "error",
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok)
-      throw new PolicyError("Google Sheets ist nicht erreichbar oder nicht freigegeben.", 502);
+    if (!response.ok) {
+      // Drive export uses the existing read-only grant when the separate Sheets
+      // API is unavailable. Folder ancestry was verified above.
+      if (range !== "Kontakte!A1:O501")
+        throw new PolicyError(`Google Sheets meldet HTTP ${response.status}. Tabellenzugriff prüfen.`, 502);
+      const exported = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${id}/export?mimeType=application%2Fvnd.openxmlformats-officedocument.spreadsheetml.sheet`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) },
+      );
+      if (!exported.ok)
+        throw new PolicyError(`Masterliste konnte auch über Google Drive nicht gelesen werden (HTTP ${exported.status}).`, 502);
+      const bytes = await exported.arrayBuffer();
+      if (bytes.byteLength > 2 * 1024 * 1024)
+        throw new PolicyError("Masterliste zu gross.", 413);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(bytes);
+      const sheet = workbook.getWorksheet("Kontakte");
+      if (!sheet) throw new PolicyError("Tabellenblatt Kontakte fehlt.");
+      if (sheet.actualRowCount > 501)
+        throw new PolicyError("Masterliste enthält mehr als 500 Datenzeilen.");
+      const cells: string[][] = [];
+      for (let row = 1; row <= sheet.rowCount; row++) {
+        cells.push(Array.from({ length: 15 }, (_, col) => {
+          const cell = sheet.getRow(row).getCell(col + 1);
+          if (cell.type === ExcelJS.ValueType.Formula)
+            throw new PolicyError(`Masterliste Zeile ${row}: Formel statt Kontaktwert.`);
+          return cell.value instanceof Date ? cell.value.toISOString().slice(0, 10) : cell.text.trim();
+        }));
+      }
+      return validateRows(mapMasterSheet(cells));
+    }
     if (Number(response.headers.get("content-length") || 0) > 2 * 1024 * 1024)
       throw new PolicyError("Masterliste zu gross.", 413);
     const raw = await response.text();

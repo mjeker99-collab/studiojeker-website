@@ -773,21 +773,8 @@ export default function App() {
                       ))}
                   </select>
                 </label>
-                <button
-                  type="button"
-                  className="primary"
-                  disabled={busy}
-                  onClick={() =>
-                    action(async () => {
-                      const result = await post("contacts/sheets", {});
-                      return `Masterliste übernommen: ${result.imported ?? 0} neue Kontakte, ${result.duplicates ?? 0} bereits vorhanden. Keine Versandfreigabe erteilt.`;
-                    })
-                  }
-                >
-                  {busy ? "Import läuft …" : "Masterliste importieren"}
-                </button>
-                <label className="file-button">
-                  CSV / XLSX importieren
+                <label className="file-button" style={{ background: "var(--cyan)", color: "#101719" }}>
+                  Kontakte importieren
                   <input
                     type="file"
                     accept=".csv,.xlsx"
@@ -806,6 +793,20 @@ export default function App() {
                     }}
                   />
                 </label>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    action(async () => {
+                      const result = await post("contacts/sheets", {});
+                      return `Masterliste übernommen: ${result.imported ?? 0} neue Kontakte, ${result.duplicates ?? 0} bereits vorhanden. Keine Versandfreigabe erteilt.`;
+                    })
+                  }
+                >
+                  {busy ? "Import läuft …" : "Aus Google Drive importieren"}
+                </button>
+
               </div>
               <div className="table-note">
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
