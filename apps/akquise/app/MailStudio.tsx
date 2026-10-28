@@ -78,15 +78,7 @@ export default function MailStudio({
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
   const [skipped, setSkipped] = useState<string[]>([]);
-  const [preparing, setPreparing] = useState(
-    !drafts.some((d) =>
-      contacts.some(
-        (c) =>
-          c.id === d.contactId &&
-          !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status),
-      ),
-    ),
-  );
+  const [preparing, setPreparing] = useState(true);
   const [batchSize, setBatchSize] = useState(25);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const contactOptions = contacts.filter(
@@ -226,32 +218,10 @@ export default function MailStudio({
     setStep(1);
   }
   async function selectReadyContacts(amount: number) {
-    const ready: string[] = [];
-    let checked = 0;
-    for (
-      let offset = 0;
-      offset < contactOptions.length && ready.length < amount;
-      offset += 200
-    ) {
-      const response = await fetch("/api/contacts/preparation/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ids: contactOptions.slice(offset, offset + 200).map((c) => c.id),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.error || "Kontakte konnten nicht geprüft werden.");
-      const proposals: ContactPreparation[] = data.contacts;
-      checked += proposals.length;
-      ready.push(...proposals.filter((c) => c.ready).map((c) => c.id));
-    }
-    setContactIds(ready.slice(0, amount));
+    const ids = contactOptions.slice(0, amount).map((c) => c.id);
+    setContactIds(ids);
     setBatchSize(amount);
-    setSelectionNotice(
-      `${Math.min(ready.length, amount)} von ${amount} gewünschten Kontakten bereit und ausgewählt. ${checked} Kontakte automatisch geprüft. Kontakte mit fehlenden Angaben bleiben erhalten.`,
-    );
+    setSelectionNotice(`${ids.length} Kontakte ausgewählt${ids.length < amount ? ` – im aktuellen Suchergebnis sind nur ${ids.length} verfügbar` : ""}. Vorhandene Entwürfe werden bei der Vorbereitung wiederverwendet.`);
   }
   async function prepareBatch() {
     setSkipped([]);
@@ -423,14 +393,15 @@ export default function MailStudio({
             className="panel"
             aria-label="Kontakte im Mail-Studio vorbereiten"
           >
-            <h3>Kontakte vorbereiten</h3>
+            <h3>{contactIds.length} Kontakte ausgewählt</h3>
+            <p>{contactOptions.length} Kontakte verfügbar. Wähle die gewünschte Menge.</p>
             {candidates.length > 0 && (
               <button
                 className="secondary"
                 disabled={busy}
                 onClick={() => setPreparing(false)}
               >
-                Zu den {candidates.length} vorhandenen Mails
+                Gespeicherte Entwürfe öffnen ({candidates.length})
               </button>
             )}
             <label>
@@ -442,9 +413,7 @@ export default function MailStudio({
             </label>
             <p>
               Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
-              automatisch übernommen und persönliche Mails vorbereitet. Die
-              Mengenauswahl sucht automatisch Kontakte mit vollständigen Angaben
-              im aktuellen Suchergebnis.
+              automatisch übernommen und persönliche Mails vorbereitet. Die Auswahl gilt für das aktuelle Suchergebnis.
             </p>
             <div className="actions">
               {[25, 50, 100].map((amount) => (

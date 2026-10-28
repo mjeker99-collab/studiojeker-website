@@ -1,5 +1,6 @@
 // Safe, one-way mapping of the current Studiojeker Google master list.
 // Research notes and mail drafts are kept as text, never as approvals.
+import { z } from "zod";
 const masterHeaders = [
   "Person", "Funktion", "Organisation", "Ort", "E-Mail",
   "Prüfstatus", "Prüfdatum", "Priorität", "Quellen-URL",
@@ -24,6 +25,9 @@ export function mapMasterSheet(values: string[][]) {
     }
     const notes = [
       `Originalname: ${cells[0]}`,
+      ...(cells[4] && !z.string().email().safeParse(cells[4]).success
+        ? [`Originaladresse aus Masterliste (Format nicht unterstützt): ${cells[4]}`]
+        : []),
       ...[5, 6, 7, 9, 10, 11, 12, 13, 14]
         .filter((col) => cells[col])
         .map((col) => `${masterHeaders[col]}: ${cells[col]}`),
@@ -36,7 +40,7 @@ export function mapMasterSheet(values: string[][]) {
       firstName: person[0],
       lastName: person.slice(1).join(" "),
       position: cells[1],
-      email: cells[4],
+      email: z.string().email().safeParse(cells[4]).success ? cells[4] : "",
       sourceUrl: cells[8],
       notes,
       // Conservative categorisation. Never grants legal approval.
