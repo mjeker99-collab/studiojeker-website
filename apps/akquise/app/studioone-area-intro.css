@@ -1,0 +1,15 @@
+/* Reference: Mail Studio black introduction, applied consistently to all workspaces. */
+.studioone-area-intro{background:#0e1316;color:#fff;border-left:6px solid #00c2df;border-radius:17px;padding:clamp(28px,4vw,46px);margin:0 0 26px;min-height:200px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.studioone-area-intro .studioone-area-kicker{color:#a9cad8;font-size:12px;font-weight:750;letter-spacing:.16em;line-height:1.6;text-transform:uppercase;margin:0}
+.studioone-area-intro h2{font-size:clamp(26px,3vw,38px);line-height:1.3;letter-spacing:-.025em;font-weight:500;color:#fff;margin:0}
+.studioone-area-intro p{font-size:clamp(15px,1.3vw,17px);line-height:1.75;color:#d0d8dd;max-width:780px;margin:0}
+.shell .dashboard-welcome p:not(.eyebrow){color:#394a52!important}
+.shell .dashboard-welcome h2{color:#0c1519!important;line-height:1.2!important}
+.shell .studio-task-start{line-height:1.65}
+.shell .studio-task-start textarea{line-height:1.7!important;padding:17px!important}
+.shell .studio-task-start .studio-quick-tasks{row-gap:12px;column-gap:12px}
+.shell .studio-task-start .studio-quick-tasks button{line-height:1.45;padding:13px 18px}
+.shell .panel,.shell .hub-card,.shell .assistant-entry{line-height:1.6}
+.shell .panel p,.shell .hub-card p,.shell .assistant-entry p{line-height:1.65}
+.shell .hub-subnav{margin-bottom:22px}
+@media(max-width:650px){.studioone-area-intro{min-height:170px;padding:24px}.studioone-area-intro h2{font-size:27px}}
