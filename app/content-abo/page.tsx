@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { VisibilityArticle } from "@/components/visibility/VisibilityArticle";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { AboLandingPageLive } from "@/components/abo/AboLandingPageLive";
 import { aboLanguageAlternates } from "@/lib/content/abo-page";
@@ -24,6 +25,7 @@ export default async function GermanContentAboPage() {
   return (
     <SiteChrome locale="de">
       <AboLandingPageLive key="de" locale="de" content={content} />
+      <VisibilityArticle />
     </SiteChrome>
   );
 }
