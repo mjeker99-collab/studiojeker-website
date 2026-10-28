@@ -51,6 +51,17 @@ Preserve Studiojeker Pro functionality while keeping KMU workflows simple.
 
 ---
 
+## STUDIOONE PROJECT ROLES (28 OCTOBER 2026)
+
+- Martin leads StudioONE as project owner: he defines business objectives, priorities and acceptance criteria. He is not expected to program or perform routine technical administration.
+- Julie (ChatGPT) coordinates the StudioONE delivery workflow across GitHub, Render, Cursor, Exoscale and Mailchimp wherever the connected tools provide access.
+- Routine development tasks, including implementation, checks, pull requests, merges, deployments and verification, should be handled through authorised tools without repeatedly asking Martin to perform technical steps.
+- Respect repository protections, mandatory checks, existing permissions and publication safeguards. Never claim an inaccessible or incomplete action succeeded.
+- Customer-facing email sending, destructive actions, sensitive access changes and other externally consequential actions still follow their applicable approval requirements.
+- Each morning at 07:00 Europe/Zurich, review these roles together with the StudioONE UX guideline, operating agreement and fast-delivery principles.
+
+---
+
 # PURPOSE
 
 This repository contains the source code for the Studiojeker website.
