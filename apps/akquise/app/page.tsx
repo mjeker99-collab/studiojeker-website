@@ -1,6 +1,7 @@
 "use client";
 import { signedMessage } from "../lib/mail-signature";
 import "./studioone-workspaces.css";
+import "./studioone-area-intro.css";
 import "./studioone-design-system.css";
 import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
@@ -539,6 +540,35 @@ export default function App() {
             <div role="status" className="notice">
               {notice}
             </div>
+          )}
+          {tab !== "Übersicht" && !acquisitionTabs.includes(tab) && (
+            <section className="studioone-area-intro" aria-label={`Einführung ${tab}`}>
+              <p className="studioone-area-kicker">STUDIOONE · {tab.toLocaleUpperCase("de-CH")}</p>
+              <h2>{({
+                "Kunden": "Deine Kunden. Alles im Blick.",
+                "Strategie & Konzepte": "Was möchtest du heute entwickeln?",
+                "Kampagnen": "Was möchtest du heute bekannt machen?",
+                "Social Media": "Was möchtest du heute veröffentlichen?",
+                "Content-Studio": "Was möchtest du heute gestalten?",
+                "Bibliothek": "Deine Inhalte. Schnell gefunden.",
+                "Newsletter": "Was möchtest du heute mitteilen?",
+                "Website": "Was möchtest du an deiner Website ändern?",
+                "Kalender": "Was steht als Nächstes an?",
+                "Einstellungen": "StudioONE einfach verwalten.",
+              } as Record<string,string>)[tab] || "Was möchtest du heute erledigen?"}</h2>
+              <p>{({
+                "Kunden": "Kundeninformationen übersichtlich verwalten und gemeinsam weiterbearbeiten.",
+                "Strategie & Konzepte": "Beschreibe deine Idee. StudioONE unterstützt dich bei Konzept und Umsetzung.",
+                "Kampagnen": "Von der Idee zur Kampagne – einfach planen, erstellen und freigeben.",
+                "Social Media": "Beiträge für deine Kanäle vorbereiten und übersichtlich verwalten.",
+                "Content-Studio": "Bilder, Videos und Inhalte gestalten – mit Unterstützung durch KI.",
+                "Bibliothek": "Bilder, Dokumente und Vorlagen an einem Ort.",
+                "Newsletter": "Newsletter erstellen, bearbeiten und für den Versand vorbereiten.",
+                "Website": "Inhalte und Projekte deiner Website an einem Ort bearbeiten.",
+                "Kalender": "Deine geplanten Aktivitäten und Termine auf einen Blick.",
+                "Einstellungen": "Die wichtigsten Einstellungen übersichtlich an einem Ort.",
+              } as Record<string,string>)[tab] || "Starte direkt mit deiner Aufgabe."}</p>
+            </section>
           )}
           {acquisitionTabs.includes(tab) && (
             <nav className="hub-subnav" aria-label="Akquise-Navigation">
