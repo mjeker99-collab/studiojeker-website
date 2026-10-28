@@ -160,16 +160,33 @@ export default function App() {
     request: number;
   }>();
   const [projectRevision, setProjectRevision] = useState(0);
-  const [dashboardTask, setDashboardTask] = useState<{ prompt: string; section: "Kampagnen" | "Social Media" | "Website"; request: number } | null>(null);
+  const [dashboardTask, setDashboardTask] = useState<{
+    prompt: string;
+    section: "Kampagnen" | "Social Media" | "Website";
+    request: number;
+  } | null>(null);
   function startDashboardTask(prompt: string, section: string) {
-    const destination: TaskDestination = section === "auto" ? routeMarketingTask(prompt) : section as TaskDestination;
-    const assisted = destination === "Kampagnen" || destination === "Social Media" || destination === "Website";
+    const destination: TaskDestination =
+      section === "auto"
+        ? routeMarketingTask(prompt)
+        : (section as TaskDestination);
+    const assisted =
+      destination === "Kampagnen" ||
+      destination === "Social Media" ||
+      destination === "Website";
     navigate({ section: destination });
     if (assisted) {
-      setDashboardTask(previous => ({ prompt, section: destination, request: (previous?.request ?? 0) + 1 }));
+      setDashboardTask((previous) => ({
+        prompt,
+        section: destination,
+        request: (previous?.request ?? 0) + 1,
+      }));
     } else {
       setDashboardTask(null);
-      setNotice("Dein Arbeitsbereich ist geöffnet. Starte hier mit deiner Aufgabe: " + prompt);
+      setNotice(
+        "Dein Arbeitsbereich ist geöffnet. Starte hier mit deiner Aufgabe: " +
+          prompt,
+      );
     }
   }
   function navigate(target: DashboardTarget) {
@@ -516,6 +533,22 @@ export default function App() {
               <h1>{tab}</h1>
             </div>
             <div className="heading-actions">
+              {tab === "Mail-Studio" && (
+                <button
+                  className="ai-button"
+                  onClick={() => {
+                    const button = document.querySelector<HTMLButtonElement>(
+                      '[aria-label="GPT für Mail-Studio"] .ai-button',
+                    );
+                    button?.click();
+                    button
+                      ?.closest("section")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  ✦ GPT beauftragen
+                </button>
+              )}
               <span className="muted">
                 {new Date().toLocaleDateString("de-CH", {
                   day: "2-digit",
@@ -565,7 +598,10 @@ export default function App() {
               </details>
             </nav>
           )}
-          {(tab === "Kampagnen" || tab === "Social Media" || tab === "Website") && (
+          {(tab === "Kampagnen" ||
+            tab === "Social Media" ||
+            tab === "Website" ||
+            tab === "Mail-Studio") && (
             <AssistantEntry
               key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
               section={tab}
@@ -575,7 +611,9 @@ export default function App() {
               campaignRequest={
                 tab === "Kampagnen" ? assistantCampaign : undefined
               }
-              initialTask={dashboardTask?.section === tab ? dashboardTask : undefined}
+              initialTask={
+                dashboardTask?.section === tab ? dashboardTask : undefined
+              }
             />
           )}
           {[
@@ -642,7 +680,7 @@ export default function App() {
           )}
           {tab === "Übersicht" && (
             <Dashboard
-            onStartTask={startDashboardTask}
+              onStartTask={startDashboardTask}
               name={data.user.name}
               contacts={data.contacts.length}
               drafts={data.drafts.filter((d) => latest(d) === "DRAFT").length}

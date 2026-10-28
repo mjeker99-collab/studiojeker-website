@@ -6,6 +6,11 @@ import type { studioState } from "@/lib/studio/service";
 
 type State = Awaited<ReturnType<typeof studioState>>;
 const sections = {
+  "Mail-Studio": {
+    description: "Persönliche Mailtexte und Betreffzeilen mit GPT vorbereiten.",
+    message:
+      "Ich möchte persönliche Akquise-Mails vorbereiten. Frage zuerst nach Zielgruppe und Angebot. Erfinde keine Kontaktdaten oder Recherchebelege. Erstelle Textvorschläge; versende keine Mails.",
+  },
   Kampagnen: {
     description:
       "Ideen entwickeln, Zielgruppen schärfen und deine nächste Kampagne planen.",
@@ -103,10 +108,17 @@ export default function AssistantEntry({
       setChatKey((key) => key + 1);
       setProjectId("");
       setCampaignId("");
-      setChatRequest({ seriesId: "", message: initialTask.prompt, campaignId: "", customerId: "" });
+      setChatRequest({
+        seriesId: "",
+        message: initialTask.prompt,
+        campaignId: "",
+        customerId: "",
+      });
       setOpen(true);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [initialTask]);
   useEffect(() => {
     if (!campaignRequest) return;

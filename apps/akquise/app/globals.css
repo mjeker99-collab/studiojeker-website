@@ -1834,3 +1834,18 @@ button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); 
   .mail-studio .actions button { flex: 1 1 auto; }
   .mail-studio > .panel > button { width: 100%; margin-right: 0; }
 }
+
+/* Compact mail workspace: navigation and selection share one readable card. */
+.mail-studio > .mail-studio-workspace { padding: 24px; background: #fff; color: #172126; }
+.mail-studio-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.mail-studio-toolbar h2 { margin:0 auto 0 0; font-size:24px; color:#172126; }
+.mail-studio-toolbar .actions { width:100%; margin:4px 0 12px; gap:8px; }
+.mail-studio-workspace > section.panel { border:0; box-shadow:none; padding:16px 0 0; margin:0; border-radius:0; }
+.mail-studio-workspace h3 { font-size:20px; margin:0 0 8px; }
+.mail-studio-workspace .actions { display:flex; flex-wrap:wrap; gap:10px; }
+.mail-studio-workspace label:not(.check) { display:grid; gap:8px; margin:16px 0; }
+.mail-studio-workspace details { margin-top:20px; }
+.assistant-entry[aria-label="GPT für Mail-Studio"]:not(:has(.studio-chat)) { padding:12px 20px; }
+.assistant-entry[aria-label="GPT für Mail-Studio"] .assistant-entry-intro > div { display:none; }
+@media(max-width:640px) { .mail-studio > .mail-studio-workspace { padding:18px; } .mail-studio-toolbar h2 { font-size:21px; } }
+.assistant-entry[aria-label="GPT für Mail-Studio"]:has(.ai-button[aria-expanded="false"]) { display:none; }
