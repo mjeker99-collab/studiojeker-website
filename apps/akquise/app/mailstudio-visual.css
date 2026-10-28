@@ -1,0 +1,17 @@
+/* Mail Studio: presentation only; no workflow or send logic changes. */
+.mail-studio{--mail-cyan:#00c3e0;line-height:1.65}
+.mail-studio .mail-studio-workspace{background:#fff;border:1px solid #dce5e9;border-radius:18px;padding:clamp(20px,3vw,36px);box-shadow:0 4px 20px #11242d0b}
+.mail-studio .mail-studio-toolbar{background:#101518;color:#fff;border-left:6px solid var(--mail-cyan);border-radius:16px;padding:clamp(24px,3vw,40px);display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-bottom:28px}
+.mail-studio .mail-studio-toolbar h2{font-size:clamp(26px,3vw,38px);font-weight:500;line-height:1.3;letter-spacing:-.025em;color:#fff;margin:0;flex:1 1 280px}
+.mail-studio .mail-studio-toolbar .actions{display:flex;gap:12px;flex-wrap:wrap;width:100%;margin-top:8px}
+.mail-studio .mail-studio-toolbar button.secondary{background:#1e272c;color:#f3f8fa;border:1px solid #52616a;border-radius:10px;line-height:1.45;min-height:46px}
+.mail-studio .mail-studio-toolbar button.secondary[aria-pressed="true"]{background:var(--mail-cyan);border-color:var(--mail-cyan);color:#071317}
+.mail-studio .mail-studio-toolbar button.secondary:disabled{opacity:.5}
+.mail-studio .panel:not(.mail-studio-workspace){background:#fff;border:1px solid #e0e7ea;border-radius:15px;padding:clamp(18px,2.4vw,28px);margin-block:16px}
+.mail-studio .panel p,.mail-studio .panel-note,.mail-studio label{line-height:1.7}
+.mail-studio input:not([type="checkbox"]),.mail-studio textarea,.mail-studio select{border-radius:10px;min-height:46px}
+.mail-studio .actions{gap:12px;flex-wrap:wrap}
+.mail-studio button{line-height:1.4}
+.mail-studio .mail-review-body{line-height:1.75;white-space:pre-wrap}
+.mail-studio .mail-review-message{border-radius:12px}
+@media(max-width:650px){.mail-studio .mail-studio-toolbar{padding:24px}.mail-studio .mail-studio-toolbar .actions button{flex:1 1 130px}}
