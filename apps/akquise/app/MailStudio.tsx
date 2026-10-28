@@ -204,6 +204,55 @@ export default function MailStudio({
       setBusy(false);
     }
   }
+  const [selectionNotice, setSelectionNotice] = useState("");
+  function resetSelection() {
+    setSelected([]);
+    setContactIds([]);
+    setRows([]);
+    setIncluded([]);
+    setRead(false);
+    setDispatch(false);
+    setLegal(false);
+    setProcurement(false);
+    setRationale("");
+    setResults([]);
+    setSkipped([]);
+    setError("");
+    setSearch("");
+    setSendProgress("");
+    setSelectionNotice("");
+    setBatchSize(25);
+    setPreparing(true);
+    setStep(1);
+  }
+  async function selectReadyContacts(amount: number) {
+    const ready: string[] = [];
+    let checked = 0;
+    for (
+      let offset = 0;
+      offset < contactOptions.length && ready.length < amount;
+      offset += 200
+    ) {
+      const response = await fetch("/api/contacts/preparation/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: contactOptions.slice(offset, offset + 200).map((c) => c.id),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Kontakte konnten nicht geprüft werden.");
+      const proposals: ContactPreparation[] = data.contacts;
+      checked += proposals.length;
+      ready.push(...proposals.filter((c) => c.ready).map((c) => c.id));
+    }
+    setContactIds(ready.slice(0, amount));
+    setBatchSize(amount);
+    setSelectionNotice(
+      `${Math.min(ready.length, amount)} von ${amount} gewünschten Kontakten bereit und ausgewählt. ${checked} Kontakte automatisch geprüft. Kontakte mit fehlenden Angaben bleiben erhalten.`,
+    );
+  }
   async function prepareBatch() {
     setSkipped([]);
     async function preparation(action: string, body: unknown) {
@@ -317,6 +366,13 @@ export default function MailStudio({
         <p>
           1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben
         </p>
+        <button className="secondary" disabled={busy} onClick={resetSelection}>
+          Auswahl zurücksetzen
+        </button>
+        <p className="muted">
+          Zurücksetzen leert nur die aktuelle Auswahl. Gespeicherte Kontakte,
+          Entwürfe und geplante Sendungen bleiben erhalten.
+        </p>
         <div className="actions" aria-label="Arbeitsschritte">
           <button
             className="secondary"
@@ -386,8 +442,9 @@ export default function MailStudio({
           </label>
           <p>
             Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
-            automatisch übernommen und persönliche Mails vorbereitet.
-            Unvollständige Kontakte werden zurückgestellt.
+            automatisch übernommen und persönliche Mails vorbereitet. Die
+            Mengenauswahl sucht automatisch Kontakte mit vollständigen Angaben
+            im aktuellen Suchergebnis.
           </p>
           <div className="actions">
             {[25, 50, 100].map((amount) => (
@@ -396,27 +453,22 @@ export default function MailStudio({
                 type="button"
                 className="secondary"
                 disabled={busy || !contactOptions.length}
-                aria-pressed={
-                  contactIds.length === Math.min(amount, contactOptions.length)
-                }
-                onClick={() =>
-                  setContactIds(
-                    contactOptions.slice(0, amount).map((c) => c.id),
-                  )
-                }
+                aria-pressed={batchSize === amount && contactIds.length > 0}
+                onClick={() => void run(() => selectReadyContacts(amount))}
               >
                 {amount} Kontakte auswählen
               </button>
             ))}
             <button
               disabled={busy || !contactIds.length || contactIds.length > 200}
-              onClick={() => void run(prepareBatch)}
+              onClick={() => void run(() => prepareBatch())}
             >
               {busy
                 ? "Mails werden vorbereitet …"
                 : `${contactIds.length} persönliche Mails vorbereiten →`}
             </button>
           </div>
+          {selectionNotice && <p role="status">{selectionNotice}</p>}
           <details>
             <summary>
               Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
