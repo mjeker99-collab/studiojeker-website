@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
+import ContactPreparationEditor from "./ContactPreparation";
 import type { ContactPreparation } from "../lib/contact-preparation";
 
 type Draft = {
@@ -77,6 +78,9 @@ export default function MailStudio({
   const [sendProgress, setSendProgress] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
+  const [batchProposals, setBatchProposals] = useState<ContactPreparation[]>(
+    [],
+  );
   const [skipped, setSkipped] = useState<string[]>([]);
   const [preparing, setPreparing] = useState(true);
   const [batchSize, setBatchSize] = useState(25);
@@ -198,6 +202,7 @@ export default function MailStudio({
   }
   const [selectionNotice, setSelectionNotice] = useState("");
   function resetSelection() {
+    setBatchProposals([]);
     setSelected([]);
     setContactIds([]);
     setRows([]);
@@ -218,47 +223,49 @@ export default function MailStudio({
     setStep(1);
   }
   async function selectReadyContacts(amount: number) {
+    setBatchProposals([]);
+    setRows([]);
+    setIncluded([]);
     const ids = contactOptions.slice(0, amount).map((c) => c.id);
     setContactIds(ids);
     setBatchSize(amount);
-    setSelectionNotice(`${ids.length} Kontakte ausgewählt${ids.length < amount ? ` – im aktuellen Suchergebnis sind nur ${ids.length} verfügbar` : ""}. Vorhandene Entwürfe werden bei der Vorbereitung wiederverwendet.`);
+    setSelectionNotice(
+      `${ids.length} Kontakte ausgewählt${ids.length < amount ? ` – im aktuellen Suchergebnis sind nur ${ids.length} verfügbar` : ""}. Vorhandene Entwürfe werden bei der Vorbereitung wiederverwendet.`,
+    );
+  }
+  async function preparation(action: string, body: unknown) {
+    const response = await fetch(`/api/contacts/preparation/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(
+        data.error || "Vorbereitung fehlgeschlagen. Bitte erneut versuchen.",
+      );
+    return data;
   }
   async function prepareBatch() {
     setSkipped([]);
-    async function preparation(action: string, body: unknown) {
-      const response = await fetch(`/api/contacts/preparation/${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(
-          data.error || "Vorbereitung fehlgeschlagen. Bitte erneut versuchen.",
-        );
-      return data;
-    }
     const previewData = await preparation("preview", { ids: contactIds });
     const proposals: ContactPreparation[] = previewData.contacts;
-    const ready = proposals.filter((r) => r.ready);
-    const deferred = proposals
-      .filter((r) => !r.ready)
-      .map((r) => `${r.organisation}: ${r.issues.join(" · ")}`);
-    setSkipped(deferred);
-    if (!ready.length) {
-      throw new Error(
-        "Für diese Auswahl fehlen noch verwendbare Rechercheangaben. Es wurden keine Mails versandt. Du kannst eine andere Gruppe auswählen; die offenen Kontakte bleiben zurückgestellt.",
-      );
+    if (proposals.some((p) => !p.ready)) {
+      setBatchProposals(proposals);
+      setRows([]);
+      setIncluded([]);
+      setStep(2);
+      return;
     }
+    setBatchProposals([]);
     const prepared = await preparation("prepare", {
       confirmed: true,
-      contacts: ready.map((r) => ({ id: r.id, revision: r.revision })),
+      contacts: proposals.map((r) => ({ id: r.id, revision: r.revision })),
     });
     const successful = prepared.results.filter(
       (r: Result & { draftId?: string }) => r.ok && r.draftId,
     );
     setSkipped([
-      ...deferred,
       ...prepared.results
         .filter((r: Result) => !r.ok)
         .map((r: Result) => r.message),
@@ -268,6 +275,16 @@ export default function MailStudio({
       throw new Error(
         "Keine Nachricht konnte vorbereitet werden. Die übrigen Kontakte bleiben unverändert.",
       );
+    if (successful.length !== proposals.length) {
+      const fresh = await preparation("preview", { ids: contactIds });
+      setBatchProposals(fresh.contacts);
+      setRows([]);
+      setIncluded([]);
+      setStep(2);
+      throw new Error(
+        "Nicht alle Mails konnten vorbereitet werden. Die gesamte Auswahl bleibt erhalten. Bitte erneut versuchen; vorhandene Entwürfe werden wiederverwendet.",
+      );
+    }
     const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
     const data = await api("preview", { ids });
     setSelected(ids);
@@ -354,7 +371,7 @@ export default function MailStudio({
             </button>
             <button
               className="secondary"
-              disabled={busy || !rows.length}
+              disabled={busy || (!rows.length && !batchProposals.length)}
               aria-pressed={step === 2}
               onClick={() => setStep(2)}
             >
@@ -367,8 +384,10 @@ export default function MailStudio({
               onClick={() =>
                 void run(async () => {
                   if (!rows.length) {
-                    if (contactIds.length) await prepareBatch();
-                    else {
+                    if (contactIds.length) {
+                      await prepareBatch();
+                      return;
+                    } else {
                       const ids = selected.length
                         ? selected
                         : visible.slice(0, batchSize).map((d) => d.id);
@@ -394,7 +413,10 @@ export default function MailStudio({
             aria-label="Kontakte im Mail-Studio vorbereiten"
           >
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
-            <p>{contactOptions.length} Kontakte verfügbar. Wähle die gewünschte Menge.</p>
+            <p>
+              {contactOptions.length} Kontakte verfügbar. Wähle die gewünschte
+              Menge.
+            </p>
             {candidates.length > 0 && (
               <button
                 className="secondary"
@@ -413,7 +435,8 @@ export default function MailStudio({
             </label>
             <p>
               Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
-              automatisch übernommen und persönliche Mails vorbereitet. Die Auswahl gilt für das aktuelle Suchergebnis.
+              automatisch übernommen und persönliche Mails vorbereitet. Die
+              Auswahl gilt für das aktuelle Suchergebnis.
             </p>
             <div className="actions">
               {[25, 50, 100].map((amount) => (
@@ -558,6 +581,30 @@ export default function MailStudio({
           </section>
         )}
       </div>
+      {step === 2 && batchProposals.length > 0 && (
+        <div className="panel" style={{ padding: 24 }}>
+          <p>
+            <strong>
+              {batchProposals.length} Kontakte bleiben ausgewählt.
+            </strong>{" "}
+          </p>
+          <ContactPreparationEditor
+            key={batchProposals.map((p) => `${p.id}:${p.revision}`).join("|")}
+            initialProposals={batchProposals}
+            refresh={refresh}
+            requireComplete
+            onDone={() => void run(() => prepareBatch())}
+            onExclude={(ids) =>
+              void run(async () => {
+                const remaining = contactIds.filter((id) => !ids.includes(id));
+                const fresh = await preparation("preview", { ids: remaining });
+                setContactIds(remaining);
+                setBatchProposals(fresh.contacts);
+              })
+            }
+          />
+        </div>
+      )}
       {skipped.length > 0 && (
         <details className="panel">
           <summary>
@@ -571,7 +618,8 @@ export default function MailStudio({
           </ul>
         </details>
       )}
-      {(step === 2 || (step === 3 && rows.length > 0)) && (
+      {((step === 2 && batchProposals.length === 0) ||
+        (step === 3 && rows.length > 0)) && (
         <section className="panel" aria-label="Globale Mailprüfung">
           <h3>
             {step === 3
