@@ -1,5 +1,6 @@
 "use client";
 import { signedMessage } from "../lib/mail-signature";
+import "./studioone-workspaces.css";
 import "./studioone-design-system.css";
 import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
