@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import "./mailstudio-visual.css";
 import { signedMessage } from "../lib/mail-signature";
 import MailSchedule from "./MailSchedule";
 import ContactPreparationEditor from "./ContactPreparation";
