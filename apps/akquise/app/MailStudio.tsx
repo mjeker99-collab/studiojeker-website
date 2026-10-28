@@ -360,232 +360,235 @@ export default function MailStudio({
   }, [initialDraftIds]);
   return (
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
-      <div className="panel mail-studio-intro">
-        <p className="eyebrow">DEINE KONTAKTE. PERSÖNLICH ERREICHEN.</p>
-        <h2>Wen möchtest du heute erreichen?</h2>
-        <p>
-          1. Kontakte auswählen · 2. Nachrichten prüfen · 3. Versand freigeben
-        </p>
-        <button className="secondary" disabled={busy} onClick={resetSelection}>
-          Auswahl zurücksetzen
-        </button>
-        <p className="muted">
-          Zurücksetzen leert nur die aktuelle Auswahl. Gespeicherte Kontakte,
-          Entwürfe und geplante Sendungen bleiben erhalten.
-        </p>
-        <div className="actions" aria-label="Arbeitsschritte">
+      <div className="panel mail-studio-workspace">
+        <div className="mail-studio-toolbar">
+          <h2>Persönliche Mails senden</h2>
           <button
             className="secondary"
             disabled={busy}
-            aria-pressed={step === 1}
-            onClick={() => {
-              setStep(1);
-              setRead(false);
-            }}
+            onClick={resetSelection}
           >
-            1 · Auswahl
+            Auswahl zurücksetzen
           </button>
-          <button
-            className="secondary"
-            disabled={busy || !rows.length}
-            aria-pressed={step === 2}
-            onClick={() => setStep(2)}
-          >
-            2 · Mails prüfen
-          </button>
-          <button
-            className="secondary"
-            disabled={busy}
-            aria-pressed={step === 3}
-            onClick={() =>
-              void run(async () => {
-                if (!rows.length) {
-                  if (contactIds.length) await prepareBatch();
-                  else {
-                    const ids = selected.length
-                      ? selected
-                      : visible.slice(0, batchSize).map((d) => d.id);
-                    if (ids.length) await preview(ids);
-                  }
-                }
-                setStep(3);
-              })
-            }
-          >
-            3 · Versand
-          </button>
-        </div>
-        {error && (
-          <p role="alert" className="error">
-            {error}
-          </p>
-        )}
-      </div>
-      {step === 1 && preparing && (
-        <section
-          className="panel"
-          aria-label="Kontakte im Mail-Studio vorbereiten"
-        >
-          <h3>Kontakte vorbereiten</h3>
-          {candidates.length > 0 && (
+          <div className="actions" aria-label="Arbeitsschritte">
             <button
               className="secondary"
               disabled={busy}
-              onClick={() => setPreparing(false)}
+              aria-pressed={step === 1}
+              onClick={() => {
+                setStep(1);
+                setRead(false);
+              }}
             >
-              Zu den {candidates.length} vorhandenen Mails
+              1 · Auswahl
             </button>
-          )}
-          <label>
-            Kontakte suchen
-            <input value={search} onChange={(e) => setSearch(e.target.value)} />
-          </label>
-          <p>
-            Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
-            automatisch übernommen und persönliche Mails vorbereitet. Die
-            Mengenauswahl sucht automatisch Kontakte mit vollständigen Angaben
-            im aktuellen Suchergebnis.
-          </p>
-          <div className="actions">
-            {[25, 50, 100].map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                className="secondary"
-                disabled={busy || !contactOptions.length}
-                aria-pressed={batchSize === amount && contactIds.length > 0}
-                onClick={() => void run(() => selectReadyContacts(amount))}
-              >
-                {amount} Kontakte auswählen
-              </button>
-            ))}
             <button
-              disabled={busy || !contactIds.length || contactIds.length > 200}
-              onClick={() => void run(() => prepareBatch())}
+              className="secondary"
+              disabled={busy || !rows.length}
+              aria-pressed={step === 2}
+              onClick={() => setStep(2)}
+            >
+              2 · Mails prüfen
+            </button>
+            <button
+              className="secondary"
+              disabled={busy}
+              aria-pressed={step === 3}
+              onClick={() =>
+                void run(async () => {
+                  if (!rows.length) {
+                    if (contactIds.length) await prepareBatch();
+                    else {
+                      const ids = selected.length
+                        ? selected
+                        : visible.slice(0, batchSize).map((d) => d.id);
+                      if (ids.length) await preview(ids);
+                    }
+                  }
+                  setStep(3);
+                })
+              }
+            >
+              3 · Versand
+            </button>
+          </div>
+          {error && (
+            <p role="alert" className="error">
+              {error}
+            </p>
+          )}
+        </div>
+        {step === 1 && preparing && (
+          <section
+            className="panel"
+            aria-label="Kontakte im Mail-Studio vorbereiten"
+          >
+            <h3>Kontakte vorbereiten</h3>
+            {candidates.length > 0 && (
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => setPreparing(false)}
+              >
+                Zu den {candidates.length} vorhandenen Mails
+              </button>
+            )}
+            <label>
+              Kontakte suchen
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+            <p>
+              Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
+              automatisch übernommen und persönliche Mails vorbereitet. Die
+              Mengenauswahl sucht automatisch Kontakte mit vollständigen Angaben
+              im aktuellen Suchergebnis.
+            </p>
+            <div className="actions">
+              {[25, 50, 100].map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  className="secondary"
+                  disabled={busy || !contactOptions.length}
+                  aria-pressed={batchSize === amount && contactIds.length > 0}
+                  onClick={() => void run(() => selectReadyContacts(amount))}
+                >
+                  {amount} Kontakte auswählen
+                </button>
+              ))}
+              <button
+                disabled={busy || !contactIds.length || contactIds.length > 200}
+                onClick={() => void run(() => prepareBatch())}
+              >
+                {busy
+                  ? "Mails werden vorbereitet …"
+                  : `${contactIds.length} persönliche Mails vorbereiten →`}
+              </button>
+            </div>
+            {selectionNotice && <p role="status">{selectionNotice}</p>}
+            <details>
+              <summary>
+                Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
+              </summary>
+              {contactOptions.map((c) => (
+                <label className="check mail-selection" key={c.id}>
+                  <input
+                    type="checkbox"
+                    disabled={busy}
+                    checked={contactIds.includes(c.id)}
+                    onChange={(e) =>
+                      setContactIds((old) =>
+                        e.target.checked
+                          ? [...old, c.id]
+                          : old.filter((id) => id !== c.id),
+                      )
+                    }
+                  />
+                  <span>
+                    {c.organisation} · {c.firstName} {c.lastName} · {c.email}
+                  </span>
+                </label>
+              ))}
+            </details>
+          </section>
+        )}
+        {step === 1 && !preparing && (
+          <section className="panel" aria-label="Mailauswahl">
+            <h3>{visible.length} persönliche Mails vorhanden</h3>
+            <p>
+              Diese Entwürfe sind bereits vorbereitet. Öffne die gewünschte
+              Menge direkt zur gemeinsamen Freigabe.
+            </p>
+            <label>
+              Mails suchen
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Organisation, Empfänger oder Betreff"
+              />
+            </label>
+            <div className="actions">
+              {[25, 50, 100].map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  className="secondary"
+                  aria-pressed={batchSize === amount}
+                  disabled={busy}
+                  onClick={() => setBatchSize(amount)}
+                >
+                  {amount} Mails
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={busy || !visible.length}
+              onClick={() =>
+                void run(() =>
+                  preview(visible.slice(0, batchSize).map((d) => d.id)),
+                )
+              }
             >
               {busy
-                ? "Mails werden vorbereitet …"
-                : `${contactIds.length} persönliche Mails vorbereiten →`}
+                ? "Mails werden geladen …"
+                : `${Math.min(batchSize, visible.length)} Mails gemeinsam freigeben →`}
             </button>
-          </div>
-          {selectionNotice && <p role="status">{selectionNotice}</p>}
-          <details>
-            <summary>
-              Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
-            </summary>
-            {contactOptions.map((c) => (
-              <label className="check mail-selection" key={c.id}>
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={contactIds.includes(c.id)}
-                  onChange={(e) =>
-                    setContactIds((old) =>
-                      e.target.checked
-                        ? [...old, c.id]
-                        : old.filter((id) => id !== c.id),
-                    )
-                  }
-                />
-                <span>
-                  {c.organisation} · {c.firstName} {c.lastName} · {c.email}
-                </span>
-              </label>
-            ))}
-          </details>
-        </section>
-      )}
-      {step === 1 && !preparing && (
-        <section className="panel" aria-label="Mailauswahl">
-          <h3>{visible.length} persönliche Mails vorhanden</h3>
-          <p>
-            Diese Entwürfe sind bereits vorbereitet. Öffne die gewünschte Menge
-            direkt zur gemeinsamen Freigabe.
-          </p>
-          <label>
-            Mails suchen
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Organisation, Empfänger oder Betreff"
-            />
-          </label>
-          <div className="actions">
-            {[25, 50, 100].map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                className="secondary"
-                aria-pressed={batchSize === amount}
-                disabled={busy}
-                onClick={() => setBatchSize(amount)}
-              >
-                {amount} Mails
-              </button>
-            ))}
-          </div>
-          <button
-            disabled={busy || !visible.length}
-            onClick={() =>
-              void run(() =>
-                preview(visible.slice(0, batchSize).map((d) => d.id)),
-              )
-            }
-          >
-            {busy
-              ? "Mails werden geladen …"
-              : `${Math.min(batchSize, visible.length)} Mails gemeinsam freigeben →`}
-          </button>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => {
-              setPreparing(true);
-              setSearch("");
-            }}
-          >
-            Weitere Kontakte auswählen
-          </button>
-          <details>
-            <summary>Einzelne Entwürfe auswählen (optional)</summary>
-            {visible.map((d) => (
-              <label className="check mail-selection" key={d.id}>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(d.id)}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setSelected((old) =>
-                      e.target.checked
-                        ? [...old, d.id]
-                        : old.filter((id) => id !== d.id),
-                    )
-                  }
-                />
-                <span>
-                  {contacts.find((c) => c.id === d.contactId)?.organisation} ·{" "}
-                  {d.versions[0].recipient}
-                  <br />
-                  {d.versions[0].subject} ·{" "}
-                  {d.approvals.find((a) => a.version === d.version)?.status ===
-                  "APPROVED"
-                    ? "Freigegeben"
-                    : "Zur Prüfung"}
-                </span>
-              </label>
-            ))}
-            {!visible.length && (
-              <p>Noch keine passenden Entwürfe. Zuerst Kontakte vorbereiten.</p>
-            )}
             <button
-              disabled={busy || !selected.length || selected.length > 200}
-              onClick={() => void run(() => preview())}
+              className="secondary"
+              disabled={busy}
+              onClick={() => {
+                setPreparing(true);
+                setSearch("");
+              }}
             >
-              {selected.length} Mails gemeinsam prüfen
+              Weitere Kontakte auswählen
             </button>
-          </details>
-        </section>
-      )}
+            <details>
+              <summary>Einzelne Entwürfe auswählen (optional)</summary>
+              {visible.map((d) => (
+                <label className="check mail-selection" key={d.id}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(d.id)}
+                    disabled={busy}
+                    onChange={(e) =>
+                      setSelected((old) =>
+                        e.target.checked
+                          ? [...old, d.id]
+                          : old.filter((id) => id !== d.id),
+                      )
+                    }
+                  />
+                  <span>
+                    {contacts.find((c) => c.id === d.contactId)?.organisation} ·{" "}
+                    {d.versions[0].recipient}
+                    <br />
+                    {d.versions[0].subject} ·{" "}
+                    {d.approvals.find((a) => a.version === d.version)
+                      ?.status === "APPROVED"
+                      ? "Freigegeben"
+                      : "Zur Prüfung"}
+                  </span>
+                </label>
+              ))}
+              {!visible.length && (
+                <p>
+                  Noch keine passenden Entwürfe. Zuerst Kontakte vorbereiten.
+                </p>
+              )}
+              <button
+                disabled={busy || !selected.length || selected.length > 200}
+                onClick={() => void run(() => preview())}
+              >
+                {selected.length} Mails gemeinsam prüfen
+              </button>
+            </details>
+          </section>
+        )}
+      </div>
       {skipped.length > 0 && (
         <details className="panel">
           <summary>
