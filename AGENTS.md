@@ -62,6 +62,19 @@ Preserve Studiojeker Pro functionality while keeping KMU workflows simple.
 
 ---
 
+## WICHTIG: STUDIOONE REPOSITORY UND DEPLOY-BRANCH (28.10.2026)
+
+StudioONE und die Studiojeker-Website verwenden dasselbe GitHub-Repository: `mjeker99-collab/studiojeker-website`.
+
+- **StudioONE (Render):** Service `studiojeker-akquise`, URL `https://studiojeker-akquise.onrender.com`, laut Render-Screenshot vom 28.10.2026 mit Branch `feat/akquise-production-readiness` verbunden.
+- **Website:** Der Repository-Default-Branch ist `main`. **Nicht annehmen**, dass `main` die aktuell auf Render laufende StudioONE-Anwendung enthält.
+- Vor jeder StudioONE-Codeänderung **zuerst** den aktuell konfigurierten Render-Deploy-Branch prüfen, dann **diesen Branch** und dessen `AGENTS.md` sowie relevante Projektdateien lesen. Die Branch-Zuordnung kann sich ändern.
+- StudioONE-Änderungen niemals nur auf `main` implementieren und als live bezeichnen. PR-Basis, Merge-Ziel und Render-Auto-Deploy-Zuordnung abgleichen; nach Deploy die laufende Revision prüfen.
+- Website- und StudioONE-Änderungen trotz gemeinsamem Repository getrennt behandeln; keine versehentlichen Deployments.
+- Betriebs- und UX-Regeln: `docs/STUDIOONE_OPERATING_AGREEMENT.md` und `docs/STUDIOONE_UX_GUIDELINES.md` (auf dem jeweiligen Branch prüfen).
+
+---
+
 # PURPOSE
 
 This repository contains the source code for the Studiojeker website.
