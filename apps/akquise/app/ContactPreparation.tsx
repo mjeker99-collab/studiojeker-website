@@ -182,6 +182,15 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
+  // Show the real reasons for an incomplete selection. A verified email address
+  // alone does not satisfy source, date, hook and human review requirements.
+  const issueCounts = Array.from(
+    open.reduce((counts, proposal) => {
+      for (const issue of new Set(proposal.issues))
+        counts.set(issue, (counts.get(issue) ?? 0) + 1);
+      return counts;
+    }, new Map<string, number>()),
+  ).sort((a, b) => b[1] - a[1]);
   const unconfirmed = proposals.filter(
     (p) =>
       (edits[p.id]?.values.confidence ?? p.values.confidence) === "UNCONFIRMED",
@@ -282,10 +291,27 @@ export default function ContactPreparation({
         </div>
       )}
       {requireComplete && open.length > 0 && (
-        <p role="status">
-          {open.length} Kontakte benötigen noch Angaben. Die Auswahl bleibt
-          vollständig erhalten.
-        </p>
+        <div role="status">
+          <p>
+            <strong>{open.length} von {proposals.length} Kontakten benötigen noch Angaben.</strong>{" "}
+            Die Auswahl bleibt vollständig erhalten. Das bedeutet nicht, dass bei
+            allen diesen Kontakten die E-Mail-Adresse fehlt.
+          </p>
+          <details>
+            <summary>Welche Pflichtangaben fehlen? ({issueCounts.length} Ursachen)</summary>
+            <ul>
+              {issueCounts.map(([issue, count]) => (
+                <li key={issue}>{count} Kontakte: {issue}</li>
+              ))}
+            </ul>
+            <p>
+              Diese Zahlen können sich überschneiden. Öffne unten die Details
+              eines Kontakts, um die fehlenden Angaben individuell zu ergänzen.
+              Bitte keine gemeinsame Quelle oder Verifikation für unterschiedliche
+              Kontakte behaupten. Speichern ist keine Mail- oder Versandfreigabe.
+            </p>
+          </details>
+        </div>
       )}
       {onExclude && open.length > 0 && open.length < proposals.length && (
         <button
