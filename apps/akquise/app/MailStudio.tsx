@@ -55,6 +55,7 @@ export default function MailStudio({
     id: string;
     organisation: string;
     status: string;
+    replyOutcome?: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -89,12 +90,15 @@ export default function MailStudio({
   const matchingContacts = contacts.filter(
     (c) =>
       !drafts.some((d) => d.contactId === c.id && queuedIds.includes(d.id)) &&
+      !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       `${c.organisation} ${c.firstName} ${c.lastName} ${c.email}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const contactOptions = matchingContacts.filter(c => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim()));
+  const contactOptions = matchingContacts.filter((c) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim()),
+  );
   const missingEmailCount = matchingContacts.length - contactOptions.length;
   // The state API orders newest drafts first. Offer only one per contact;
   // older message drafts remain available in the detailed archive.
@@ -106,6 +110,7 @@ export default function MailStudio({
     return (
       !queuedIds.includes(d.id) &&
       c &&
+      !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       d.versions[0]
     );
@@ -417,8 +422,8 @@ export default function MailStudio({
           >
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
             <p>
-              {contactOptions.length} Kontakte mit E-Mail-Adresse verfügbar. Wähle die gewünschte
-              Menge.
+              {contactOptions.length} Kontakte mit E-Mail-Adresse verfügbar.
+              Wähle die gewünschte Menge.
             </p>
             {candidates.length > 0 && (
               <button
@@ -468,7 +473,13 @@ export default function MailStudio({
               <summary>
                 Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
               </summary>
-              {missingEmailCount > 0 && <p role="status">{missingEmailCount} weitere Kontakte ohne gültige E-Mail-Adresse bleiben unter «Kontakte» erhalten. Sie zählen nicht zur Mengenauswahl.</p>}
+              {missingEmailCount > 0 && (
+                <p role="status">
+                  {missingEmailCount} weitere Kontakte ohne gültige
+                  E-Mail-Adresse bleiben unter «Kontakte» erhalten. Sie zählen
+                  nicht zur Mengenauswahl.
+                </p>
+              )}
               {contactOptions.map((c) => (
                 <label className="check mail-selection" key={c.id}>
                   <input

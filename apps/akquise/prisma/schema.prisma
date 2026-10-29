@@ -98,6 +98,10 @@ model Contact {
   status             ContactStatus      @default(NEW)
   owner              String             @default("")
   notes              String             @default("")
+  replyOutcome       String             @default("")
+  replyNote          String             @default("")
+  repliedAt          DateTime?
+  followUpOn         String             @default("")
   revision           Int                @default(1)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt

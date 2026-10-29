@@ -22,8 +22,14 @@ Object.assign(process.env, {
   DAILY_SEND_LIMIT: "25",
 });
 const { db } = await import("../../lib/db");
-const { saveContact, newDraft, reviewDraft, legalReview, suppress } =
-  await import("../../lib/workflow");
+const {
+  saveContact,
+  newDraft,
+  reviewDraft,
+  legalReview,
+  suppress,
+  recordContactReply,
+} = await import("../../lib/workflow");
 const {
   mailScheduleMutation: mutate,
   runMailSchedule,
@@ -318,4 +324,85 @@ test("Gemeinsame Freigabe und Einplanung verlangt Bestätigung und bleibt versio
   });
   assert.equal(await db.mailQueueItem.count({ where: { draftId: d.id } }), 1);
   assert.equal((await mailScheduleState()).schedule.enabled, false);
+});
+
+test("Antwort stoppt Warteschlange und Direktversand; Wiedervorlage sendet nichts", async () => {
+  const { c, d } = await prepared();
+  await enqueue(d);
+  await start();
+  await recordContactReply(user, c.id, {
+    revision: c.revision,
+    outcome: "NO_NEED",
+    note: "Derzeit kein Bedarf",
+    followUpOn: "2027-04-29",
+  });
+  const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+  assert.equal(saved.status, "REPLIED");
+  assert.equal(saved.replyOutcome, "NO_NEED");
+  assert.equal(saved.followUpOn, "2027-04-29");
+  assert.equal(
+    (await db.mailQueueItem.findFirstOrThrow({ where: { draftId: d.id } }))
+      .status,
+    "CANCELLED",
+  );
+  await runMailSchedule(sender);
+  await assert.rejects(dispatchApproved(user, d.id, d.version, sender));
+  assert.equal(calls, 0);
+  await assert.rejects(
+    recordContactReply(user, c.id, {
+      revision: c.revision,
+      outcome: "INTERESTED",
+    }),
+    /geändert/,
+  );
+});
+
+test("Nicht mehr kontaktieren sperrt auch doppelte Kontaktadresse und bleibt gesperrt", async () => {
+  const { c } = await prepared();
+  const duplicate = await db.contact.create({
+    data: {
+      organisation: "Zweiter Datensatz",
+      firstName: "Duplikat",
+      lastName: "Test",
+      email: c.email,
+      personKey: "duplicate-" + c.id,
+    },
+  });
+  await recordContactReply(user, c.id, {
+    revision: c.revision,
+    outcome: "DO_NOT_CONTACT",
+  });
+  assert.ok(await db.suppression.findUnique({ where: { email: c.email } }));
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: duplicate.id } }))
+      .status,
+    "DO_NOT_CONTACT",
+  );
+  await recordContactReply(user, c.id, {
+    revision: c.revision + 1,
+    outcome: "INTERESTED",
+    followUpOn: "2027-04-29",
+  });
+  const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+  assert.equal(saved.replyOutcome, "DO_NOT_CONTACT");
+  assert.equal(saved.followUpOn, "");
+});
+
+test("Interessiert dokumentiert Antwort; gesendete Mail wird als beantwortet markiert", async () => {
+  const { c, d } = await prepared();
+  await dispatchApproved(user, d.id, d.version, sender);
+  await recordContactReply(user, c.id, {
+    revision: c.revision,
+    outcome: "INTERESTED",
+    note: "Bitte anrufen",
+  });
+  assert.equal(
+    (await db.delivery.findFirstOrThrow({ where: { draftId: d.id } })).status,
+    "REPLIED",
+  );
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).replyNote,
+    "Bitte anrufen",
+  );
+  assert.equal(calls, 1);
 });
