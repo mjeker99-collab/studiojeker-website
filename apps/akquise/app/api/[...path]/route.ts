@@ -50,6 +50,7 @@ import { prepareContacts } from "@/lib/contact-preparation-service";
 import { mailReview } from "@/lib/mail-review";
 import {
   saveContact,
+  recordContactReply,
   importContacts,
   newDraft,
   editDraft,
@@ -629,6 +630,11 @@ async function handler(
       return NextResponse.json(await setGptShare(user.id, body));
     if (route === "integrations/gpt/write-grant")
       return NextResponse.json(await setGptWriteGrant(user.id, body));
+    if (path[0] === "contacts" && path.length === 3 && path[2] === "reply") {
+      return NextResponse.json(
+        await recordContactReply(user.id, path[1], body),
+      );
+    }
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }

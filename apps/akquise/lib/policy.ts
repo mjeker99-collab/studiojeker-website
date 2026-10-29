@@ -35,10 +35,13 @@ export function verificationIssues(
     sourceUrl: string;
     hook: string;
     status: string;
+    replyOutcome?: string;
   },
   now = new Date(),
 ) {
   const issues: string[] = [];
+  if (c.replyOutcome)
+    issues.push("Antwort erfasst. Keine weitere automatische Akquise.");
   if (c.status === "DO_NOT_CONTACT") issues.push("Kontakt ist gesperrt.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
     issues.push("Gültige E-Mail-Adresse fehlt.");

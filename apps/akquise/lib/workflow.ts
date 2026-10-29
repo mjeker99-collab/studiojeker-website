@@ -11,6 +11,7 @@ import {
 } from "./policy";
 import { generateDraft, importedDraft } from "./generation";
 import { renderLocalMessage } from "./mail";
+import { replyInput } from "./contact-reply-input";
 import { randomUUID } from "node:crypto";
 import { allowedAccount } from "./config.mjs";
 export type Tx = Prisma.TransactionClient;
@@ -75,9 +76,11 @@ export async function saveContact(
             status:
               existing.status === "DO_NOT_CONTACT"
                 ? "DO_NOT_CONTACT"
-                : data.confidence === "VERIFIED"
-                  ? "VERIFIED"
-                  : "NEW",
+                : existing.replyOutcome
+                  ? "REPLIED"
+                  : data.confidence === "VERIFIED"
+                    ? "VERIFIED"
+                    : "NEW",
           },
         })
       : await tx.contact.create({
@@ -494,4 +497,100 @@ export async function simulate(
     });
     return { delivery, reused: false };
   });
+}
+
+// Same lock order as SMTP dispatch: a saved reply prevents subsequent claims.
+export async function recordContactReply(
+  userId: string,
+  contactId: string,
+  raw: unknown,
+) {
+  const input = replyInput.parse(raw);
+  return db.$transaction(
+    async (tx) => {
+      await actor(tx, userId);
+      await lock(tx, "delivery-global");
+      await lock(tx, "contact:" + contactId);
+      const contact = await tx.contact.findUniqueOrThrow({
+        where: { id: contactId },
+      });
+      if (contact.revision !== input.revision)
+        throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
+      const email = normalizeEmail(contact.email);
+      // Shared mailboxes must not remain eligible through a second contact record.
+      const contacts = email
+        ? await tx.contact.findMany({
+            where: { email: { equals: email, mode: "insensitive" } },
+          })
+        : [contact];
+      const blocked =
+        input.outcome === "DO_NOT_CONTACT" ||
+        contact.status === "DO_NOT_CONTACT" ||
+        Boolean(
+          email && (await tx.suppression.findUnique({ where: { email } })),
+        );
+      for (const c of contacts) {
+        await lock(tx, "contact:" + c.id);
+        await invalidate(tx, c.id, userId);
+        await tx.contact.update({
+          where: { id: c.id },
+          data: {
+            replyOutcome: blocked ? "DO_NOT_CONTACT" : input.outcome,
+            replyNote: input.note,
+            repliedAt: new Date(),
+            followUpOn: blocked ? "" : input.followUpOn,
+            status: blocked ? "DO_NOT_CONTACT" : "REPLIED",
+            revision: { increment: 1 },
+          },
+        });
+      }
+      const drafts = await tx.draft.findMany({
+        where: { contactId: { in: contacts.map((c) => c.id) } },
+        select: { id: true },
+      });
+      await tx.mailQueueItem.updateMany({
+        where: {
+          status: "QUEUED",
+          OR: [
+            { draftId: { in: drafts.map((d) => d.id) } },
+            ...(email
+              ? [{ recipient: { equals: email, mode: "insensitive" as const } }]
+              : []),
+          ],
+        },
+        data: {
+          status: "CANCELLED",
+          error: "Antwort erfasst – keine weitere automatische Akquise.",
+        },
+      });
+      if (email) {
+        await tx.delivery.updateMany({
+          where: {
+            recipient: { equals: email, mode: "insensitive" },
+            mode: "PRODUCTION",
+            status: "SENT",
+          },
+          data: { status: "REPLIED" },
+        });
+        if (blocked)
+          await tx.suppression.upsert({
+            where: { email },
+            create: {
+              email,
+              reason: input.note || "Nicht mehr kontaktieren",
+              userId,
+            },
+            update: { reason: input.note || "Nicht mehr kontaktieren", userId },
+          });
+      }
+      await audit(tx, userId, "CONTACT_REPLY_RECORDED", contactId, {
+        outcome: blocked ? "DO_NOT_CONTACT" : input.outcome,
+        note: input.note,
+        followUpOn: blocked ? "" : input.followUpOn,
+        contactIds: contacts.map((c) => c.id),
+      });
+      return { ok: true };
+    },
+    { timeout: 35000 },
+  );
 }

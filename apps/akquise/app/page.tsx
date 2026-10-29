@@ -3,6 +3,8 @@ import { signedMessage } from "../lib/mail-signature";
 import "./studioone-workspaces.css";
 import "./studioone-area-intro.css";
 import "./studioone-design-system.css";
+import ContactReply from "./ContactReply";
+import { replyLabels } from "../lib/contact-reply-input";
 import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
 import ContactMailFlow from "./ContactMailFlow";
@@ -352,7 +354,15 @@ export default function App() {
   const contacts =
     data?.contacts.filter(
       (c) =>
-        (!filter || c.status === filter) &&
+        (!filter ||
+          c.status === filter ||
+          c.replyOutcome === filter ||
+          (filter === "FOLLOW_UP" &&
+            Boolean(c.followUpOn) &&
+            c.followUpOn <=
+              new Intl.DateTimeFormat("sv-SE", {
+                timeZone: "Europe/Zurich",
+              }).format(new Date()))) &&
         `${c.organisation} ${c.firstName} ${c.lastName} ${c.email} ${c.region}`
           .toLowerCase()
           .includes(search.toLowerCase()),
@@ -764,6 +774,9 @@ export default function App() {
                     onChange={(e) => setFilter(e.target.value)}
                   >
                     <option value="">Alle Status</option>
+                    <option value="INTERESTED">Interessiert</option>
+                    <option value="NO_NEED">Derzeit kein Bedarf</option>
+                    <option value="FOLLOW_UP">Wiedervorlage fällig</option>
                     {Object.entries(labels)
                       .slice(0, 12)
                       .map(([v, l]) => (
@@ -773,7 +786,10 @@ export default function App() {
                       ))}
                   </select>
                 </label>
-                <label className="file-button" style={{ background: "var(--cyan)", color: "#101719" }}>
+                <label
+                  className="file-button"
+                  style={{ background: "var(--cyan)", color: "#101719" }}
+                >
                   Kontakte importieren
                   <input
                     type="file"
@@ -806,7 +822,6 @@ export default function App() {
                 >
                   {busy ? "Import läuft …" : "Aus Google Drive importieren"}
                 </button>
-
               </div>
               <div className="table-note">
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
@@ -1093,6 +1108,19 @@ export default function App() {
                 ✕
               </button>
             </div>
+            {contact && (
+              <ContactReply
+                key={contact.id + ":" + contact.revision}
+                contact={contact}
+                busy={busy}
+                save={(body) =>
+                  action(async () => {
+                    await post("contacts/" + contact.id + "/reply", body);
+                    setShowContact(false);
+                  }, "Antwort gespeichert. Weitere Akquise-Mails an diese Adresse sind gestoppt.")
+                }
+              />
+            )}
             <form onSubmit={saveContact}>
               <div className="form-grid">
                 {(
@@ -1645,6 +1673,14 @@ function ContactTable({
               </td>
               <td>
                 <Badge value={c.status} />
+                {c.replyOutcome && (
+                  <small>{replyLabels[c.replyOutcome] || c.replyOutcome}</small>
+                )}
+                {c.followUpOn && (
+                  <small>
+                    Wiedervorlage: {c.followUpOn.split("-").reverse().join(".")}
+                  </small>
+                )}
               </td>
               <td>
                 <button
