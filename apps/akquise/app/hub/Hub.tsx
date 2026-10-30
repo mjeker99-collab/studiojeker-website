@@ -8,7 +8,6 @@ import {
   newsletterDefaults,
   newsletterText,
 } from "@/lib/hub/newsletter-template";
-import Cms from "../cms/Cms";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
