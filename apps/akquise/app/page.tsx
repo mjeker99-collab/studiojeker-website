@@ -641,7 +641,8 @@ export default function App() {
           {(tab === "Kampagnen" ||
             tab === "Social Media" ||
             tab === "Website" ||
-            tab === "Mail-Studio") && (
+            tab === "Mail-Studio" ||
+            tab === "Newsletter") && (
             <AssistantEntry
               key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
               section={tab}
