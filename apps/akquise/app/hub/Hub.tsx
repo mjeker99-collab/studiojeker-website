@@ -8,7 +8,6 @@ import {
   newsletterDefaults,
   newsletterText,
 } from "@/lib/hub/newsletter-template";
-import Cms from "../cms/Cms";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
@@ -940,7 +939,7 @@ export default function Hub({
           </form>
         </section>
       )}
-      {section === "Newsletter" && <><Cms onImported={refresh} /><MailchimpTemplates /></>}
+      {section === "Newsletter" && <MailchimpTemplates />}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
