@@ -254,11 +254,13 @@ export default function MailStudio({
       );
     return data;
   }
-  async function prepareBatch() {
+  async function prepareBatch(ids: string[] = contactIds) {
     setSkipped([]);
-    const previewData = await preparation("preview", { ids: contactIds });
+    const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
-    if (proposals.some((p) => !p.ready)) {
+    // Proposed changes from existing notes also require an explicit group review.
+    // An email address alone never proves a contact is ready.
+    if (proposals.some((p) => !p.ready || p.changed)) {
       setBatchProposals(proposals);
       setRows([]);
       setIncluded([]);
@@ -283,15 +285,14 @@ export default function MailStudio({
       throw new Error(
         "Keine Nachricht konnte vorbereitet werden. Die übrigen Kontakte bleiben unverändert.",
       );
+    // Keep completed drafts usable even when a different contact failed.
+    // Failed contacts are displayed separately and are never included in approval.
+    // Existing drafts are reused if the user intentionally retries.
     if (successful.length !== proposals.length) {
-      const fresh = await preparation("preview", { ids: contactIds });
-      setBatchProposals(fresh.contacts);
-      setRows([]);
-      setIncluded([]);
-      setStep(2);
-      throw new Error(
-        "Nicht alle Mails konnten vorbereitet werden. Die gesamte Auswahl bleibt erhalten. Bitte erneut versuchen; vorhandene Entwürfe werden wiederverwendet.",
-      );
+      setSkipped((old) => [
+        ...old,
+        `${successful.length} von ${proposals.length} Mails vorbereitet. Fehlgeschlagene Kontakte wurden nicht freigegeben.`,
+      ]);
     }
     const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
     const data = await api("preview", { ids });
@@ -612,9 +613,12 @@ export default function MailStudio({
             onExclude={(ids) =>
               void run(async () => {
                 const remaining = contactIds.filter((id) => !ids.includes(id));
-                const fresh = await preparation("preview", { ids: remaining });
                 setContactIds(remaining);
-                setBatchProposals(fresh.contacts);
+                setSkipped((old) => [
+                  ...old,
+                  `${ids.length} unvollständige Kontakte bewusst für diesen Durchgang zurückgestellt.`,
+                ]);
+                await prepareBatch(remaining);
               })
             }
           />
