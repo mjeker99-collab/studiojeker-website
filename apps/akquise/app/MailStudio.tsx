@@ -254,8 +254,8 @@ export default function MailStudio({
       );
     return data;
   }
-  async function prepareBatch(ids: string[] = contactIds) {
-    setSkipped([]);
+  async function prepareBatch(ids: string[] = contactIds, excluded: string[] = []) {
+    setSkipped(excluded);
     const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
     // Proposed changes from existing notes also require an explicit group review.
@@ -276,6 +276,7 @@ export default function MailStudio({
       (r: Result & { draftId?: string }) => r.ok && r.draftId,
     );
     setSkipped([
+      ...excluded,
       ...prepared.results
         .filter((r: Result) => !r.ok)
         .map((r: Result) => r.message),
@@ -288,12 +289,7 @@ export default function MailStudio({
     // Keep completed drafts usable even when a different contact failed.
     // Failed contacts are displayed separately and are never included in approval.
     // Existing drafts are reused if the user intentionally retries.
-    if (successful.length !== proposals.length) {
-      setSkipped((old) => [
-        ...old,
-        `${successful.length} von ${proposals.length} Mails vorbereitet. Fehlgeschlagene Kontakte wurden nicht freigegeben.`,
-      ]);
-    }
+    // The remaining failures are shown above; only successful draft IDs enter preview.
     const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
     const data = await api("preview", { ids });
     setSelected(ids);
@@ -614,11 +610,13 @@ export default function MailStudio({
               void run(async () => {
                 const remaining = contactIds.filter((id) => !ids.includes(id));
                 setContactIds(remaining);
-                setSkipped((old) => [
-                  ...old,
-                  `${ids.length} unvollständige Kontakte bewusst für diesen Durchgang zurückgestellt.`,
-                ]);
-                await prepareBatch(remaining);
+                await prepareBatch(
+                  remaining,
+                  ids.map((id) => {
+                    const contact = contacts.find((c) => c.id === id);
+                    return `${contact?.organisation || id}: Angaben offen, bewusst zurückgestellt.`;
+                  }),
+                );
               })
             }
           />
