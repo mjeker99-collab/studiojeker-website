@@ -1,0 +1,51 @@
+name: Newsletter V4 preview assets
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/newsletter-v4-preview-assets.yml'
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.event.pull_request.number == 296
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect original newsletter source and images
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import json, urllib.request
+          root = Path('newsletter-preview-source')
+          root.mkdir()
+          source = Path('mailchimp/studiojeker-newsletter-04-sichtbarkeit.html').read_text()
+          (root / 'newsletter-source.html').write_text(source)
+          class Images(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.urls = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'img':
+                      value = dict(attrs).get('src', '')
+                      if value.startswith('https://') and value not in self.urls:
+                          self.urls.append(value)
+          parser = Images(); parser.feed(source)
+          manifest = []
+          for index, url in enumerate(parser.urls):
+              name = str(index).zfill(2) + '-' + url.rsplit('/', 1)[-1]
+              try:
+                  request = urllib.request.Request(url, headers={'User-Agent': 'Studiojeker-Newsletter-Preview'})
+                  with urllib.request.urlopen(request, timeout=40) as response:
+                      data = response.read()
+                  (root / name).write_bytes(data)
+                  manifest.append({'url': url, 'file': name, 'bytes': len(data)})
+              except Exception as exc:
+                  manifest.append({'url': url, 'error': str(exc)})
+          (root / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: newsletter-v4-original-assets
+          path: newsletter-preview-source/
+          retention-days: 3
