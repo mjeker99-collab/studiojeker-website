@@ -290,9 +290,9 @@ export default function MailStudio({
     // Failed contacts are displayed separately and are never included in approval.
     // Existing drafts are reused if the user intentionally retries.
     // The remaining failures are shown above; only successful draft IDs enter preview.
-    const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
-    const data = await api("preview", { ids });
-    setSelected(ids);
+    const draftIds = successful.map((r: Result & { draftId: string }) => r.draftId);
+    const data = await api("preview", { ids: draftIds });
+    setSelected(draftIds);
     setRows(data.rows);
     setIncluded(
       data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
