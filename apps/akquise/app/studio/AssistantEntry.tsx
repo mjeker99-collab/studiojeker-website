@@ -17,6 +17,11 @@ const sections = {
     message:
       "Ich möchte eine Kampagne planen. Bitte hilf mir Schritt für Schritt und frage zuerst nach meinem Vorhaben.",
   },
+  Newsletter: {
+    description: "Newsletter-Ideen, Betreffzeilen und Texte mit GPT vorbereiten.",
+    message:
+      "Ich möchte einen Newsletter vorbereiten. Hilf mir bei Thema, Zielgruppe, Betreff und Text. Verwende nur bestätigte Angebotsangaben. Erstelle einen Entwurf, aber versende und veröffentliche nichts.",
+  },
   "Social Media": {
     description:
       "Beiträge, Bildideen und einen Redaktionsplan mit GPT vorbereiten.",
