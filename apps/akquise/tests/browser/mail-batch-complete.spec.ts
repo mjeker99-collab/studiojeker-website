@@ -252,7 +252,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\\/Akquise/ }).click();
+  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await page.getByRole("button", { name: "2 persönliche Mails vorbereiten →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
