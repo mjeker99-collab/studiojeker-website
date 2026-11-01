@@ -33,10 +33,23 @@ jobs:
           mkdir -p backups
           pg_dump --dbname="$DATABASE_URL" --format=custom --no-owner --no-privileges --file="backups/studioone-${GITHUB_RUN_ID}.dump"
           test -s "backups/studioone-${GITHUB_RUN_ID}.dump"
-      - name: Upload encrypted transport to Exoscale private bucket
+          # pg_restore validates the custom archive directory without restoring data.
+          pg_restore --list "backups/studioone-${GITHUB_RUN_ID}.dump" > /dev/null
+      - name: Upload via TLS to Exoscale private bucket
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXOSCALE_BACKUP_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXOSCALE_BACKUP_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ch-dk-2
         run: |
-          aws --endpoint-url https://sos-ch-dk-2.exo.io s3 cp "backups/studioone-${GITHUB_RUN_ID}.dump" "s3://studiojeker-backups/studioone/postgres/$(date -u +%Y-%m-%d)/studioone-${GITHUB_RUN_ID}.dump"
+          set -euo pipefail
+          file="backups/studioone-${GITHUB_RUN_ID}.dump"
+          key="studioone/postgres/$(date -u +%Y-%m-%d)/studioone-${GITHUB_RUN_ID}.dump"
+          aws --endpoint-url https://sos-ch-dk-2.exo.io s3 cp "$file" "s3://studiojeker-backups/$key"
+          expected=$(stat -c %s "$file")
+          actual=$(aws --endpoint-url https://sos-ch-dk-2.exo.io s3api head-object \
+            --bucket studiojeker-backups --key "$key" --query ContentLength --output text)
+          test "$actual" = "$expected" || {
+            echo "::error::PostgreSQL backup was not verified in Exoscale; size mismatch."
+            exit 1
+          }
+          echo "PostgreSQL custom archive validated and private offsite object size verified."
