@@ -183,6 +183,7 @@ for (const width of [390, 768, 1440]) {
     await expect(
       page
         .getByRole("region", { name: "Globale Mailprüfung" })
+        .locator("details.mail-review-message > summary")
         .getByText("Persönliche Projektbilder", { exact: false }),
     ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
@@ -279,7 +280,7 @@ for (const width of [390, 768, 1440]) {
     }
     await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
-      name: "Änderungen speichern",
+      name: "Angaben für alle speichern und weiter →",
       exact: true,
     });
     await expect(prepare).toBeDisabled();
