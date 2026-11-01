@@ -286,7 +286,9 @@ for (const width of [390, 768, 1440]) {
     await expect(prepare).toBeDisabled();
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await expect(prepare).toBeEnabled();
-    const row = panel.getByRole("group", { name: "Angaben für Eva Muster" });
+    const rowDetails = panel.locator("details.preparation-contact").filter({ hasText: "Eva Muster" });
+    await rowDetails.locator("summary").click();
+    const row = rowDetails.getByRole("group", { name: "Angaben für Eva Muster" });
     await row
       .getByLabel("Quellen-URL")
       .fill("example.test/individueller-beleg");
