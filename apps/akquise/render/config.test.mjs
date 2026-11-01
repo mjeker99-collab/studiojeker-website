@@ -77,6 +77,7 @@ test("sandbox accepts invited testers without production owner emails", async ()
   const sandbox = {
     ...environment(),
     STUDIOONE_TEST_SANDBOX: "true",
+    DATABASE_URL: "postgresql://test:synthetic-long-password-12345@dpg-dbjgergu01pc73fd9l50-a/studioone_tester_sandbox",
     TEST_ACCESS_CODE: "a".repeat(48),
     MARTIN_EMAIL: "",
     NORA_EMAIL: "",
@@ -89,6 +90,7 @@ test("sandbox accepts invited testers without production owner emails", async ()
   assert.equal(allowedAccount({ name: "KMU Testperson", email: "tester@firma.ch", active: false }, configured), false);
   for (const patch of [
     { TEST_ACCESS_CODE: "kurz" },
+    { DATABASE_URL: environment().DATABASE_URL },
     { MAIL_MODE: "production" },
     { ENABLE_EMAIL_SENDING: "true" },
     { SMTP_PASSWORD: "secret" },
