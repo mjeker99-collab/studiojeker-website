@@ -1,0 +1,32 @@
+[
+  {
+    "width": 700,
+    "file": "v4-desktop-700.png",
+    "imgCount": 14,
+    "failed": [],
+    "scrollW": 700,
+    "clientW": 700,
+    "overflow": false,
+    "bodyH": 2665
+  },
+  {
+    "width": 390,
+    "file": "v4-mobile-390.png",
+    "imgCount": 14,
+    "failed": [],
+    "scrollW": 390,
+    "clientW": 390,
+    "overflow": false,
+    "bodyH": 4277
+  },
+  {
+    "width": 320,
+    "file": "v4-mobile-320.png",
+    "imgCount": 14,
+    "failed": [],
+    "scrollW": 320,
+    "clientW": 320,
+    "overflow": false,
+    "bodyH": 4323
+  }
+]
