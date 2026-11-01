@@ -1,6 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private authenticated image routes. */
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
@@ -10,6 +16,18 @@ import DialogManager, {
 } from "../dialogs/DialogManager";
 import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
+export type StudioChatRequest = {
+  seriesId?: string;
+  message: string;
+  intent?: "TEXT" | "IMAGE" | "VIDEO" | "EDIT";
+  sourceAssetId?: string;
+  contentId?: string;
+  campaignId?: string;
+  customerId?: string;
+};
+export type StudioChatHandle = {
+  prepare: (request: StudioChatRequest, replace?: boolean) => boolean;
+};
 async function post(path: string, body: unknown) {
   const r = await fetch(`/api/studio/${path}`, {
     method: "POST",
@@ -28,6 +46,8 @@ export default function StudioChat({
   hasUnsavedContent = false,
   projectArea = "Content-Studio",
   onProjectAssigned,
+  taskRef,
+  hideStartOptions = false,
 }: {
   state: State;
   refresh: () => Promise<void>;
@@ -43,6 +63,8 @@ export default function StudioChat({
   hasUnsavedContent?: boolean;
   projectArea?: string;
   onProjectAssigned?: () => void;
+  taskRef?: Ref<StudioChatHandle>;
+  hideStartOptions?: boolean;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState(
@@ -206,7 +228,65 @@ export default function StudioChat({
   const images = state.assets.filter((a) =>
     ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
   );
+  const suggestedMessage = useRef(initialRequest?.message || "");
   const storageReady = state.config.storage !== "DISCONNECTED";
+  useImperativeHandle(taskRef, () => ({
+    prepare(request, replace = false) {
+      if (busy) return false;
+      const switchingProject =
+        request.seriesId !== undefined &&
+        (request.seriesId !== seriesId ||
+          (!request.seriesId &&
+            ((request.customerId !== undefined &&
+              request.customerId !== customerId) ||
+              (request.campaignId !== undefined &&
+                request.campaignId !== campaignId))));
+      if (
+        (replace || switchingProject) &&
+        (message.trim() || referenceCount > 0) &&
+        !window.confirm(
+          "Neue GPT-Aufgabe öffnen? Die noch nicht gesendete Nachricht und Bildauswahl werden ersetzt. Gespeicherte Gespräche bleiben erhalten.",
+        )
+      )
+        return false;
+      if (switchingProject) {
+        setSeriesId(request.seriesId!);
+        setSelectedState(null);
+        const selected = state.series.find((s) => s.id === request.seriesId);
+        setCustomerId(selected?.customerId || request.customerId || "");
+        setCampaignId(
+          (selected?.briefing as { campaignId?: string | null } | undefined)
+            ?.campaignId ||
+            request.campaignId ||
+            "",
+        );
+      }
+      if (
+        replace ||
+        switchingProject ||
+        !message.trim() ||
+        message === suggestedMessage.current
+      ) {
+        const nextMessage = request.message.slice(0, 4000);
+        setMessage(nextMessage);
+        suggestedMessage.current = nextMessage;
+      }
+      if (replace || switchingProject) {
+        setReferenceIds(request.sourceAssetId ? [request.sourceAssetId] : []);
+        setDriveImages([]);
+        setContentId(request.contentId || "");
+      } else {
+        if (request.sourceAssetId && referenceCount === 0)
+          setReferenceIds([request.sourceAssetId]);
+        if (request.contentId) setContentId(request.contentId);
+      }
+      setMediaIntent(request.intent || "TEXT");
+      setReplyToJobId("");
+      setConfirmed(false);
+      setError("");
+      return true;
+    },
+  }));
   async function uploadImage(file: File) {
     if (
       busy ||
@@ -582,7 +662,9 @@ export default function StudioChat({
           setError("");
           setContentId("");
           setReplyToJobId("");
-          const selected = projectState.series.find((series) => series.id === id);
+          const selected = projectState.series.find(
+            (series) => series.id === id,
+          );
           setCustomerId(selected?.customerId || "");
           setCampaignId(
             (selected?.briefing as { campaignId?: string | null } | undefined)
@@ -596,8 +678,11 @@ export default function StudioChat({
         }}
         onCampaign={(id) => {
           setCampaignId(id);
-          const selectedCampaign = state.campaigns.find((campaign) => campaign.id === id);
-          if (selectedCampaign) setCustomerId(selectedCampaign.customerId || "");
+          const selectedCampaign = state.campaigns.find(
+            (campaign) => campaign.id === id,
+          );
+          if (selectedCampaign)
+            setCustomerId(selectedCampaign.customerId || "");
           setConfirmed(false);
         }}
         refresh={() => {
@@ -902,7 +987,7 @@ export default function StudioChat({
             setConfirmed(false);
           }}
         />
-        {!jobs.length && !message && (
+        {!hideStartOptions && !jobs.length && !message && (
           <div className="actions studio-start-options">
             {[
               ["TEXT", "Text erstellen", "Ich möchte einen Text erstellen."],

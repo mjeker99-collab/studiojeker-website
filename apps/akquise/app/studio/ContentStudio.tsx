@@ -1,5 +1,8 @@
 "use client";
-import StudioChat from "./StudioChat";
+import StudioChat, {
+  type StudioChatHandle,
+  type StudioChatRequest,
+} from "./StudioChat";
 import ProjectSave from "../projects/ProjectSave";
 import GraphicsEditor from "./GraphicsEditor";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
@@ -23,6 +26,56 @@ import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
 type Series = State["series"][number];
 type Content = Series["contents"][number];
+const tasks = [
+  {
+    id: "text",
+    label: "Texte erstellen",
+    hint: "Beiträge, Headlines und Kanaltexte mit GPT entwickeln.",
+    prompt:
+      "Hilf mir, Texte für einen Social-Media-Beitrag zu erstellen. Frage zuerst nach den noch fehlenden Angaben.",
+    intent: "TEXT",
+  },
+  {
+    id: "image",
+    label: "Bild erstellen",
+    hint: "Briefing anlegen oder Beitrag öffnen, dann ein Bildmotiv generieren.",
+    prompt:
+      "Entwickle mit mir eine konkrete Bildidee für diesen Beitrag. Liefere eine Bildbeschreibung für die anschliessende Bildgenerierung.",
+    target: "studio-generation",
+  },
+  {
+    id: "photo",
+    label: "Bild bearbeiten",
+    hint: "Ein Bild auswählen und GPT die gewünschte Änderung beschreiben.",
+    prompt: "",
+    intent: "EDIT",
+  },
+  {
+    id: "graphics",
+    label: "Grafik gestalten",
+    hint: "Beitrag öffnen und Bild, Text und Logo in einer Vorlage gestalten.",
+    prompt:
+      "Hilf mir bei der Gestaltung einer Grafik mit Bild, Headline und Logo. Berate mich zu Vorlage, Textaufteilung und Bildausschnitt.",
+    target: "grafikstudio",
+  },
+  {
+    id: "film",
+    label: "Video planen",
+    hint: "Drehbuch, Szenen und Schnittplan mit GPT vorbereiten.",
+    prompt:
+      "Hilf mir, ein Video zu planen: Drehbuch, Sprechertext, Szenen und Schnittplan. Frage zuerst nach fehlenden Angaben zu Ziel, Kanal, Länge und Material. Es geht um Planung, nicht um Video-Rendering.",
+    intent: "VIDEO",
+  },
+  {
+    id: "export",
+    label: "Prüfen & exportieren",
+    hint: "Beitrag prüfen, freigeben und Bilder oder Texte herunterladen.",
+    prompt:
+      "Hilf mir, diesen Beitrag vor der Freigabe zu prüfen: Verständlichkeit, Kanaltext, Headline und Handlungsaufforderung. Erteile selbst keine Freigabe.",
+    target: "studio-export",
+  },
+] as const;
+type StudioTask = (typeof tasks)[number];
 const blank: Briefing = {
   title: "",
   topic: "",
@@ -87,14 +140,15 @@ export default function ContentStudio({
     [format, setFormat] = useState<StudioFormat>("1:1"),
     [encoding, setEncoding] = useState<"png" | "jpg">("png");
   const [picking, setPicking] = useState<"motif" | "reference" | null>(null);
-  const [designRequest, setDesignRequest] = useState<{
-    id: number;
-    seriesId: string;
-    message: string;
-    intent?: "EDIT";
-    sourceAssetId?: string;
-    contentId?: string;
-  }>();
+  const chatRef = useRef<StudioChatHandle>(null);
+  const [task, setTask] = useState<StudioTask | null>(null);
+  function focusArea(id: string) {
+    requestAnimationFrame(() => {
+      const element = document.getElementById(id);
+      element?.scrollIntoView({ block: "start" });
+      element?.focus({ preventScroll: true });
+    });
+  }
   const [libraryRefs, setLibraryRefs] = useState<LibraryEntry[]>([]);
   const dirty = !!(
     editing &&
@@ -182,6 +236,7 @@ export default function ContentStudio({
     setCreating(false);
     setRefs([]);
     setTransfer(false);
+    if (task && "target" in task) focusArea(task.target);
   }
   function update(data: Partial<ContentInput>) {
     setForm((p) =>
@@ -203,30 +258,60 @@ export default function ContentStudio({
     setRead(false);
     setPreview("");
   }
-  function prepareAdvice(message: string, intent?: "EDIT") {
-    if (
-      !window.confirm(
-        "KI-Beratung vorbereiten? Eine dort noch nicht gesendete Nachricht und deren Bildauswahl werden ersetzt.",
-      )
-    )
-      return;
-    setDesignRequest({
-      id: Date.now(),
-      seriesId,
-      message: message.slice(0, 4000),
+  function chatRequest(
+    message: string,
+    intent: StudioChatRequest["intent"] = "TEXT",
+  ) {
+    const context = form
+      ? `\nAktueller Beitrag: ${form.title}\nHeadline: ${form.studio?.headline || ""}\nBildidee: ${form.studio?.imageIdea || ""}\nKanaltexte: ${form.variants.map((v) => `${v.channel}: ${v.text}`).join("\n")}`
+      : creating
+        ? `\nAktuelles Briefing: ${JSON.stringify(brief)}`
+        : "";
+    return {
+      ...(creating
+        ? {
+            seriesId: "",
+            customerId: brief.customerId || "",
+            campaignId: brief.campaignId || "",
+          }
+        : seriesId
+          ? { seriesId }
+          : {}),
+      message:
+        intent === "EDIT" ? message : `${message}${context}`.slice(0, 4000),
       intent,
-      ...(intent
+      ...(intent === "EDIT"
         ? {
             sourceAssetId: form?.studio?.motifAssetId || undefined,
             contentId: editing?.id,
           }
         : {}),
-    });
+    };
+  }
+  function openGPT(request?: StudioChatRequest, replace = false) {
+    if (request && !chatRef.current?.prepare(request, replace)) return false;
     setEditorOpen(false);
-    setTimeout(
-      () => document.getElementById("studio-chat-message")?.focus(),
-      0,
-    );
+    focusArea("studio-chat-message");
+    return true;
+  }
+  function prepareAdvice(message: string, intent?: "EDIT") {
+    openGPT(chatRequest(message, intent), true);
+  }
+  function chooseTask(next: StudioTask) {
+    if ("intent" in next) {
+      if (!openGPT(chatRequest(next.prompt, next.intent))) return;
+    } else {
+      setEditorOpen(true);
+      if (!editing && next.id !== "export") setCreating(true);
+      focusArea(
+        editing
+          ? next.target
+          : next.id === "export"
+            ? "studio-series"
+            : "studio-brief",
+      );
+    }
+    setTask(next);
   }
   function studio(data: Partial<StudioSnapshot>) {
     if (form?.studio) update({ studio: { ...form.studio, ...data } });
@@ -294,42 +379,84 @@ export default function ContentStudio({
     return <p role="status">{error || "Content-Studio wird geladen …"}</p>;
   return (
     <div className="studio-workspace">
-      <div
-        className="actions studio-view-switch"
-        aria-label="Ansicht im Content-Studio"
+      <section
+        className="studio-task-picker"
+        aria-label="Aufgaben im Content-Studio"
       >
-        <button
-          type="button"
-          aria-pressed={!editorOpen}
-          onClick={() => setEditorOpen(false)}
-        >
-          Mit GPT arbeiten
-        </button>
-        <button
-          type="button"
-          className="secondary"
-          aria-pressed={editorOpen}
-          onClick={() => setEditorOpen(true)}
-        >
-          Beiträge bearbeiten
-        </button>
+        <h2>Was möchtest du erstellen?</h2>
+        <div className="studio-task-buttons">
+          {tasks.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="secondary"
+              aria-pressed={task?.id === item.id}
+              onClick={() => chooseTask(item)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <p role="status">
+          {task?.hint ||
+            "Wähle eine Aufgabe. GPT begleitet dich bei jedem Schritt."}
+        </p>
+      </section>
+      <div className="studio-task-toolbar" aria-label="GPT und Beiträge">
+        <span>
+          {task?.label || "Content Studio"}
+          {form ? ` · ${form.title}` : ""}
+        </span>
+        <div className="actions">
+          <button
+            type="button"
+            className="secondary"
+            aria-pressed={editorOpen}
+            onClick={() => {
+              setEditorOpen(true);
+              focusArea(
+                editing && task && "target" in task
+                  ? task.target
+                  : "studio-editor-start",
+              );
+            }}
+          >
+            Beiträge bearbeiten
+          </button>
+          <button
+            type="button"
+            className="ai-button"
+            aria-pressed={!editorOpen}
+            onClick={() =>
+              openGPT(
+                editorOpen
+                  ? chatRequest(
+                      task?.prompt || "Hilf mir beim aktuellen Beitrag.",
+                    )
+                  : undefined,
+              )
+            }
+          >
+            Mit GPT arbeiten
+          </button>
+        </div>
       </div>
       <div hidden={editorOpen}>
         <StudioChat
-          key={designRequest?.id || 0}
+          taskRef={chatRef}
+          hideStartOptions
           state={state}
           refresh={() => refresh(undefined, undefined, true)}
           initialRequest={
-            designRequest ||
-            (initialSeriesId &&
+            initialSeriesId &&
             state.series.some((series) => series.id === initialSeriesId)
               ? { seriesId: initialSeriesId, message: "" }
-              : undefined)
+              : undefined
           }
           hasUnsavedContent={dirty}
         />
       </div>
-      <div hidden={!editorOpen}>
+      <div id="studio-editor-start" tabIndex={-1} hidden={!editorOpen}>
         <ProjectSave
           area="Content-Editor"
           identity={editing?.id || ""}
@@ -376,42 +503,6 @@ export default function ContentStudio({
           }}
         />
 
-        <section aria-label="Arbeitsbereiche im Content-Studio">
-          <h2>Ein Content-Studio. Drei Arbeitsbereiche.</h2>
-          <p>
-            Gemeinsames Briefing, KI-Dialog, Versionen und Freigaben für deine
-            Inhalte.
-          </p>
-          <div className="studio-workspaces">
-            {[
-              [
-                "grafikstudio",
-                "Grafikstudio",
-                "Vorlagen, Texte und Logos gestalten. PNG/JPG exportieren.",
-              ],
-              [
-                "fotostudio",
-                "Fotostudio",
-                "Motive auswählen, Bildausschnitte anpassen und Bildideen mit KI entwickeln.",
-              ],
-              [
-                "filmstudio",
-                "Filmstudio",
-                "Drehbuch, Szenen und Schnittplan mit KI vorbereiten. Videoschnitt folgt.",
-              ],
-            ].map(([id, title, description]) => (
-              <article key={id}>
-                <h3>{title}</h3>
-                <p>{description}</p>
-                {editing ? (
-                  <a href={`#${id}`}>{title} öffnen</a>
-                ) : (
-                  <p>Serie öffnen oder neues Briefing anlegen.</p>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
         {picking && (
           <LibraryPicker
             imagesOnly={picking === "motif"}
@@ -485,6 +576,7 @@ export default function ContentStudio({
               setCreating(true);
               setForm(null);
               setEditing(null);
+              setSeriesId("");
               setBrief(blank);
             }}
           >
@@ -555,6 +647,8 @@ export default function ContentStudio({
         </details>
         {creating && (
           <form
+            id="studio-brief"
+            tabIndex={-1}
             className="studio-brief"
             onSubmit={(e) => {
               e.preventDefault();
@@ -563,6 +657,7 @@ export default function ContentStudio({
                 const s = await api("studio/series", b);
                 await refresh(undefined, s.id);
                 setCreating(false);
+                if (task && "target" in task) focusArea(task.target);
                 setNotice(
                   "Serie als eigene Entwürfe gespeichert. Noch keine KI-Generierung gestartet.",
                 );
@@ -779,7 +874,12 @@ export default function ContentStudio({
           </form>
         )}
         <div className="studio-columns">
-          <aside className="studio-series" aria-label="Beitragsserien">
+          <aside
+            id="studio-series"
+            tabIndex={-1}
+            className="studio-series"
+            aria-label="Beitragsserien"
+          >
             <h2>Serien</h2>
             {!state.series.length && (
               <p>Noch keine Serie. Mit einem Briefing beginnen.</p>
@@ -829,7 +929,11 @@ export default function ContentStudio({
                     ))}
                 </dl>
               </details>
-              <section className="studio-generation">
+              <section
+                id="studio-generation"
+                tabIndex={-1}
+                className="studio-generation"
+              >
                 <h3>KI-Auftrag ausdrücklich starten</h3>
                 <p>{state.config.costNote}</p>
                 <details>
@@ -1460,7 +1564,7 @@ export default function ContentStudio({
                   </article>
                 ))}
               </section>
-              <section>
+              <section id="studio-export" tabIndex={-1}>
                 <h3>Freigabe und Export</h3>
                 <p>
                   Jede Speicherung ist bereits ein Social-Entwurf in der

@@ -94,16 +94,9 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
       exact: true,
     }),
   ).toBeVisible();
-  const workspaces = page.getByRole("region", {
-    name: "Arbeitsbereiche im Content-Studio",
-  });
-  for (const title of ["Grafikstudio", "Fotostudio", "Filmstudio"]) {
-    await workspaces.getByRole("link", { name: `${title} öffnen` }).click();
-    await expect(
-      page.getByRole("region", { name: title, exact: true }),
-    ).toBeVisible();
-  }
-  page.once("dialog", (dialog) => dialog.accept());
+  const workspaces = page.getByRole("region", { name: "Aufgaben im Content-Studio" });
+  await workspaces.getByRole("button", { name: "Grafik gestalten", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Grafikstudio", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Drehbuch mit KI vorbereiten" })
     .click();
@@ -123,8 +116,8 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page
     .getByLabel("Eigenes oder generiertes Motiv")
     .selectOption({ label: "SYNTHETISCH-Testmotiv.png" });
-  await workspaces.getByRole("link", { name: "Fotostudio öffnen" }).click();
-  await workspaces.getByRole("link", { name: "Grafikstudio öffnen" }).click();
+  await page.locator("#fotostudio").scrollIntoViewIfNeeded();
+  await workspaces.getByRole("button", { name: "Grafik gestalten", exact: true }).click();
   await expect(
     page.getByRole("textbox", { name: "Headline", exact: true }),
   ).toHaveValue("TESTINHALT – Sichtbarkeit planen");
@@ -237,7 +230,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     (
       await new AxeBuilder({ page })
         .include(".graphics-editor")
-        .include(".studio-workspaces")
+        .include(".studio-task-picker")
         .include("#filmstudio")
         .include("#fotostudio")
         .analyze()
