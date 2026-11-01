@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import type { libraryState } from "@/lib/library/service";
 import type { BrandProfile } from "@/lib/library/input";
 import DriveConnection from "./DriveConnection";
+import { uploadProblem } from "@/lib/studio/upload-policy";
 export type LibraryState = Awaited<ReturnType<typeof libraryState>>;
 export type LibraryEntry = LibraryState["items"][number];
 export async function libraryApi(path: string, body?: unknown) {
@@ -22,7 +23,7 @@ const names: Record<string, string> = {
   IMAGE: "Bilder und Grafiken",
   DOCUMENT: "Dokumente",
   TEXT: "Texte",
-  VIDEO: "Videolinks",
+  VIDEO: "Videos und Videolinks",
   LINK: "Referenzlinks",
   EXPORT: "Exporte",
   FONT: "Schriften",
@@ -281,7 +282,8 @@ export default function Library() {
           old.map((v, j) => (j === n ? `${f.name}: ${s}` : v)),
         );
       try {
-        if (f.size > 8 * 1024 * 1024) throw new Error("Maximal 8 MB");
+        const problem = uploadProblem(f.name, f.size);
+        if (problem) throw new Error(problem);
         status("wird geprüft und gespeichert");
         const kind = /\.(ttf|otf)$/i.test(f.name)
           ? "FONT"
@@ -296,7 +298,7 @@ export default function Library() {
             "x-file-name": encodeURIComponent(f.name),
           },
           body: f,
-          signal: AbortSignal.timeout(35000),
+          signal: AbortSignal.timeout(180000),
         });
         const a = await r.json();
         if (!r.ok) throw new Error(a.error);
@@ -519,8 +521,9 @@ export default function Library() {
           <section className="panel">
             <h2>Inhalte hinzufügen</h2>
             <p>
-              JPEG, PNG, WebP, PDF, TXT, TTF/OTF · höchstens 8 MB je Datei und 8
-              Dateien je Auswahl. Originale bleiben unverändert.
+              Bilder (JPEG, PNG, WebP), PDF, TXT und TTF/OTF bis 8 MB;
+              Videos (MP4, M4V, MOV) bis 64 MB. Höchstens 8 Dateien je Auswahl.
+              Originale bleiben unverändert.
             </p>
             {state.config.storage === "DISCONNECTED" && (
               <p role="status">
@@ -543,7 +546,8 @@ export default function Library() {
               <input
                 type="file"
                 multiple
-                accept="image/jpeg,image/png,image/webp,.pdf,.txt,.ttf,.otf"
+                // No accept filter: iPad Drive providers can label valid media
+                // as generic files. Validate after selection and on the server.
                 disabled={
                   busy || !rights || state.config.storage === "DISCONNECTED"
                 }
@@ -661,7 +665,7 @@ export default function Library() {
                   ))}
                 </select>
               </label>
-              {["LINK", "VIDEO"].includes(item.kind) && (
+              {["LINK", "VIDEO"].includes(item.kind) && !selected?.asset && (
                 <>
                   <label>
                     HTTPS-Link
@@ -821,3 +825,4 @@ export default function Library() {
     </div>
   );
 }
+

@@ -6,9 +6,11 @@ import { PolicyError } from "../policy";
 import { audit } from "../workflow";
 import { objectStore, type ObjectStore } from "./storage";
 import { ORG } from "./input";
+import { MAX_UPLOAD, isVideoUpload, uploadLimit } from "./upload-policy";
+import { videoUploadMime } from "./video-upload";
+export { MAX_UPLOAD } from "./upload-policy";
 sharp.concurrency(1);
 sharp.cache({ memory: 16, files: 0, items: 16 });
-export const MAX_UPLOAD = 8 * 1024 * 1024;
 export async function storeAsset(
   actor: string,
   bytes: Buffer,
@@ -19,7 +21,7 @@ export async function storeAsset(
 ) {
   if (
     !bytes.length ||
-    bytes.length > (kind === "EXPORT" ? 96 * 1024 * 1024 : MAX_UPLOAD)
+    bytes.length > (kind === "EXPORT" ? 96 * 1024 * 1024 : kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD)
   )
     throw new PolicyError("Datei zu gross oder leer.", 413);
   let width: number | undefined, height: number | undefined;
@@ -51,6 +53,12 @@ export async function storeAsset(
       throw new PolicyError(
         "Nur PDF oder UTF-8-TXT bis 8 MB. PDF wird ausschliesslich abgelegt, nicht analysiert.",
       );
+  } else if (kind === "ORIGINAL" && isVideoUpload(name)) {
+    try {
+      mime = videoUploadMime(bytes);
+    } catch {
+      throw new PolicyError("Ungültiges Video. Eine vollständige MP4- oder MOV-Datei bis 64 MB wählen.");
+    }
   } else if (kind !== "EXPORT") {
     try {
       const m = await sharp(bytes, {
@@ -128,7 +136,7 @@ export async function storeAsset(
                   ? "EXPORT"
                   : kind === "DOCUMENT"
                     ? "DOCUMENT"
-                    : "IMAGE",
+                    : mime!.startsWith("video/") ? "VIDEO" : "IMAGE",
             rights: ["ORIGINAL", "FONT", "DOCUMENT"].includes(kind)
               ? "Nutzungsrechte beim Upload bestätigt; Details ergänzen."
               : "Herkunft und Nutzungsrechte prüfen.",
@@ -168,3 +176,4 @@ export async function readAsset(
     throw new PolicyError("Datei-Prüfsumme stimmt nicht überein.", 503);
   return { asset, bytes };
 }
+

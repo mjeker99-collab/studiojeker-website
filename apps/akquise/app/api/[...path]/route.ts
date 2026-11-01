@@ -31,6 +31,7 @@ import {
 import { studioState } from "@/lib/studio/service";
 import { studioMutation } from "@/lib/studio/api";
 import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
+import { uploadLimit } from "@/lib/studio/upload-policy";
 import { logoBytes } from "@/lib/studio/config";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -438,11 +439,12 @@ async function handler(
             : "ORIGINAL";
       if (req.headers.get("x-rights-confirmed") !== "true")
         throw new PolicyError("Nutzungsrechte an der Datei bestätigen.");
-      const bytes = await boundedBody(req, MAX_UPLOAD);
+      const name = decodeURIComponent(req.headers.get("x-file-name") || "datei");
+      const bytes = await boundedBody(req, kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD);
       const a = await storeAsset(
         user.id,
         bytes,
-        decodeURIComponent(req.headers.get("x-file-name") || "datei"),
+        name,
         kind,
       );
       return NextResponse.json(a);
@@ -789,3 +791,4 @@ async function handler(
   }
 }
 export { handler as GET, handler as POST };
+

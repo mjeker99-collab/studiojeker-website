@@ -29,6 +29,8 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
     page.getByRole("button", { name: "Google Drive verbinden", exact: true }),
   ).toBeDisabled();
   await page.getByRole("checkbox", { name: /Ich darf die Dateien/ }).check();
+  // Native Drive file providers may report a generic type. Do not filter them out.
+  await expect(page.getByLabel("Dateien hochladen")).not.toHaveAttribute("accept");
   const buffer = await sharp({
     create: { width: 900, height: 650, channels: 3, background: "#204451" },
   })
@@ -42,7 +44,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
     .png()
     .toBuffer();
   await page.getByLabel("Dateien hochladen").setInputFiles([
-    { name: "SYNTHETISCH-Bibliotheksbild.png", mimeType: "image/png", buffer },
+    { name: "SYNTHETISCH-Bibliotheksbild.png", mimeType: "application/octet-stream", buffer },
     { name: "SYNTHETISCH-Kopie.png", mimeType: "image/png", buffer },
   ]);
   await expect(
@@ -190,3 +192,4 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
     page.getByRole("button", { name: "Text erfassen" }),
   ).toBeEnabled();
 });
+
