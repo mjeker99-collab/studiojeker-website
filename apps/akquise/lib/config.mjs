@@ -74,6 +74,10 @@ export function validateProduction(env = process.env) {
       "PostgreSQL benötigt eine individuelle DATABASE_URL mit sicherem Passwort.",
     );
   if (isolatedTestEnvironment(env)) {
+    // Pin the sandbox database identity: never accept the production DATABASE_URL.
+    if (database.pathname !== "/studioone_tester_sandbox" ||
+        !database.hostname.startsWith("dpg-dbjgergu01pc73fd9l50-a"))
+      throw new Error("Testumgebung benötigt die separate StudioONE-Testdatenbank.");
     // A test deployment must have a separate, empty database and no live integrations.
     if (!env.TEST_ACCESS_CODE || env.TEST_ACCESS_CODE.length < 32)
       throw new Error("Testumgebung benötigt einen geheimen Einladungscode.");
