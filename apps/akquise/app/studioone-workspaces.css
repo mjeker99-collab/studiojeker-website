@@ -3,7 +3,7 @@
 .shell .content{background:#f4f7f8}
 .shell .page-heading{margin-bottom:24px}
 .shell .page-heading h1{font-size:clamp(29px,3vw,42px);font-weight:700;letter-spacing:-.035em}
-.shell .page-heading .eyebrow,.shell .section-head .eyebrow{font-size:11px;letter-spacing:.18em;color:#657884}
+.shell .page-heading .eyebrow,.shell .section-head .eyebrow{font-size:11px;letter-spacing:.18em;color:#536671}
 .shell .panel,.shell .hub-card,.shell .metric,.shell .login-card{background:#fff;border:1px solid var(--one-border);border-radius:16px;box-shadow:0 3px 18px #112b3808}
 .shell .hub-card,.shell .metric{transition:border-color .15s,box-shadow .15s}
 .shell .hub-card:hover{border-color:#00bddd;box-shadow:0 6px 20px #12374312}
