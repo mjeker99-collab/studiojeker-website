@@ -121,7 +121,7 @@ export default function Dashboard({
         </div>
         <button
           type="button"
-          className="ai-button"
+          className="secondary"
           onClick={() => document.getElementById("studio-task-input")?.focus()}
         >
           <span aria-hidden="true">✦</span> Aufgabe beschreiben{" "}
@@ -129,7 +129,7 @@ export default function Dashboard({
         </button>
       </section>
       <section className="panel studio-task-start" aria-labelledby="studio-task-start-title">
-        <h2 id="studio-task-start-title">Deine Aufgabe</h2>
+        <h2 id="studio-task-start-title">Was möchtest du heute erledigen?</h2>
         <form onSubmit={(event) => { event.preventDefault(); if (task.trim()) onStartTask(task.trim(), "auto"); }}>
           <label htmlFor="studio-task-input">Deine Aufgabe</label>
           <textarea id="studio-task-input" rows={3} maxLength={2000}

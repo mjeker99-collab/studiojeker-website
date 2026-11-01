@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("CMS overview, responsive controls, import status and provider failure", async ({
+test("Website CMS overview and newsletter editing without Sanity administration", async ({
   page,
 }) => {
   let imported = false;
-  let failed = false;
+  const failed = false;
   let cmsRequests = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -141,40 +141,25 @@ test("CMS overview, responsive controls, import status and provider failure", as
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Newsletter/ })
     .click();
-  const panel = page.getByRole("region", { name: "Sanity-Verwaltung" });
-  await expect(
-    panel.getByRole("heading", { name: "Synthetische Ausgabe" }),
-  ).toBeVisible();
+  // The newsletter is edited in StudioONE; Sanity administration was removed
+  // from this area. Keep the Website/Sanity provider stub to detect regressions.
+  await expect(page.getByRole("region", { name: "Sanity-Verwaltung" })).toHaveCount(0);
+  const panel = page.getByRole("region", { name: "Newsletter-Vorlage auswählen" });
+  await expect(panel.getByRole("heading", { name: "Newsletter bearbeiten" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Grundvorlage bearbeiten" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Letzte gespeicherte Version bearbeiten" })).toBeDisabled();
   for (const width of [1440, 1024, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
     ).toBe(true);
     expect(
-      (await new AxeBuilder({ page }).include(".cms-panel").analyze())
-        .violations,
+      (await new AxeBuilder({ page }).include('[aria-label="Newsletter-Vorlage auswählen"]').analyze()).violations,
     ).toEqual([]);
   }
-  await panel
-    .getByRole("button", { name: "Als neuen Entwurf übernehmen" })
-    .click();
-  await expect(panel.getByRole("status")).toContainText(
-    "Als neuer Entwurf übernommen",
-  );
-  await panel
-    .getByRole("button", { name: "Als neuen Entwurf übernehmen" })
-    .click();
-  await expect(panel.getByRole("status")).toContainText("bereits übernommen");
-  await expect(
-    panel.getByRole("link", { name: "Newsletter in Sanity bearbeiten ↗" }),
-  ).toHaveAttribute("target", "_blank");
-  failed = true;
-  await panel
-    .getByRole("button", { name: "Sanity-Liste aktualisieren" })
-    .click();
-  await expect(panel.getByRole("alert")).toContainText("nicht erreichbar");
+  await panel.getByRole("button", { name: "Vorlage ansehen" }).click();
+  await expect(panel.getByRole("button", { name: "Vorschau schliessen" })).toBeVisible();
+  expect(cmsRequests).toBe(0);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: ".local/cms-desktop.png", fullPage: true });
 });

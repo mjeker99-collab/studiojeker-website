@@ -254,11 +254,13 @@ export default function MailStudio({
       );
     return data;
   }
-  async function prepareBatch() {
-    setSkipped([]);
-    const previewData = await preparation("preview", { ids: contactIds });
+  async function prepareBatch(ids: string[] = contactIds, excluded: string[] = []) {
+    setSkipped(excluded);
+    const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
-    if (proposals.some((p) => !p.ready)) {
+    // Proposed changes from existing notes also require an explicit group review.
+    // An email address alone never proves a contact is ready.
+    if (proposals.some((p) => !p.ready || p.changed)) {
       setBatchProposals(proposals);
       setRows([]);
       setIncluded([]);
@@ -274,6 +276,7 @@ export default function MailStudio({
       (r: Result & { draftId?: string }) => r.ok && r.draftId,
     );
     setSkipped([
+      ...excluded,
       ...prepared.results
         .filter((r: Result) => !r.ok)
         .map((r: Result) => r.message),
@@ -283,19 +286,13 @@ export default function MailStudio({
       throw new Error(
         "Keine Nachricht konnte vorbereitet werden. Die übrigen Kontakte bleiben unverändert.",
       );
-    if (successful.length !== proposals.length) {
-      const fresh = await preparation("preview", { ids: contactIds });
-      setBatchProposals(fresh.contacts);
-      setRows([]);
-      setIncluded([]);
-      setStep(2);
-      throw new Error(
-        "Nicht alle Mails konnten vorbereitet werden. Die gesamte Auswahl bleibt erhalten. Bitte erneut versuchen; vorhandene Entwürfe werden wiederverwendet.",
-      );
-    }
-    const ids = successful.map((r: Result & { draftId: string }) => r.draftId);
-    const data = await api("preview", { ids });
-    setSelected(ids);
+    // Keep completed drafts usable even when a different contact failed.
+    // Failed contacts are displayed separately and are never included in approval.
+    // Existing drafts are reused if the user intentionally retries.
+    // The remaining failures are shown above; only successful draft IDs enter preview.
+    const draftIds = successful.map((r: Result & { draftId: string }) => r.draftId);
+    const data = await api("preview", { ids: draftIds });
+    setSelected(draftIds);
     setRows(data.rows);
     setIncluded(
       data.rows.filter((r: Row) => !r.issues.length).map((r: Row) => r.id),
@@ -612,9 +609,14 @@ export default function MailStudio({
             onExclude={(ids) =>
               void run(async () => {
                 const remaining = contactIds.filter((id) => !ids.includes(id));
-                const fresh = await preparation("preview", { ids: remaining });
                 setContactIds(remaining);
-                setBatchProposals(fresh.contacts);
+                await prepareBatch(
+                  remaining,
+                  ids.map((id) => {
+                    const contact = contacts.find((c) => c.id === id);
+                    return `${contact?.organisation || id}: Angaben offen, bewusst zurückgestellt.`;
+                  }),
+                );
               })
             }
           />
@@ -846,7 +848,7 @@ export default function MailStudio({
                 {sendMode === "now"
                   ? "an Mailserver übergeben"
                   : "freigegeben und eingeplant"}
-                · {results.filter((r) => !r.ok).length} noch offen.
+                {" · "}{results.filter((r) => !r.ok).length} noch offen.
               </p>
               <ul>
                 {results.map((r) => (

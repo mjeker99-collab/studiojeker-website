@@ -56,20 +56,15 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /Gespeicherte Entwürfe öffnen/ }).click();
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
-    await page
-      .getByRole("button", {
-        name: "Erste 25 angezeigte Mails auswählen",
-        exact: true,
-      })
-      .click();
-    await page
-      .getByRole("button", { name: "2 Mails gemeinsam prüfen", exact: true })
-      .click();
+    await page.getByRole("button", { name: "2 Mails gemeinsam freigeben →", exact: true }).click();
     const panel = page.getByRole("region", {
       name: "Globale Mailprüfung",
       exact: true,
     });
+    await panel.locator("details.mail-review-message").nth(0).locator("summary").click();
+    await panel.locator("details.mail-review-message").nth(1).locator("summary").click();
     await expect(
       panel.getByText("Persönlicher Architekturtext 0.", { exact: false }),
     ).toBeVisible();
@@ -77,7 +72,7 @@ for (const width of [390, 768, 1440]) {
       panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
     ).toBeVisible();
     const approve = panel.getByRole("button", {
-      name: "2 Mails freigeben und einplanen",
+      name: "Nach Zeitplan einplanen",
       exact: true,
     });
     await expect(approve).toBeDisabled();
@@ -85,15 +80,14 @@ for (const width of [390, 768, 1440]) {
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
     await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
-    await panel.getByLabel(/Ich habe alle 2 ausgewählten Nachrichten/).check();
-    await panel.getByLabel(/Diese 2 Mails nach der Freigabe/).check();
+    await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
     await expect(approve).toBeEnabled();
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Aktualisierter synthetischer Nachweis für beide Testkontakte.");
     await expect(approve).toBeDisabled();
     await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
-    await panel.getByLabel(/Ich habe alle 2 ausgewählten Nachrichten/).check();
+    await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
     expect(
       (await new AxeBuilder({ page }).include(".mail-studio").analyze())
         .violations,
@@ -178,7 +172,7 @@ for (const width of [390, 768, 1440]) {
       exact: true,
     });
     await expect(prepare).toBeDisabled();
-    await panel.getByLabel(/Ich habe die vorgeschlagenen Angaben/).check();
+    await panel.getByLabel(/Ich bestätige die Verwendung der angezeigten Angaben/).check();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(
       await page.evaluate(
@@ -189,6 +183,7 @@ for (const width of [390, 768, 1440]) {
     await expect(
       page
         .getByRole("region", { name: "Globale Mailprüfung" })
+        .locator("details.mail-review-message > summary")
         .getByText("Persönliche Projektbilder", { exact: false }),
     ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
@@ -242,15 +237,9 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "Übersicht", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
-    for (const name of names)
-      await page.getByLabel(`${name} auswählen`, { exact: true }).check();
-    await page
-      .getByRole("button", { name: "2 Mails vorbereiten →", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "2 Kontakte ergänzen", exact: true })
-      .click();
+    await page.getByLabel("Kontakte suchen").fill(suffix);
+    await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
+    await page.getByRole("button", { name: "2 persönliche Mails vorbereiten →", exact: true }).click();
     const panel = page.getByRole("region", {
       name: "2 Kontakte ergänzen und speichern",
     });
@@ -265,7 +254,7 @@ for (const width of [390, 768, 1440]) {
     await common.getByLabel("Quellen-URL").fill("keine adresse");
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await panel
-      .getByRole("button", { name: "Änderungen speichern", exact: true })
+      .getByRole("button", { name: "Angaben für alle speichern und weiter →", exact: true })
       .click();
     await expect(panel.getByRole("alert")).toContainText(
       "Bitte die markierte Quellenadresse korrigieren",
@@ -275,7 +264,7 @@ for (const width of [390, 768, 1440]) {
     // Saving useful partial data must not require a source or create a draft.
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await panel
-      .getByRole("button", { name: "Änderungen speichern", exact: true })
+      .getByRole("button", { name: "Angaben für alle speichern und weiter →", exact: true })
       .click();
     await expect(
       panel.getByText("2 Kontakte gespeichert · 0 nicht gespeichert"),
@@ -291,13 +280,15 @@ for (const width of [390, 768, 1440]) {
     }
     await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
-      name: "Änderungen speichern",
+      name: "Angaben für alle speichern und weiter →",
       exact: true,
     });
     await expect(prepare).toBeDisabled();
     await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
     await expect(prepare).toBeEnabled();
-    const row = panel.getByRole("group", { name: "Angaben für Eva Muster" });
+    const rowDetails = panel.locator("details.preparation-contact").filter({ hasText: "Eva Muster" });
+    await rowDetails.locator("summary").click();
+    const row = rowDetails.getByRole("group", { name: "Angaben für Eva Muster" });
     await row
       .getByLabel("Quellen-URL")
       .fill("example.test/individueller-beleg");
@@ -313,15 +304,8 @@ for (const width of [390, 768, 1440]) {
       ),
     ).toBe(true);
     await prepare.click();
-    await expect(
-      page.getByText("2 Kontakte bereit · 0 Kontakte benötigen Angaben"),
-    ).toBeVisible();
-    await expect(
-      panel.getByText("2 Kontakte gespeichert · 0 nicht gespeichert"),
-    ).toBeVisible();
-    await panel
-      .getByRole("button", { name: "Weiter zur Mailprüfung →" })
-      .click();
+    // When all required evidence is confirmed, the flow proceeds directly to the
+    // shared review; it does not require another manual transition.
     await expect(
       page.getByRole("region", { name: "Globale Mailprüfung" }),
     ).toBeVisible();
@@ -432,7 +416,7 @@ for (const [name, width, height] of [
     await page.setViewportSize({ width, height });
     await signIn(page);
     await expect(
-      page.getByRole("heading", { name: "Deine Arbeitsbereiche" }),
+      page.getByRole("heading", { name: "Schnellzugriff" }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -626,12 +610,12 @@ test("Dashboard opens each work area and keeps navigation available after projec
   );
   const main = page.getByRole("navigation", { name: "Hauptnavigation" });
   for (const [button, heading] of [
-    ["Content erstellen öffnen", "Content-Studio"],
+    ["Content Studio öffnen", "Content-Studio"],
     ["Kampagnen öffnen", "Kampagnen"],
     ["Social Media öffnen", "Social Media"],
     ["Newsletter öffnen", "Newsletter"],
     ["Websites öffnen", "Website"],
-    ["Kontakte & Akquise öffnen", "Mail-Studio"],
+    ["Kontakte öffnen", "Mail-Studio"],
     ["Kunden", "Kunden"],
     ["Strategie & Konzepte", "Strategie & Konzepte"],
     ["Bibliothek", "Bibliothek"],

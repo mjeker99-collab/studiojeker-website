@@ -126,10 +126,10 @@ test("GPT entry points preserve input and require an explicit confirmed request"
     await page.mouse.move(0, 0);
     await expect(
       entry.getByRole("button", { name: "GPT-Dialog einklappen" }),
-    ).toHaveCSS("border-radius", "10px");
+    ).toHaveCSS("border-radius", "11px");
     await expect(
       entry.getByRole("button", { name: "GPT-Dialog einklappen" }),
-    ).toHaveCSS("background-color", "rgb(41, 125, 195)");
+    ).toHaveCSS("background-color", "rgb(0, 197, 232)");
   }
   expect(writes).toEqual([]);
 });

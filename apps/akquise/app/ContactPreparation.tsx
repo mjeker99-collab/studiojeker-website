@@ -168,7 +168,7 @@ export default function ContactPreparation({
       if (
         requireComplete &&
         data.results.every((r) => r.ok) &&
-        fresh.contacts.every((p) => p.ready)
+        fresh.contacts.every((p) => p.ready && !p.changed)
       )
         onDone();
     } catch (e) {
@@ -182,6 +182,7 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
+  const pendingChanges = proposals.some((p) => p.changed);
   // Show the real reasons for an incomplete selection. A verified email address
   // alone does not satisfy source, date, hook and human review requirements.
   const issueCounts = Array.from(
@@ -252,7 +253,7 @@ export default function ContactPreparation({
         </button>
         <button
           className="secondary"
-          disabled={busy || dirty || (requireComplete && open.length > 0)}
+          disabled={busy || dirty || (requireComplete && (open.length > 0 || pendingChanges))}
           onClick={onDone}
         >
           Weiter zur Mailprüfung →
@@ -260,6 +261,9 @@ export default function ContactPreparation({
       </div>
       {!confirmed && <p>Bitte die Angaben bestätigen, um sie zu speichern.</p>}
       {dirty && <p role="status">Ungespeicherte Änderungen</p>}
+      {requireComplete && pendingChanges && (
+        <p role="status">Ergänzungen aus vorhandenen Notizen bitte gemeinsam bestätigen und speichern, bevor du zur Mailprüfung weitergehst.</p>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}
