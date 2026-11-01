@@ -1,6 +1,7 @@
 "use client";
+import CustomerImport from "./CustomerImport";
 import CustomerAssistant from "./CustomerAssistant";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   customerKnowledgeSchema,
   emptyKnowledge,
@@ -41,6 +42,10 @@ const blank: Form = {
 };
 
 export default function Customers() {
+  const [showImport, setShowImport] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const assistantRef = useRef<HTMLDivElement>(null);
+  const focusAssistant = useRef(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState<Form | null>(null);
@@ -49,6 +54,34 @@ export default function Customers() {
   const [busy, setBusy] = useState(false);
   const [assistantBusy, setAssistantBusy] = useState(false);
   const [formSession, setFormSession] = useState(0);
+  useEffect(() => {
+    if (focusAssistant.current) {
+      assistantRef.current?.scrollIntoView({
+        block: "start",
+      });
+      assistantRef.current?.focus();
+      focusAssistant.current = false;
+    }
+  }, [formSession]);
+  function openCustomer(customer: Customer | null, gpt = false) {
+    setShowImport(false);
+    setFormSession((v) => v + 1);
+    setEditing(customer);
+    setForm(
+      customer
+        ? {
+            name: customer.name,
+            website: customer.website,
+            contactName: customer.contactName,
+            contactEmail: customer.contactEmail,
+            notes: customer.notes,
+            status: customer.status,
+            knowledge: customerKnowledgeSchema.parse(customer.knowledge ?? {}),
+          }
+        : { ...blank, knowledge: { ...emptyKnowledge } },
+    );
+    focusAssistant.current = gpt;
+  }
   async function refresh() {
     const response = await fetch("/api/customers/state", { cache: "no-store" });
     const value = await response.json();
@@ -109,16 +142,33 @@ export default function Customers() {
     <section className="panel padded">
       <div className="section-head">
         <h2>Interne Kundenprofile</h2>
-        <button
-          disabled={busy || assistantBusy}
-          onClick={() => {
-            setFormSession((v) => v + 1);
-            setEditing(null);
-            setForm({ ...blank });
-          }}
-        >
-          Kunde erfassen ＋
-        </button>
+        <div className="actions">
+          <button
+            disabled={busy || assistantBusy || importBusy || !!form}
+            onClick={() => setShowImport(true)}
+          >
+            Aus Masterliste importieren
+          </button>
+          <button
+            className="secondary"
+            disabled={busy || assistantBusy || importBusy}
+            onClick={() => {
+              if (form) {
+                assistantRef.current?.scrollIntoView({ block: "start" });
+                assistantRef.current?.focus();
+              } else openCustomer(null, true);
+            }}
+          >
+            GPT-Assistent
+          </button>
+          <button
+            className="secondary"
+            disabled={busy || assistantBusy || importBusy || !!form}
+            onClick={() => openCustomer(null)}
+          >
+            Kunde erfassen ＋
+          </button>
+        </div>
       </div>
       <p>
         Diese Profile dienen der internen Planung. Kunden erhalten keinen Login
@@ -134,15 +184,26 @@ export default function Customers() {
           {notice}
         </p>
       )}
+      {showImport && (
+        <CustomerImport
+          onBusy={setImportBusy}
+          onClose={() => setShowImport(false)}
+          onImported={async (message) => {
+            setNotice(message);
+            await refresh();
+            setShowImport(false);
+          }}
+        />
+      )}
       {form && (
         <form onSubmit={save} className="hub-editor">
           <h3>{editing ? "Kunde bearbeiten" : "Neuer Kunde"}</h3>
           <label>
             Firma / Kundenname
             <input
-              disabled={busy || assistantBusy}
+              disabled={busy || assistantBusy || importBusy}
               required
-              maxLength={200}
+              maxLength={250}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
@@ -150,7 +211,7 @@ export default function Customers() {
           <label>
             Website (HTTPS)
             <input
-              disabled={busy || assistantBusy}
+              disabled={busy || assistantBusy || importBusy}
               type="url"
               onBlur={() => {
                 if (
@@ -166,6 +227,21 @@ export default function Customers() {
               onChange={(e) => setForm({ ...form, website: e.target.value })}
             />
           </label>
+          <div ref={assistantRef} tabIndex={-1}>
+            <CustomerAssistant
+              key={formSession}
+              name={form.name}
+              website={form.website}
+              knowledge={form.knowledge}
+              disabled={busy}
+              onBusy={setAssistantBusy}
+              onChange={(knowledge) =>
+                setForm((current) =>
+                  current ? { ...current, knowledge } : current,
+                )
+              }
+            />
+          </div>
           <label>
             Ansprechperson
             <input
@@ -206,7 +282,10 @@ export default function Customers() {
               <option value="INACTIVE">Inaktiv</option>
             </select>
           </label>
-          <fieldset disabled={busy || assistantBusy} style={{ minWidth: 0 }}>
+          <fieldset
+            disabled={busy || assistantBusy || importBusy}
+            style={{ minWidth: 0 }}
+          >
             <legend>Unternehmenswissen für die KI</legend>
             <p>
               Diese Angaben werden im Konzeptgespräch nach deiner
@@ -214,19 +293,7 @@ export default function Customers() {
               offen. Gestaltungsregeln beschreiben Vorgaben; sie ersetzen keine
               Logo- oder Schriftdateien.
             </p>
-            <CustomerAssistant
-              key={formSession}
-              name={form.name}
-              website={form.website}
-              knowledge={form.knowledge}
-              disabled={busy}
-              onBusy={setAssistantBusy}
-              onChange={(knowledge) =>
-                setForm((current) =>
-                  current ? { ...current, knowledge } : current,
-                )
-              }
-            />
+
             {knowledgeFields.map(([key, label]) => (
               <label key={key}>
                 {label}
@@ -245,10 +312,12 @@ export default function Customers() {
               </label>
             ))}
           </fieldset>
-          <button disabled={busy || assistantBusy}>Speichern</button>{" "}
+          <button disabled={busy || assistantBusy || importBusy}>
+            Speichern
+          </button>{" "}
           <button
             type="button"
-            disabled={busy || assistantBusy}
+            disabled={busy || assistantBusy || importBusy}
             className="secondary"
             onClick={() => {
               setEditing(null);
@@ -279,25 +348,22 @@ export default function Customers() {
             <p>
               {c._count.campaigns} Kampagnen · {c._count.series} Content-Serien
             </p>
-            <button
-              className="secondary"
-              disabled={busy || assistantBusy}
-              onClick={() => {
-                setFormSession((v) => v + 1);
-                setEditing(c);
-                setForm({
-                  name: c.name,
-                  website: c.website,
-                  contactName: c.contactName,
-                  contactEmail: c.contactEmail,
-                  notes: c.notes,
-                  status: c.status,
-                  knowledge: customerKnowledgeSchema.parse(c.knowledge ?? {}),
-                });
-              }}
-            >
-              Bearbeiten
-            </button>
+            <div className="actions">
+              <button
+                className="secondary"
+                disabled={busy || assistantBusy || importBusy || !!form}
+                onClick={() => openCustomer(c, true)}
+              >
+                Mit GPT bearbeiten
+              </button>
+              <button
+                className="secondary"
+                disabled={busy || assistantBusy || importBusy || !!form}
+                onClick={() => openCustomer(c)}
+              >
+                Bearbeiten
+              </button>
+            </div>
           </article>
         ))}
       </div>
