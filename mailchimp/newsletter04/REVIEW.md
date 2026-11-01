@@ -1,15 +1,33 @@
-# Newsletter V4 – unveränderte Übernahme von V3
+# Newsletter V4 – gezielte Korrekturen (3 Punkte)
 
-Ausgangslage: `mailchimp/studiojeker-newsletter-03-visibility-final.html` (main)  
-Neue Datei: `mailchimp/studiojeker-newsletter-04-visibility.html`
+Datei: `mailchimp/studiojeker-newsletter-04-visibility.html`  
+Basis: unveränderte V3-Übernahme (PR #305 / `cursor/newsletter-v4-clean-copy-bd16`)
 
-## Identität
+## Exakt vorgenommene Änderungen
 
-- SHA256 identisch: `b20e4936203d1abeb4f928b4fde8a75a11c6daf500053686949070b40a8b544f`
-- Bytegleicher `cmp`-Vergleich: bestanden
-- Keine inhaltlichen, visuellen oder technischen Änderungen gegenüber V3
+1. **Headlines-Typografie** auf Helvetica Black-Stil gesetzt  
+   (`font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 900;`) für:
+   - Hero: «Einmal auffallen ist gut. Sichtbar bleiben ist besser.»
+   - «Sichtbarkeit im Abo»
+   - «Professioneller Content. Planbar und effizient.»
+   - «Persönliches Gespräch vereinbaren.»
+   - «Unsere Visibility Abos.»  
+   Abschnittstitel «Martin Jeker» bleibt zurückhaltend (Arial / weight 700).
 
-## Vorschauen (Chromium, Originalbilder via GitHub)
+2. **Ansprechpartner Nora → Martin**
+   - Kontaktbild: `martin-jeker-contact.jpg` (Layout/Maße unverändert)
+   - Texte: Name + männliche Formen (Ansprechpartner, Geschäftsführer, Spezialist)
+   - Alt-Text angepasst
+
+3. **Hero-Bild → Baseballer**
+   - Desktop/Mobile: `hero-baseballer-desktop.jpg` / `hero-baseballer-mobile.jpg`
+   - Rahmen, Maße (386×290), Vimeo-Link und Play-Button unverändert
+
+## Nicht geändert
+
+Promo-Bild, Logo, Footer, übrige Bilder, Layout, Farben, Abstände, CTAs, Links, responsive Struktur, Fliesstext (ausser Nora→Martin).
+
+## Vorschauen (Chromium)
 
 | Breite | Datei |
 | --- | --- |
@@ -19,6 +37,6 @@ Neue Datei: `mailchimp/studiojeker-newsletter-04-visibility.html`
 
 Prüfungen (`previews/responsive-checks.json`): 14/14 Bilder geladen, kein horizontaler Überlauf.
 
-## Nächste Schritte
+## Status
 
-Inhaltliche Änderungen nur nach ausdrücklicher Einzelbeauftragung. Kein Merge/Deploy/Versand in diesem Schritt.
+Stop nach diesen 3 Änderungen – auf Freigabe warten. Kein Merge/Deploy/Versand.
