@@ -271,3 +271,105 @@ test("Dialogverwaltung: löschen mit Sicherheitsabfrage und Archivfilter", async
     promote.getByRole("heading", { name: "Archiv-Dialog" }),
   ).toBeVisible();
 });
+
+for (const width of [390, 1024, 1440]) {
+  test(`Social connection selects the company after personal login at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await mockHub(page, []);
+    let selected = false;
+    const source = "personal-member";
+    const organizationId = "urn:li:organization:77";
+    await page.route("**/api/social/**", async (route) => {
+      const request = route.request();
+      const address = new URL(request.url());
+      if (address.pathname.endsWith("/status"))
+        return route.fulfill({
+          json: {
+            configured: { meta: false, linkedin: true },
+            setup: {
+              meta: {
+                sandbox: false,
+                checks: [{ key: "META_CLIENT_ID", ready: false }],
+                redirectUri:
+                  "https://studiojeker-akquise.onrender.com/api/social/meta/callback",
+              },
+              linkedin: {
+                sandbox: false,
+                checks: [{ key: "LINKEDIN_CLIENT_ID", ready: true }],
+                redirectUri:
+                  "https://studiojeker-akquise.onrender.com/api/social/linkedin/callback",
+              },
+            },
+            connections: [
+              {
+                provider: "LINKEDIN",
+                accountId: selected ? organizationId : source,
+                accountName: selected ? "Studiojeker" : "Personal member",
+                ownerId: user.id,
+                expired: false,
+                needsOrganization: !selected,
+              },
+            ],
+          },
+        });
+      if (address.pathname.endsWith("/organizations")) {
+        expect(address.searchParams.get("accountId")).toBe(source);
+        return route.fulfill({
+          json: {
+            organizations: [
+              {
+                accountId: organizationId,
+                accountName: "Studiojeker",
+                url: "https://www.linkedin.com/company/studiojeker/",
+              },
+            ],
+          },
+        });
+      }
+      expect(address.pathname).toBe("/api/social/linkedin/organization");
+      expect(request.method()).toBe("POST");
+      expect(request.postDataJSON()).toEqual({
+        accountId: source,
+        organizationId,
+      });
+      selected = true;
+      return route.fulfill({ json: { ok: true } });
+    });
+    await page.goto("/");
+    await page
+      .getByRole("navigation", { name: "Hauptnavigation" })
+      .getByRole("button", { name: /Social Media/ })
+      .click();
+    const panel = page.getByRole("region", { name: "Social-Media-Konten" });
+    await expect(
+      panel.getByText(/Anmeldung erfolgt – Unternehmensseite noch auswählen/),
+    ).toBeVisible();
+    await expect(
+      panel.getByRole("button", { name: "Facebook & Instagram verbinden" }),
+    ).toBeDisabled();
+    await panel.getByText("Einrichtungsdetails", { exact: true }).click();
+    await expect(panel.getByText("META_CLIENT_ID")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await panel
+      .getByRole("button", { name: "Unternehmensseite auswählen", exact: true })
+      .click();
+    await panel
+      .getByRole("button", { name: "Diese Unternehmensseite verbinden" })
+      .click();
+    await expect(panel.getByRole("status")).toContainText(
+      "Unternehmensseite verbunden",
+    );
+    await expect(
+      panel.getByText(/LinkedIn: Studiojeker · verbunden/),
+    ).toBeVisible();
+    await expect(
+      panel.getByRole("button", { name: "Seitenrechte prüfen" }),
+    ).toBeVisible();
+  });
+}
