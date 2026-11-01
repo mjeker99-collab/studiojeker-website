@@ -6,7 +6,16 @@
 .dashboard-home .dashboard-welcome .eyebrow{letter-spacing:.32em;font-size:12px;font-weight:800;color:#31363a}
 .dashboard-home .dashboard-welcome h2{font-size:clamp(32px,4vw,62px);line-height:1.06;letter-spacing:-.045em;max-width:700px;margin:16px 0}
 .dashboard-home .dashboard-welcome p:not(.eyebrow){font-size:clamp(15px,1.5vw,19px);max-width:580px;line-height:1.55}
-.dashboard-home .studio-task-start{background:#111519;color:#fff;border:0;border-radius:16px;padding:clamp(20px,3vw,36px)}
+.dashboard-home .studio-task-start{display:grid;gap:20px;margin:0;background:#111519;color:#fff;border:0;border-radius:16px;padding:clamp(20px,3vw,36px)}
+.dashboard-home .studio-task-start>h2,.dashboard-home .studio-task-start>p{margin:0}
+.dashboard-home .studio-task-start form{display:grid;gap:12px;min-width:0}
+.dashboard-home .studio-task-start form>label{margin:0}
+.dashboard-home .studio-task-start form>button[type=submit]{justify-self:start;margin-top:4px}
+.dashboard-home .studio-quick-tasks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;min-width:0}
+.dashboard-home .studio-quick-tasks button{width:100%;min-width:0;justify-content:space-between;text-align:left;line-height:1.4;white-space:normal}
+.dashboard-home .studio-quick-tasks button>span{flex-shrink:0}
+@media(max-width:1100px){.dashboard-home .studio-quick-tasks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.dashboard-home .studio-quick-tasks{grid-template-columns:1fr}.dashboard-home .studio-task-start form>button[type=submit]{justify-self:stretch}}
 .dashboard-home .studio-task-start textarea{border-radius:12px;background:#22272b;color:white;border:1px solid #51585d}
 .dashboard-home .studio-task-start label,.dashboard-home .studio-task-start .muted{color:#c8d2d7}
 .dashboard-home .studio-task-start button[type=submit]{background:var(--one-cyan);color:#071116;border-radius:12px}
