@@ -848,7 +848,7 @@ export default function MailStudio({
                 {sendMode === "now"
                   ? "an Mailserver übergeben"
                   : "freigegeben und eingeplant"}
-                · {results.filter((r) => !r.ok).length} noch offen.
+                {" · "}{results.filter((r) => !r.ok).length} noch offen.
               </p>
               <ul>
                 {results.map((r) => (
