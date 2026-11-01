@@ -5,7 +5,7 @@ test("Website CMS overview and newsletter editing without Sanity administration"
   page,
 }) => {
   let imported = false;
-  let failed = false;
+  const failed = false;
   let cmsRequests = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
