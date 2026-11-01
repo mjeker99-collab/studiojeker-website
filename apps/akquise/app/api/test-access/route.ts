@@ -55,14 +55,6 @@ export async function POST(req: NextRequest) {
       create: { id: "studiojeker", name: "StudioONE Testumgebung", brand: {} },
       update: {},
     });
-    const user = await db.user.create({
-      data: {
-        name: input.name,
-        email: input.email,
-        passwordHash: hashPassword(input.password),
-      },
-      select: { id: true },
-    });
     const rows = [
       ["Beispiel Architektur AG", "Anna", "Muster", "Architektur", "Solothurn"],
       ["Demo Immobilien GmbH", "Luca", "Beispiel", "Immobilien", "Bern"],
@@ -79,6 +71,14 @@ export async function POST(req: NextRequest) {
         confidence: "UNCONFIRMED",
       })),
       skipDuplicates: true,
+    });
+    const user = await db.user.create({
+      data: {
+        name: input.name,
+        email: input.email,
+        passwordHash: hashPassword(input.password),
+      },
+      select: { id: true },
     });
     await db.audit.create({
       data: { userId: user.id, action: "TEST_REGISTRATION", entityId: user.id, detail: {} },
