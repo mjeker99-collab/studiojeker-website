@@ -45,7 +45,7 @@ import { login, requireUser, tokenHash } from "@/lib/auth";
 import { PolicyError, messageHash } from "@/lib/policy";
 import { appOrigin, sessionCookieName, readMailConfig } from "@/lib/config.mjs";
 import { dispatchApproved } from "@/lib/delivery";
-import { parseImport } from "@/lib/import";
+import { MAX_IMPORT_BYTES, parseImport } from "@/lib/import";
 import { prepareContacts } from "@/lib/contact-preparation-service";
 import { mailReview } from "@/lib/mail-review";
 import {
@@ -521,14 +521,14 @@ async function handler(
     }
     if (req.method !== "POST") throw new PolicyError("Nicht gefunden.", 404);
     if (route === "contacts/import") {
-      if (Number(req.headers.get("content-length")) > 2200000)
+      if (Number(req.headers.get("content-length")) > MAX_IMPORT_BYTES + 200000)
         throw new PolicyError("Datei zu gross.", 413);
-      const bytes = await boundedBody(req, 2200000);
+      const bytes = await boundedBody(req, MAX_IMPORT_BYTES + 200000);
       const form = await new Response(new Uint8Array(bytes), {
         headers: { "Content-Type": req.headers.get("content-type") ?? "" },
       }).formData();
       const file = form.get("file");
-      if (!(file instanceof File) || file.size > 2097152)
+      if (!(file instanceof File) || file.size > MAX_IMPORT_BYTES)
         throw new PolicyError("Datei fehlt oder ist zu gross.");
       const rows = await parseImport(
         Buffer.from(await file.arrayBuffer()),
