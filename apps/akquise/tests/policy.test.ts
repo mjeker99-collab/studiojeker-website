@@ -10,7 +10,7 @@ import {
   messageHash,
   assertExternalSendingAllowed,
 } from "../lib/policy";
-import { parseImport, validateRows } from "../lib/import";
+import { MAX_IMPORT_BYTES, MAX_IMPORT_CONTACTS, parseImport, validateRows } from "../lib/import";
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
@@ -513,7 +513,7 @@ test("Import blockiert Dubletten, Formeln, unerlaubte URLs und Übergrösse", as
       "test.csv",
     ),
   );
-  await assert.rejects(parseImport(Buffer.alloc(2097153), "test.csv"));
+  await assert.rejects(parseImport(Buffer.alloc(MAX_IMPORT_BYTES + 1), "test.csv"));
   assert.throws(() =>
     validateRows([
       {
@@ -526,7 +526,7 @@ test("Import blockiert Dubletten, Formeln, unerlaubte URLs und Übergrösse", as
     ]),
   );
   await assert.rejects(parseImport(Buffer.from(csv), "test.exe"));
-  assert.throws(() => validateRows(Array.from({ length: 501 }, () => ({}))));
+  assert.throws(() => validateRows(Array.from({ length: MAX_IMPORT_CONTACTS + 1 }, () => ({}))));
 });
 test("XLSX akzeptiert Text und blockiert Formeln", async () => {
   const book = new ExcelJS.Workbook();
@@ -620,4 +620,29 @@ test("Masterliste mit mehreren Blättern und x:-Namespace importiert nur Kontakt
     subject: "Betreff",
     body: "Entwurf",
   });
+});
+
+test("One XLSX master with more than 500 contacts remains importable without approval", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("Kontakte");
+  sheet.addRow([
+    "Person", "Funktion", "Organisation", "Ort", "E-Mail",
+    "Prüfstatus", "Prüfdatum", "Priorität", "Quellen-URL",
+    "Newsletter-Einwilligung", "Akquise-Status", "Betreff",
+    "E-Mail-Entwurf", "Herkunft", "Hinweise",
+  ]);
+  for (let i = 0; i < 650; i++) {
+    sheet.addRow([
+      `Anna Person${i}`, "Marketing", `Firma ${i} AG`, "Solothurn",
+      `anna${i}@example.test`, "Offiziell", "2026-11-01", "B",
+      "https://example.test/kontakt", "Nicht belegt", "Keine Versandfreigabe",
+      `Betreff ${i}`, `Persönlicher Entwurf ${i}`, "Recherche", "",
+    ]);
+  }
+  const rows = await parseImport(
+    Buffer.from(await book.xlsx.writeBuffer()), "einzige-masterliste.xlsx",
+  );
+  assert.equal(rows.length, 650);
+  assert.match(rows[649].notes, /E-Mail-Entwurf: Persönlicher Entwurf 649/);
+  assert.ok(rows.every(r => r.confidence === "UNCONFIRMED" && !r.newsletterConsent));
 });
