@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 export default function Testzugang() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -58,7 +59,7 @@ export default function Testzugang() {
             <h2>Dein Testkonto ist bereit.</h2>
             <p>Du kannst dich jetzt mit deiner E-Mail-Adresse und deinem eigenen Passwort anmelden.</p>
             <p>Hier arbeitest du mit Beispieldaten. Echte E-Mails und Veröffentlichungen sind ausgeschaltet.</p>
-            <a href="/">Zur Anmeldung →</a>
+            <Link href="/">Zur Anmeldung →</Link>
           </div>
         ) : (
           <>
@@ -86,7 +87,7 @@ export default function Testzugang() {
             <p className="muted">Nur für eingeladene Testpersonen. Deine Testarbeiten können von anderen Testpersonen gesehen werden.</p>
           </>
         )}
-        <p><a href="/">Zur StudioONE-Anmeldung</a></p>
+        <p><Link href="/">Zur StudioONE-Anmeldung</Link></p>
       </div>
     </main>
   );
