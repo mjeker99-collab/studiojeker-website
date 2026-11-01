@@ -74,6 +74,8 @@ import {
   begin as beginSocial,
   disconnect as disconnectSocial,
   status as socialStatus,
+  linkedinOrganizations,
+  chooseLinkedInOrganization,
 } from "@/lib/social/service";
 import {
   beginDrive,
@@ -310,6 +312,38 @@ async function handler(
       return NextResponse.json(await socialStatus(user.id), {
         headers: { "Cache-Control": "no-store" },
       });
+    if (route === "social/linkedin/organizations" && req.method === "GET") {
+      const accountId = z
+        .string()
+        .min(1)
+        .max(200)
+        .parse(req.nextUrl.searchParams.get("accountId"));
+      return NextResponse.json(
+        await linkedinOrganizations(user.id, accountId),
+        {
+          headers: { "Cache-Control": "no-store, private" },
+        },
+      );
+    }
+    if (route === "social/linkedin/organization" && req.method === "POST") {
+      const input = z
+        .object({
+          accountId: z.string().min(1).max(200),
+          organizationId: z.string().min(1).max(200),
+        })
+        .strict()
+        .parse(await jsonBody(req));
+      return NextResponse.json(
+        await chooseLinkedInOrganization(
+          user.id,
+          input.accountId,
+          input.organizationId,
+        ),
+        {
+          headers: { "Cache-Control": "no-store, private" },
+        },
+      );
+    }
     if (
       path[0] === "social" &&
       path[1] === "connect" &&

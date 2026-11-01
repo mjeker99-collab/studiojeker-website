@@ -95,6 +95,9 @@ export function validateProduction(env = process.env) {
       "CHATGPT_CONNECTOR_WRITE_TOKEN", "STUDIO_S3_ACCESS_KEY_ID",
       "STUDIO_S3_SECRET_ACCESS_KEY", "SOCIAL_META_APP_SECRET",
       "SOCIAL_LINKEDIN_CLIENT_SECRET",
+      "META_CLIENT_ID", "META_CLIENT_SECRET",
+      "LINKEDIN_CLIENT_ID", "LINKEDIN_CLIENT_SECRET",
+      "SOCIAL_TOKEN_ENCRYPTION_KEY",
     ]) {
       if (env[key]) throw new Error(`Testumgebung darf ${key} nicht verbinden.`);
     }

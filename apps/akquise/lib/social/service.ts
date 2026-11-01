@@ -2,18 +2,25 @@ import {
   createHash,
   randomBytes,
   createCipheriv,
+  createDecipheriv,
   timingSafeEqual,
 } from "node:crypto";
 import { db } from "../db";
 import { PolicyError } from "../policy";
 import { appOrigin, allowedAccount } from "../config.mjs";
 import { hubActor } from "../hub/workflow";
+import { socialSetup } from "./config";
+import {
+  linkedinOrganizationPattern,
+  linkedinScope,
+  readLinkedIn,
+  studiojekerOrganizations,
+} from "./linkedin";
 
 export type Provider = "meta" | "linkedin";
 const graphVersion = "v26.0";
 const metaScope =
   "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish";
-const linkedinScope = "openid profile w_organization_social";
 const digest = (s: string) => createHash("sha256").update(s).digest("hex");
 const idPattern = /^[0-9]{1,30}$/;
 function key() {
@@ -35,6 +42,11 @@ function seal(value: string, context: string) {
     .join(".");
 }
 function credentials(provider: Provider) {
+  if (process.env.STUDIOONE_TEST_SANDBOX === "true")
+    throw new PolicyError(
+      "In der Testumgebung sind Social-Verbindungen deaktiviert.",
+      403,
+    );
   key();
   const prefix = provider === "meta" ? "META" : "LINKEDIN";
   const id = process.env[`${prefix}_CLIENT_ID`];
@@ -46,14 +58,6 @@ function credentials(provider: Provider) {
     secret,
     redirect: `${appOrigin()}/api/social/${provider}/callback`,
   };
-}
-function configured(provider: Provider) {
-  const prefix = provider === "meta" ? "META" : "LINKEDIN";
-  return Boolean(
-    process.env[`${prefix}_CLIENT_ID`] &&
-    process.env[`${prefix}_CLIENT_SECRET`] &&
-    /^[a-f0-9]{64}$/i.test(process.env.SOCIAL_TOKEN_ENCRYPTION_KEY || ""),
-  );
 }
 async function jsonResponse(url: string, init?: RequestInit) {
   let response: Response;
@@ -78,6 +82,7 @@ async function auth(actor: string) {
 }
 export async function status(actor: string) {
   await auth(actor);
+  const setup = socialSetup();
   const connections = await db.socialConnection.findMany({
     select: {
       provider: true,
@@ -89,12 +94,133 @@ export async function status(actor: string) {
     orderBy: { updatedAt: "desc" },
   });
   return {
-    configured: { meta: configured("meta"), linkedin: configured("linkedin") },
+    configured: {
+      meta: setup.meta.configured,
+      linkedin: setup.linkedin.configured,
+    },
+    setup,
     connections: connections.map((c) => ({
       ...c,
       expired: !!c.expiresAt && c.expiresAt <= new Date(),
+      needsOrganization:
+        c.provider === "LINKEDIN" &&
+        !linkedinOrganizationPattern.test(c.accountId),
     })),
   };
+}
+
+async function ownedLinkedIn(actor: string, accountId: string) {
+  await auth(actor);
+  credentials("linkedin");
+  const connection = await db.socialConnection.findFirst({
+    where: { provider: "LINKEDIN", accountId, ownerId: actor },
+  });
+  if (!connection)
+    throw new PolicyError("Bitte mit deinem LinkedIn-Konto verbinden.", 403);
+  if (!connection.expiresAt || connection.expiresAt <= new Date())
+    throw new PolicyError(
+      "Die LinkedIn-Freigabe ist abgelaufen. Bitte erneut verbinden.",
+      401,
+    );
+  let token: string;
+  try {
+    const parts = connection.encryptedToken.split(".");
+    if (parts.length !== 3) throw new Error("Invalid encrypted token");
+    const [iv, tag, encrypted] = parts.map((p) => Buffer.from(p, "base64url"));
+    const decipher = createDecipheriv("aes-256-gcm", key(), iv);
+    decipher.setAAD(Buffer.from(`LINKEDIN:${accountId}`));
+    decipher.setAuthTag(tag);
+    token = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]).toString("utf8");
+  } catch {
+    throw new PolicyError(
+      "Die LinkedIn-Freigabe kann nicht gelesen werden. Bitte erneut verbinden.",
+      503,
+    );
+  }
+  return { connection, token };
+}
+
+export async function linkedinOrganizations(actor: string, accountId: string) {
+  const { token } = await ownedLinkedIn(actor, accountId);
+  return {
+    organizations: await studiojekerOrganizations((path) =>
+      readLinkedIn(path, token),
+    ),
+  };
+}
+
+export async function chooseLinkedInOrganization(
+  actor: string,
+  accountId: string,
+  organizationId: string,
+) {
+  if (!linkedinOrganizationPattern.test(organizationId))
+    throw new PolicyError("Ungültige Unternehmensseite.");
+  const { connection, token } = await ownedLinkedIn(actor, accountId);
+  // Never trust the displayed candidate list or a submitted organization name.
+  const candidates = await studiojekerOrganizations((path) =>
+    readLinkedIn(path, token),
+  );
+  const selected = candidates.find((c) => c.accountId === organizationId);
+  if (!selected)
+    throw new PolicyError(
+      "Keine Studiojeker-Unternehmensseite mit bestätigtem Seitenrecht gefunden.",
+      403,
+    );
+  await db.$transaction(async (tx) => {
+    await hubActor(tx, actor);
+    // Serialize selection and disconnect for the same source connection.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"social:" + connection.id}))`;
+    const current = await tx.socialConnection.findFirst({
+      where: {
+        id: connection.id,
+        ownerId: actor,
+        encryptedToken: connection.encryptedToken,
+        expiresAt: { gt: new Date() },
+      },
+    });
+    if (!current)
+      throw new PolicyError(
+        "Die Verbindung wurde geändert. Bitte neu laden.",
+        409,
+      );
+    await tx.socialConnection.upsert({
+      where: {
+        provider_accountId: {
+          provider: "LINKEDIN",
+          accountId: selected.accountId,
+        },
+      },
+      create: {
+        provider: "LINKEDIN",
+        accountId: selected.accountId,
+        accountName: selected.accountName,
+        encryptedToken: seal(token, `LINKEDIN:${selected.accountId}`),
+        expiresAt: current.expiresAt,
+        ownerId: actor,
+      },
+      update: {
+        accountName: selected.accountName,
+        encryptedToken: seal(token, `LINKEDIN:${selected.accountId}`),
+        expiresAt: current.expiresAt,
+        ownerId: actor,
+      },
+    });
+    if (accountId !== selected.accountId)
+      await tx.socialConnection.delete({ where: { id: current.id } });
+    await tx.audit.create({
+      data: {
+        userId: actor,
+        action: "SOCIAL_ORGANIZATION_CONNECTED",
+        entityId: selected.accountId,
+        detail: { provider: "LINKEDIN" },
+      },
+    });
+  });
+  return { ok: true };
 }
 export async function begin(
   actor: string,
@@ -382,8 +508,15 @@ export async function disconnect(
     accountId.length > 200
   )
     throw new PolicyError("Ungültiges Social-Konto.");
-  const removed = await db.socialConnection.deleteMany({
-    where: { provider, accountId, ownerId: actor },
+  const removed = await db.$transaction(async (tx) => {
+    const connection = await tx.socialConnection.findFirst({
+      where: { provider, accountId, ownerId: actor },
+    });
+    if (!connection) return { count: 0 };
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"social:" + connection.id}))`;
+    return tx.socialConnection.deleteMany({
+      where: { id: connection.id, ownerId: actor },
+    });
   });
   if (!removed.count)
     throw new PolicyError(

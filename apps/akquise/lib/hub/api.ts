@@ -19,6 +19,7 @@ import {
 import { manageDialogs } from "./dialogs";
 import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
+import { linkedinOrganizationPattern } from "../social/linkedin";
 const version = z.number().int().positive();
 export async function hubState() {
   const [campaigns, contents, users, drafts, social, customers] =
@@ -53,7 +54,7 @@ export async function hubState() {
         },
       }),
       db.socialConnection.findMany({
-        select: { provider: true, expiresAt: true },
+        select: { provider: true, accountId: true, expiresAt: true },
       }),
       db.customer.findMany({
         where: { organizationId: "studiojeker" },
@@ -90,9 +91,10 @@ export async function hubState() {
       linkedin: social.some(
         (c) =>
           c.provider === "LINKEDIN" &&
+          linkedinOrganizationPattern.test(c.accountId) &&
           (!c.expiresAt || c.expiresAt > new Date()),
       )
-        ? "MEMBER_CONNECTED"
+        ? "CONNECTED"
         : "NOT_CONNECTED",
       instagram: social.some(
         (c) =>
