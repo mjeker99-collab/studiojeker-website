@@ -71,3 +71,39 @@ test("missing/HTTP origins, demo accounts and weak DB credentials fail closed", 
   ])
     assert.throws(() => configureRender({ ...environment(), ...patch }));
 });
+
+test("sandbox accepts invited testers without production owner emails", async () => {
+  const { allowedAccount } = await import("../lib/config.mjs");
+  const sandbox = {
+    ...environment(),
+    STUDIOONE_TEST_SANDBOX: "true",
+    TEST_ACCESS_CODE: "a".repeat(48),
+    MARTIN_EMAIL: "",
+    NORA_EMAIL: "",
+  };
+  const configured = configureRender({ ...sandbox });
+  assert.equal(configured.NODE_ENV, "production");
+  assert.equal(configured.APP_URL, sandbox.RENDER_EXTERNAL_URL);
+  assert.equal(allowedAccount({ name: "KMU Testperson", email: "tester@firma.ch", active: true }, configured), true);
+  assert.equal(allowedAccount({ name: "KMU Testperson", email: "tester@example.test", active: true }, configured), false);
+  assert.equal(allowedAccount({ name: "KMU Testperson", email: "tester@firma.ch", active: false }, configured), false);
+  for (const patch of [
+    { TEST_ACCESS_CODE: "kurz" },
+    { MAIL_MODE: "production" },
+    { ENABLE_EMAIL_SENDING: "true" },
+    { SMTP_PASSWORD: "secret" },
+    { MAILCHIMP_API_KEY: "key" },
+    { GOOGLE_CLIENT_EMAIL: "service@company.ch" },
+    { SANITY_API_WRITE_TOKEN: "key" },
+    { OPENAI_API_KEY: "key" },
+    { SITE_CMS_ALLOW_PUBLISH: "true" },
+  ])
+    assert.throws(() => configureRender({ ...sandbox, ...patch }));
+  assert.equal(
+    allowedAccount(
+      { name: "KMU Testperson", email: "tester@firma.ch", active: true },
+      { ...sandbox, NODE_ENV: "production", STUDIOONE_TEST_SANDBOX: "false" },
+    ),
+    false,
+  );
+});
