@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { campaignsForSelection } from "@/lib/studio/campaign-picker";
 import type { studioState } from "@/lib/studio/service";
 type State = Awaited<ReturnType<typeof studioState>>;
 export default function StudioProjects({
@@ -155,11 +156,7 @@ export default function StudioProjects({
               }}
             >
               <option value="">Ohne Kampagne</option>
-              {state.campaigns
-                .filter(
-                  (c) => (c.customerId || null) === (currentCustomer || null),
-                )
-                .map((campaign) => (
+              {campaignsForSelection(state.campaigns, currentCustomer).map((campaign) => (
                   <option key={campaign.id} value={campaign.id}>
                     {campaign.title}
                   </option>
