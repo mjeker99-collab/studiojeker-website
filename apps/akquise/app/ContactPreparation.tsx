@@ -168,7 +168,7 @@ export default function ContactPreparation({
       if (
         requireComplete &&
         data.results.every((r) => r.ok) &&
-        fresh.contacts.every((p) => p.ready)
+        fresh.contacts.every((p) => p.ready && !p.changed)
       )
         onDone();
     } catch (e) {
