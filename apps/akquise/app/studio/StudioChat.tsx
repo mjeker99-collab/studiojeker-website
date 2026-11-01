@@ -234,7 +234,13 @@ export default function StudioChat({
     prepare(request, replace = false) {
       if (busy) return false;
       const switchingProject =
-        request.seriesId !== undefined && request.seriesId !== seriesId;
+        request.seriesId !== undefined &&
+        (request.seriesId !== seriesId ||
+          (!request.seriesId &&
+            ((request.customerId !== undefined &&
+              request.customerId !== customerId) ||
+              (request.campaignId !== undefined &&
+                request.campaignId !== campaignId))));
       if (
         (replace || switchingProject) &&
         (message.trim() || referenceCount > 0) &&
