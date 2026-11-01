@@ -1430,6 +1430,23 @@ pre {
 
 /* Content-Studio: same compact internal design; fixed readable desktop editor. */
 .studio-workspace { min-width:0; }
+.studio-task-picker { margin-bottom: 16px; }
+.studio-task-picker h2 { margin: 0 0 16px; }
+.studio-task-picker > p { margin: 12px 0 0; color: var(--muted); }
+.studio-task-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.studio-task-buttons button { min-height: 52px; white-space: normal; }
+.studio-task-buttons button[aria-pressed="true"] { border-color: var(--cyan); box-shadow: inset 0 -3px var(--cyan); }
+.studio-task-toolbar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; margin-bottom: 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.studio-task-toolbar > span { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.studio-task-toolbar .actions { display: flex; gap: 8px; flex-shrink: 0; }
+.studio-workspace [id] { scroll-margin-top: 110px; }
+@media(max-width:600px) {
+  .studio-task-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .studio-task-toolbar { flex-wrap: wrap; }
+  .studio-task-toolbar > span { display: none; }
+  .studio-task-toolbar .actions { width: 100%; flex-shrink: 1; }
+  .studio-task-toolbar button { flex: 1; padding-inline: 10px; }
+}
 .studio-connections { display:flex; flex-wrap:wrap; gap:12px 24px; padding:14px 0; color:var(--muted,#aabcc2); font-size:13px; }
 .studio-columns { display:grid; grid-template-columns:minmax(190px,240px) minmax(0,1fr); gap:24px; align-items:start; margin-top:20px; }
 .studio-series { position:sticky; top:16px; max-height:80vh; overflow:auto; }
