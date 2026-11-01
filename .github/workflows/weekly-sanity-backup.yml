@@ -1,4 +1,4 @@
-name: Weekly Sanity content backup
+name: Weekly Sanity content backup (private Exoscale)
 
 on:
   schedule:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check backup credentials
         env:
-          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN || secrets.SANITY_AUTH_TOKEN }}
         run: |
           if [ -z "$SANITY_AUTH_TOKEN" ]; then
             echo "::error::Missing SANITY_AUTH_TOKEN GitHub Actions repository secret"
@@ -33,7 +33,7 @@ jobs:
       - name: Export dataset including media assets
         working-directory: studio
         env:
-          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_BACKUP_TOKEN || secrets.SANITY_AUTH_TOKEN }}
         run: |
           mkdir -p ../backups
           npx sanity dataset export production "../backups/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz" --overwrite
@@ -48,11 +48,16 @@ jobs:
           test -n "$AWS_ACCESS_KEY_ID" || { echo "::error::Missing Exoscale access key"; exit 1; }
           test -n "$AWS_SECRET_ACCESS_KEY" || { echo "::error::Missing Exoscale secret key"; exit 1; }
           F="backups/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
-          aws --endpoint-url https://sos-ch-dk-2.exo.io s3 cp "$F" "s3://studiojeker-backups/website/sanity/$(date -u +%Y-%m-%d)/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
-      - name: Store weekly backup (90 days)
-        uses: actions/upload-artifact@v4
-        with:
-          name: studiojeker-sanity-${{ github.run_id }}
-          path: backups/*.tar.gz
-          retention-days: 90
-          if-no-files-found: error
+          KEY="website/sanity/$(date -u +%Y-%m-%d)/studiojeker-sanity-${GITHUB_RUN_ID}.tar.gz"
+          aws --endpoint-url https://sos-ch-dk-2.exo.io s3 cp "$F" "s3://studiojeker-backups/$KEY"
+          # Confirm that the private offsite object exists with the expected size.
+          expected=$(stat -c %s "$F")
+          actual=$(aws --endpoint-url https://sos-ch-dk-2.exo.io s3api head-object \
+            --bucket studiojeker-backups --key "$KEY" --query ContentLength --output text)
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::Backup upload size mismatch; offsite backup is not verified."
+            exit 1
+          fi
+          echo "Private offsite backup exists; size verified."
+      # Do not upload unencrypted production CMS exports as Actions artifacts:
+      # this repository is public, while drafts and CMS assets are confidential.
