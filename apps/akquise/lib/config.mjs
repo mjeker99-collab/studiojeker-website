@@ -35,8 +35,13 @@ export function appOrigin(env = process.env) {
     throw new Error("Produktion benötigt eine eigene HTTPS-Adresse.");
   return url.origin;
 }
+export function isolatedTestEnvironment(env = process.env) {
+  return env.STUDIOONE_TEST_SANDBOX === "true";
+}
 export function allowedAccount(user, env = process.env) {
   if (env.NODE_ENV !== "production") return true;
+  if (isolatedTestEnvironment(env))
+    return Boolean(user.active && emailPattern.test(user.email) && !synthetic(user.email));
   const email =
     user.name === "Martin Jeker"
       ? env.MARTIN_EMAIL
@@ -68,14 +73,43 @@ export function validateProduction(env = process.env) {
     throw new Error(
       "PostgreSQL benötigt eine individuelle DATABASE_URL mit sicherem Passwort.",
     );
-  for (const key of ["MARTIN_EMAIL", "NORA_EMAIL"])
-    if (!emailPattern.test(env[key] || "") || synthetic(env[key] || ""))
-      throw new Error(`${key}: persönliche reale E-Mail-Adresse erforderlich.`);
-  if (
-    env.MARTIN_EMAIL.trim().toLowerCase() ===
-    env.NORA_EMAIL.trim().toLowerCase()
-  )
-    throw new Error("Martin und Nora benötigen unterschiedliche Konten.");
+  if (isolatedTestEnvironment(env)) {
+    // Pin the sandbox database identity: never accept the production DATABASE_URL.
+    if (database.pathname !== "/studioone_tester_sandbox" ||
+        !database.hostname.startsWith("dpg-dbjgergu01pc73fd9l50-a"))
+      throw new Error("Testumgebung benötigt die separate StudioONE-Testdatenbank.");
+    // A test deployment must have a separate, empty database and no live integrations.
+    if (!env.TEST_ACCESS_CODE || env.TEST_ACCESS_CODE.length < 32)
+      throw new Error("Testumgebung benötigt einen geheimen Einladungscode.");
+    if (
+      env.MAIL_MODE !== "disabled" ||
+      env.ENABLE_EMAIL_SENDING !== "false" ||
+      env.SMTP_CONFIGURATION_CONFIRMED !== "false"
+    )
+      throw new Error("In der Testumgebung ist jeder Versand deaktiviert.");
+    for (const key of [
+      "SMTP_PASSWORD", "MAILCHIMP_API_KEY", "GOOGLE_CLIENT_EMAIL",
+      "GOOGLE_PRIVATE_KEY", "GOOGLE_SHEET_ID", "DRIVE_CLIENT_ID",
+      "DRIVE_CLIENT_SECRET", "SANITY_API_WRITE_TOKEN", "SANITY_API_READ_TOKEN",
+      "OPENAI_API_KEY", "INTERNAL_CONTACT_SYNC_TOKEN", "CHATGPT_CONNECTOR_TOKEN",
+      "CHATGPT_CONNECTOR_WRITE_TOKEN", "STUDIO_S3_ACCESS_KEY_ID",
+      "STUDIO_S3_SECRET_ACCESS_KEY", "SOCIAL_META_APP_SECRET",
+      "SOCIAL_LINKEDIN_CLIENT_SECRET",
+    ]) {
+      if (env[key]) throw new Error(`Testumgebung darf ${key} nicht verbinden.`);
+    }
+    if (env.CONTENT_AI_ENABLED === "true" || env.SITE_CMS_ALLOW_PUBLISH === "true")
+      throw new Error("Testumgebung darf keine externen Aktionen erlauben.");
+  } else {
+    for (const key of ["MARTIN_EMAIL", "NORA_EMAIL"])
+      if (!emailPattern.test(env[key] || "") || synthetic(env[key] || ""))
+        throw new Error(`${key}: persönliche reale E-Mail-Adresse erforderlich.`);
+    if (
+      env.MARTIN_EMAIL.trim().toLowerCase() ===
+      env.NORA_EMAIL.trim().toLowerCase()
+    )
+      throw new Error("Martin und Nora benötigen unterschiedliche Konten.");
+  }
   if (flag(env.ALLOW_SYNTHETIC_SEED))
     throw new Error("Demo-Seed ist in Produktion verboten.");
   readMailConfig(env);

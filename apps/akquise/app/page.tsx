@@ -421,7 +421,7 @@ export default function App() {
             <br />
             Bewusste Freigaben.
           </h1>
-          <p className="muted">Interner Zugang für Martin und Nora Jeker.</p>
+          <p className="muted">Geschützter Zugang zu StudioONE.</p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
