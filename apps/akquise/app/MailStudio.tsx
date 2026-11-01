@@ -353,8 +353,7 @@ export default function MailStudio({
   return (
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel mail-studio-workspace">
-        <div className="mail-studio-toolbar studioone-area-intro">
-          <span className="studioone-area-watermark" aria-hidden="true">ONE</span>
+        <div className="mail-studio-toolbar">
           <h2>Persönliche Mails senden</h2>
           <button
             className="secondary"

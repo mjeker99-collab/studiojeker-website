@@ -1,65 +1,8 @@
-/* Area introductions share the overview's light hero and decorative ONE. */
-.shell .studioone-area-intro {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  min-width: 0;
-  min-height: 260px;
-  margin: 0 0 26px;
-  padding: clamp(28px, 5vw, 64px);
-  border: 1px solid #e5e8eb;
-  border-radius: 18px;
-  background: linear-gradient(105deg, #fff 0%, #fff 55%, #e5faff 100%);
-  color: #11171b;
-}
-.shell .studioone-area-intro > :not(.studioone-area-watermark) {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-.shell .studioone-area-intro > .studioone-area-watermark {
-  position: absolute;
-  z-index: 0;
-  right: 3%;
-  bottom: -.22em;
-  font-size: clamp(100px, 18vw, 300px);
-  line-height: 1.2;
-  font-weight: 900;
-  letter-spacing: -.1em;
-  color: #00c5ef13;
-  pointer-events: none;
-  user-select: none;
-}
-.shell .studioone-area-intro .studioone-area-kicker {
-  margin: 0;
-  color: #31363a;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .24em;
-  line-height: 1.6;
-  text-transform: uppercase;
-}
-.shell .studioone-area-intro h2 {
-  max-width: 850px;
-  margin: 0;
-  color: #0c1519;
-  font-size: clamp(30px, 3.5vw, 52px);
-  font-weight: 500;
-  letter-spacing: -.04em;
-  line-height: 1.15;
-  overflow-wrap: break-word;
-}
-.shell .studioone-area-intro > p:not(.studioone-area-kicker):not(.error) {
-  max-width: 780px;
-  margin: 0;
-  color: #394a52;
-  font-size: clamp(15px, 1.5vw, 19px);
-  line-height: 1.65;
-}
+/* Reference: Mail Studio black introduction, applied consistently to all workspaces. */
+.studioone-area-intro{background:#0e1316;color:#fff;border-left:6px solid #00c2df;border-radius:17px;padding:clamp(28px,4vw,46px);margin:0 0 26px;min-height:200px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.studioone-area-intro .studioone-area-kicker{color:#a9cad8;font-size:12px;font-weight:750;letter-spacing:.16em;line-height:1.6;text-transform:uppercase;margin:0}
+.studioone-area-intro h2{font-size:clamp(26px,3vw,38px);line-height:1.3;letter-spacing:-.025em;font-weight:500;color:#fff;margin:0}
+.studioone-area-intro p{font-size:clamp(15px,1.3vw,17px);line-height:1.75;color:#d0d8dd;max-width:780px;margin:0}
 .shell .dashboard-welcome p:not(.eyebrow){color:#394a52!important}
 .shell .dashboard-welcome h2{color:#0c1519!important;line-height:1.2!important}
 .shell .studio-task-start{line-height:1.65}
@@ -69,11 +12,4 @@
 .shell .panel,.shell .hub-card,.shell .assistant-entry{line-height:1.6}
 .shell .panel p,.shell .hub-card p,.shell .assistant-entry p{line-height:1.65}
 .shell .hub-subnav{margin-bottom:22px}
-
-@media (max-width: 900px) {
-  .shell .studioone-area-intro { min-height: 220px; }
-}
-@media (max-width: 650px) {
-  .shell .studioone-area-intro { min-height: 190px; padding: 24px; }
-  .shell .studioone-area-intro h2 { font-size: 30px; }
-}
+@media(max-width:650px){.studioone-area-intro{min-height:170px;padding:24px}.studioone-area-intro h2{font-size:27px}}
