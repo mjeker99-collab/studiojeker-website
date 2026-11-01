@@ -110,6 +110,9 @@ export default function CustomerAssistant({
           Vorhandene Angaben ausformulieren
         </button>
       </div>
+      {!name.trim() && (
+        <p>Für die GPT-Unterstützung oben den Firmennamen ergänzen.</p>
+      )}
       {!website.trim() && (
         <p>Für die Recherche oben die Firmenwebsite ergänzen.</p>
       )}

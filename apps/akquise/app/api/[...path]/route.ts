@@ -61,7 +61,12 @@ import {
   audit,
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
-import { customerState, saveCustomer } from "@/lib/customers";
+import {
+  customerState,
+  saveCustomer,
+  customerMasterlist,
+  importCustomers,
+} from "@/lib/customers";
 import { mailchimpAudiences } from "@/lib/hub/mailchimp";
 import { readSheetContacts } from "@/lib/sheets";
 import {
@@ -444,6 +449,8 @@ async function handler(
     }
     if (route === "hub/state" && req.method === "GET")
       return NextResponse.json(await hubState());
+    if (route === "customers/masterlist" && req.method === "GET")
+      return NextResponse.json(await customerMasterlist(user.id));
     if (route === "customers/state" && req.method === "GET")
       return NextResponse.json(await customerState(user.id), {
         headers: { "Cache-Control": "no-store" },
@@ -541,7 +548,8 @@ async function handler(
       return NextResponse.json(await importContacts(user.id, rows));
     }
     const maxJsonBytes =
-      path[0] === "contacts" && path[1] === "preparation"
+      route === "customers/import" ||
+      (path[0] === "contacts" && path[1] === "preparation")
         ? 2 * 1024 * 1024
         : path[0] === "site-cms" && path[1] === "media"
           ? 6_500_000
@@ -599,6 +607,8 @@ async function handler(
       return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "concepts")
       return NextResponse.json(await conceptMutation(user.id, path, body));
+    if (route === "customers/import")
+      return NextResponse.json(await importCustomers(user.id, body));
     if (route === "customers/assist")
       return NextResponse.json(await assistCustomer(user.id, body), {
         headers: { "Cache-Control": "no-store" },
