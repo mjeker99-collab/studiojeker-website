@@ -4,6 +4,8 @@ import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { z } from "zod";
 import { normalizeEmail, personKey, PolicyError } from "./policy";
+export const MAX_IMPORT_CONTACTS = 5000;
+export const MAX_IMPORT_BYTES = 8 * 1024 * 1024;
 const text = z.string().trim().max(4000).default("");
 const url = z
   .union([
@@ -193,8 +195,8 @@ function masterRows(sheet: ExcelJS.Worksheet): Record<string, unknown>[] {
   return rows;
 }
 export async function parseImport(buffer: Buffer, filename: string) {
-  if (buffer.length > 2 * 1024 * 1024)
-    throw new PolicyError("Import maximal 2 MB.");
+  if (buffer.length > MAX_IMPORT_BYTES)
+    throw new PolicyError("Import maximal 8 MB.");
   let rows: Record<string, unknown>[];
   if (filename.toLowerCase().endsWith(".csv")) {
     rows = parse(buffer, {
@@ -222,7 +224,7 @@ export async function parseImport(buffer: Buffer, filename: string) {
         expanded += buffer.readUInt32LE(i + 24);
         entries++;
       }
-    if (!entries || entries > 200 || expanded > 12 * 1024 * 1024)
+    if (!entries || entries > 200 || expanded > 48 * 1024 * 1024)
       throw new PolicyError("XLSX-Archiv zu gross oder ungültig.");
     const book = new ExcelJS.Workbook();
     try {
@@ -237,8 +239,8 @@ export async function parseImport(buffer: Buffer, filename: string) {
           sheet.getCell("A1").text.trim() === "Person"),
     );
     if (master?.name === "Kontakte") {
-      if (master.rowCount > 501 || master.columnCount > 30)
-        throw new PolicyError("Maximal 500 Zeilen und 30 Spalten.");
+      if (master.rowCount > MAX_IMPORT_CONTACTS + 1 || master.columnCount > 30)
+        throw new PolicyError(`Maximal ${MAX_IMPORT_CONTACTS} Kontakte und 30 Spalten.`);
       const values = Array.from({ length: master.rowCount }, (_, i) =>
         Array.from({ length: 15 }, (_, col) => {
           const cell = master.getRow(i + 1).getCell(col + 1);
@@ -249,16 +251,16 @@ export async function parseImport(buffer: Buffer, filename: string) {
       return validateRows(mapMasterSheet(values));
     }
     if (master) {
-      if (master.rowCount > 501 || master.columnCount > 30)
-        throw new PolicyError("Maximal 500 Zeilen und 30 Spalten.");
+      if (master.rowCount > MAX_IMPORT_CONTACTS + 1 || master.columnCount > 30)
+        throw new PolicyError(`Maximal ${MAX_IMPORT_CONTACTS} Kontakte und 30 Spalten.`);
       rows = masterRows(master);
       return validateRows(rows);
     }
     if (book.worksheets.length !== 1)
       throw new PolicyError("XLSX muss genau ein Tabellenblatt enthalten.");
     const sheet = book.worksheets[0];
-    if (sheet.rowCount > 501 || sheet.columnCount > 30)
-      throw new PolicyError("Maximal 500 Zeilen und 30 Spalten.");
+    if (sheet.rowCount > MAX_IMPORT_CONTACTS + 1 || sheet.columnCount > 30)
+      throw new PolicyError(`Maximal ${MAX_IMPORT_CONTACTS} Kontakte und 30 Spalten.`);
     const headers: string[] = [];
     sheet.getRow(1).eachCell((cell, col) => {
       if (cell.type !== ExcelJS.ValueType.String)
@@ -285,8 +287,8 @@ export async function parseImport(buffer: Buffer, filename: string) {
   return validateRows(rows);
 }
 export function validateRows(rows: Record<string, unknown>[]) {
-  if (!rows.length || rows.length > 500)
-    throw new PolicyError("Import benötigt 1 bis 500 Kontakte.");
+  if (!rows.length || rows.length > MAX_IMPORT_CONTACTS)
+    throw new PolicyError(`Import benötigt 1 bis ${MAX_IMPORT_CONTACTS} Kontakte.`);
   const people = new Set<string>();
   return rows.map((row, index) => {
     for (const [key, value] of Object.entries(row)) {

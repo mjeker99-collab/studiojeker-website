@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { JWT } from "google-auth-library";
-import { validateRows } from "./import";
+import { MAX_IMPORT_BYTES, MAX_IMPORT_CONTACTS, validateRows } from "./import";
 import { mapMasterSheet } from "./sheet-master";
 import { sheetAccessWithinSelectedFolder } from "./drive/service";
 import { PolicyError } from "./policy";
@@ -11,7 +11,11 @@ export async function readSheetContacts(actorId?: string) {
   const key = process.env.GOOGLE_PRIVATE_KEY;
   if (!id) throw new PolicyError("Google-Sheets-ID ist nicht konfiguriert.", 503);
   if (!/^[\w-]+$/.test(id)) throw new PolicyError("Ungültige Sheet-ID.");
-  const range = process.env.GOOGLE_SHEET_RANGE ?? "Kontakte!A1:O501";
+  const defaultRange = `Kontakte!A1:O${MAX_IMPORT_CONTACTS + 1}`;
+  const configuredRange = process.env.GOOGLE_SHEET_RANGE;
+  // Expand the legacy default even when it is explicitly configured in Render.
+  const range = !configuredRange || configuredRange === "Kontakte!A1:O501"
+    ? defaultRange : configuredRange;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(range)}`;
   let values: string[][] | undefined;
   if (email || key) {
@@ -23,7 +27,7 @@ export async function readSheetContacts(actorId?: string) {
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
     });
     const result = await auth.request<{ values?: string[][] }>({
-      url, timeout: 15000, maxContentLength: 2 * 1024 * 1024,
+      url, timeout: 30000, maxContentLength: MAX_IMPORT_BYTES,
     });
     values = result.data.values;
   } else {
@@ -39,7 +43,7 @@ export async function readSheetContacts(actorId?: string) {
     if (!response.ok) {
       // Drive export uses the existing read-only grant when the separate Sheets
       // API is unavailable. Folder ancestry was verified above.
-      if (range !== "Kontakte!A1:O501")
+      if (range !== defaultRange)
         throw new PolicyError(`Google Sheets meldet HTTP ${response.status}. Tabellenzugriff prüfen.`, 502);
       const exported = await fetch(
         `https://www.googleapis.com/drive/v3/files/${id}/export?mimeType=application%2Fvnd.openxmlformats-officedocument.spreadsheetml.sheet`,
@@ -48,14 +52,14 @@ export async function readSheetContacts(actorId?: string) {
       if (!exported.ok)
         throw new PolicyError(`Masterliste konnte auch über Google Drive nicht gelesen werden (HTTP ${exported.status}).`, 502);
       const bytes = await exported.arrayBuffer();
-      if (bytes.byteLength > 2 * 1024 * 1024)
+      if (bytes.byteLength > MAX_IMPORT_BYTES)
         throw new PolicyError("Masterliste zu gross.", 413);
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(bytes);
       const sheet = workbook.getWorksheet("Kontakte");
       if (!sheet) throw new PolicyError("Tabellenblatt Kontakte fehlt.");
-      if (sheet.actualRowCount > 501)
-        throw new PolicyError("Masterliste enthält mehr als 500 Datenzeilen.");
+      if (sheet.actualRowCount > MAX_IMPORT_CONTACTS + 1)
+        throw new PolicyError(`Masterliste enthält mehr als ${MAX_IMPORT_CONTACTS} Datenzeilen.`);
       const cells: string[][] = [];
       for (let row = 1; row <= sheet.rowCount; row++) {
         cells.push(Array.from({ length: 15 }, (_, col) => {
@@ -67,10 +71,10 @@ export async function readSheetContacts(actorId?: string) {
       }
       return validateRows(mapMasterSheet(cells));
     }
-    if (Number(response.headers.get("content-length") || 0) > 2 * 1024 * 1024)
+    if (Number(response.headers.get("content-length") || 0) > MAX_IMPORT_BYTES)
       throw new PolicyError("Masterliste zu gross.", 413);
     const raw = await response.text();
-    if (raw.length > 2 * 1024 * 1024)
+    if (raw.length > MAX_IMPORT_BYTES)
       throw new PolicyError("Masterliste zu gross.", 413);
     const payload = JSON.parse(raw) as { values?: string[][] };
     values = payload.values;

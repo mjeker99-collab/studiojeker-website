@@ -104,30 +104,35 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
-      // One bulk insert avoids two sequential database round trips per contact.
-      // Person identity is unique; shared or missing mailboxes are permitted.
-      const created = await tx.contact.createMany({
-        data: rows.map((c) => ({
-          ...c,
-          publicAuthority:
-            c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
-          verifiedAt: null,
-          confidence: "UNCONFIRMED" as const,
-          status: "NEW" as const,
-          newsletterConsent: false,
-          newsletterEvidence: "",
-          personKey: personKey(c.firstName, c.lastName, c.organisation),
-        })),
-        skipDuplicates: true,
-      });
+      // Keep large master imports atomic without exceeding database bind limits.
+      // Each chunk preserves unique-person deduplication and never grants approval.
+      let imported = 0;
+      for (let offset = 0; offset < rows.length; offset += 250) {
+        const batch = rows.slice(offset, offset + 250);
+        const created = await tx.contact.createMany({
+          data: batch.map((c) => ({
+            ...c,
+            publicAuthority:
+              c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
+            verifiedAt: null,
+            confidence: "UNCONFIRMED" as const,
+            status: "NEW" as const,
+            newsletterConsent: false,
+            newsletterEvidence: "",
+            personKey: personKey(c.firstName, c.lastName, c.organisation),
+          })),
+          skipDuplicates: true,
+        });
+        imported += created.count;
+      }
       const result = {
-        imported: created.count,
-        duplicates: rows.length - created.count,
+        imported,
+        duplicates: rows.length - imported,
       };
       await audit(tx, userId, "CONTACT_IMPORT", "import", result);
       return result;
     },
-    { timeout: 20000 },
+    { timeout: 90000 },
   );
 }
 export async function newDraft(
