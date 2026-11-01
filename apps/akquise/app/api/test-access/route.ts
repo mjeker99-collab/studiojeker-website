@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
     if (Buffer.byteLength(body) > 4096)
       return NextResponse.json({ error: "Anfrage zu gross." }, { status: 413, headers: noStore });
     const input = registration.parse(JSON.parse(body));
+    if (/(^|[.@])(example|test|invalid|localhost)([.@]|$)/i.test(input.email))
+      return NextResponse.json({ error: "Bitte eine echte persönliche E-Mail-Adresse verwenden." }, { status: 400, headers: noStore });
     const expected = createHash("sha256").update(process.env.TEST_ACCESS_CODE || "").digest();
     const supplied = createHash("sha256").update(input.invitationCode).digest();
     if (!timingSafeEqual(expected, supplied))
