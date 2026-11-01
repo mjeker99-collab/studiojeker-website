@@ -64,7 +64,7 @@ test("Content tasks are directly available and preserve drafts when GPT and edit
     page.getByRole("heading", { name: "Briefing", exact: true }),
   ).toBeVisible();
   await page
-    .getByLabel("Serientitel", { exact: true })
+    .getByRole("textbox", { name: "Serientitel", exact: true })
     .fill("Mein ungespeichertes Grafikbriefing");
   await page
     .getByRole("button", { name: "Mit GPT arbeiten", exact: true })
@@ -75,13 +75,13 @@ test("Content tasks are directly available and preserve drafts when GPT and edit
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();
-  await expect(page.getByLabel("Serientitel", { exact: true })).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Serientitel", exact: true })).toHaveValue(
     "Mein ungespeichertes Grafikbriefing",
   );
   await picker
     .getByRole("button", { name: "Bild erstellen", exact: true })
     .click();
-  await expect(page.getByLabel("Serientitel", { exact: true })).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Serientitel", exact: true })).toHaveValue(
     "Mein ungespeichertes Grafikbriefing",
   );
   await picker
