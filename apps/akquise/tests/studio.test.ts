@@ -1,4 +1,6 @@
 import { test } from "node:test";
+import { campaignsForSelection } from "../lib/studio/campaign-picker";
+
 import "./studio-chat.test";
 import "./drive-images.test";
 import assert from "node:assert/strict";
@@ -121,4 +123,22 @@ test("Studio: lokaler Bildspeicher ist im Produktionsbetrieb gesperrt", () => {
     else env.STUDIO_LOCAL_ASSETS = local;
     if (endpoint !== undefined) env.STUDIO_S3_ENDPOINT = endpoint;
   }
+});
+
+
+test("Content-Studio: Kampagnen bleiben ohne gewählte Firma sichtbar und werden gezielt gefiltert", () => {
+  const campaigns = [
+    { id: "visibility", customerId: "studiojeker" },
+    { id: "relaunch", customerId: null },
+    { id: "kunde", customerId: "kunde2" },
+  ];
+  assert.deepEqual(
+    campaignsForSelection(campaigns, "").map((campaign) => campaign.id),
+    ["visibility", "relaunch", "kunde"],
+  );
+  assert.deepEqual(
+    campaignsForSelection(campaigns, "studiojeker").map((campaign) => campaign.id),
+    ["visibility"],
+  );
+  assert.deepEqual(campaignsForSelection(campaigns, "nicht-vorhanden"), []);
 });
