@@ -21,7 +21,7 @@ before(async () => {
     env: { ...process.env, NODE_TEST_CONTEXT: undefined }, stdio: "pipe", timeout: 60000,
   });
   actor = (await db.user.create({ data: { name: "Martin", email: "martin@example.test", passwordHash: "unused" } })).id;
-  await db.studioOrganization.create({ data: { id: "studiojeker", name: "Test", brand: {} } });
+  await db.studioOrganization.upsert({ where: { id: "studiojeker" }, create: { id: "studiojeker", name: "Test", brand: {} }, update: {} });
 });
 after(async () => {
   await db.$disconnect();
