@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { newsletterSession, applyNewsletterJob } from "../hub/newsletter-chat";
 import {
   createSeries,
   queueJob,
@@ -25,6 +26,12 @@ export async function studioMutation(
   body: unknown,
 ) {
   const id = path[2];
+  if (path[1] === "newsletter-session" && path.length === 2)
+    return newsletterSession(actor, body);
+  if (path[1] === "newsletter-apply" && path.length === 3) {
+    z.object({}).strict().parse(body);
+    return applyNewsletterJob(actor, id);
+  }
   if (path[1] === "series" && path[3] === "assignment" && path.length === 4)
     return assignProject(actor, id, body);
   if (path[1] === "preferences" && path.length === 2)
@@ -90,3 +97,4 @@ export async function studioMutation(
   }
   throw new PolicyError("Studio-Funktion nicht gefunden.", 404);
 }
+

@@ -46,6 +46,9 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
     .getByRole("button", { name: "Duplizieren", exact: true })
     .click();
   const editor = page.getByRole("region", { name: "Inhaltseditor" });
+  await expect(editor.getByRole("heading", { name: "Mit GPT bearbeiten" })).toBeVisible();
+  await expect(editor.getByLabel("Was möchtest du ändern?")).toBeVisible();
+  await editor.getByRole("button", { name: "Texte und Bilder manuell bearbeiten" }).click();
   await expect(editor.getByLabel("Interner Titel")).toHaveValue(/Kopie/);
   await editor.getByLabel("Interner Titel").fill("Browserprüfung Newsletter");
   await editor
@@ -137,3 +140,4 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await editor.getByRole("button", { name: "HTML & Text exportieren" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.html$/);
 });
+

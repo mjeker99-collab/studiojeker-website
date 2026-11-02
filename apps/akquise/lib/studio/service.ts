@@ -14,6 +14,8 @@ import { Prisma } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { db } from "../db";
 import { contentInput, type ContentInput } from "../hub/input";
+import { newsletterEditTarget, applyNewsletterEdit } from "../hub/newsletter-edit";
+import { getNewsletterTemplate } from "../hub/newsletter-template";
 import { saveContentInTx, hubActor } from "../hub/workflow";
 import { audit } from "../workflow";
 import { PolicyError } from "../policy";
@@ -305,6 +307,7 @@ const requestSchema = z
     photoEdit: z.literal(true).optional(),
     replyToJobId: z.string().min(1).max(100).optional(),
     useProjectMemory: z.boolean().default(true),
+    newsletterEdit: newsletterEditTarget.optional(),
     contentId: z.string().nullable(),
     requestKey: z.string().uuid(),
     referenceIds: z.array(z.string()).max(4),
@@ -319,6 +322,8 @@ export async function queueJob(actor: string, raw: unknown) {
     config = studioConfig();
   if (data.kind === "CHAT" && !data.message)
     throw new PolicyError("Nachricht fehlt.");
+  if (data.newsletterEdit && (data.kind !== "CHAT" || data.mediaIntent || data.photoEdit))
+    throw new PolicyError("Newsletter-Änderungen benötigen einen Textdialog.");
   if (data.replyToJobId && data.kind !== "CHAT" && !data.photoEdit)
     throw new PolicyError(
       "Eine Antwort benötigt einen Dialog oder eine Bildbearbeitung.",
@@ -413,6 +418,20 @@ export async function queueJob(actor: string, raw: unknown) {
       },
     });
     if (!series) throw new PolicyError("Serie nicht zugänglich.", 403);
+    let newsletterEdit: { payload: ContentInput; slots: { key: string; kind: string; region: string }[] } | undefined;
+    if (data.newsletterEdit) {
+      const target = data.newsletterEdit;
+      const current = await tx.marketingContent.findFirst({
+        where: { id: target.id, organizationId: ORG, kind: "NEWSLETTER", studioSeriesId: series.id, archivedAt: null },
+        include: { versions: { where: { version: target.version } } },
+      });
+      if (!current || current.version !== target.version || !current.versions[0])
+        throw new PolicyError("Newsletter wurde geändert. Bitte neu öffnen.", 409);
+      const payload = contentInput.parse(current.versions[0].payload);
+      if (!payload.newsletter) throw new PolicyError("Newsletter-Vorlage fehlt.");
+      newsletterEdit = { payload, slots: getNewsletterTemplate(payload.newsletter.templateId)
+        .slots.filter((slot) => !slot.special).map(({ key, kind, region }) => ({ key, kind, region })) };
+    }
     let replyTo: { jobId: string; message: string; reply: string } | undefined;
     if (data.replyToJobId) {
       const proposal = await tx.studioJob.findFirst({
@@ -611,6 +630,7 @@ export async function queueJob(actor: string, raw: unknown) {
       : undefined;
     const input = {
       strategy,
+      ...(newsletterEdit ? { newsletterEdit } : {}),
       campaignStrategy: await campaignConcept(tx, brief.campaignId),
       request: data,
       ...(replyTo ? { replyTo } : {}),
@@ -649,7 +669,7 @@ export async function queueJob(actor: string, raw: unknown) {
                   organizationId: ORG,
                   seriesId: series.id,
                   kind: "CHAT",
-                  status: "SUCCEEDED",
+                  status: { in: ["SUCCEEDED", "APPLIED"] },
                 },
                 orderBy: { createdAt: "desc" },
                 take: 12,
@@ -748,6 +768,7 @@ export async function runJob(
     strategy?: unknown;
     campaignStrategy?: unknown;
     assistant?: unknown;
+    newsletterEdit?: { payload: ContentInput; slots: { key: string; kind: string; region: string }[] };
   };
   let providerStarted = false;
   const currentMessage = input.replyTo
@@ -785,6 +806,7 @@ export async function runJob(
       const r = await provider.chat(
         {
           assistant: input.assistant,
+          newsletterEdit: input.newsletterEdit,
           strategy: input.strategy,
           campaignStrategy: input.campaignStrategy,
           briefing: input.brief,
@@ -809,6 +831,8 @@ export async function runJob(
         job.model,
         refs,
       );
+      if (input.newsletterEdit)
+        applyNewsletterEdit(input.newsletterEdit.payload, JSON.parse(r.reply));
       result = { reply: r.reply };
       usage = r.usage;
       requestId = r.requestId;
@@ -1073,3 +1097,4 @@ export async function cancelOrReconcile(actor: string, id: string) {
     return { ok: true };
   });
 }
+
