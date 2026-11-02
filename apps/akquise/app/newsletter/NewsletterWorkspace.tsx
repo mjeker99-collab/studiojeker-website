@@ -108,7 +108,9 @@ export default function NewsletterWorkspace({ value, saved, save, reload, onBusy
     <section className="newsletter-dialog-workspace" aria-label="Newsletter mit GPT bearbeiten">
       <div>
         <h3>Dein Newsletter</h3>
-        {value.newsletter && <NewsletterLinkTester newsletter={value.newsletter} />}
+        {value.newsletter && <NewsletterLinkTester
+          key={value.newsletter.templateId + "|" + Object.entries(value.newsletter.fields).filter(([field]) => field.includes(".link.")).map(([field, url]) => field + "=" + url).join("|")}
+          newsletter={value.newsletter} />}
         <NewsletterPreview subject={value.subject} preheader={value.preheader} newsletter={value.newsletter} />
       </div>
       <div className="newsletter-dialog-panel">
