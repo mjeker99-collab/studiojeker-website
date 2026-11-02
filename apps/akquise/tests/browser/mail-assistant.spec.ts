@@ -55,21 +55,23 @@ for (const width of [390, 1024])
               },
       });
     });
-    await page.getByText("Neue Leads recherchieren", { exact: true }).click();
+    await page.getByRole("button", { name: "1 · Kontakte finden", exact: true }).click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Architekturbüros für Visualisierungen finden");
     await page.getByLabel("Region", { exact: true }).fill("Bern");
     await page
-      .getByRole("button", { name: "Leads recherchieren", exact: true })
+      .getByRole("button", { name: "Kontakte recherchieren", exact: true })
       .click();
     await expect(
       page.getByRole("link", { name: "Quelle öffnen" }),
     ).toHaveAttribute("href", lead.sourceUrl);
     await page
-      .getByRole("button", { name: "1 Leads in Masterliste übernehmen" })
+      .getByRole("button", { name: "1 ausgewählte Kontakte übernehmen" })
       .click();
     await expect(page.getByText(/1 neue Kontakte übernommen/)).toBeVisible();
+    await page.getByRole("button", { name: "3 · Mails erstellen & versenden", exact: true }).click();
+    await page.getByText("Nach Unternehmen oder Branche filtern", { exact: true }).click();
     await page
       .getByRole("combobox", { name: "Kunde / Unternehmen", exact: true })
       .selectOption({ index: 1 });
@@ -78,11 +80,9 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "Filter zurücksetzen", exact: true })
       .click();
     await page
-      .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
-    await page
-      .getByText("Personalisierte Mailtexte mit GPT (3)", { exact: true })
-      .click();
+
     await page
       .getByLabel("Was möchtest du diesen Kontakten anbieten?")
       .fill("Businessfotografie für ihre nächste Kampagne anbieten.");

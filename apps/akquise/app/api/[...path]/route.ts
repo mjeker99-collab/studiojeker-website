@@ -58,6 +58,7 @@ import { prepareContacts } from "@/lib/contact-preparation-service";
 import { mailReview } from "@/lib/mail-review";
 import {
   saveContact,
+  deleteUnusedContact,
   recordContactReply,
   importContacts,
   newDraft,
@@ -705,6 +706,10 @@ async function handler(
         await recordContactReply(user.id, path[1], body),
       );
     }
+    if (path[0] === "contacts" && path[2] === "delete" && path.length === 3) {
+      const input = z.object({ revision: z.number().int().positive(), confirmed: z.literal(true) }).strict().parse(body);
+      return NextResponse.json(await deleteUnusedContact(user.id, path[1], input.revision));
+    }
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
     }
@@ -849,3 +854,4 @@ async function handler(
   }
 }
 export { handler as GET, handler as POST };
+

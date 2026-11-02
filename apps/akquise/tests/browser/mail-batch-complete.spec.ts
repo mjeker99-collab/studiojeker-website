@@ -161,7 +161,7 @@ test("50 selected contacts stay together through shared completion and review", 
     .click();
   await page
     .getByRole("button", {
-      name: "Sofort senden (50) →",
+      name: "50 Mails erstellen →",
       exact: true,
     })
     .click();
@@ -236,7 +236,7 @@ test("50 selected contacts stay together through shared completion and review", 
   ).toBeVisible();
   expect(prepared).toBe(50);
   await expect(
-    page.getByRole("button", { name: "Alle 50 jetzt senden", exact: true }),
+    page.getByRole("button", { name: "50 Mails jetzt senden", exact: true }),
   ).toBeDisabled();
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
@@ -245,13 +245,14 @@ test("50 selected contacts stay together through shared completion and review", 
     .getByLabel(/Ich gebe die 50 ausgewählten persönlichen Mails/)
     .check();
   await page
-    .getByRole("button", { name: "Alle 50 jetzt senden", exact: true })
+    .getByRole("button", { name: "50 Mails jetzt senden", exact: true })
     .click();
   await expect(
     page.getByText("50 von 50 Mails bearbeitet.", { exact: true }),
   ).toBeVisible();
   expect(new Set(sent).size).toBe(50);
   expect(sent).toHaveLength(50);
+  await page.getByText("Weitere Optionen", { exact: true }).click();
   await page
     .getByRole("button", { name: "Auswahl zurücksetzen", exact: true })
     .click();
@@ -310,8 +311,8 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   await page.goto("/");
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
+  await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
   await expect(page.getByText(/1 Mails bereit/)).toBeVisible();
   await expect(page.getByText(/1 Kontakte zurückgestellt/)).toBeVisible();
   expect(preparationCalls).toBe(1);
@@ -384,8 +385,8 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.goto("/");
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (4) →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
+  await page.getByRole("button", { name: "4 Mails erstellen →", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
   await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Jetzt senden", exact: true })).toBeDisabled();
   expect(preparedIds).toEqual(["m0"]);
@@ -473,9 +474,7 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await expect(page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })).toBeVisible();
   await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }).click();
-  await expect(page.getByRole("heading", { name: "1 persönliche Mails vorhanden" })).toBeVisible();
-  await page.getByRole("button", { name: "1 Mails gemeinsam freigeben →" }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
   expect(previewIds).toEqual(["d-good"]);
   expect(dispatchCalls).toBe(0);
 });

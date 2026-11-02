@@ -56,24 +56,19 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page.getByRole("button", { name: /Gespeicherte Entwürfe öffnen/ }).click();
+    await page.getByRole("button", { name: "Entwürfe auswählen", exact: true }).click();
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
-    await page.getByRole("button", { name: "2 Mails gemeinsam freigeben →", exact: true }).click();
+    await page.getByRole("button", { name: "2 Entwürfe öffnen →", exact: true }).click();
     const panel = page.getByRole("region", {
       name: "Globale Mailprüfung",
       exact: true,
     });
-    await panel.locator("details.mail-preview-list > summary").click();
-    await panel.locator("details.mail-review-message").nth(0).locator("summary").click();
-    await panel.locator("details.mail-review-message").nth(1).locator("summary").click();
-    await expect(
-      panel.getByText("Persönlicher Architekturtext 0.", { exact: false }),
-    ).toBeVisible();
-    await expect(
-      panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
-    ).toBeVisible();
+    await panel.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("button").filter({ hasText: `${suffix} 0` }).click();
+    await expect(panel.getByText("Persönlicher Architekturtext 0.", { exact: false })).toBeVisible();
+    await panel.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("button").filter({ hasText: `${suffix} 1` }).click();
+    await expect(panel.getByText("Persönlicher Architekturtext 1.", { exact: false })).toBeVisible();
     const approve = panel.getByRole("button", {
-      name: "Nach Zeitplan einplanen",
+      name: "Versand planen",
       exact: true,
     });
     await expect(approve).toBeDisabled();
@@ -150,39 +145,22 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "Übersicht", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
       .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
       .check();
-    await page
-      .getByRole("button", { name: "2 Mails vorbereiten →", exact: true })
-      .click();
-    const panel = page.getByRole("region", {
-      name: "Ausgewählte Mails vorbereiten",
-    });
-    await expect(
-      panel.getByText("1 Kontakte bereit · 1 Kontakte benötigen Angaben"),
-    ).toBeVisible();
-    const prepare = panel.getByRole("button", {
-      name: "1 Mails prüfen →",
-      exact: true,
-    });
-    await expect(prepare).toBeDisabled();
-    await panel.getByLabel(/Ich bestätige die Verwendung der angezeigten Angaben/).check();
+    await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
+    await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
+    const panel = page.getByRole("region", { name: "Angaben für 2 Mails bestätigen" });
+    await expect(panel).toBeVisible();
+    await panel.getByRole("button", { name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/ }).click();
+    const ready = page.getByRole("region", { name: "Angaben für 1 Mails bestätigen" });
+    await ready.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
+    await ready.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true }).click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-    ).toBe(true);
-    await prepare.click();
-    await expect(
-      page
-        .getByRole("region", { name: "Globale Mailprüfung" })
-        .locator("details.mail-review-message > summary")
-        .getByText("Persönliche Projektbilder", { exact: false }),
-    ).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.locator(".mail-preview-pane").getByRole("heading", { name: "Persönliche Projektbilder" })).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.contacts.find((contact: { id: string }) => contact.id === c.id)
@@ -239,7 +217,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
       .click();
     await page
-      .getByRole("button", { name: "Sofort senden (2) →", exact: true })
+      .getByRole("button", { name: "2 Mails erstellen →", exact: true })
       .click();
     const panel = page.getByRole("region", {
       name: "Angaben für 2 Mails bestätigen",
@@ -349,7 +327,7 @@ for (const width of [390, 768, 1440]) {
           response.request().method() === "GET",
       ),
       page
-        .getByRole("button", { name: "Versandhistorie", exact: true })
+        .getByRole("button", { name: "Versandverlauf", exact: true })
         .click(),
     ]);
     expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
@@ -436,41 +414,10 @@ for (const [name, width, height] of [
       path: `.local/dashboard-${width}.png`,
       fullPage: true,
     });
-    for (const section of [
-      "Kontakte",
-      "E-Mail-Entwürfe",
-      "Freigaben",
-      "Versandhistorie",
-      "Einstellungen",
-    ]) {
-      if (section !== "Einstellungen")
-        await page
-          .getByRole("navigation", { name: "Hauptnavigation" })
-          .getByRole("button", { name: /Kontakte/ })
-          .click();
-      if (["E-Mail-Entwürfe", "Freigaben"].includes(section)) {
-        const nav = page.getByRole("navigation", {
-          name: "Akquise-Navigation",
-        });
-        if (
-          !(await nav
-            .getByRole("button", { name: section, exact: true })
-            .isVisible())
-        )
-          await nav.getByText("Weitere Ansichten", { exact: true }).click();
-      }
-      await page
-        .getByRole("navigation", {
-          name:
-            section === "Einstellungen"
-              ? "Hauptnavigation"
-              : "Akquise-Navigation",
-        })
-        .getByRole("button", { name: section, exact: true })
-        .click();
-      await expect(
-        page.getByRole("heading", { name: section, exact: true }),
-      ).toBeVisible();
+    for (const section of ["1 · Kontakte finden", "2 · Kontakte verwalten", "3 · Mails erstellen & versenden", "Versandverlauf", "Einstellungen"]) {
+      if (section !== "Einstellungen") await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /Kontakte/ }).click();
+      await page.getByRole("navigation", { name: section === "Einstellungen" ? "Hauptnavigation" : "Akquise-Navigation" }).getByRole("button", { name: section, exact: true }).click();
+      await expect(page.getByRole("heading", { name: section === "Einstellungen" ? "Einstellungen" : "Kontakte & Akquise", level: 1, exact: true })).toBeVisible();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -507,12 +454,13 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
-  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
+  await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeFocused();
   await dialog.getByRole("button", { name: /Entwurf vorbereiten/ }).click();
   await expect(dialog).not.toBeVisible();
+  await page.getByText("Alle gespeicherten Entwürfe", { exact: true }).click();
   await page
     .locator(".draft-row")
     .filter({ hasText: organisation })
@@ -537,8 +485,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
-  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
+  await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
+  await dialog.getByText("Weitere Versandangaben", { exact: true }).click();
   await dialog
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill(
@@ -548,11 +497,8 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Zulässigkeit dokumentieren" })
     .click();
   await expect(dialog).not.toBeVisible();
-  await page.getByText("Weitere Ansichten", { exact: true }).click();
-  await page
-    .getByRole("navigation", { name: "Akquise-Navigation" })
-    .getByRole("button", { name: /E-Mail-Entwürfe/ })
-    .click();
+  await page.getByRole("button", { name: "3 · Mails erstellen & versenden", exact: true }).click();
+  await page.getByText("Alle gespeicherten Entwürfe", { exact: true }).click();
   await page
     .locator(".draft-row")
     .filter({ hasText: organisation })
@@ -624,7 +570,7 @@ test("Dashboard opens each work area and keeps navigation available after projec
     ["Social Media öffnen", "Social Media"],
     ["Newsletter öffnen", "Newsletter"],
     ["Websites öffnen", "Website"],
-    ["Kontakte öffnen", "Mail-Studio"],
+    ["Kontakte öffnen", "Kontakte & Akquise"],
     ["Kunden", "Kunden"],
     ["Strategie & Konzepte", "Strategie & Konzepte"],
     ["Bibliothek", "Bibliothek"],

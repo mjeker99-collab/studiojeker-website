@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
 type Job = {
   id: string;
@@ -32,7 +32,20 @@ export default function MailAssistant({
   disabled = false,
   refresh,
   onBusyChange,
+  expanded = false,
+  persistenceKey,
+  contacts = [],
+  onOpenContacts,
 }: {
+  expanded?: boolean;
+  persistenceKey?: string;
+  contacts?: {
+    organisation: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }[];
+  onOpenContacts?: () => void;
   mode: "RESEARCH" | "WRITE";
   items?: { id: string; version: number }[];
   industry?: string;
@@ -43,6 +56,8 @@ export default function MailAssistant({
   const [briefing, setBriefing] = useState("");
   const [region, setRegion] = useState("");
   const [count, setCount] = useState(10);
+  const [selectedIndustry, setSelectedIndustry] = useState(industry);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -53,6 +68,59 @@ export default function MailAssistant({
   const [chosen, setChosen] = useState<number[]>([]);
   const [history, setHistory] = useState<Job[]>([]);
   const lock = useRef(false);
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      try {
+        const value = persistenceKey
+          ? JSON.parse(localStorage.getItem(persistenceKey) || "null")
+          : null;
+        if (value) {
+          if (typeof value.briefing === "string") setBriefing(value.briefing);
+          if (typeof value.region === "string") setRegion(value.region);
+          if (typeof value.industry === "string")
+            setSelectedIndustry(value.industry);
+          if ([5, 10, 20].includes(value.count)) setCount(value.count);
+        }
+      } catch {
+        /* Storage may be unavailable; the form remains usable. */
+      }
+      setPreferencesLoaded(true);
+    });
+  }, [persistenceKey]);
+  useEffect(() => {
+    if (!persistenceKey || !preferencesLoaded) return;
+    try {
+      localStorage.setItem(
+        persistenceKey,
+        JSON.stringify({ briefing, region, industry: selectedIndustry, count }),
+      );
+    } catch {
+      /* Optional preferences only. */
+    }
+  }, [
+    briefing,
+    region,
+    selectedIndustry,
+    count,
+    persistenceKey,
+    preferencesLoaded,
+  ]);
+  const normalize = (value: string) => value.trim().toLocaleLowerCase("de-CH");
+  const existing = (lead: AssistantResult["leads"][number]) =>
+    contacts.some(
+      (c) =>
+        (lead.email && normalize(c.email) === normalize(lead.email)) ||
+        (normalize(c.organisation) === normalize(lead.organisation) &&
+          normalize(c.firstName) === normalize(lead.firstName) &&
+          normalize(c.lastName) === normalize(lead.lastName)),
+    );
+  const available =
+    job?.result.leads
+      .map((lead, index) => (existing(lead) ? -1 : index))
+      .filter((index) => index >= 0) || [];
+  const selectedLeads = chosen.filter((index) => available.includes(index));
+  const Container = expanded ? "section" : "details";
+
   async function loadHistory() {
     try {
       setHistory(await request("history"));
@@ -76,6 +144,9 @@ export default function MailAssistant({
       lock.current = false;
     }
   }
+  useEffect(() => {
+    if (expanded) void loadHistory();
+  }, [expanded]);
   const research = mode === "RESEARCH";
   async function generate() {
     setNotice("");
@@ -85,7 +156,7 @@ export default function MailAssistant({
         mode,
         briefing,
         region,
-        industry,
+        industry: selectedIndustry,
         count,
       });
       setJob(value);
@@ -129,19 +200,23 @@ export default function MailAssistant({
     if (failures.length) setError(failures.join(" "));
   }
   return (
-    <details
-      className="panel"
+    <Container
+      className="panel mail-assistant"
       onToggle={(e) => {
         if (e.currentTarget.open) void loadHistory();
       }}
     >
-      <summary>
-        <strong>
-          {research
-            ? "Neue Leads recherchieren"
-            : `Personalisierte Mailtexte mit GPT (${items.length})`}
-        </strong>
-      </summary>
+      {expanded ? (
+        <h2>{research ? "Kontakte finden" : "Persönliche Texte erstellen"}</h2>
+      ) : (
+        <summary>
+          <strong>
+            {research
+              ? "Kontakte finden"
+              : `Texte mit KI anpassen (${items.length})`}
+          </strong>
+        </summary>
+      )}
       <p>
         {research
           ? "Zielgruppe und Angebot beschreiben. GPT sucht passende Unternehmen und berufliche Ansprechpartner mit Quellen."
@@ -174,7 +249,16 @@ export default function MailAssistant({
             />
           </label>
           <label>
-            Leads pro Recherche
+            Branche
+            <input
+              value={selectedIndustry}
+              disabled={disabled || working}
+              onChange={(e) => setSelectedIndustry(e.target.value)}
+              placeholder="Zum Beispiel Industrie"
+            />
+          </label>
+          <label>
+            Anzahl Kontakte
             <select
               disabled={disabled || working}
               value={count}
@@ -191,6 +275,7 @@ export default function MailAssistant({
       )}
       <button
         type="button"
+        className={research && job ? "secondary" : undefined}
         disabled={
           disabled ||
           working ||
@@ -202,7 +287,7 @@ export default function MailAssistant({
         {working
           ? "GPT arbeitet …"
           : research
-            ? "Leads recherchieren"
+            ? "Kontakte recherchieren"
             : `${items.length} Mailtexte persönlich formulieren`}
       </button>
       <p className="muted">
@@ -213,32 +298,27 @@ export default function MailAssistant({
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       {research && job && (
-        <section aria-label="Gefundene Leads">
-          <h3>{job.result.leads.length} Leads gefunden</h3>
+        <section aria-label="Gefundene Kontakte">
+          <h3>{job.result.leads.length} Kontakte gefunden</h3>
           <p>{job.result.note}</p>
           <label className="check">
             <input
               type="checkbox"
               disabled={disabled || working}
               checked={
-                !!job.result.leads.length &&
-                chosen.length === job.result.leads.length
+                !!available.length && selectedLeads.length === available.length
               }
-              onChange={(e) =>
-                setChosen(
-                  e.target.checked ? job.result.leads.map((_, i) => i) : [],
-                )
-              }
+              onChange={(e) => setChosen(e.target.checked ? available : [])}
             />
-            Alle gefundenen Leads auswählen
+            Alle neuen Kontakte auswählen
           </label>
           {job.result.leads.map((lead, i) => (
             <div key={i}>
               <label className="check">
                 <input
                   type="checkbox"
-                  disabled={disabled || working}
-                  checked={chosen.includes(i)}
+                  disabled={disabled || working || existing(lead)}
+                  checked={selectedLeads.includes(i)}
                   onChange={(e) =>
                     setChosen((old) =>
                       e.target.checked
@@ -249,6 +329,7 @@ export default function MailAssistant({
                 />
                 {lead.organisation} · {lead.firstName} {lead.lastName} ·{" "}
                 {lead.email || "E-Mail nicht gefunden"}
+                {existing(lead) ? " · Bereits vorhanden" : ""}
               </label>
               <p>
                 {lead.hook}{" "}
@@ -260,22 +341,32 @@ export default function MailAssistant({
           ))}
           <button
             type="button"
-            disabled={disabled || working || !chosen.length}
+            disabled={disabled || working || !selectedLeads.length}
             onClick={() =>
               void run(async () => {
                 const r = await request("apply", {
                   id: job.id,
-                  indices: chosen,
+                  indices: selectedLeads,
                 });
                 await refresh();
                 setNotice(
-                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden. Du kannst sie jetzt in der Masterliste auswählen.`,
+                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden. Du findest sie unter «Kontakte verwalten».`,
                 );
               })
             }
           >
-            {chosen.length} Leads in Masterliste übernehmen
+            {selectedLeads.length} ausgewählte Kontakte übernehmen
           </button>
+          {onOpenContacts && (
+            <button
+              type="button"
+              className="secondary"
+              disabled={working}
+              onClick={onOpenContacts}
+            >
+              Kontakte verwalten →
+            </button>
+          )}
         </section>
       )}
       {!!history.filter((j) => j.input.mode === mode).length && (
@@ -330,6 +421,6 @@ export default function MailAssistant({
             ))}
         </details>
       )}
-    </details>
+    </Container>
   );
 }
