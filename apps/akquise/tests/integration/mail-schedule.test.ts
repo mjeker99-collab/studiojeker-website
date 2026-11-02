@@ -222,10 +222,13 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
   await enqueue(b.d);
   await start(1);
   await dispatchApproved(user, a.d.id, 1, sender);
+  assert.ok((await mailScheduleState()).schedule.lastClaimAt);
   await runMailSchedule(sender);
   assert.equal(calls, 1);
   await start(25);
   await runMailSchedule(sender);
+  // Sending now also counts toward the schedule's spacing. The next queued
+  // recipient must wait, while A is already marked as sent.
   assert.equal(calls, 1);
   assert.equal(
     (
@@ -233,8 +236,16 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
         where: { draftId_version: { draftId: a.d.id, version: 1 } },
       })
     ).status,
-    "SKIPPED",
+    "SENT",
   );
+  assert.equal(await db.delivery.count({ where: { recipient: a.c.email } }), 1);
+  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 0);
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+  await elapsed();
+  await runMailSchedule(sender);
+  assert.equal(calls, 2);
+  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 1);
 });
 test("Unklarer SMTP-Ausgang pausiert dauerhaft; Abgleich erlaubt keine Wiederholung", async () => {
   const a = await prepared();
@@ -404,5 +415,107 @@ test("Interessiert dokumentiert Antwort; gesendete Mail wird als beantwortet mar
     (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).replyNote,
     "Bitte anrufen",
   );
+  assert.equal(calls, 1);
+});
+
+test("Jetzt senden aktualisiert eingeplante Mail und verhindert erneuten Versand", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { d } = await prepared();
+  await enqueue(d);
+  const preview = await mailReview(user, "preview", { ids: [d.id] });
+  if (!("rows" in preview) || !preview.rows) throw new Error("Vorschau fehlt");
+  const { id, version, hash, contactRevision } = preview.rows[0];
+  const result = await mailReview(
+    user,
+    "approve-and-send",
+    {
+      items: [{ id, version, hash, contactRevision }],
+      read: true,
+      confirmDispatch: true,
+    },
+    sender,
+  );
+  assert.ok("results" in result && result.results?.[0].ok);
+  assert.equal(calls, 1);
+  const queued = await db.mailQueueItem.findFirstOrThrow({
+    where: { draftId: d.id },
+  });
+  assert.equal(queued.status, "SENT");
+  assert.ok(queued.deliveryId);
+  await start();
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+});
+
+test("Sofortversand unterscheidet sichere Prüfrückstellung von unklarem SMTP", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { d } = await prepared();
+  const preview = await mailReview(user, "preview", { ids: [d.id] });
+  if (!("rows" in preview) || !preview.rows) throw new Error("Vorschau fehlt");
+  const { id, version, hash, contactRevision } = preview.rows[0];
+  const body = {
+    items: [{ id, version, hash, contactRevision }],
+    read: true,
+    confirmDispatch: true,
+  };
+  const stale = await mailReview(
+    user,
+    "approve-and-send",
+    {
+      ...body,
+      items: [{ ...body.items[0], contactRevision: contactRevision + 1 }],
+    },
+    sender,
+  );
+  assert.ok("results" in stale && stale.results);
+  assert.equal(stale.results[0].ok, false);
+  assert.equal(
+    "stopBatch" in stale.results[0] && stale.results[0].stopBatch,
+    false,
+  );
+  assert.equal(calls, 0);
+  const uncertain = await mailReview(
+    user,
+    "approve-and-send",
+    body,
+    async () => {
+      calls++;
+      throw new Error("Synthetic SMTP timeout");
+    },
+  );
+  assert.ok("results" in uncertain && uncertain.results);
+  assert.equal(uncertain.results[0].ok, false);
+  assert.equal(
+    "stopBatch" in uncertain.results[0] && uncertain.results[0].stopBatch,
+    true,
+  );
+  assert.equal(calls, 1);
+});
+
+test("Sofortversand beansprucht die Warteschlange vor SMTP und pausiert bei unklarem Ergebnis", async () => {
+  const { d } = await prepared();
+  await enqueue(d);
+  await start();
+  let claimedStatus = "";
+  let claimedDeliveryId: string | null = null;
+  const result = await dispatchApproved(user, d.id, d.version, async () => {
+    calls++;
+    const queued = await db.mailQueueItem.findFirstOrThrow({
+      where: { draftId: d.id },
+    });
+    claimedStatus = queued.status;
+    claimedDeliveryId = queued.deliveryId;
+    throw new Error("Synthetic SMTP timeout");
+  });
+  assert.equal(claimedStatus, "SENDING");
+  assert.ok(claimedDeliveryId);
+  assert.equal(result.delivery.status, "UNKNOWN");
+  assert.equal((await mailScheduleState()).schedule.enabled, false);
+  assert.equal(
+    (await db.mailQueueItem.findFirstOrThrow({ where: { draftId: d.id } }))
+      .status,
+    "UNKNOWN",
+  );
+  await runMailSchedule(sender);
   assert.equal(calls, 1);
 });

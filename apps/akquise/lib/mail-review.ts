@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { SmtpSender } from "./mail";
 import { dispatchApproved } from "./delivery";
 import { mailScheduleMutation } from "./mail-schedule";
 import { db } from "./db";
@@ -23,7 +24,12 @@ const item = z
     contactRevision: z.number().int().positive(),
   })
   .strict();
-export async function mailReview(userId: string, action: string, raw: unknown) {
+export async function mailReview(
+  userId: string,
+  action: string,
+  raw: unknown,
+  sender?: SmtpSender,
+) {
   if (action === "preview") {
     const input = z.object({ ids }).strict().parse(raw);
     const drafts = await db.draft.findMany({
@@ -122,22 +128,26 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
       throw new PolicyError("Sofortversand erfolgt einzeln pro Nachricht.");
     const results = [];
     for (const entry of input.items) {
+      let approved = false;
       try {
         await reviewDraft(userId, entry.id, entry.version, "APPROVED", true, {
           ...entry,
           legal: input.legal,
         });
+        approved = true;
         if (action === "approve-and-send") {
           const { delivery } = await dispatchApproved(
             userId,
             entry.id,
             entry.version,
+            sender,
           );
           const ok =
             delivery.status === "SENT" || delivery.status === "TEST_SENT";
           results.push({
             id: entry.id,
             ok,
+            stopBatch: !ok,
             message:
               delivery.status === "SENT"
                 ? "An Mailserver übergeben"
@@ -173,6 +183,10 @@ export async function mailReview(userId: string, action: string, raw: unknown) {
         results.push({
           id: entry.id,
           ok: false,
+          // Only a known pre-send review rejection is safe to skip.
+          // Transport errors, limits and uncertain delivery stop the group.
+          stopBatch:
+            approved || !(e instanceof PolicyError) || e.status === 403,
           message:
             e instanceof PolicyError
               ? e.message

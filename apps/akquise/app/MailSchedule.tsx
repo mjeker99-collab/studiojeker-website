@@ -60,13 +60,20 @@ export default function MailSchedule({
   compact = false,
   readyCount,
   onQueueChange,
+  onSendableQueueChange,
+  onSendNow,
+  reviewBusy = false,
 }: {
+  onSendNow?: (ids: string[]) => void;
+  onSendableQueueChange?: (ids: string[]) => void;
+  reviewBusy?: boolean;
   compact?: boolean;
   readyCount?: number;
   onQueueChange?: (ids: string[]) => void;
   drafts: Candidate[];
   openDraft: (id: string) => void;
 }) {
+  const [showStart, setShowStart] = useState(false);
   const [data, setData] = useState<Data | null>(null);
   const [settings, setSettings] = useState<Schedule | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
@@ -133,13 +140,16 @@ export default function MailSchedule({
         setConfirmQueue(false);
       }
       setConfirmStart(false);
+      setShowStart(false);
       await load(true);
       setNotice(
         action === "pause"
           ? "Automatik pausiert. Ein bereits laufender Versand kann noch abgeschlossen werden."
           : action === "enqueue"
             ? "Auswahl verarbeitet. Ergebnisse stehen unter der Auswahl."
-            : "Zeitplan gespeichert.",
+            : action === "settings" && (body as { enabled?: boolean }).enabled
+              ? "Automatik aktiviert. Versand erfolgt im angezeigten Zeitfenster."
+              : "Zeitplan gespeichert.",
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Aktion fehlgeschlagen.");
@@ -159,13 +169,17 @@ export default function MailSchedule({
       ),
   );
   useEffect(() => {
-    if (data)
+    if (data) {
+      onSendableQueueChange?.(
+        data.items.filter((i) => i.status === "QUEUED").map((i) => i.draftId),
+      );
       onQueueChange?.(
         data.items
           .filter((i) => !["CANCELLED", "BLOCKED"].includes(i.status))
           .map((i) => i.draftId),
       );
-  }, [data, onQueueChange]);
+    }
+  }, [data, onQueueChange, onSendableQueueChange]);
   const count = (status: string) =>
     data?.counts.find((c) => c.status === status)?._count || 0;
   const dirty = Boolean(
@@ -304,19 +318,105 @@ export default function MailSchedule({
             {String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · alle{" "}
             {data.schedule.intervalMinutes} Minute(n).
           </p>
-          {data.schedule.enabled && (
-            <button disabled={busy} onClick={() => void mutate("pause", {})}>
-              Versand pausieren
-            </button>
+          <div className="actions">
+            {onSendNow && count("QUEUED") > 0 && (
+              <button
+                className="secondary"
+                disabled={busy || reviewBusy}
+                onClick={() =>
+                  onSendNow(
+                    data.items
+                      .filter((i) => i.status === "QUEUED")
+                      .slice(0, 200)
+                      .map((i) => i.draftId),
+                  )
+                }
+              >
+                Eingeplante Mails jetzt senden (
+                {Math.min(
+                  200,
+                  data.items.filter((i) => i.status === "QUEUED").length,
+                )}
+                ) →
+              </button>
+            )}
+            {data.schedule.enabled ? (
+              <button
+                className="secondary"
+                disabled={busy || reviewBusy}
+                onClick={() => void mutate("pause", {})}
+              >
+                Versand pausieren
+              </button>
+            ) : (
+              <button
+                className="secondary"
+                disabled={busy || reviewBusy}
+                onClick={() => setShowStart(!showStart)}
+              >
+                Zeitplan starten
+              </button>
+            )}
+          </div>
+          {showStart && !data.schedule.enabled && (
+            <fieldset>
+              <legend>Automatischen Versand starten</legend>
+              <p>
+                Es werden nur bereits freigegebene und eingeplante Mails nach
+                dem oben angezeigten Zeitplan versandt.
+              </p>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  disabled={busy || reviewBusy}
+                  checked={confirmStart}
+                  onChange={(e) => setConfirmStart(e.target.checked)}
+                />
+                Ich bestätige den automatischen Versand nach diesem Zeitplan.
+              </label>
+              <button
+                disabled={
+                  busy ||
+                  reviewBusy ||
+                  !confirmStart ||
+                  !data.productionReady ||
+                  staleWorker
+                }
+                onClick={() =>
+                  void mutate("settings", {
+                    revision: data.schedule.revision,
+                    enabled: true,
+                    dailyLimit: data.schedule.dailyLimit,
+                    weekdaysOnly: data.schedule.weekdaysOnly,
+                    startHour: data.schedule.startHour,
+                    endHour: data.schedule.endHour,
+                    intervalMinutes: data.schedule.intervalMinutes,
+                    confirmDispatch: true,
+                  })
+                }
+              >
+                Freigegebene Mails nach Zeitplan senden
+              </button>
+              <p role="status">
+                {!data.productionReady
+                  ? "E-Mail-Versand ist in den Einstellungen noch deaktiviert."
+                  : staleWorker
+                    ? "Der Versanddienst ist noch nicht bereit. Status aktualisieren."
+                    : !confirmStart
+                      ? "Bestätige den automatischen Versand, um zu starten."
+                      : "Bereit zum Start."}
+              </p>
+            </fieldset>
           )}
           <p>
             Absender: Nora Jeker · njeker@studiojeker.ch · Schweizer Zeit
             (Europe/Zurich).
           </p>
           <button
-            disabled={busy}
+            className="secondary"
+            disabled={busy || reviewBusy}
             onClick={() => {
-              void load(false).catch((e) =>
+              void load(!dirty).catch((e) =>
                 setError(
                   e instanceof Error ? e.message : "Status nicht verfügbar.",
                 ),
@@ -345,86 +445,100 @@ export default function MailSchedule({
             <summary>
               Zeitplan bearbeiten{dirty ? " · Ungespeicherte Änderungen" : ""}
             </summary>
-            <div className="form-grid" onChange={() => setConfirmStart(false)}>
-              <label>
-                Mails pro Tag
-                <input
-                  type="number"
-                  min="1"
-                  max={Math.min(500, data.serverLimit)}
-                  value={settings.dailyLimit}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      dailyLimit: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Versandtage
-                <select
-                  value={settings.weekdaysOnly ? "weekdays" : "daily"}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      weekdaysOnly: e.target.value === "weekdays",
-                    })
-                  }
-                >
-                  <option value="weekdays">Montag bis Freitag</option>
-                  <option value="daily">Jeden Tag</option>
-                </select>
-              </label>
-              <label>
-                Start (Stunde)
-                <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={settings.startHour}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      startHour: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Ende (Stunde)
-                <input
-                  type="number"
-                  min="1"
-                  max="24"
-                  value={settings.endHour}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      endHour: Number(e.target.value),
-                    })
-                  }
-                />
-              </label>
-              <details>
-                <summary>Erweitert</summary>
+            <fieldset disabled={busy || reviewBusy}>
+              <div
+                className="form-grid"
+                onChange={() => setConfirmStart(false)}
+              >
                 <label>
-                  Abstand in Minuten
+                  Mails pro Tag
                   <input
                     type="number"
                     min="1"
-                    max="120"
-                    value={settings.intervalMinutes}
+                    max={Math.min(500, data.serverLimit)}
+                    value={settings.dailyLimit}
                     onChange={(e) =>
                       setSettings({
                         ...settings,
-                        intervalMinutes: Number(e.target.value),
+                        dailyLimit: Number(e.target.value),
                       })
                     }
                   />
                 </label>
-              </details>
-            </div>
+                <label>
+                  Versandtage
+                  <select
+                    value={settings.weekdaysOnly ? "weekdays" : "daily"}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        weekdaysOnly: e.target.value === "weekdays",
+                      })
+                    }
+                  >
+                    <option value="weekdays">Montag bis Freitag</option>
+                    <option value="daily">Jeden Tag</option>
+                  </select>
+                </label>
+                <label>
+                  Von
+                  <select
+                    value={settings.startHour}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        startHour: Number(e.target.value),
+                      })
+                    }
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i + 0).map((hour) => (
+                      <option key={hour} value={hour}>
+                        {String(hour).padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Bis
+                  <select
+                    value={settings.endHour}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        endHour: Number(e.target.value),
+                      })
+                    }
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i + 1).map((hour) => (
+                      <option key={hour} value={hour}>
+                        {String(hour).padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <details>
+                  <summary>Erweitert</summary>
+                  <label>
+                    Abstand in Minuten
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={settings.intervalMinutes}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          intervalMinutes: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                </details>
+              </div>
+            </fieldset>
+            {settings.startHour >= settings.endHour && (
+              <p role="alert">Die Endzeit muss nach der Startzeit liegen.</p>
+            )}
             <p className="muted">
               Serverlimit: {data.serverLimit}/Tag. Einzelversand zählt mit.
               Keine Nachholung verpasster Tagesmengen; ohne bereitstehende Mails
@@ -441,20 +555,29 @@ export default function MailSchedule({
                 ? "Ungespeicherte Änderungen – der Versand verwendet noch den oben angezeigten Zeitplan."
                 : "Zeitplan ist gespeichert."}
             </p>
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={confirmStart}
-                onChange={(e) => setConfirmStart(e.target.checked)}
-              />
-              Ich bestätige den automatischen echten Versand der eingeplanten,
-              freigegebenen Mails nach diesem Zeitplan.
-            </label>
+            {data.schedule.enabled && dirty && (
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={confirmStart}
+                  onChange={(e) => setConfirmStart(e.target.checked)}
+                />
+                Ich bestätige den automatischen echten Versand der eingeplanten,
+                freigegebenen Mails nach diesem Zeitplan.
+              </label>
+            )}
+            {data.schedule.enabled && dirty && !confirmStart && (
+              <p role="status">
+                Bestätige den geänderten Zeitplan vor dem Speichern.
+              </p>
+            )}
             <div className="actions">
               <button
                 disabled={
                   busy ||
+                  reviewBusy ||
                   !dirty ||
+                  settings.startHour >= settings.endHour ||
                   (data.schedule.enabled &&
                     (!confirmStart || !data.productionReady || staleWorker))
                 }
@@ -473,30 +596,6 @@ export default function MailSchedule({
               >
                 Änderungen speichern
               </button>
-              {!data.schedule.enabled && (
-                <button
-                  disabled={
-                    busy ||
-                    !confirmStart ||
-                    !data.productionReady ||
-                    staleWorker
-                  }
-                  onClick={() =>
-                    void mutate("settings", {
-                      revision: settings.revision,
-                      enabled: true,
-                      dailyLimit: settings.dailyLimit,
-                      weekdaysOnly: settings.weekdaysOnly,
-                      startHour: settings.startHour,
-                      endHour: settings.endHour,
-                      intervalMinutes: settings.intervalMinutes,
-                      confirmDispatch: true,
-                    })
-                  }
-                >
-                  Versand starten
-                </button>
-              )}
             </div>
           </details>
           {!compact && (
