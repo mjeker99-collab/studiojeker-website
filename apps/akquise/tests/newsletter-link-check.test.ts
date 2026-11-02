@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { approvedLinkUrl, checkNewsletterLink } from "../app/api/newsletter/check-links/route";
+import { approvedLinkUrl, checkNewsletterLink } from "../lib/hub/newsletter-link-check";
 
 test("only trusted public hosts can be probed automatically", () => {
   for (const url of [
