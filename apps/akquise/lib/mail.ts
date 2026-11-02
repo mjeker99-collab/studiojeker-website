@@ -1,3 +1,4 @@
+import { mailImageAttachments } from "./mail-images";
 import nodemailer from "nodemailer";
 import { assertExternalSendingAllowed } from "./policy";
 import { readMailConfig } from "./config.mjs";
@@ -42,7 +43,10 @@ export const smtpSender: SmtpSender = async (message) => {
         ? `[INTERNER TEST] ${message.subject}`
         : message.subject,
       ...signedMessage(message.body),
-      attachments: await signatureAttachments(),
+      attachments: [
+        ...(await signatureAttachments()),
+        ...(await mailImageAttachments(message.body)),
+      ],
       messageId: message.messageId,
       envelope: {
         from: "njeker@studiojeker.ch",
@@ -73,7 +77,10 @@ export async function renderLocalMessage(message: {
     to: message.recipient,
     subject: message.subject,
     ...signedMessage(message.body),
-    attachments: await signatureAttachments(),
+    attachments: [
+      ...(await signatureAttachments()),
+      ...(await mailImageAttachments(message.body)),
+    ],
     messageId: message.messageId,
   });
   if (!Buffer.isBuffer(result.message))

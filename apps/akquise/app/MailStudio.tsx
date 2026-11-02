@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./mailstudio-visual.css";
 import { signedMessage } from "../lib/mail-signature";
+import MailContentEditor from "./MailContentEditor";
 import MailSchedule from "./MailSchedule";
 import ContactPreparationEditor from "./ContactPreparation";
 import type { ContactPreparation } from "../lib/contact-preparation";
@@ -796,6 +797,39 @@ export default function MailStudio({
               zurückgestellt
             </strong>
           </p>
+          <MailContentEditor
+            count={chosen.length}
+            disabled={busy}
+            onApply={async (content) => {
+              setBusy(true);
+              setRead(false);
+              setLegal(false);
+              const previousIncluded = [...included];
+              try {
+                const data = await api("content", {
+                  items: chosen.map((r) => ({ id: r.id, version: r.version })),
+                  content,
+                });
+                await preview();
+                setIncluded(previousIncluded);
+                await refresh();
+                if (data.results.some((r: Result) => !r.ok))
+                  throw new Error(
+                    data.results
+                      .filter((r: Result) => !r.ok)
+                      .map((r: Result) => r.message)
+                      .join(" · "),
+                  );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+          <button type="button" className="secondary" disabled={busy || !chosen.length} onClick={() => void run(async () => {
+            const first = chosen[0];
+            const result = await api("test", {confirmed:true, requestId:crypto.randomUUID(),draft:{id:first.id,version:first.version}});
+            setSendProgress(result.message);
+          })}>Erste Mail als Test an njeker@studiojeker.ch senden</button>
           <section
             id="mailstudio-send-approval"
             ref={approvalRef}

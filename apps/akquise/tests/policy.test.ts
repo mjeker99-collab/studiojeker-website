@@ -10,7 +10,12 @@ import {
   messageHash,
   assertExternalSendingAllowed,
 } from "../lib/policy";
-import { MAX_IMPORT_BYTES, MAX_IMPORT_CONTACTS, parseImport, validateRows } from "../lib/import";
+import {
+  MAX_IMPORT_BYTES,
+  MAX_IMPORT_CONTACTS,
+  parseImport,
+  validateRows,
+} from "../lib/import";
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
@@ -135,6 +140,15 @@ test("Separate SMTP-Testmail bindet Empfänger, bestätigt Versand und verhinder
     },
   };
   const tx = {
+    draftVersion: {
+      async findUnique() {
+        return {
+          subject: "Projekt",
+          body: "Persönliche Mail mit Bild",
+          draft: { version: 2 },
+        };
+      },
+    },
     audit,
     user: {
       async findFirst() {
@@ -232,6 +246,38 @@ test("Separate SMTP-Testmail bindet Empfänger, bestätigt Versand und verhinder
       /bereits gestartet/,
     );
     assert.equal(sends, 1);
+    records.length = 0;
+    process.env.MAIL_MODE = "production";
+    await assert.rejects(
+      sendInternalSmtpTest(
+        "martin",
+        {
+          ...request,
+          requestId: randomUUID(),
+          draft: { id: "draft", version: 1 },
+        },
+        sender,
+        client,
+      ),
+      /geändert/,
+    );
+    await sendInternalSmtpTest(
+      "martin",
+      {
+        ...request,
+        requestId: randomUUID(),
+        draft: { id: "draft", version: 2 },
+      },
+      async (message) => {
+        assert.equal(message.subject, "Projekt");
+        assert.equal(message.body, "Persönliche Mail mit Bild");
+        assert.deepEqual(message.envelopeRecipients, ["njeker@studiojeker.ch"]);
+        assert.equal(message.test, true);
+        return { accepted: ["njeker@studiojeker.ch"], rejected: [] };
+      },
+      client,
+    );
+    assert.equal(records.at(-1)?.action, "SMTP_TEST_ACCEPTED");
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key];
@@ -513,7 +559,9 @@ test("Import blockiert Dubletten, Formeln, unerlaubte URLs und Übergrösse", as
       "test.csv",
     ),
   );
-  await assert.rejects(parseImport(Buffer.alloc(MAX_IMPORT_BYTES + 1), "test.csv"));
+  await assert.rejects(
+    parseImport(Buffer.alloc(MAX_IMPORT_BYTES + 1), "test.csv"),
+  );
   assert.throws(() =>
     validateRows([
       {
@@ -526,7 +574,9 @@ test("Import blockiert Dubletten, Formeln, unerlaubte URLs und Übergrösse", as
     ]),
   );
   await assert.rejects(parseImport(Buffer.from(csv), "test.exe"));
-  assert.throws(() => validateRows(Array.from({ length: MAX_IMPORT_CONTACTS + 1 }, () => ({}))));
+  assert.throws(() =>
+    validateRows(Array.from({ length: MAX_IMPORT_CONTACTS + 1 }, () => ({}))),
+  );
 });
 test("XLSX akzeptiert Text und blockiert Formeln", async () => {
   const book = new ExcelJS.Workbook();
@@ -626,23 +676,48 @@ test("One XLSX master with more than 500 contacts remains importable without app
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet("Kontakte");
   sheet.addRow([
-    "Person", "Funktion", "Organisation", "Ort", "E-Mail",
-    "Prüfstatus", "Prüfdatum", "Priorität", "Quellen-URL",
-    "Newsletter-Einwilligung", "Akquise-Status", "Betreff",
-    "E-Mail-Entwurf", "Herkunft", "Hinweise",
+    "Person",
+    "Funktion",
+    "Organisation",
+    "Ort",
+    "E-Mail",
+    "Prüfstatus",
+    "Prüfdatum",
+    "Priorität",
+    "Quellen-URL",
+    "Newsletter-Einwilligung",
+    "Akquise-Status",
+    "Betreff",
+    "E-Mail-Entwurf",
+    "Herkunft",
+    "Hinweise",
   ]);
   for (let i = 0; i < 650; i++) {
     sheet.addRow([
-      `Anna Person${i}`, "Marketing", `Firma ${i} AG`, "Solothurn",
-      `anna${i}@example.test`, "Offiziell", "2026-11-01", "B",
-      "https://example.test/kontakt", "Nicht belegt", "Keine Versandfreigabe",
-      `Betreff ${i}`, `Persönlicher Entwurf ${i}`, "Recherche", "",
+      `Anna Person${i}`,
+      "Marketing",
+      `Firma ${i} AG`,
+      "Solothurn",
+      `anna${i}@example.test`,
+      "Offiziell",
+      "2026-11-01",
+      "B",
+      "https://example.test/kontakt",
+      "Nicht belegt",
+      "Keine Versandfreigabe",
+      `Betreff ${i}`,
+      `Persönlicher Entwurf ${i}`,
+      "Recherche",
+      "",
     ]);
   }
   const rows = await parseImport(
-    Buffer.from(await book.xlsx.writeBuffer()), "einzige-masterliste.xlsx",
+    Buffer.from(await book.xlsx.writeBuffer()),
+    "einzige-masterliste.xlsx",
   );
   assert.equal(rows.length, 650);
   assert.match(rows[649].notes, /E-Mail-Entwurf: Persönlicher Entwurf 649/);
-  assert.ok(rows.every(r => r.confidence === "UNCONFIRMED" && !r.newsletterConsent));
+  assert.ok(
+    rows.every((r) => r.confidence === "UNCONFIRMED" && !r.newsletterConsent),
+  );
 });
