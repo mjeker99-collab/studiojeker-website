@@ -11,21 +11,230 @@
       "complete": 14,
       "broken": [],
       "scrollWidth": 700,
-      "clientWidth": 700
+      "clientWidth": 700,
+      "scrollHeight": 2786
     },
     "v4-mobile-390.png": {
       "total": 14,
       "complete": 14,
       "broken": [],
       "scrollWidth": 390,
-      "clientWidth": 390
+      "clientWidth": 390,
+      "scrollHeight": 4647
     },
     "v4-mobile-320.png": {
       "total": 14,
       "complete": 14,
       "broken": [],
       "scrollWidth": 320,
-      "clientWidth": 320
+      "clientWidth": 320,
+      "scrollHeight": 4682
     }
-  }
+  },
+  "fonts": {
+    "v4-desktop-700.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    },
+    "v4-mobile-390.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    },
+    "v4-mobile-320.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    }
+  },
+  "headlines": {
+    "v4-desktop-700.png": [
+      {
+        "text": "Sichtbarkeit ist kein Luxus.Aber wer hat Zeit dafür?",
+        "width": 264,
+        "parent": 304,
+        "overflow": false,
+        "fontSize": "32px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 5
+      },
+      {
+        "text": "Sichtbarkeit braucht Kontinuität",
+        "width": 660,
+        "parent": 700,
+        "overflow": false,
+        "fontSize": "24px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 1
+      },
+      {
+        "text": "Marketing nebenbei? Selten dauerhaft.",
+        "width": 338,
+        "parent": 338,
+        "overflow": false,
+        "fontSize": "24px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Die Lösung: Sichtbarkeit im Abo",
+        "width": 650,
+        "parent": 650,
+        "overflow": false,
+        "fontSize": "24px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 1
+      },
+      {
+        "text": "Persönliches Gespräch vereinbaren.",
+        "width": 271,
+        "parent": 271,
+        "overflow": false,
+        "fontSize": "24px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 3
+      },
+      {
+        "text": "Unsere Visibility Abos.",
+        "width": 336,
+        "parent": 378,
+        "overflow": false,
+        "fontSize": "30px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 3
+      }
+    ],
+    "v4-mobile-390.png": [
+      {
+        "text": "Sichtbarkeit ist kein Luxus.Aber wer hat Zeit dafür?",
+        "width": 348,
+        "parent": 380,
+        "overflow": false,
+        "fontSize": "28px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 5
+      },
+      {
+        "text": "Sichtbarkeit braucht Kontinuität",
+        "width": 358,
+        "parent": 390,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Marketing nebenbei? Selten dauerhaft.",
+        "width": 348,
+        "parent": 380,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Die Lösung: Sichtbarkeit im Abo",
+        "width": 348,
+        "parent": 380,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Persönliches Gespräch vereinbaren.",
+        "width": 348,
+        "parent": 348,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Unsere Visibility Abos.",
+        "width": 338,
+        "parent": 380,
+        "overflow": false,
+        "fontSize": "30px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 3
+      }
+    ],
+    "v4-mobile-320.png": [
+      {
+        "text": "Sichtbarkeit ist kein Luxus.Aber wer hat Zeit dafür?",
+        "width": 278,
+        "parent": 310,
+        "overflow": false,
+        "fontSize": "28px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 5
+      },
+      {
+        "text": "Sichtbarkeit braucht Kontinuität",
+        "width": 288,
+        "parent": 320,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Marketing nebenbei? Selten dauerhaft.",
+        "width": 278,
+        "parent": 310,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Die Lösung: Sichtbarkeit im Abo",
+        "width": 278,
+        "parent": 310,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Persönliches Gespräch vereinbaren.",
+        "width": 278,
+        "parent": 278,
+        "overflow": false,
+        "fontSize": "22px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 2
+      },
+      {
+        "text": "Unsere Visibility Abos.",
+        "width": 268,
+        "parent": 310,
+        "overflow": false,
+        "fontSize": "30px",
+        "fontWeight": "900",
+        "family": "\"Helvetica Now Display\", HelveticaNeue-Black, \"Helvetica Neue Black\", \"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+        "lines": 4
+      }
+    ]
+  },
+  "desktopTextHasMartinBlock": false
 }
