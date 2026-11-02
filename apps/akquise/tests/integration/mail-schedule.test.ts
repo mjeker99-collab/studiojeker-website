@@ -226,15 +226,21 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
   assert.equal(calls, 1);
   await start(25);
   await runMailSchedule(sender);
-  assert.equal(calls, 1);
+  // The direct send is already reflected in the queue. The next tick can
+  // send B immediately instead of spending a tick marking A as skipped.
+  assert.equal(calls, 2);
   assert.equal(
     (
       await db.mailQueueItem.findUniqueOrThrow({
         where: { draftId_version: { draftId: a.d.id, version: 1 } },
       })
     ).status,
-    "SKIPPED",
+    "SENT",
   );
+  assert.equal(await db.delivery.count({ where: { recipient: a.c.email } }), 1);
+  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 1);
+  await runMailSchedule(sender);
+  assert.equal(calls, 2);
 });
 test("Unklarer SMTP-Ausgang pausiert dauerhaft; Abgleich erlaubt keine Wiederholung", async () => {
   const a = await prepared();
