@@ -1,4 +1,5 @@
 import type { Contact } from "@prisma/client";
+import { hasPersonName, isTeamMailbox } from "./contact-identity";
 import { PolicyError, verifiedContact } from "./policy";
 
 // Both supported master-list imports preserve these labelled fields in notes.
@@ -40,7 +41,7 @@ export const localGenerator: DraftGenerator = {
   async generate({ facts }) {
     return {
       subject: `${facts.service} für ${facts.organisation}`,
-      body: `Guten Tag ${facts.firstName} ${facts.lastName}\n\n${facts.hook}\n\nBei Studiojeker GmbH unterstützen wir Unternehmen mit ${facts.service}. Dürfte ich Ihnen dazu einen kurzen, unverbindlichen Vorschlag vorstellen?\n\nFreundliche Grüsse\nNora Jeker\nStudiojeker GmbH\nnjeker@studiojeker.ch\n\nFalls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.`,
+      body: `${facts.greeting}\n\n${facts.hook}\n\nBei Studiojeker GmbH unterstützen wir Unternehmen mit ${facts.service}. Dürfte ich Ihnen dazu einen kurzen, unverbindlichen Vorschlag vorstellen?\n\nFreundliche Grüsse\nNora Jeker\nStudiojeker GmbH\nnjeker@studiojeker.ch\n\nFalls Sie keinen weiteren Kontakt wünschen, genügt eine kurze Antwort.`,
     };
   },
 };
@@ -51,6 +52,8 @@ export async function generateDraft(
   verifiedContact(c);
   const imported = importedDraft(c.notes);
   if (imported) return imported;
+  const team = isTeamMailbox(c.email);
+  const named = hasPersonName(c.firstName, c.lastName);
   // A missing industry must not turn an explicitly named architecture practice
   // into a generic business prospect. An entered industry/service takes priority.
   const industry = c.industry.trim() || c.organisation;
@@ -58,8 +61,15 @@ export async function generateDraft(
     rules: generationRules,
     facts: {
       organisation: c.organisation,
-      firstName: c.firstName,
-      lastName: c.lastName,
+      firstName: named ? c.firstName : "",
+      lastName: named ? c.lastName : "",
+      greeting:
+        team && !named
+          ? "Guten Tag"
+          : `Guten Tag ${c.firstName} ${c.lastName}`,
+      mailbox: team
+        ? "Team-Postfach, Unternehmensadresse, keine persönliche Einzeladresse"
+        : "",
       industry: c.industry,
       hook: c.hook,
       service:

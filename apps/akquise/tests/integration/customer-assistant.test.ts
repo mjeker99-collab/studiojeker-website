@@ -222,14 +222,105 @@ test("Mail assistant saves sourced leads without approval, deduplicates imports 
     }),
   );
   const applied = await applyMailAssistant(actor, { id: write.id });
-  assert.ok("results" in applied);
-  assert.ok(applied.results[0].ok);
+  if (!("results" in applied) || !applied.results[0])
+    throw new Error("Textübernahme fehlt.");
+  assert.equal(applied.results[0].ok, true);
   const again = await applyMailAssistant(actor, { id: write.id });
-  assert.ok("results" in again);
-  assert.ok(again.results[0].ok);
+  if (!("results" in again) || !again.results[0])
+    throw new Error("Textübernahme fehlt.");
+  assert.equal(again.results[0].ok, true);
   assert.equal(
     (await db.draft.findUniqueOrThrow({ where: { id: draft.id } })).version,
     2,
   );
   assert.equal(await db.delivery.count(), 0);
+});
+
+test("Research import drops empty and info@ leads, marks team mailboxes and sends nothing", async () => {
+  const { assistMail, applyMailAssistant } =
+    await import("../../lib/mail-assistant/service");
+  process.env.CONTENT_AI_ENABLED = "true";
+  process.env.CONTENT_DAILY_REQUEST_LIMIT = "1000";
+  process.env.CONTENT_DAILY_BUDGET_USD = "1000";
+  const leads = [
+    {
+      organisation: "Leer AG",
+      firstName: "Lea",
+      lastName: "Ohne",
+      email: "",
+      industry: "Industrie",
+      region: "Olten",
+      position: "Leitung",
+      website: "https://leer.example",
+      sourceUrl: "https://leer.example/team",
+      hook: "Produktionsstandort in Olten.",
+      service: "Industriefilm",
+    },
+    {
+      organisation: "Info AG",
+      firstName: "Ida",
+      lastName: "Info",
+      email: "info@info.example",
+      industry: "Dienstleistung",
+      region: "Solothurn",
+      position: "Empfang",
+      website: "https://info.example",
+      sourceUrl: "https://info.example/kontakt",
+      hook: "Dienstleister in Solothurn.",
+      service: "Fotografie",
+    },
+    {
+      organisation: "Team AG",
+      firstName: "Tina",
+      lastName: "Team",
+      email: "kommunikation@team.example",
+      industry: "Architektur",
+      region: "Bern",
+      position: "Team-Postfach",
+      website: "https://team.example",
+      sourceUrl: "https://team.example/kontakt",
+      hook: "Architekturbüro mit öffentlichem Team-Postfach.",
+      service: "Architekturvisualisierung",
+    },
+  ];
+  const generated = await assistMail(
+    actor,
+    {
+      requestKey: randomUUID(),
+      mode: "RESEARCH",
+      briefing: "Industrie und Architekturbüros in Solothurn",
+    },
+    async () => ({
+      result: { leads, mails: [], note: "Synthetische Quellen." },
+      usage: {},
+      requestId: "synthetic-research",
+    }),
+  );
+  const applied = await applyMailAssistant(actor, { id: generated.id });
+  if (!("imported" in applied)) throw new Error("Import fehlt.");
+  assert.equal(applied.imported, 1);
+  assert.equal(await db.contact.count({ where: { email: "" } }), 0);
+  assert.equal(await db.contact.count({ where: { email: "info@info.example" } }), 0);
+  const team = await db.contact.findFirstOrThrow({
+    where: { email: "kommunikation@team.example" },
+  });
+  assert.equal(team.confidence, "GENERAL");
+  assert.match(team.notes, /Team-Postfach/);
+  assert.equal(await db.delivery.count(), 0);
+  assert.equal(await db.draft.count({ where: { contactId: team.id } }), 0);
+  process.env.CONTENT_AI_ENABLED = "false";
+  await assert.rejects(
+    assistMail(
+      actor,
+      {
+        requestKey: randomUUID(),
+        mode: "RESEARCH",
+        briefing: "Weitere Architekturleads in Bern",
+      },
+      async () => {
+        throw new Error("darf nicht aufgerufen werden");
+      },
+    ),
+    /BLOCKIERT/,
+  );
 });

@@ -1,6 +1,12 @@
 "use client";
 import { useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
+import {
+  isTeamMailbox,
+  qualifyResearchLead,
+  researchPriorities,
+  researchRegions,
+} from "../lib/mail-assistant/qualify";
 type Job = {
   id: string;
   status: string;
@@ -24,6 +30,12 @@ async function request(path: string, body?: unknown) {
   if (!r.ok)
     throw new Error(data.error || "Auftrag konnte nicht abgeschlossen werden.");
   return data;
+}
+const emptyKnown = { emails: new Set<string>(), keys: new Set<string>() };
+function acceptedLeadIndices(leads: AssistantResult["leads"]) {
+  return leads.flatMap((lead, index) =>
+    qualifyResearchLead(lead, emptyKnown).ok ? [index] : [],
+  );
 }
 export default function MailAssistant({
   mode,
@@ -89,7 +101,7 @@ export default function MailAssistant({
         count,
       });
       setJob(value);
-      setChosen(value.result.leads.map((_: unknown, i: number) => i));
+      setChosen(acceptedLeadIndices(value.result.leads));
       await loadHistory();
       return;
     }
@@ -144,7 +156,7 @@ export default function MailAssistant({
       </summary>
       <p>
         {research
-          ? "Zielgruppe und Angebot beschreiben. GPT sucht passende Unternehmen und berufliche Ansprechpartner mit Quellen."
+          ? "Zielgruppe und Angebot beschreiben. GPT sucht passende Unternehmen und berufliche Ansprechpartner mit belegter E-Mail-Adresse und Quelle."
           : "Ein Briefing für die ganze Auswahl. GPT formuliert jeden Entwurf anhand des jeweiligen Kontakts neu und speichert ihn für die gemeinsame Vorschau."}
       </p>
       <label>
@@ -173,6 +185,10 @@ export default function MailAssistant({
               placeholder="Zum Beispiel Solothurn und Bern"
             />
           </label>
+          <p className="muted">
+            Zielregionen: {researchRegions.join(", ")}. Vorrang:{" "}
+            {researchPriorities.join(", ")}.
+          </p>
           <label>
             Leads pro Recherche
             <select
@@ -207,8 +223,8 @@ export default function MailAssistant({
       </button>
       <p className="muted">
         {research
-          ? "Nur belegte Kontakte werden vorgeschlagen. Fehlende E-Mail-Adressen werden gekennzeichnet. Übernehmen versendet keine Mail."
-          : "Vorhandene Texte werden als neue Version gespeichert. Der Versand braucht danach deine Freigabe."}
+          ? "Nur Leads mit belegter E-Mail-Adresse werden übernommen. info@-Adressen entfallen. marketing@ und kommunikation@ bleiben als Team-Postfach gekennzeichnet. Es wird keine Mail versendet."
+          : "Vorhandene Texte werden als neue Version gespeichert. Die frühere Freigabe gilt danach nicht mehr. Der Versand braucht eine neue Bestätigung."}
       </p>
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
@@ -221,19 +237,22 @@ export default function MailAssistant({
               type="checkbox"
               disabled={disabled || working}
               checked={
-                !!job.result.leads.length &&
-                chosen.length === job.result.leads.length
+                acceptedLeadIndices(job.result.leads).length > 0 &&
+                chosen.length === acceptedLeadIndices(job.result.leads).length
               }
               onChange={(e) =>
                 setChosen(
-                  e.target.checked ? job.result.leads.map((_, i) => i) : [],
+                  e.target.checked ? acceptedLeadIndices(job.result.leads) : [],
                 )
               }
             />
-            Alle gefundenen Leads auswählen
+            Alle geeigneten Leads auswählen
           </label>
-          {job.result.leads.map((lead, i) => (
+          {job.result.leads.map((lead, i) => {
+            const decision = qualifyResearchLead(lead, emptyKnown);
+            return (
             <div key={i}>
+              {decision.ok ? (
               <label className="check">
                 <input
                   type="checkbox"
@@ -248,8 +267,15 @@ export default function MailAssistant({
                   }
                 />
                 {lead.organisation} · {lead.firstName} {lead.lastName} ·{" "}
-                {lead.email || "E-Mail nicht gefunden"}
+                {lead.email}
+                {isTeamMailbox(lead.email) ? " · Team-Postfach" : ""}
               </label>
+              ) : (
+                <p>
+                  {lead.organisation} · {lead.firstName} {lead.lastName}:{" "}
+                  {decision.reason}
+                </p>
+              )}
               <p>
                 {lead.hook}{" "}
                 <a href={lead.sourceUrl} target="_blank" rel="noreferrer">
@@ -257,7 +283,8 @@ export default function MailAssistant({
                 </a>
               </p>
             </div>
-          ))}
+            );
+          })}
           <button
             type="button"
             disabled={disabled || working || !chosen.length}
@@ -268,8 +295,18 @@ export default function MailAssistant({
                   indices: chosen,
                 });
                 await refresh();
+                const excluded = Array.isArray(r.excluded) ? r.excluded : [];
                 setNotice(
-                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden. Du kannst sie jetzt in der Masterliste auswählen.`,
+                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden.${
+                    excluded.length
+                      ? ` Nicht übernommen: ${excluded
+                          .map(
+                            (item: { count: number; reason: string }) =>
+                              `${item.count} ${item.reason}`,
+                          )
+                          .join(" ")}`
+                      : ""
+                  } Du kannst sie jetzt in der Masterliste auswählen.`,
                 );
               })
             }
@@ -299,7 +336,7 @@ export default function MailAssistant({
                     onClick={() => {
                       if (research) {
                         setJob({ id: j.id, result: j.result! });
-                        setChosen(j.result!.leads.map((_, i) => i));
+                        setChosen(acceptedLeadIndices(j.result!.leads));
                       } else
                         void run(async () => {
                           const r = await request("apply", { id: j.id });

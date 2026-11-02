@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
+import { isTeamMailbox, normalizeEmail, personKey } from "./contact-identity";
 import { signedMessage, signatureAssets } from "./mail-signature";
+export { normalizeEmail, personKey };
 export class PolicyError extends Error {
   constructor(
     message: string,
@@ -9,12 +11,6 @@ export class PolicyError extends Error {
     super(message);
   }
 }
-export const normalizeEmail = (email: string) =>
-  email.normalize("NFKC").trim().toLowerCase();
-export const personKey = (first: string, last: string, org: string) =>
-  [first, last, org]
-    .map((v) => v.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " "))
-    .join("|");
 export const messageHash = (recipient: string, subject: string, body: string) =>
   createHash("sha256")
     .update(
@@ -43,15 +39,21 @@ export function verificationIssues(
   if (c.replyOutcome)
     issues.push("Antwort erfasst. Keine weitere automatische Akquise.");
   if (c.status === "DO_NOT_CONTACT") issues.push("Kontakt ist gesperrt.");
+  const team = isTeamMailbox(c.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
     issues.push("Gültige E-Mail-Adresse fehlt.");
   if (c.confidence !== "VERIFIED")
-    issues.push("Persönliche Adresse noch nicht als verifiziert bestätigt.");
+    issues.push(
+      team
+        ? "Team-Postfach noch nicht als Unternehmensadresse bestätigt."
+        : "Persönliche Adresse noch nicht als verifiziert bestätigt.",
+    );
   if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
   if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
   if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");
   if (
-    /^(info|kontakt|contact|office|admin|hello|mail|sales|support|marketing|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
+    !team &&
+    /^(info|kontakt|contact|office|admin|hello|mail|sales|support|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
       c.email,
     )
   )

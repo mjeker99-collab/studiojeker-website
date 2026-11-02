@@ -1,4 +1,5 @@
 import type { Contact } from "@prisma/client";
+import { isTeamMailbox } from "./contact-identity";
 import { importedDraft } from "./generation";
 import { normalizeSourceUrl, sourceUrlIssue } from "./contact-source-url";
 import { verificationIssues } from "./policy";
@@ -169,6 +170,17 @@ export function contactPreparation(
   if (values.confidence === "UNCONFIRMED" && input.shared?.confidence) {
     values.confidence = input.shared.confidence;
     origins.push("Prüfstatus aus gemeinsamer Angabe");
+  }
+  // Research stores marketing@ and kommunikation@ as a general team mailbox.
+  // An explicit shared confirmation may accept that mailbox as a company
+  // address. It never turns the address into a named personal mailbox.
+  if (
+    values.confidence === "GENERAL" &&
+    input.shared?.confidence === "VERIFIED" &&
+    isTeamMailbox(patch.email ?? c.email)
+  ) {
+    values.confidence = "VERIFIED";
+    origins.push("Team-Postfach als Unternehmensadresse bestätigt");
   }
   if (input.values?.confidence !== undefined) {
     values.confidence = input.values.confidence;
