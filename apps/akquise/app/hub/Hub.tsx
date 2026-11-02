@@ -297,7 +297,7 @@ export default function Hub({
   }
   useEffect(() => {
     if (!editorNavigation || !form || !editorRef.current) return;
-    editorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    editorRef.current.scrollIntoView({ behavior: "auto", block: "start" });
     editorRef.current.focus({ preventScroll: true });
   }, [editorNavigation, editing?.id, form?.kind]);
   const dirty =
