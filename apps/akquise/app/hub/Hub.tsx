@@ -1146,6 +1146,32 @@ export default function Hub({
           </div>
           {form.kind === "NEWSLETTER" && form.newsletter && (
             <>
+              {editing && form.newsletter.templateId === "newsletter-04-github-364bba2" && (
+                <div className="panel padded" style={{ marginBottom: 14 }}>
+                  <p>Für V4 ist eine neue Video-Vorlage verfügbar: Hero und Promobild sind bildfüllend und haben je einen Playbutton.</p>
+                  <button type="button" disabled={busy} onClick={() => act(async () => {
+                    // Preserve all current content and the uploaded Nora image. Only the
+                    // template ID and independently editable promo video target change.
+                    const newsletter = {
+                      ...form.newsletter!,
+                      templateId: "newsletter-04-video-promo-20261102",
+                      fields: {
+                        ...form.newsletter!.fields,
+                        "promo_image.link.1": form.newsletter!.fields["hero_video_cta.link.1"],
+                      },
+                    };
+                    const next = { ...form, newsletter, body: newsletterText(newsletter) };
+                    const result = await post("contents/" + editing.id, {
+                      version: editing.version,
+                      data: next,
+                    });
+                    await reloadNewsletter(result.id);
+                  }, "Video-Vorlage als neue Version gespeichert. Bitte beide Videoziele vor Versand prüfen.")}>
+                    Video-Vorlage übernehmen
+                  </button>
+                  <p className="muted">Die bestehenden Inhalte bleiben erhalten. Vorerst verwenden beide Playbuttons den bisherigen Vimeo-Link; vor dem Versand prüfen.</p>
+                </div>
+              )}
               <NewsletterWorkspace key={newsletterSessionKey}
                 value={form} saved={editing} save={saveNewsletter}
                 reload={async (id) => { await reloadNewsletter(id); }} onBusy={setBusy} />
