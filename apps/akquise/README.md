@@ -75,6 +75,21 @@ Synthetische Beispiel AG,Anna,Muster,anna.muster@example.test,Architektur,Soloth
 
 Google Sheets: Service-Account über `GOOGLE_CLIENT_EMAIL` und `GOOGLE_PRIVATE_KEY` konfigurieren, Masterliste lesend mit diesem Konto teilen und `GOOGLE_SHEET_ID` setzen. `GOOGLE_SHEET_RANGE` muss zur Spaltenzahl und maximal 500 Datenzeilen passen. In den Einstellungen manuell synchronisieren. Der Adapter liest nur erlaubte Kontaktfelder und verwendet denselben Validator. V1 importiert neue Datensätze und überspringt bestehende Identitäten; keine automatischen Überschreibungen, kein bidirektionaler Sync und keine Statusübernahme.
 
+## Newsletter an Cursor übergeben
+
+Im Newsletter-Bereich steht oben die Aktion **Mit Cursor umsetzen**. Die kaufmännische Person beschreibt die Änderung am gespeicherten Newsletter. StudioONE übergibt den Wunsch serverseitig an die Cursor Cloud Agents API und zeigt danach einen der Status `Noch nicht gesendet`, `An Cursor übergeben`, `In Bearbeitung`, `Vorschau bereit` oder `Fehler`. `Vorschau bereit` ist keine Freigabe: es wird nichts gemergt, veröffentlicht oder versendet.
+
+Beide aktiven StudioONE-Konten, Martin und Nora, dürfen einen Auftrag starten. Geschützte Ausgaben (Newsletter 03 und die zugehörige Promo) werden abgelehnt. Eine Ausgabe braucht zusätzlich einen fest im Code freigegebenen Pull Request. PR #313 (Newsletter V4) und PR #305 sind ausgeschlossen. Solange keine Ausgabe in dieser Liste steht, startet StudioONE keinen Auftrag und meldet das klar.
+
+### Einmalige Schlüssel-Konfiguration
+
+1. Im Cursor-Dashboard unter API Keys einen Schlüssel für StudioONE erstellen.
+2. Den Schlüssel nur als Render-Secret `CURSOR_API_KEY` beim Service `studiojeker-akquise` eintragen. In `render.yaml` steht der Schlüssel mit `sync: false` und ohne Wert. Den Blueprint dafür nicht anwenden.
+3. Den Dienst neu starten, damit der Secret geladen wird. Ohne Schlüssel zeigt StudioONE `Cursor noch nicht verbunden` und meldet keinen Erfolg.
+4. Der Schlüssel bleibt serverseitig. Er wird nicht im Browser abgefragt, nicht geloggt und nicht in Git gespeichert.
+
+Wenn Cursor noch an derselben Ausgabe arbeitet, bleibt der Status `In Bearbeitung`. Eine weitere Änderung ist erst danach möglich. Ein Konflikt wird als Hinweis angezeigt, nicht als neuer Erfolg. Nach dem Reload bleibt der gespeicherte Status erhalten.
+
 ## Tests
 
 ```sh
