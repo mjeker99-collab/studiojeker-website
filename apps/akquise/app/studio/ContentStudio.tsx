@@ -117,9 +117,11 @@ const statusLabel: Record<string, string> = {
 export default function ContentStudio({
   userId,
   initialSeriesId,
+  initialTask,
 }: {
   userId: string;
   initialSeriesId?: string;
+  initialTask?: { prompt: string; request: number };
 }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [state, setState] = useState<State | null>(null),
@@ -448,10 +450,12 @@ export default function ContentStudio({
           state={state}
           refresh={() => refresh(undefined, undefined, true)}
           initialRequest={
-            initialSeriesId &&
-            state.series.some((series) => series.id === initialSeriesId)
-              ? { seriesId: initialSeriesId, message: "" }
-              : undefined
+            initialTask
+              ? { seriesId: "", message: initialTask.prompt }
+              : initialSeriesId &&
+                  state.series.some((series) => series.id === initialSeriesId)
+                ? { seriesId: initialSeriesId, message: "" }
+                : undefined
           }
           hasUnsavedContent={dirty}
         />
