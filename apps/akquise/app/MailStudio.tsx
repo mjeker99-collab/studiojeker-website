@@ -258,9 +258,12 @@ export default function MailStudio({
     setSkipped(excluded);
     const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
-    // Proposed changes from existing notes also require an explicit group review.
-    // An email address alone never proves a contact is ready.
-    if (proposals.some((p) => !p.ready || p.changed)) {
+    // Never infer verification from an email address alone. A mixed group
+    // continues with unchanged, verified records; incomplete records and
+    // unconfirmed suggestions stay out of the dispatch approval entirely.
+    const eligible = proposals.filter((p) => p.ready && !p.changed);
+    const deferred = proposals.filter((p) => !p.ready || p.changed);
+    if (!eligible.length) {
       setBatchProposals(proposals);
       setRows([]);
       setIncluded([]);
@@ -270,13 +273,17 @@ export default function MailStudio({
     setBatchProposals([]);
     const prepared = await preparation("prepare", {
       confirmed: true,
-      contacts: proposals.map((r) => ({ id: r.id, revision: r.revision })),
+      contacts: eligible.map((r) => ({ id: r.id, revision: r.revision })),
     });
     const successful = prepared.results.filter(
       (r: Result & { draftId?: string }) => r.ok && r.draftId,
     );
     setSkipped([
       ...excluded,
+      ...deferred.map(
+        (p) =>
+          `${p.organisation} · ${p.name}: ${p.changed ? "Vorgeschlagene Ergänzungen müssen zuerst bestätigt werden" : "Prüfangaben fehlen"} – zurückgestellt.`,
+      ),
       ...prepared.results
         .filter((r: Result) => !r.ok)
         .map((r: Result) => r.message),
