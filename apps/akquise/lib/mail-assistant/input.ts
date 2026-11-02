@@ -1,13 +1,17 @@
 import { z } from "zod";
+// Validate URLs locally: OpenAI Structured Outputs does not support format: uri.
 const httpUrl = z
   .string()
-  .url()
   .max(2000)
   .refine((v) => {
-    const u = new URL(v);
-    return (
-      ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
-    );
+    try {
+      const u = new URL(v);
+      return (
+        ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
+      );
+    } catch {
+      return false;
+    }
   });
 export const mailAssistantInput = z
   .object({
