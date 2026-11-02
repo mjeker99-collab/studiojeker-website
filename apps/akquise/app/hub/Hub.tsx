@@ -1085,7 +1085,7 @@ export default function Hub({
               )}
               {showOriginal && !form && (
                 <NewsletterPreview html={newsletterLibrary.find((template) => template.id === templateId)!.html} />
-              )
+              )}
             </section>
           )}
           <div className="actions">
