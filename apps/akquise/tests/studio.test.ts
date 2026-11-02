@@ -2,6 +2,7 @@ import { test } from "node:test";
 import { campaignsForSelection } from "../lib/studio/campaign-picker";
 
 import "./studio-chat.test";
+import "./studio-presentation.test";
 import "./drive-images.test";
 import assert from "node:assert/strict";
 import { briefingSchema, generatedPostSchema } from "../lib/studio/input";

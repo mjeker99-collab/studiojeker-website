@@ -1867,6 +1867,18 @@ button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); 
 @media(max-width:640px) { .mail-studio > .mail-studio-workspace { padding:18px; } .mail-studio-toolbar h2 { font-size:21px; } }
 .assistant-entry[aria-label="GPT für Mail-Studio"]:has(.ai-button[aria-expanded="false"]) { display:none; }
 
+/* Content Studio: visible results and image choices, including tablet widths. */
+.studio-image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; max-height: 480px; overflow: auto; padding: 4px; }
+.studio-workspace .studio-image-choice { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; align-items: start; padding: 10px; margin: 0; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; min-width: 0; }
+.studio-image-choice[data-selected="true"] { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
+.studio-image-choice:focus-within { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.studio-image-choice .studio-reference-thumb { grid-column: 1 / -1; grid-row: 1; width: 100%; height: 120px; object-fit: contain; }
+.studio-image-choice span { overflow-wrap: anywhere; }
+.studio-result { margin: 16px 0; min-width: 0; overflow-wrap: anywhere; }
+.studio-result-image { display: block; width: 100%; max-width: 540px; max-height: 560px; object-fit: contain; margin: 0 0 12px; }
+.studio-project-options { margin: 12px 0; }
+.studio-workspace .studio-series { position: static; max-height: 65vh; }
+@media (max-width: 1200px) { .studio-columns { grid-template-columns: 1fr; } .studio-workspace .studio-series { max-height: 280px; } }
 /* Library folders reuse the existing panels, palette and button styles. */
 .library-breadcrumb, .library-folder-actions, .library-move { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0; }
 .library-breadcrumb { overflow-wrap:anywhere; }
