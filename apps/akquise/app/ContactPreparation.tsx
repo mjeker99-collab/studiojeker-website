@@ -6,6 +6,7 @@ import type {
 } from "../lib/contact-preparation";
 
 import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
+import { isPermanentPreparationBlock } from "../lib/mail-batch-status";
 
 type Result = { id: string; ok: boolean; message: string; revision?: number };
 type Edit = { id: string; revision: number; values: PreparationFields };
@@ -228,6 +229,9 @@ export default function ContactPreparation({
       return counts;
     }, new Map<string, number>()),
   ).sort((a, b) => b[1] - a[1]);
+  const permanent = proposals.filter((p) =>
+    isPermanentPreparationBlock(p.issues),
+  );
   const unconfirmed = proposals.filter(
     (p) =>
       (edits[p.id]?.values.confidence ?? p.values.confidence) === "UNCONFIRMED",
@@ -248,6 +252,34 @@ export default function ContactPreparation({
         Angaben und bestätige die Auswahl einmal. Danach erscheinen die Mails
         zur gemeinsamen Versandfreigabe.
       </p>
+      {requireComplete && open.length > 0 && issueCounts.length > 0 && (
+        <div role="status">
+          <p>
+            <strong>
+              Noch nicht bereit: {open.length} von {proposals.length}
+            </strong>
+          </p>
+          <ul>
+            {issueCounts.map(([issue, count]) => (
+              <li key={issue}>
+                {count} Kontakte: {issue}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {onExclude && permanent.length > 0 && (
+        <button
+          type="button"
+          className="secondary"
+          disabled={busy}
+          onClick={() => onExclude(permanent.map((p) => p.id))}
+        >
+          {permanent.length === proposals.length
+            ? "Zurück zur Auswahl"
+            : `Diese ${permanent.length} Kontakte zurückstellen und mit ${proposals.length - permanent.length} fortfahren`}
+        </button>
+      )}
       {!requireComplete && unconfirmed > 0 && !shared.confidence && (
         <p role="status">
           Bei {unconfirmed} Kontakten fehlt die Bestätigung der Adressprüfung.
@@ -335,20 +367,6 @@ export default function ContactPreparation({
                 ))}
             </ul>
           )}
-        </div>
-      )}
-      {requireComplete && open.length > 0 && results.length > 0 && (
-        <div role="status">
-          <p>
-            <strong>Noch zu korrigieren für {open.length} Kontakte:</strong>
-          </p>
-          <ul>
-            {issueCounts.map(([issue, count]) => (
-              <li key={issue}>
-                {count} Kontakte: {issue}
-              </li>
-            ))}
-          </ul>
         </div>
       )}
       {onExclude && open.length > 0 && open.length < proposals.length && (

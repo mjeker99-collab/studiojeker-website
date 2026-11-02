@@ -11,6 +11,15 @@ import {
   mailAssistantResult,
 } from "../lib/mail-assistant/input";
 import { parseMailAssistantResponse } from "../lib/mail-assistant/provider";
+import {
+  blockedWebMessage,
+  qualifyResearchLead,
+  researchProviderError,
+} from "../lib/mail-assistant/qualify";
+import {
+  isPermanentPreparationBlock,
+  summarizeDeferred,
+} from "../lib/mail-batch-status";
 test("Master filters combine company and industry, including missing industry", () => {
   const contacts = [
     { organisation: "A", industry: "Bau" },
@@ -138,6 +147,81 @@ test("Personalized texts must match the entire selected version-bound batch", ()
   );
 });
 
+test("Research keeps found mailboxes, rejects info@ and empty addresses, marks team mailboxes", () => {
+  const existing = {
+    emails: new Set(["anna@lead.example"]),
+    keys: new Set<string>(),
+  };
+  assert.equal(
+    qualifyResearchLead(
+      {
+        ...lead,
+        email: "anna.neu@example.test",
+      },
+      existing,
+    ).ok,
+    true,
+  );
+  const missing = qualifyResearchLead({ ...lead, email: "" }, existing);
+  assert.equal(missing.ok, false);
+  const info = qualifyResearchLead(
+    { ...lead, email: "info@example.test" },
+    existing,
+  );
+  assert.equal(info.ok, false);
+  if (!info.ok) assert.match(info.reason, /info@/);
+  const team = qualifyResearchLead(
+    { ...lead, email: "kommunikation@example.test" },
+    existing,
+  );
+  assert.equal(team.ok && team.teamMailbox, true);
+  assert.equal(
+    qualifyResearchLead(
+      { ...lead, email: "Anna@lead.example" },
+      existing,
+    ).ok,
+    false,
+  );
+  assert.equal(researchProviderError(new Error("Missing research sources")), blockedWebMessage);
+  assert.match(researchProviderError(new Error("other")), /nichts übernommen/);
+});
+test("Deferred contacts keep the exact reason and a count", () => {
+  const summary = summarizeDeferred([
+    {
+      organisation: "A",
+      name: "Anna",
+      issues: ["Team-Postfach. Für den persönlichen Versand nicht freigabefähig."],
+      changed: false,
+    },
+    {
+      organisation: "B",
+      name: "Ben",
+      issues: ["Team-Postfach. Für den persönlichen Versand nicht freigabefähig."],
+      changed: false,
+    },
+    {
+      organisation: "C",
+      name: "Cara",
+      issues: [],
+      changed: true,
+    },
+  ]);
+  assert.deepEqual(summary.counts[0], [
+    "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
+    2,
+  ]);
+  assert.match(summary.lines[2], /zuerst bestätigt/);
+  assert.equal(
+    isPermanentPreparationBlock([
+      "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
+    ]),
+    true,
+  );
+  assert.equal(
+    isPermanentPreparationBlock(["Quellen-URL fehlt."]),
+    false,
+  );
+});
 test("Provider schema omits unsupported URI format while runtime validates URLs", () => {
   assert.equal(
     JSON.stringify(z.toJSONSchema(mailAssistantResult)).includes(

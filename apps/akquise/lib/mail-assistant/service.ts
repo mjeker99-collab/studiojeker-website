@@ -11,8 +11,10 @@ import {
   mailAssistantResult,
 } from "./input";
 import { z } from "zod";
+import { normalizeEmail, personKey } from "../contact-identity";
 import { contactInput } from "../import";
 import { importContacts, editDraft } from "../workflow";
+import { blockedAiMessage, qualifyResearchLead } from "./qualify";
 import { generateMailAssistant } from "./provider";
 const json = (v: unknown) =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
@@ -50,11 +52,7 @@ export async function assistMail(
         409,
       );
     }
-    if (!config.connected)
-      throw new PolicyError(
-        "GPT ist nicht verbunden. Bitte die KI-Verbindung in den Einstellungen prüfen.",
-        503,
-      );
+    if (!config.connected) throw new PolicyError(blockedAiMessage, 503);
     await tx.studioJob.updateMany({
       where: {
         organizationId: ORG,
@@ -115,35 +113,43 @@ export async function assistMail(
   if (reservation.cached)
     return { id: reservation.job.id, result: reservation.cached };
   try {
-    const facts =
-      input.mode === "WRITE"
-        ? await db.draft.findMany({
-            where: {
-              id: { in: input.items.map((i) => i.id) },
-              contact: { organizationId: ORG },
-            },
-            include: {
-              contact: true,
-              versions: { orderBy: { version: "desc" }, take: 1 },
+    const known =
+      input.mode === "RESEARCH"
+        ? await db.contact.findMany({
+            orderBy: { updatedAt: "desc" },
+            take: 500,
+            select: {
+              organisation: true,
+              firstName: true,
+              lastName: true,
+              email: true,
             },
           })
         : [];
-    if (
-      input.mode === "WRITE" &&
-      (facts.length !== input.items.length ||
+    let providerFacts: unknown = known;
+    if (input.mode === "WRITE") {
+      const facts = await db.draft.findMany({
+        where: {
+          id: { in: input.items.map((i) => i.id) },
+          contact: { organizationId: ORG },
+        },
+        include: {
+          contact: true,
+          versions: { orderBy: { version: "desc" }, take: 1 },
+        },
+      });
+      if (
+        facts.length !== input.items.length ||
         facts.some(
           (d) =>
             !input.items.some((i) => i.id === d.id && i.version === d.version),
-        ))
-    )
-      throw new ProviderFailure(
-        false,
-        "Ein Entwurf wurde geändert. Vorschau neu laden.",
-      );
-    const response = await provider(
-      input,
-      reservation.job.model,
-      facts.map((d) => ({
+        )
+      )
+        throw new ProviderFailure(
+          false,
+          "Ein Entwurf wurde geändert. Vorschau neu laden.",
+        );
+      providerFacts = facts.map((d) => ({
         id: d.id,
         version: d.version,
         subject: d.versions[0]?.subject,
@@ -157,7 +163,12 @@ export async function assistMail(
           service: d.contact.service,
           sourceUrl: d.contact.sourceUrl,
         },
-      })),
+      }));
+    }
+    const response = await provider(
+      input,
+      reservation.job.model,
+      providerFacts,
     );
     await db.studioJob.update({
       where: { id: reservation.job.id },
@@ -204,7 +215,17 @@ export async function mailAssistantHistory(actor: string) {
     },
   });
 }
-export async function applyMailAssistant(actor: string, raw: unknown) {
+type MailApplyResult =
+  | {
+      imported: number;
+      duplicates: number;
+      excluded: { reason: string; count: number }[];
+    }
+  | { results: { id: string; ok: boolean; message: string }[] };
+export async function applyMailAssistant(
+  actor: string,
+  raw: unknown,
+): Promise<MailApplyResult> {
   const input = z
     .object({
       id: z.string(),
@@ -232,13 +253,85 @@ export async function applyMailAssistant(actor: string, raw: unknown) {
     ];
     if (!indices.length || indices.some((i) => !result.leads[i]))
       throw new PolicyError("Mindestens einen gefundenen Kontakt auswählen.");
-    const rows = indices.map((i) =>
+    const candidates = indices.map((i) => result.leads[i]);
+    const existing = await db.contact.findMany({
+      where: {
+        OR: [
+          {
+            personKey: {
+              in: candidates.map((lead) =>
+                personKey(lead.firstName, lead.lastName, lead.organisation),
+              ),
+            },
+          },
+          ...candidates
+            .map((lead) => normalizeEmail(lead.email))
+            .filter((email) => email.includes("@"))
+            .map((email) => ({
+              email: { equals: email, mode: "insensitive" as const },
+            })),
+        ],
+      },
+      select: { email: true, personKey: true },
+    });
+    const known = {
+      emails: new Set(existing.map((c) => normalizeEmail(c.email))),
+      keys: new Set(existing.map((c) => c.personKey)),
+    };
+    const excluded: string[] = [];
+    const accepted = candidates.flatMap((lead) => {
+      const decision = qualifyResearchLead(lead, known);
+      if (!decision.ok) {
+        excluded.push(decision.reason);
+        return [];
+      }
+      known.emails.add(decision.email);
+      known.keys.add(personKey(lead.firstName, lead.lastName, lead.organisation));
+      return [{ lead, decision }];
+    });
+    const grouped = [...new Set(excluded)].map((reason) => ({
+      reason,
+      count: excluded.filter((item) => item === reason).length,
+    }));
+    const duplicates =
+      grouped.find((item) => item.reason === "Bereits in der Masterliste.")
+        ?.count ?? 0;
+    const rejected = grouped.filter(
+      (item) => item.reason !== "Bereits in der Masterliste.",
+    );
+    if (!accepted.length)
+      return { imported: 0, duplicates, excluded: rejected };
+    const rows = accepted.map(({ lead, decision }) =>
       contactInput.parse({
-        ...result.leads[i],
-        notes: `KI-Recherche vom ${job.createdAt.toISOString()}. Quelle: ${result.leads[i].sourceUrl}. Angaben vor Versand gemeinsam bestätigen.`,
+        ...lead,
+        email: decision.email,
+        notes: `KI-Recherche vom ${job.createdAt.toISOString()}. Quelle: ${lead.sourceUrl}. ${decision.teamMailbox ? "Postfachart: Team-Postfach. " : ""}Angaben vor Versand gemeinsam bestätigen.`,
       }),
     );
-    return importContacts(actor, rows);
+    const imported = await importContacts(actor, rows);
+    const freshTeamKeys = accepted
+      .filter((item) => item.decision.teamMailbox)
+      .map((item) =>
+        personKey(
+          item.lead.firstName,
+          item.lead.lastName,
+          item.lead.organisation,
+        ),
+      )
+      .filter((key) => !existing.some((contact) => contact.personKey === key));
+    if (freshTeamKeys.length)
+      await db.contact.updateMany({
+        where: {
+          personKey: { in: freshTeamKeys },
+          confidence: "UNCONFIRMED",
+        },
+        data: { confidence: "GENERAL" },
+      });
+    return {
+      imported: imported.imported,
+      duplicates: imported.duplicates + duplicates,
+      excluded: rejected,
+    };
   }
   const results = [];
   for (const m of result.mails) {

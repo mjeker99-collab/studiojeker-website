@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
+import { normalizeEmail, personKey } from "./contact-identity";
 import { signedMessage, signatureAssets } from "./mail-signature";
+export { normalizeEmail, personKey };
 export class PolicyError extends Error {
   constructor(
     message: string,
@@ -9,12 +11,6 @@ export class PolicyError extends Error {
     super(message);
   }
 }
-export const normalizeEmail = (email: string) =>
-  email.normalize("NFKC").trim().toLowerCase();
-export const personKey = (first: string, last: string, org: string) =>
-  [first, last, org]
-    .map((v) => v.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " "))
-    .join("|");
 export const messageHash = (recipient: string, subject: string, body: string) =>
   createHash("sha256")
     .update(
@@ -50,8 +46,12 @@ export function verificationIssues(
   if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
   if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
   if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");
-  if (
-    /^(info|kontakt|contact|office|admin|hello|mail|sales|support|marketing|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
+  if (/^(?:marketing|kommunikation)(?:[.+_-][^@]*)?@/i.test(c.email))
+    issues.push(
+      "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
+    );
+  else if (
+    /^(info|kontakt|contact|office|admin|hello|mail|sales|support|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
       c.email,
     )
   )

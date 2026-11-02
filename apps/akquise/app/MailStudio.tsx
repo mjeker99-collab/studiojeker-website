@@ -13,6 +13,8 @@ import MailContentEditor from "./MailContentEditor";
 import MailSchedule from "./MailSchedule";
 import ContactPreparationEditor from "./ContactPreparation";
 import type { ContactPreparation } from "../lib/contact-preparation";
+import { isInfoAddress, isTeamMailbox } from "../lib/mail-assistant/qualify";
+import { summarizeDeferred } from "../lib/mail-batch-status";
 
 type Draft = {
   id: string;
@@ -120,12 +122,11 @@ export default function MailStudio({
   // bulk mail preparation. Other functional addresses remain visible here
   // until the existing server-side verification and approval checks run.
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isInfoEmail = (email: string) => /^info(?:[.+_-][^@]*)?@/i.test(email);
   const contactOptions = matchingContacts.filter(
-    (c) => validEmail.test(c.email.trim()) && !isInfoEmail(c.email.trim()),
+    (c) => validEmail.test(c.email.trim()) && !isInfoAddress(c.email.trim()),
   );
   const excludedInfoCount = matchingContacts.filter(
-    (c) => validEmail.test(c.email.trim()) && isInfoEmail(c.email.trim()),
+    (c) => validEmail.test(c.email.trim()) && isInfoAddress(c.email.trim()),
   ).length;
   const missingEmailCount =
     matchingContacts.length - contactOptions.length - excludedInfoCount;
@@ -147,9 +148,9 @@ export default function MailStudio({
       !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       d.versions[0] &&
-      !isInfoEmail(c.email.trim()) &&
+      !isInfoAddress(c.email.trim()) &&
       validEmail.test(recipient) &&
-      !isInfoEmail(recipient)
+      !isInfoAddress(recipient)
     );
   });
   const visible = candidates.filter((d) =>
@@ -301,6 +302,8 @@ export default function MailStudio({
     }
   }
   const [selectionNotice, setSelectionNotice] = useState("");
+  const [reviewNotice, setReviewNotice] = useState("");
+  const [deferral, setDeferral] = useState<[string, number][]>([]);
   function resetSelection() {
     setBatchProposals([]);
     setSelected([]);
@@ -319,6 +322,8 @@ export default function MailStudio({
     onFiltersChange?.(emptyContactFilters);
     setSendProgress("");
     setSelectionNotice("");
+    setReviewNotice("");
+    setDeferral([]);
     setBatchSize(25);
     setPreparing(true);
     setStep(1);
@@ -329,12 +334,18 @@ export default function MailStudio({
     setIncluded([]);
     const ids = contactOptions.slice(0, amount).map((c) => c.id);
     setContactIds(ids);
+    setDeferral([]);
     setSelected([]);
     setRead(false);
     setDispatch(false);
     setBatchSize(amount);
     setSelectionNotice(
       `${ids.length} Kontakte ausgewählt${ids.length < amount ? ` – im aktuellen Suchergebnis sind nur ${ids.length} verfügbar` : ""}. Vorhandene Entwürfe werden bei der Vorbereitung wiederverwendet.`,
+    );
+    requestAnimationFrame(() =>
+      document.getElementById("mailstudio-send-now")?.scrollIntoView({
+        block: "nearest",
+      }),
     );
   }
   async function preparation(action: string, body: unknown) {
@@ -354,9 +365,22 @@ export default function MailStudio({
     ids: string[] = contactIds,
     excluded: string[] = [],
   ) {
+    if (!ids.length) {
+      setSkipped(excluded);
+      setBatchProposals([]);
+      setRows([]);
+      setIncluded([]);
+      setStep(1);
+      setPreparing(true);
+      setSelectionNotice(
+        "Keine versandfähige Teilmenge. Die Gründe stehen oben. Die Kontakte bleiben gespeichert.",
+      );
+      return;
+    }
     setSkipped(excluded);
     setRows([]);
     setIncluded([]);
+    setReviewNotice("");
     const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
     // Never infer verification from an email address alone. A mixed group
@@ -364,6 +388,8 @@ export default function MailStudio({
     // unconfirmed suggestions stay out of the dispatch approval entirely.
     const eligible = proposals.filter((p) => p.ready && !p.changed);
     const deferred = proposals.filter((p) => !p.ready || p.changed);
+    const deferredSummary = summarizeDeferred(deferred);
+    setDeferral(deferredSummary.counts);
     if (!eligible.length) {
       setBatchProposals(proposals);
       setRows([]);
@@ -388,10 +414,7 @@ export default function MailStudio({
     );
     setSkipped([
       ...excluded,
-      ...deferred.map(
-        (p) =>
-          `${p.organisation} · ${p.name}: ${p.changed ? "Vorgeschlagene Ergänzungen müssen zuerst bestätigt werden" : "Prüfangaben fehlen"} – zurückgestellt.`,
-      ),
+      ...deferredSummary.lines,
       ...prepared.results
         .filter((r: Result) => !r.ok)
         .map((r: Result) => r.message),
@@ -435,6 +458,7 @@ export default function MailStudio({
     setLegal(false);
     setProcurement(false);
     setResults([]);
+    setReviewNotice("");
     setStep(2);
   }
   useEffect(() => {
@@ -520,6 +544,7 @@ export default function MailStudio({
           {step === 1 &&
             (visible.length > 0 || filteredQueuedIds.length > 0) && (
               <button
+                className={contactIds.length ? "secondary" : undefined}
                 disabled={busy}
                 onClick={() =>
                   void run(() =>
@@ -579,17 +604,10 @@ export default function MailStudio({
                 setRows([]);
                 setIncluded([]);
                 setSelectionNotice("");
+                setDeferral([]);
               }}
             />
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
-            <button
-              disabled={busy || !contactIds.length || contactIds.length > 200}
-              onClick={() => void run(() => reviewForSending())}
-            >
-              {busy
-                ? "Mails werden vorbereitet …"
-                : `Sofort senden (${contactIds.length}) →`}
-            </button>
             <p>Du prüfst und bestätigst die Mails vor dem Versand gemeinsam.</p>
             <p>
               {contactOptions.length} Kontakte mit E-Mail-Adresse für die
@@ -631,6 +649,17 @@ export default function MailStudio({
               ))}
             </div>
             {selectionNotice && <p role="status">{selectionNotice}</p>}
+            {contactIds.length > 0 && (
+              <button
+                id="mailstudio-send-now"
+                disabled={busy || contactIds.length > 200}
+                onClick={() => void run(() => reviewForSending())}
+              >
+                {busy
+                  ? "Mails werden vorbereitet …"
+                  : `Sofort senden (${contactIds.length}) →`}
+              </button>
+            )}
             <details>
               <summary>
                 Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
@@ -669,6 +698,7 @@ export default function MailStudio({
                   />
                   <span>
                     {c.organisation} · {c.firstName} {c.lastName} · {c.email}
+                    {isTeamMailbox(c.email) ? " · Team-Postfach" : ""}
                   </span>
                 </label>
               ))}
@@ -798,21 +828,39 @@ export default function MailStudio({
             onExclude={(ids) =>
               void run(async () => {
                 const remaining = contactIds.filter((id) => !ids.includes(id));
+                const blocked = batchProposals.filter((p) =>
+                  ids.includes(p.id),
+                );
+                setDeferral(summarizeDeferred(blocked).counts);
                 setContactIds(remaining);
                 await prepareBatch(
                   remaining,
-                  ids.map((id) => {
-                    const contact = contacts.find((c) => c.id === id);
-                    return `${contact?.organisation || id}: Angaben offen, bewusst zurückgestellt.`;
-                  }),
+                  blocked.map(
+                    (p) =>
+                      `${p.organisation} · ${p.name}: ${p.issues.join(" ") || "bewusst zurückgestellt"}`,
+                  ),
                 );
               })
             }
           />
         </div>
       )}
+      {deferral.length > 0 && batchProposals.length === 0 && (
+        <div className="panel" role="status">
+          <p>
+            <strong>Zurückgestellt nach Grund</strong>
+          </p>
+          <ul>
+            {deferral.map(([reason, count]) => (
+              <li key={reason}>
+                {count} Kontakte: {reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {skipped.length > 0 && (
-        <details className="panel">
+        <details className="panel" open>
           <summary>
             {skipped.length} Kontakte zurückgestellt – übrige Mails können
             weitergehen
@@ -870,6 +918,9 @@ export default function MailStudio({
               setLegal(false);
               await preview(rows.map((r) => r.id));
               setIncluded(keep);
+              setReviewNotice(
+                "Der persönliche Text wurde geändert. Die frühere Freigabe gilt nicht mehr. Bitte die neue Version prüfen und erneut bestätigen.",
+              );
               await refresh();
             }}
           />
@@ -888,6 +939,9 @@ export default function MailStudio({
                 });
                 await preview();
                 setIncluded(previousIncluded);
+                setReviewNotice(
+                  "Bild oder Link geändert. Die frühere Freigabe gilt nicht mehr. Bitte die neue Version prüfen und erneut bestätigen.",
+                );
                 await refresh();
                 if (data.results.some((r: Result) => !r.ok))
                   throw new Error(
@@ -984,6 +1038,7 @@ export default function MailStudio({
               {missingLegal.length > 0 &&
                 " Ich bestätige die Zulässigkeit und die oben angegebene Grundlage für diese Kontakte."}
             </label>
+            {reviewNotice && <p role="status">{reviewNotice}</p>}
             <p id="mail-approval-hint" role="status">
               {approvalHint}
             </p>

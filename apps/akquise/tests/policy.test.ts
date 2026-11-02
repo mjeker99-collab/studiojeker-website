@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import {
   verifiedContact,
+  verificationIssues,
   legalAllowed,
   normalizeEmail,
   personKey,
@@ -469,8 +470,16 @@ test("Nur individuell verifizierte Kontakte sind freigabefähig", () => {
     "kontakt@example.test",
     "office.team@example.test",
     "sales@example.test",
+    "marketing@example.test",
+    "kommunikation@example.test",
   ])
     assert.throws(() => verifiedContact({ ...base, email }));
+  assert.match(
+    verificationIssues({ ...base, email: "kommunikation@example.test" }).join(
+      " ",
+    ),
+    /Team-Postfach/,
+  );
   assert.throws(() => verifiedContact({ ...base, verifiedAt: null }));
   assert.throws(() => verifiedContact({ ...base, status: "DO_NOT_CONTACT" }));
 });
