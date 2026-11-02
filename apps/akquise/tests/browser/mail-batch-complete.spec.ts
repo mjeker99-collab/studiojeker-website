@@ -335,3 +335,36 @@ test("mixed contact group advances only verified unchanged records without sendi
   expect(preparedIds).toEqual(["m0"]);
   expect(dispatchCalls).toBe(0);
 });
+
+test("bulk selection skips info@ addresses while retaining other valid contacts", async ({ page }) => {
+  const contacts = [
+    { id: "p", revision: 1, organisation: "Atelier", firstName: "Anna", lastName: "Test", email: "anna@example.test", status: "NEW" },
+    { id: "m", revision: 1, organisation: "Marketing", firstName: "Mia", lastName: "Test", email: "marketing@example.test", status: "NEW" },
+    { id: "i", revision: 1, organisation: "Info", firstName: "Ivo", lastName: "Test", email: "info@example.test", status: "NEW" },
+    { id: "i2", revision: 1, organisation: "Info Team", firstName: "Ina", lastName: "Test", email: "INFO+team@example.test", status: "NEW" },
+  ];
+  let mailCalls = 0;
+  await page.route("**/api/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/state") return route.fulfill({ json: {
+      user: { id: "test", name: "Test" }, users: [], contacts,
+      drafts: [], deliveries: [], suppressions: [], audits: [],
+      generator: "disabled", externalSending: false, mailMode: "disabled",
+    } });
+    if (path === "/api/hub/state") return route.fulfill({ json: {
+      campaigns: [], contents: [], users: [], drafts: [],
+      customers: [], integrations: {}, events: [],
+    } });
+    if (path.includes("mail-review") || path.includes("/preparation/")) mailCalls += 1;
+    return route.fulfill({ status: 503, json: { error: "Not used" } });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await expect(page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/)).toBeVisible();
+  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "2 Kontakte ausgewählt" })).toBeVisible();
+  await page.getByText(/Auswahl einzeln anpassen/).click();
+  await expect(page.getByText(/2 info@-Adressen von der Auswahl ausgeschlossen/)).toBeVisible();
+  expect(mailCalls).toBe(0);
+});
