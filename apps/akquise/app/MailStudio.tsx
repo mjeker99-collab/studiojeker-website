@@ -96,10 +96,19 @@ export default function MailStudio({
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const contactOptions = matchingContacts.filter((c) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim()),
+  // Keep info@ contacts in the master list, but never propose them for
+  // bulk mail preparation. Other functional addresses remain visible here
+  // until the existing server-side verification and approval checks run.
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isInfoEmail = (email: string) => /^info(?:[.+_-][^@]*)?@/i.test(email);
+  const contactOptions = matchingContacts.filter(
+    (c) => validEmail.test(c.email.trim()) && !isInfoEmail(c.email.trim()),
   );
-  const missingEmailCount = matchingContacts.length - contactOptions.length;
+  const excludedInfoCount = matchingContacts.filter(
+    (c) => validEmail.test(c.email.trim()) && isInfoEmail(c.email.trim()),
+  ).length;
+  const missingEmailCount =
+    matchingContacts.length - contactOptions.length - excludedInfoCount;
   // The state API orders newest drafts first. Offer only one per contact;
   // older message drafts remain available in the detailed archive.
   const seen = new Set<string>();
@@ -426,8 +435,8 @@ export default function MailStudio({
           >
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
             <p>
-              {contactOptions.length} Kontakte mit E-Mail-Adresse verfügbar.
-              Wähle die gewünschte Menge.
+              {contactOptions.length} Kontakte mit E-Mail-Adresse für die
+              Auswahl verfügbar (ohne info@). Wähle die gewünschte Menge.
             </p>
             {candidates.length > 0 && (
               <button
@@ -477,6 +486,12 @@ export default function MailStudio({
               <summary>
                 Auswahl einzeln anpassen ({contactIds.length} ausgewählt)
               </summary>
+              {excludedInfoCount > 0 && (
+                <p role="status">
+                  {excludedInfoCount} info@-Adressen von der Auswahl
+                  ausgeschlossen. Sie bleiben unter «Kontakte» gespeichert.
+                </p>
+              )}
               {missingEmailCount > 0 && (
                 <p role="status">
                   {missingEmailCount} weitere Kontakte ohne gültige
