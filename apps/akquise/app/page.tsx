@@ -165,7 +165,7 @@ export default function App() {
   const [projectRevision, setProjectRevision] = useState(0);
   const [dashboardTask, setDashboardTask] = useState<{
     prompt: string;
-    section: "Kampagnen" | "Social Media" | "Website";
+    section: "Kampagnen" | "Social Media" | "Website" | "Newsletter" | "Content-Studio";
     request: number;
   } | null>(null);
   function startDashboardTask(prompt: string, section: string) {
@@ -176,7 +176,9 @@ export default function App() {
     const assisted =
       destination === "Kampagnen" ||
       destination === "Social Media" ||
-      destination === "Website";
+      destination === "Website" ||
+      destination === "Newsletter" ||
+      destination === "Content-Studio";
     navigate({ section: destination });
     if (assisted) {
       setDashboardTask((previous) => ({
@@ -715,6 +717,11 @@ export default function App() {
               initialSeriesId={
                 dashboardTarget?.section === "Content-Studio"
                   ? dashboardTarget.projectId
+                  : undefined
+              }
+              initialTask={
+                dashboardTask?.section === "Content-Studio"
+                  ? dashboardTask
                   : undefined
               }
             />
