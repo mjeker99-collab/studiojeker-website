@@ -26,7 +26,7 @@ test("newsletter renders two accessible clickable video posters without embeds o
   const output = renderNewsletter({
     newsletter, subject: "Test Visibility", preheader: "Newsletter Test",
   });
-  assert.match(output, /href="https:\/\/vimeo\.com\/123456789"[^>]*class=/i, "Link muss im Promo-Poster vorhanden sein");
+  assert.match(output, /<a class="sj-video-link sj-promo-video" href="https:\/\/vimeo\.com\/123456789"/i, "Link muss im Promo-Poster vorhanden sein");
   assert.match(output, /mc:edit="promo_image" src="https:\/\/mcusercontent\.com\/test\/images\/nora\.png"/);
   assert.equal((output.match(/sj-video-play/g) || []).length >= 2, true);
   assert.doesNotMatch(output, /<video\b|<iframe\b/i);
