@@ -274,7 +274,11 @@ export async function applyMailAssistant(actor: string, raw: unknown) {
         current.body.match(
           /!?\[[^\n]*?\]\((?:https?:\/\/|\/api\/studio\/assets\/)[^\s)]+\)/g,
         ) || [];
-      if (preserved.some((token) => !m.body.includes(token)))
+      const originalUrls = current.body.match(/https?:\/\/[^\s)<>]+/g) || [];
+      if (
+        preserved.some((token) => !m.body.includes(token)) ||
+        originalUrls.some((url) => !m.body.includes(url))
+      )
         throw new PolicyError(
           "GPT hat vorhandene Bilder oder Links verändert. Der ursprüngliche Entwurf bleibt erhalten.",
         );
