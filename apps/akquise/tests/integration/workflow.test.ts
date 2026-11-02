@@ -2488,11 +2488,20 @@ test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und e
 test("Newsletter import is idempotent; copies and edits cannot reuse approval", async () => {
   const { importNewsletters, duplicateNewsletter } =
     await import("../../lib/hub/newsletter-library");
-  const first = await importNewsletters(martin);
-  const { newsletterLibrary } =
+  const { newsletterLibrary, newsletterDefaults, newsletterText } =
     await import("../../lib/hub/newsletter-template");
-  assert.equal(first.imported, newsletterLibrary.length);
-  assert.equal(first.ids.length, newsletterLibrary.length);
+  const v4 = newsletterLibrary.find((item) => item.id === "newsletter-04-github-364bba2")!;
+  const newsletter = newsletterDefaults(v4.id);
+  const connectedDraft = await hub.saveContent(martin, {
+    ...social(martin), kind: "NEWSLETTER", variants: [], title: v4.name,
+    subject: v4.subject, preheader: v4.preheader, newsletter,
+    body: newsletterText(newsletter), audience: "Synthetische Zielgruppe",
+  });
+  const first = await importNewsletters(martin);
+  assert.equal(first.imported, newsletterLibrary.length - 1);
+  assert.equal(first.ids.length, newsletterLibrary.length - 1);
+  assert.equal(await db.marketingContent.count({ where: { title: v4.name } }), 1);
+  assert.equal((await db.marketingContent.findUniqueOrThrow({ where: { id: connectedDraft.id } })).version, 1);
   assert.equal((await importNewsletters(nora)).imported, 0);
   const original = await db.marketingContent.findUniqueOrThrow({
     where: { id: first.ids[1] },

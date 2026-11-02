@@ -992,6 +992,12 @@ export default function Hub({
               </div>
               <p className="muted">Die neueste gespeicherte Newsletter-Version wird geöffnet. Ältere Versionen bleiben in der Übersicht erhalten.</p>
               <div className="actions">
+                <button type="button" className="secondary" disabled={busy}
+                  onClick={() => act(async () => {
+                    await post("newsletter/import", {});
+                  }, "GitHub-Vorlagen importiert. Bereits vorhandene Ausgaben bleiben erhalten.")}>
+                  Aus GitHub importieren
+                </button>
                 <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
                   {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
