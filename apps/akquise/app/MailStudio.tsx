@@ -116,12 +116,19 @@ export default function MailStudio({
     if (seen.has(d.contactId)) return false;
     seen.add(d.contactId);
     const c = contacts.find((c) => c.id === d.contactId);
+    // Old drafts must obey the same info@ exclusion as new selections.
+    // Check both the current contact and the recipient stored in the draft:
+    // they can differ after a contact update. Never delete those drafts.
+    const recipient = d.versions[0]?.recipient?.trim() ?? "";
     return (
       !queuedIds.includes(d.id) &&
       c &&
       !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
-      d.versions[0]
+      d.versions[0] &&
+      !isInfoEmail(c.email.trim()) &&
+      validEmail.test(recipient) &&
+      !isInfoEmail(recipient)
     );
   });
   const visible = candidates.filter((d) =>
