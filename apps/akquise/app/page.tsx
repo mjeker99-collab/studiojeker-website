@@ -1,4 +1,6 @@
 "use client";
+import MailContentEditor from "./MailContentEditor";
+import { appendMailContent } from "../lib/mail-content";
 import { signedMessage } from "../lib/mail-signature";
 import "./studioone-workspaces.css";
 import "./studioone-area-intro.css";
@@ -1438,6 +1440,9 @@ export default function App() {
                   }}
                 />
               </label>
+              <MailContentEditor disabled={busy} onApply={async (content) => {
+                setMessage({...message, body:appendMailContent(message.body, content)}); setRead(false);
+              }}/>
               <button disabled={busy || !dirty}>
                 Als neue Version speichern
               </button>

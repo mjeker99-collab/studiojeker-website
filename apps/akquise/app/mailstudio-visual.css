@@ -12,6 +12,8 @@
 .mail-studio input:not([type="checkbox"]),.mail-studio textarea,.mail-studio select{border-radius:10px;min-height:46px}
 .mail-studio .actions{gap:12px;flex-wrap:wrap}
 .mail-studio button{line-height:1.4}
+.mail-studio .contact-preparation fieldset,.mail-studio .contact-preparation .form-grid>label{min-width:0}
+.mail-studio .contact-preparation input,.mail-studio .contact-preparation textarea,.mail-studio .contact-preparation select{max-width:100%;box-sizing:border-box}
 .mail-studio .mail-review-body{line-height:1.75;white-space:pre-wrap}
 .mail-studio .mail-review-message{border-radius:12px}
 @media(max-width:650px){.mail-studio .mail-studio-toolbar{padding:24px}.mail-studio .mail-studio-toolbar .actions button{flex:1 1 130px}}

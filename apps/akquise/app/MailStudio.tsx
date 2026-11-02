@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./mailstudio-visual.css";
 import { signedMessage } from "../lib/mail-signature";
+import MailContentEditor from "./MailContentEditor";
 import MailSchedule from "./MailSchedule";
 import ContactPreparationEditor from "./ContactPreparation";
 import type { ContactPreparation } from "../lib/contact-preparation";
@@ -66,6 +67,7 @@ export default function MailStudio({
 }) {
   const operation = useRef(false);
   const approvalRef = useRef<HTMLElement>(null);
+  const preparationRef = useRef<HTMLDivElement>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleRevision, setScheduleRevision] = useState(0);
   const [sendableQueuedIds, setSendableQueuedIds] = useState<string[]>([]);
@@ -160,11 +162,9 @@ export default function MailStudio({
       ? "Ergänze die gemeinsame Rechtsgrundlage mit mindestens 15 Zeichen."
       : missingLegal.length && publicLegal && !procurement
         ? "Bestätige die Prüfung für öffentliche Auftraggeber."
-        : missingLegal.length && !legal
-          ? "Bestätige die gemeinsame Versandprüfung."
-          : !read || !dispatch
-            ? "Bestätige die Versandfreigabe für die ausgewählten Mails."
-            : "Bereit. Jetzt senden startet sofort, unabhängig vom Zeitplan.";
+        : !read || !dispatch || (missingLegal.length && !legal)
+          ? "Bestätige die Versandfreigabe für die ausgewählten Mails."
+          : "Bereit. Jetzt senden startet sofort, unabhängig vom Zeitplan.";
   function focusApproval() {
     requestAnimationFrame(() => {
       approvalRef.current?.scrollIntoView({
@@ -343,6 +343,13 @@ export default function MailStudio({
       setRows([]);
       setIncluded([]);
       setStep(2);
+      requestAnimationFrame(() => {
+        preparationRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        preparationRef.current?.focus({ preventScroll: true });
+      });
       return;
     }
     setBatchProposals([]);
@@ -387,6 +394,7 @@ export default function MailStudio({
     setProcurement(false);
     setResults([]);
     setStep(2);
+    focusApproval();
   }
   async function preview(ids = selected) {
     setBatchProposals([]);
@@ -526,6 +534,15 @@ export default function MailStudio({
             aria-label="Kontakte im Mail-Studio vorbereiten"
           >
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
+            <button
+              disabled={busy || !contactIds.length || contactIds.length > 200}
+              onClick={() => void run(() => reviewForSending())}
+            >
+              {busy
+                ? "Mails werden vorbereitet …"
+                : `Sofort senden (${contactIds.length}) →`}
+            </button>
+            <p>Du prüfst und bestätigst die Mails vor dem Versand gemeinsam.</p>
             <p>
               {contactOptions.length} Kontakte mit E-Mail-Adresse für die
               Auswahl verfügbar (ohne info@). Wähle die gewünschte Menge.
@@ -564,14 +581,6 @@ export default function MailStudio({
                   {amount} Kontakte auswählen
                 </button>
               ))}
-              <button
-                disabled={busy || !contactIds.length || contactIds.length > 200}
-                onClick={() => void run(() => prepareBatch())}
-              >
-                {busy
-                  ? "Mails werden vorbereitet …"
-                  : `${contactIds.length} persönliche Mails vorbereiten →`}
-              </button>
             </div>
             {selectionNotice && <p role="status">{selectionNotice}</p>}
             <details>
@@ -721,7 +730,12 @@ export default function MailStudio({
         )}
       </div>
       {step === 2 && batchProposals.length > 0 && (
-        <div className="panel" style={{ padding: 24 }}>
+        <div
+          className="panel"
+          style={{ padding: 24 }}
+          ref={preparationRef}
+          tabIndex={-1}
+        >
           <p>
             <strong>
               {batchProposals.length} Kontakte bleiben ausgewählt.
@@ -796,6 +810,39 @@ export default function MailStudio({
               zurückgestellt
             </strong>
           </p>
+          <MailContentEditor
+            count={chosen.length}
+            disabled={busy}
+            onApply={async (content) => {
+              setBusy(true);
+              setRead(false);
+              setLegal(false);
+              const previousIncluded = [...included];
+              try {
+                const data = await api("content", {
+                  items: chosen.map((r) => ({ id: r.id, version: r.version })),
+                  content,
+                });
+                await preview();
+                setIncluded(previousIncluded);
+                await refresh();
+                if (data.results.some((r: Result) => !r.ok))
+                  throw new Error(
+                    data.results
+                      .filter((r: Result) => !r.ok)
+                      .map((r: Result) => r.message)
+                      .join(" · "),
+                  );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+          <button type="button" className="secondary" disabled={busy || !chosen.length} onClick={() => void run(async () => {
+            const first = chosen[0];
+            const result = await api("test", {confirmed:true, requestId:crypto.randomUUID(),draft:{id:first.id,version:first.version}});
+            setSendProgress(result.message);
+          })}>Erste Mail als Test an njeker@studiojeker.ch senden</button>
           <section
             id="mailstudio-send-approval"
             ref={approvalRef}
@@ -843,30 +890,23 @@ export default function MailStudio({
                     Auftraggeber separat geprüft
                   </label>
                 )}
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    disabled={busy}
-                    checked={legal}
-                    onChange={(e) => setLegal(e.target.checked)}
-                  />
-                  Ich bestätige die Zulässigkeit und die angegebene Grundlage
-                  für alle ausgewählten Kontakte mit offener Versandprüfung.
-                </label>
               </fieldset>
             )}
             <label className="check">
               <input
                 type="checkbox"
                 disabled={busy || !chosen.length}
-                checked={read && dispatch}
+                checked={read && dispatch && (!missingLegal.length || legal)}
                 onChange={(e) => {
                   setRead(e.target.checked);
                   setDispatch(e.target.checked);
+                  setLegal(e.target.checked);
                 }}
               />
               Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
               Empfänger, Betreff und Signatur zum Versand frei.
+              {missingLegal.length > 0 &&
+                " Ich bestätige die Zulässigkeit und die oben angegebene Grundlage für diese Kontakte."}
             </label>
             <p id="mail-approval-hint" role="status">
               {approvalHint}

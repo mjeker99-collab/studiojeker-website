@@ -225,3 +225,15 @@ test("Quellenadressen akzeptieren übliche Eingaben und erklären ungültige Wer
     assert.match(sourceUrlIssue(invalid)!, /gültige Website-Adresse/);
   }
 });
+
+test("Explizite gemeinsame Bestätigung repariert ein zukünftiges Prüfdatum und erhält gültige Belege", () => {
+  const future = { ...contact, notes: "", hook: "Dokumentierter Bedarf", verifiedAt: new Date("2026-11-28") };
+  const shared = { confidence: "VERIFIED" as const, verifiedAt: "2026-10-20T00:00:00.000Z" };
+  assert.equal(contactPreparation(future, now).ready, false);
+  const repaired = contactPreparation(future, now, { shared });
+  assert.equal(repaired.ready, true);
+  assert.equal(repaired.values.verifiedAt, shared.verifiedAt);
+  assert.equal(repaired.values.sourceUrl, contact.sourceUrl);
+  assert.equal(future.confidence, "UNCONFIRMED");
+  assert.equal(contactPreparation({ ...future, verifiedAt: new Date("2026-10-01") }, now, { shared }).values.verifiedAt, "2026-10-01T00:00:00.000Z");
+});

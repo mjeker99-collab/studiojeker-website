@@ -23,39 +23,48 @@ function Fields({
   values,
   change,
   shared = false,
+  simple = false,
+  showSource = true,
+  showHook = true,
 }: {
   values: PreparationFields;
   change: (values: PreparationFields) => void;
   shared?: boolean;
+  simple?: boolean;
+  showSource?: boolean;
+  showHook?: boolean;
 }) {
   const sourceHintId = useId();
   const sourceError = sourceUrlIssue(values.sourceUrl ?? "");
   return (
     <div className="form-grid">
+      {!simple && (
+        <label>
+          Prüfstatus
+          <select
+            value={values.confidence ?? ""}
+            onChange={(e) =>
+              change({
+                confidence: (e.target.value ||
+                  undefined) as PreparationFields["confidence"],
+              })
+            }
+          >
+            {shared && (
+              <option value="">Aus vorhandenen Angaben übernehmen</option>
+            )}
+            <option value="UNCONFIRMED">Unbestätigt</option>
+            <option value="ESTIMATED">Geschätzt</option>
+            <option value="GENERAL">Allgemeine Adresse</option>
+            <option value="VERIFIED">Persönliche Adresse verifiziert</option>
+          </select>
+        </label>
+      )}
       <label>
-        Prüfstatus
-        <select
-          value={values.confidence ?? ""}
-          onChange={(e) =>
-            change({
-              confidence: (e.target.value ||
-                undefined) as PreparationFields["confidence"],
-            })
-          }
-        >
-          {shared && (
-            <option value="">Aus vorhandenen Angaben übernehmen</option>
-          )}
-          <option value="UNCONFIRMED">Unbestätigt</option>
-          <option value="ESTIMATED">Geschätzt</option>
-          <option value="GENERAL">Allgemeine Adresse</option>
-          <option value="VERIFIED">Persönliche Adresse verifiziert</option>
-        </select>
-      </label>
-      <label>
-        Verifikationsdatum
+        Prüfdatum
         <input
           type="date"
+          max={new Intl.DateTimeFormat("sv-SE").format(new Date())}
           value={values.verifiedAt?.slice(0, 10) ?? ""}
           onChange={(e) =>
             change({
@@ -66,38 +75,42 @@ function Fields({
           }
         />
       </label>
-      <label>
-        Quellen-URL
-        <input
-          type="text"
-          inputMode="url"
-          aria-label="Quellen-URL"
-          aria-describedby={sourceHintId}
-          aria-invalid={!!sourceError}
-          placeholder="firma.ch/team"
-          onBlur={() => {
-            const normalized = normalizeSourceUrl(values.sourceUrl ?? "");
-            if (normalized !== (values.sourceUrl ?? ""))
-              change({ sourceUrl: normalized });
-          }}
-          value={values.sourceUrl ?? ""}
-          maxLength={4000}
-          onChange={(e) => change({ sourceUrl: e.target.value })}
-        />
-        <span id={sourceHintId} className={sourceError ? "error" : "muted"}>
-          {sourceError ||
-            "Fundstelle der Kontaktadresse, z. B. die Teamseite des Unternehmens. https:// wird automatisch ergänzt."}
-        </span>
-      </label>
-      <label>
-        Dokumentierter Anknüpfungspunkt
-        <textarea
-          rows={3}
-          value={values.hook ?? ""}
-          maxLength={4000}
-          onChange={(e) => change({ hook: e.target.value })}
-        />
-      </label>
+      {showSource && (
+        <label>
+          Quellen-URL
+          <input
+            type="text"
+            inputMode="url"
+            aria-label="Quellen-URL"
+            aria-describedby={sourceHintId}
+            aria-invalid={!!sourceError}
+            placeholder="firma.ch/team"
+            onBlur={() => {
+              const normalized = normalizeSourceUrl(values.sourceUrl ?? "");
+              if (normalized !== (values.sourceUrl ?? ""))
+                change({ sourceUrl: normalized });
+            }}
+            value={values.sourceUrl ?? ""}
+            maxLength={4000}
+            onChange={(e) => change({ sourceUrl: e.target.value })}
+          />
+          <span id={sourceHintId} className={sourceError ? "error" : "muted"}>
+            {sourceError ||
+              "Fundstelle der Kontaktadresse, z. B. die Teamseite des Unternehmens. https:// wird automatisch ergänzt."}
+          </span>
+        </label>
+      )}
+      {showHook && (
+        <label>
+          Dokumentierter Anknüpfungspunkt
+          <textarea
+            rows={3}
+            value={values.hook ?? ""}
+            maxLength={4000}
+            onChange={(e) => change({ hook: e.target.value })}
+          />
+        </label>
+      )}
     </div>
   );
 }
@@ -115,7 +128,10 @@ export default function ContactPreparation({
   onExclude?: (ids: string[]) => void;
 }) {
   const [proposals, setProposals] = useState(initialProposals);
-  const [shared, setShared] = useState<PreparationFields>({});
+  const today = new Intl.DateTimeFormat("sv-SE").format(new Date());
+  const [shared, setShared] = useState<PreparationFields>(() =>
+    requireComplete ? { verifiedAt: today + "T00:00:00.000Z" } : {},
+  );
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [confirmed, setConfirmed] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -125,9 +141,25 @@ export default function ContactPreparation({
   function changed() {
     setDirty(true);
     setConfirmed(false);
+    setError("");
+    setResults([]);
   }
   async function save() {
     if (!confirmed || busy) return;
+    const dates = [
+      shared.verifiedAt,
+      ...Object.values(edits).map((e) => e.values.verifiedAt),
+    ].filter(Boolean) as string[];
+    if (
+      dates.some(
+        (date) => Number.isNaN(Date.parse(date)) || date.slice(0, 10) > today,
+      )
+    ) {
+      setError(
+        "Das Prüfdatum liegt in der Zukunft oder ist ungültig. Bitte das tatsächliche Prüfdatum wählen; deine Eingaben bleiben erhalten.",
+      );
+      return;
+    }
     const invalid =
       sourceUrlIssue(shared.sourceUrl ?? "") ||
       Object.values(edits)
@@ -144,7 +176,12 @@ export default function ContactPreparation({
     try {
       const data = await post<{ results: Result[] }>("save", {
         confirmed: true,
-        shared,
+        // The visible checkbox explicitly confirms address verification as well
+        // as the data. The server still preserves existing non-UNCONFIRMED
+        // classifications and requires source, date and a documented context.
+        shared: requireComplete
+          ? { ...shared, confidence: "VERIFIED" }
+          : shared,
         contacts: proposals.map((p) => ({
           id: p.id,
           revision: p.revision,
@@ -182,7 +219,6 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
-  const pendingChanges = proposals.some((p) => p.changed);
   // Show the real reasons for an incomplete selection. A verified email address
   // alone does not satisfy source, date, hook and human review requirements.
   const issueCounts = Array.from(
@@ -203,13 +239,16 @@ export default function ContactPreparation({
       aria-busy={busy}
     >
       <h2 id="contact-preparation-title">
-        {proposals.length} Kontakte ergänzen und speichern
+        {requireComplete
+          ? `Angaben für ${proposals.length} Mails bestätigen`
+          : `${proposals.length} Kontakte ergänzen und speichern`}
       </h2>
       <p>
-        Gemeinsame Angaben einmal eintragen. Vorhandene Angaben bleiben
-        erhalten; Ausnahmen kannst du unten pro Kontakt bearbeiten.
+        Vorhandene Rechercheangaben werden übernommen. Ergänze nur fehlende
+        Angaben und bestätige die Auswahl einmal. Danach erscheinen die Mails
+        zur gemeinsamen Versandfreigabe.
       </p>
-      {unconfirmed > 0 && !shared.confidence && (
+      {!requireComplete && unconfirmed > 0 && !shared.confidence && (
         <p role="status">
           Bei {unconfirmed} Kontakten fehlt die Bestätigung der Adressprüfung.
           Wenn du diese persönlichen Adressen geprüft hast, wähle unten
@@ -220,12 +259,18 @@ export default function ContactPreparation({
       <fieldset disabled={busy}>
         <legend>Gemeinsame Angaben für die Auswahl</legend>
         <p>
-          Diese Angaben ergänzen leere Felder. Quelle und Anknüpfungspunkt
-          müssen für die betroffenen Kontakte zutreffen. Verwende das
-          tatsächliche Prüfdatum.
+          Dieses Datum ergänzt fehlende oder ungültige Prüfdaten. Vorhandene
+          gültige Angaben bleiben erhalten; Ausnahmen kannst du unten ändern.
         </p>
         <Fields
           shared
+          simple={requireComplete}
+          showSource={
+            !requireComplete || proposals.some((p) => !p.values.sourceUrl)
+          }
+          showHook={
+            !requireComplete || proposals.some((p) => !p.values.hook?.trim())
+          }
           values={shared}
           change={(v) => {
             setShared({ ...shared, ...v });
@@ -240,29 +285,30 @@ export default function ContactPreparation({
           checked={confirmed}
           onChange={(e) => setConfirmed(e.target.checked)}
         />
-        Ich bestätige die eingetragenen Angaben und die unten angezeigten
-        Ergänzungen aus den Notizen.
+        {requireComplete
+          ? `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
+          : "Ich bestätige die eingetragenen Angaben und die unten angezeigten Ergänzungen aus den Notizen."}
       </label>
       <div className="actions">
         <button disabled={busy || !confirmed} onClick={() => void save()}>
           {busy
             ? "Wird gespeichert …"
             : requireComplete
-              ? "Angaben für alle speichern und weiter →"
+              ? "Weiter zum Sofortversand →"
               : "Änderungen speichern"}
         </button>
-        <button
-          className="secondary"
-          disabled={busy || dirty || (requireComplete && (open.length > 0 || pendingChanges))}
-          onClick={onDone}
-        >
-          Weiter zur Mailprüfung →
-        </button>
+        {!requireComplete && (
+          <button
+            className="secondary"
+            disabled={busy || dirty}
+            onClick={onDone}
+          >
+            Weiter zur Mailprüfung →
+          </button>
+        )}
       </div>
-      {!confirmed && <p>Bitte die Angaben bestätigen, um sie zu speichern.</p>}
-      {dirty && <p role="status">Ungespeicherte Änderungen</p>}
-      {requireComplete && pendingChanges && (
-        <p role="status">Ergänzungen aus vorhandenen Notizen bitte gemeinsam bestätigen und speichern, bevor du zur Mailprüfung weitergehst.</p>
+      {!confirmed && (
+        <p>Bitte die Adressprüfung und Rechercheangaben oben bestätigen.</p>
       )}
       {error && (
         <p role="alert" className="error">
@@ -271,14 +317,12 @@ export default function ContactPreparation({
       )}
       {!!results.length && (
         <div role="status">
-          <strong>
-            {results.filter((r) => r.ok).length} Kontakte gespeichert ·{" "}
-            {results.filter((r) => !r.ok).length} nicht gespeichert
-          </strong>
-          <p>
-            {open.length} Kontakte benötigen noch Angaben. Vollständige Kontakte
-            kannst du anschliessend gemeinsam zur Mailprüfung übernehmen.
-          </p>
+          {!requireComplete && (
+            <strong>
+              {results.filter((r) => r.ok).length} Kontakte gespeichert ·{" "}
+              {results.filter((r) => !r.ok).length} nicht gespeichert
+            </strong>
+          )}
           {results.some((r) => !r.ok) && (
             <ul>
               {results
@@ -291,30 +335,20 @@ export default function ContactPreparation({
                 ))}
             </ul>
           )}
-          <p>Speichern erteilt keine Versandfreigabe.</p>
         </div>
       )}
-      {requireComplete && open.length > 0 && (
+      {requireComplete && open.length > 0 && results.length > 0 && (
         <div role="status">
           <p>
-            <strong>{open.length} von {proposals.length} Kontakten benötigen noch Angaben.</strong>{" "}
-            Die Auswahl bleibt vollständig erhalten. Das bedeutet nicht, dass bei
-            allen diesen Kontakten die E-Mail-Adresse fehlt.
+            <strong>Noch zu korrigieren für {open.length} Kontakte:</strong>
           </p>
-          <details>
-            <summary>Welche Pflichtangaben fehlen? ({issueCounts.length} Ursachen)</summary>
-            <ul>
-              {issueCounts.map(([issue, count]) => (
-                <li key={issue}>{count} Kontakte: {issue}</li>
-              ))}
-            </ul>
-            <p>
-              Diese Zahlen können sich überschneiden. Öffne unten die Details
-              eines Kontakts, um die fehlenden Angaben individuell zu ergänzen.
-              Bitte keine gemeinsame Quelle oder Verifikation für unterschiedliche
-              Kontakte behaupten. Speichern ist keine Mail- oder Versandfreigabe.
-            </p>
-          </details>
+          <ul>
+            {issueCounts.map(([issue, count]) => (
+              <li key={issue}>
+                {count} Kontakte: {issue}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {onExclude && open.length > 0 && open.length < proposals.length && (
@@ -327,44 +361,46 @@ export default function ContactPreparation({
           Kontakten fortfahren
         </button>
       )}
-      <h3>Details und Ausnahmen (optional)</h3>
-      <p>
-        Ergänzungen aus vorhandenen Notizen sind bereits eingetragen.
-        Kontaktänderungen erfordern eine erneute Mailfreigabe.
-      </p>
-      {proposals.map((p) => (
-        <details className="preparation-contact" key={p.id}>
-          <summary>
-            {p.organisation} · {p.name} —{" "}
-            {p.ready ? "vollständig" : "Angaben offen"}
-          </summary>
-          <p>{p.email || "E-Mail-Adresse fehlt"}</p>
-          {!!p.issues.length && (
-            <p>
-              <strong>Noch zu ergänzen:</strong> {p.issues.join(" ")}
-              {dirty ? " (Stand vor dem Speichern)" : ""}
-            </p>
-          )}
-          <fieldset disabled={busy}>
-            <legend>Angaben für {p.name}</legend>
-            <Fields
-              values={{ ...p.values, ...edits[p.id]?.values }}
-              change={(values) => {
-                setEdits({
-                  ...edits,
-                  [p.id]: {
-                    id: p.id,
-                    revision: p.revision,
-                    values: { ...edits[p.id]?.values, ...values },
-                  },
-                });
-                changed();
-              }}
-            />
-          </fieldset>
-          {!!p.origins.length && <p>{p.origins.join(" · ")}</p>}
-        </details>
-      ))}
+      <details>
+        <summary>Details und Ausnahmen ({proposals.length} Kontakte)</summary>
+        <p>
+          Ergänzungen aus vorhandenen Notizen sind bereits eingetragen.
+          Kontaktänderungen erfordern eine erneute Mailfreigabe.
+        </p>
+        {proposals.map((p) => (
+          <details className="preparation-contact" key={p.id}>
+            <summary>
+              {p.organisation} · {p.name} —{" "}
+              {p.ready ? "vollständig" : "Angaben offen"}
+            </summary>
+            <p>{p.email || "E-Mail-Adresse fehlt"}</p>
+            {!!p.issues.length && (
+              <p>
+                <strong>Noch zu ergänzen:</strong> {p.issues.join(" ")}
+                {dirty ? " (Stand vor dem Speichern)" : ""}
+              </p>
+            )}
+            <fieldset disabled={busy}>
+              <legend>Angaben für {p.name}</legend>
+              <Fields
+                values={{ ...p.values, ...edits[p.id]?.values }}
+                change={(values) => {
+                  setEdits({
+                    ...edits,
+                    [p.id]: {
+                      id: p.id,
+                      revision: p.revision,
+                      values: { ...edits[p.id]?.values, ...values },
+                    },
+                  });
+                  changed();
+                }}
+              />
+            </fieldset>
+            {!!p.origins.length && <p>{p.origins.join(" · ")}</p>}
+          </details>
+        ))}
+      </details>
     </section>
   );
 }
