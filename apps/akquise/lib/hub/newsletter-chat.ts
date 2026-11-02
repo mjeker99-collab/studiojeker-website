@@ -5,6 +5,7 @@ import { ORG, briefingSchema } from "../studio/input";
 import { contentInput } from "./input";
 import { hubActor, saveContentInTx } from "./workflow";
 import { applyNewsletterEdit, newsletterEditTarget } from "./newsletter-edit";
+import { verifyNewsletterImageChanges } from "./newsletter-image-check";
 
 export async function newsletterSession(actor: string, raw: unknown) {
   const target = newsletterEditTarget.parse(raw);
@@ -63,9 +64,12 @@ export async function applyNewsletterJob(actor: string, id: string) {
     const result = job.result as { reply?: string };
     const next = applyNewsletterEdit(source, JSON.parse(result.reply || ""));
     const changed = JSON.stringify(source) !== JSON.stringify(next);
-    if (changed) await saveContentInTx(tx, actor, next, content.id, target.version);
+    if (changed) {
+      await verifyNewsletterImageChanges(source, next);
+      await saveContentInTx(tx, actor, next, content.id, target.version);
+    }
     await tx.studioJob.update({ where: { id }, data: { status: "APPLIED" } });
     await audit(tx, actor, "NEWSLETTER_GPT_APPLIED", content.id, { jobId: id, sourceVersion: target.version, changed });
     return { id: content.id, applied: true, changed };
-  });
+  }, { timeout: 15000 });
 }
