@@ -329,6 +329,8 @@ export default function MailStudio({
     excluded: string[] = [],
   ) {
     setSkipped(excluded);
+    setRows([]);
+    setIncluded([]);
     const previewData = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = previewData.contacts;
     // Never infer verification from an email address alone. A mixed group
@@ -760,7 +762,10 @@ export default function MailStudio({
           </ul>
         </details>
       )}
-      {step === 2 && batchProposals.length === 0 && (
+      {step === 2 && batchProposals.length === 0 && !rows.length && busy && (
+        <p role="status">Persönliche Mails werden vorbereitet …</p>
+      )}
+      {step === 2 && batchProposals.length === 0 && rows.length > 0 && (
         <section className="panel" aria-label="Globale Mailprüfung">
           <h3>{rows.length} Nachrichten in der Prüfvorschau</h3>
           <p>

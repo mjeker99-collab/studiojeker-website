@@ -6,6 +6,10 @@ test("50 selected contacts stay together through shared completion and review", 
   test.setTimeout(45000);
   let saved = false;
   let prepared = 0;
+  let releasePreparation!: () => void;
+  const preparationWait = new Promise<void>((resolve) => { releasePreparation = resolve; });
+  let markPreparationStarted!: () => void;
+  const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
   const sent: string[] = [];
   const contacts = Array.from({ length: 50 }, (_, i) => ({
     id: `c${i}`,
@@ -95,6 +99,8 @@ test("50 selected contacts stay together through shared completion and review", 
       prepared = body.contacts.length;
       expect(saved).toBe(true);
       expect(prepared).toBe(50);
+      markPreparationStarted();
+      await preparationWait;
       return route.fulfill({
         json: {
           results: contacts.map((c) => ({
@@ -171,6 +177,13 @@ test("50 selected contacts stay together through shared completion and review", 
       exact: true,
     })
     .click();
+  await preparationStarted;
+  try {
+    await expect(page.getByText("Persönliche Mails werden vorbereitet …", { exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Globale Mailprüfung" })).toHaveCount(0);
+  } finally {
+    releasePreparation();
+  }
   await expect(
     page.getByText("Gemeinsame Versandprüfung für 50 ausgewählte Kontakte", {
       exact: true,
