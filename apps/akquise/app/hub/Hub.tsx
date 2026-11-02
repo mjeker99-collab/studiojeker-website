@@ -297,8 +297,14 @@ export default function Hub({
   }
   useEffect(() => {
     if (!editorNavigation || !form || !editorRef.current) return;
-    editorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    editorRef.current.focus({ preventScroll: true });
+    const editor = editorRef.current;
+    editor.focus({ preventScroll: true });
+    // Align after the selected preview has mounted. Animated scrolling can be
+    // interrupted when switching between newsletters with different heights.
+    const frame = requestAnimationFrame(() => {
+      editor.scrollIntoView({ behavior: "instant", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [editorNavigation, editing?.id, form?.kind]);
   const dirty =
     !!form &&
