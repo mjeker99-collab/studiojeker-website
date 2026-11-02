@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getNewsletterTemplate, type NewsletterSnapshot } from "@/lib/hub/newsletter-template";
 
 type Check = { url: string; status: "reachable" | "broken" | "review"; detail: string };
@@ -34,11 +34,7 @@ export default function NewsletterLinkTester({ newsletter }: { newsletter: Newsl
   const [error, setError] = useState("");
   const [checks, setChecks] = useState<Record<string, Check>>({});
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    setChecks({});
-    setReviewed({});
-    setError("");
-  }, [signature]);
+
 
   async function run() {
     setExpanded(true);
