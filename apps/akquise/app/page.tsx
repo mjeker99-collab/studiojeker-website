@@ -593,11 +593,15 @@ export default function App() {
               {notice}
             </div>
           )}
-          {tab !== "Übersicht" && !acquisitionTabs.includes(tab) && (
+          {tab !== "Übersicht" && tab !== "Mail-Studio" && (
             <section className="studioone-area-intro" aria-label={`Einführung ${tab}`}>
               <p className="studioone-area-kicker">STUDIOONE · {tab.toLocaleUpperCase("de-CH")}</p>
               <h2>{({
                 "Kunden": "Deine Kunden. Alles im Blick.",
+                "Kontakte": "Deine Kontakte. Alles im Blick.",
+                "E-Mail-Entwürfe": "Deine persönlichen Mails vorbereiten.",
+                "Freigaben": "Deine Mails prüfen und freigeben.",
+                "Versandhistorie": "Deine versandten Mails im Überblick.",
                 "Strategie & Konzepte": "Was möchtest du heute entwickeln?",
                 "Kampagnen": "Was möchtest du heute bekannt machen?",
                 "Social Media": "Was möchtest du heute veröffentlichen?",
@@ -610,6 +614,10 @@ export default function App() {
               } as Record<string,string>)[tab] || "Was möchtest du heute erledigen?"}</h2>
               <p>{({
                 "Kunden": "Kundeninformationen übersichtlich verwalten und gemeinsam weiterbearbeiten.",
+                "Kontakte": "Kontakte recherchieren, importieren und übersichtlich verwalten.",
+                "E-Mail-Entwürfe": "Personalisierte Entwürfe lesen, bearbeiten und für die Freigabe vorbereiten.",
+                "Freigaben": "Vorbereitete Mails kontrollieren und den Versand bewusst freigeben.",
+                "Versandhistorie": "Nachsehen, welche Kontakte bereits eine Nachricht erhalten haben.",
                 "Strategie & Konzepte": "Beschreibe deine Idee. StudioONE unterstützt dich bei Konzept und Umsetzung.",
                 "Kampagnen": "Von der Idee zur Kampagne – einfach planen, erstellen und freigeben.",
                 "Social Media": "Beiträge für deine Kanäle vorbereiten und übersichtlich verwalten.",
