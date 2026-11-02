@@ -25,7 +25,7 @@ for (const width of [390, 1024]) {
     });
     await page.goto("/");
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
     await page.getByRole("button", { name: "Beispielfirma", exact: true }).click();
     const panel = page.getByRole("region", { name: "Antwort erfassen" });
     await panel.getByRole("button", { name: "Derzeit kein Bedarf", exact: true }).click();

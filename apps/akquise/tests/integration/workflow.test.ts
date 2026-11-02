@@ -13,6 +13,7 @@ const { db } = await import("../../lib/db");
 const { hashPassword, login } = await import("../../lib/auth");
 const {
   saveContact,
+  deleteUnusedContact,
   newDraft,
   editDraft,
   reviewDraft,
@@ -2547,4 +2548,23 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
   assert.ok(
     studioContentInput.parse(saved.payload).body.includes("Geänderte Headline"),
   );
+});
+
+
+
+test("unused contact deletion respects revision, actor, mail history and suppression", async () => {
+  const unused = await saveContact(martin, input("delete-unused"));
+  await assert.rejects(deleteUnusedContact("missing-actor", unused.id, unused.revision));
+  await assert.rejects(deleteUnusedContact(martin, unused.id, unused.revision + 1));
+  assert.ok(await db.contact.findUnique({ where: { id: unused.id } }));
+  await deleteUnusedContact(martin, unused.id, unused.revision);
+  assert.equal(await db.contact.findUnique({ where: { id: unused.id } }), null);
+  const drafted = await saveContact(martin, input("delete-drafted"));
+  const draft = await newDraft(martin, drafted.id);
+  await assert.rejects(deleteUnusedContact(martin, drafted.id, drafted.revision), /Mailverlauf/);
+  assert.ok(await db.draft.findUnique({ where: { id: draft.id } }));
+  const blocked = await saveContact(martin, input("delete-blocked"));
+  await suppress(martin, blocked.email, "Synthetischer Widerspruch");
+  await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperre/);
+  assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
 });

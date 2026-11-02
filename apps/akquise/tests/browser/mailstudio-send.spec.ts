@@ -160,12 +160,12 @@ for (const width of [390, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const state = await setup(page, { queued: true });
     await page
-      .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
     expect(state.previews).toEqual([["d0", "d1", "d2"]]);
     expect(state.sent).toEqual([]);
     const send = page.getByRole("button", {
-      name: "Alle 3 jetzt senden",
+      name: "3 Mails jetzt senden",
       exact: true,
     });
     await expect(send).toBeDisabled();
@@ -199,25 +199,17 @@ test("single mail action changes the approval scope and sends only that recipien
 }) => {
   const state = await setup(page);
   await page
-    .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+    .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
     .click();
-  await page
-    .getByText("Nachrichten ansehen oder Auswahl anpassen (3)", { exact: true })
-    .click();
-  const message = page
-    .locator(".mail-review-message")
-    .filter({ hasText: "anna1@example.test" });
-  await message.locator("summary").click();
-  await message
-    .getByRole("button", { name: "Nur diese Mail senden", exact: true })
-    .click();
+  await page.getByLabel("anna0@example.test für Versand auswählen").uncheck();
+  await page.getByLabel("anna2@example.test für Versand auswählen").uncheck();
   await expect(
-    page.getByRole("button", { name: "Jetzt senden", exact: true }),
+    page.getByRole("button", { name: "1 Mail jetzt senden", exact: true }),
   ).toBeDisabled();
   await page
     .getByLabel(/Ich gebe die 1 ausgewählten persönlichen Mails/)
     .check();
-  await page.getByRole("button", { name: "Jetzt senden", exact: true }).click();
+  await page.getByRole("button", { name: "1 Mail jetzt senden", exact: true }).click();
   await expect(
     page.getByText("1 von 1 Mails bearbeitet.", { exact: true }),
   ).toBeVisible();
@@ -230,13 +222,13 @@ for (const failure of ["review", "unknown"] as const) {
   }) => {
     const state = await setup(page, { failure });
     await page
-      .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
     await page
       .getByLabel(/Ich gebe die 3 ausgewählten persönlichen Mails/)
       .check();
     await page
-      .getByRole("button", { name: "Alle 3 jetzt senden", exact: true })
+      .getByRole("button", { name: "3 Mails jetzt senden", exact: true })
       .click();
     await expect(
       page.getByText(
@@ -257,6 +249,7 @@ test("schedule starts directly from the overview after explicit approval", async
   page,
 }) => {
   const state = await setup(page, { queued: true });
+  await page.getByText("Weitere Optionen", { exact: true }).click();
   await page
     .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
     .click();
@@ -299,14 +292,15 @@ test("discard requires confirmation and leaves the selection intact on cancel", 
     discarded = body.items.map((item: { id: string }) => item.id);
     await route.fulfill({ json: { results: body.items.map((item: { id: string }) => ({ id: item.id, ok: true })) } });
   });
-  await page.getByRole("button", { name: "Alle jetzt senden (3) →", exact: true }).click();
+  await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true }).click();
+  await page.getByText("Weitere Optionen", { exact: true }).click();
   const open = page.getByRole("button", { name: "Auswahl und ungesendete Entwürfe verwerfen", exact: true });
   await open.click();
   const panel = page.getByRole("region", { name: "Entwürfe verwerfen" });
   await expect(panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true })).toBeDisabled();
   await panel.getByRole("button", { name: "Abbrechen", exact: true }).click();
   expect(discarded).toEqual([]);
-  await expect(page.getByRole("button", { name: "Alle 3 jetzt senden", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "3 Mails jetzt senden", exact: true })).toBeVisible();
   await open.click();
   await panel.getByLabel(/Ich bestätige das Verwerfen/).check();
   await panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true }).click();

@@ -14,7 +14,9 @@ import ContactReply from "./ContactReply";
 import { replyLabels } from "../lib/contact-reply-input";
 import MailSchedule from "./MailSchedule";
 import MailStudio from "./MailStudio";
-import ContactMailFlow from "./ContactMailFlow";
+import MailAssistant from "./MailAssistant";
+import { contactStage, contactStageLabels } from "../lib/contact-stage";
+import "./acquisition.css";
 import Hub from "./hub/Hub";
 import Dashboard, { type DashboardTarget } from "./Dashboard";
 import Website from "./cms/Website";
@@ -73,6 +75,7 @@ const nav = [
   "Einstellungen",
 ];
 const acquisitionTabs = [
+  "Kontakte finden",
   "Mail-Studio",
   "Kontakte",
   "E-Mail-Entwürfe",
@@ -217,6 +220,10 @@ export default function App() {
     setFilter("");
     window.scrollTo({ top: 0 });
   }
+  const acquisitionLabels: Record<string, string> = {
+    "Mail-Studio": "Mails erstellen & versenden",
+    Kontakte: "Kontakte verwalten",
+  };
   const mailLabel = data?.externalSending
     ? data.mailMode === "test"
       ? "Interner SMTP-Testmodus"
@@ -364,7 +371,7 @@ export default function App() {
       (c) =>
         matchesContactFilters(c, contactFilters) &&
         (!filter ||
-          c.status === filter ||
+          contactStage(c) === filter ||
           c.replyOutcome === filter ||
           (filter === "FOLLOW_UP" &&
             Boolean(c.followUpOn) &&
@@ -500,6 +507,7 @@ export default function App() {
                   ? "active"
                   : ""
               }
+              disabled={busy}
               onClick={() => navigate({ section: n })}
             >
               <span className="nav-index" aria-hidden="true">
@@ -550,25 +558,11 @@ export default function App() {
           <div className="page-heading">
             <div>
               <p className="eyebrow">ÜBERSICHT & KONTROLLE</p>
-              <h1>{tab}</h1>
+              <h1>
+                {acquisitionTabs.includes(tab) ? "Kontakte & Akquise" : tab}
+              </h1>
             </div>
             <div className="heading-actions">
-              {tab === "Mail-Studio" && (
-                <button
-                  className="ai-button"
-                  onClick={() => {
-                    const button = document.querySelector<HTMLButtonElement>(
-                      '[aria-label="GPT für Mail-Studio"] .ai-button',
-                    );
-                    button?.click();
-                    button
-                      ?.closest("section")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                >
-                  ✦ GPT beauftragen
-                </button>
-              )}
               <span className="muted">
                 {new Date().toLocaleDateString("de-CH", {
                   day: "2-digit",
@@ -577,7 +571,7 @@ export default function App() {
                 })}
               </span>
               {["Übersicht", "Kontakte"].includes(tab) && (
-                <button onClick={() => openContact(null)}>
+                <button className="secondary" onClick={() => openContact(null)}>
                   Kontakt erfassen <span>＋</span>
                 </button>
               )}
@@ -593,72 +587,87 @@ export default function App() {
               {notice}
             </div>
           )}
-          {tab !== "Übersicht" && tab !== "Mail-Studio" && (
-            <section className="studioone-area-intro" aria-label={`Einführung ${tab}`}>
-              <p className="studioone-area-kicker">STUDIOONE · {tab.toLocaleUpperCase("de-CH")}</p>
-              <h2>{({
-                "Kunden": "Deine Kunden. Alles im Blick.",
-                "Kontakte": "Deine Kontakte. Alles im Blick.",
-                "E-Mail-Entwürfe": "Deine persönlichen Mails vorbereiten.",
-                "Freigaben": "Deine Mails prüfen und freigeben.",
-                "Versandhistorie": "Deine versandten Mails im Überblick.",
-                "Strategie & Konzepte": "Was möchtest du heute entwickeln?",
-                "Kampagnen": "Was möchtest du heute bekannt machen?",
-                "Social Media": "Was möchtest du heute veröffentlichen?",
-                "Content-Studio": "Was möchtest du heute gestalten?",
-                "Bibliothek": "Deine Inhalte. Schnell gefunden.",
-                "Newsletter": "Was möchtest du heute mitteilen?",
-                "Website": "Was möchtest du an deiner Website ändern?",
-                "Kalender": "Was steht als Nächstes an?",
-                "Einstellungen": "StudioONE einfach verwalten.",
-              } as Record<string,string>)[tab] || "Was möchtest du heute erledigen?"}</h2>
-              <p>{({
-                "Kunden": "Kundeninformationen übersichtlich verwalten und gemeinsam weiterbearbeiten.",
-                "Kontakte": "Kontakte recherchieren, importieren und übersichtlich verwalten.",
-                "E-Mail-Entwürfe": "Personalisierte Entwürfe lesen, bearbeiten und für die Freigabe vorbereiten.",
-                "Freigaben": "Vorbereitete Mails kontrollieren und den Versand bewusst freigeben.",
-                "Versandhistorie": "Nachsehen, welche Kontakte bereits eine Nachricht erhalten haben.",
-                "Strategie & Konzepte": "Beschreibe deine Idee. StudioONE unterstützt dich bei Konzept und Umsetzung.",
-                "Kampagnen": "Von der Idee zur Kampagne – einfach planen, erstellen und freigeben.",
-                "Social Media": "Beiträge für deine Kanäle vorbereiten und übersichtlich verwalten.",
-                "Content-Studio": "Bilder, Videos und Inhalte gestalten – mit Unterstützung durch KI.",
-                "Bibliothek": "Bilder, Dokumente und Vorlagen an einem Ort.",
-                "Newsletter": "Newsletter erstellen, bearbeiten und für den Versand vorbereiten.",
-                "Website": "Inhalte und Projekte deiner Website an einem Ort bearbeiten.",
-                "Kalender": "Deine geplanten Aktivitäten und Termine auf einen Blick.",
-                "Einstellungen": "Die wichtigsten Einstellungen übersichtlich an einem Ort.",
-              } as Record<string,string>)[tab] || "Starte direkt mit deiner Aufgabe."}</p>
+          {tab !== "Übersicht" && !acquisitionTabs.includes(tab) && (
+            <section
+              className="studioone-area-intro"
+              aria-label={`Einführung ${tab}`}
+            >
+              <p className="studioone-area-kicker">
+                STUDIOONE · {tab.toLocaleUpperCase("de-CH")}
+              </p>
+              <h2>
+                {(
+                  {
+                    Kunden: "Deine Kunden. Alles im Blick.",
+                    "Strategie & Konzepte": "Was möchtest du heute entwickeln?",
+                    Kampagnen: "Was möchtest du heute bekannt machen?",
+                    "Social Media": "Was möchtest du heute veröffentlichen?",
+                    "Content-Studio": "Was möchtest du heute gestalten?",
+                    Bibliothek: "Deine Inhalte. Schnell gefunden.",
+                    Newsletter: "Was möchtest du heute mitteilen?",
+                    Website: "Was möchtest du an deiner Website ändern?",
+                    Kalender: "Was steht als Nächstes an?",
+                    Einstellungen: "StudioONE einfach verwalten.",
+                  } as Record<string, string>
+                )[tab] || "Was möchtest du heute erledigen?"}
+              </h2>
+              <p>
+                {(
+                  {
+                    Kunden:
+                      "Kundeninformationen übersichtlich verwalten und gemeinsam weiterbearbeiten.",
+                    "Strategie & Konzepte":
+                      "Beschreibe deine Idee. StudioONE unterstützt dich bei Konzept und Umsetzung.",
+                    Kampagnen:
+                      "Von der Idee zur Kampagne – einfach planen, erstellen und freigeben.",
+                    "Social Media":
+                      "Beiträge für deine Kanäle vorbereiten und übersichtlich verwalten.",
+                    "Content-Studio":
+                      "Bilder, Videos und Inhalte gestalten – mit Unterstützung durch KI.",
+                    Bibliothek: "Bilder, Dokumente und Vorlagen an einem Ort.",
+                    Newsletter:
+                      "Newsletter erstellen, bearbeiten und für den Versand vorbereiten.",
+                    Website:
+                      "Inhalte und Projekte deiner Website an einem Ort bearbeiten.",
+                    Kalender:
+                      "Deine geplanten Aktivitäten und Termine auf einen Blick.",
+                    Einstellungen:
+                      "Die wichtigsten Einstellungen übersichtlich an einem Ort.",
+                  } as Record<string, string>
+                )[tab] || "Starte direkt mit deiner Aufgabe."}
+              </p>
             </section>
           )}
           {acquisitionTabs.includes(tab) && (
             <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {["Mail-Studio", "Kontakte", "Versandhistorie"].map((n) => (
-                <button
-                  className={tab === n ? "" : "secondary"}
-                  key={n}
-                  onClick={() => setTab(n)}
-                >
-                  {n}
-                </button>
-              ))}
-              <details>
-                <summary>Weitere Ansichten</summary>
-                {["E-Mail-Entwürfe", "Freigaben"].map((n) => (
+              {["Kontakte finden", "Kontakte", "Mail-Studio"].map(
+                (n, index) => (
                   <button
-                    className={tab === n ? "" : "secondary"}
+                    className="secondary"
+                    aria-current={tab === n ? "page" : undefined}
                     key={n}
-                    onClick={() => setTab(n)}
+                    disabled={busy}
+                    onClick={() => {
+                      setTab(n);
+                      setError("");
+                      setNotice("");
+                    }}
                   >
-                    {n}
+                    {index + 1} · {acquisitionLabels[n] || n}
                   </button>
-                ))}
-              </details>
+                ),
+              )}
+              <button
+                className="quiet"
+                onClick={() => setTab("Versandhistorie")}
+              >
+                Versandverlauf
+              </button>
             </nav>
           )}
           {(tab === "Kampagnen" ||
             tab === "Social Media" ||
             tab === "Website" ||
-            tab === "Mail-Studio" ||
             tab === "Newsletter") && (
             <AssistantEntry
               key={`assistant-${tab}-${tab === "Kampagnen" ? assistantCampaign?.request || "" : ""}`}
@@ -749,37 +758,55 @@ export default function App() {
               onOpen={navigate}
             />
           )}
-          {tab === "Mail-Studio" && (
-            <MailStudio
-              filters={contactFilters}
-              onFiltersChange={(value) => {
-                setContactFilters(value);
-                setSelected([]);
-              }}
-              initialDraftIds={mailDraftIds}
-              drafts={data.drafts}
-              contacts={data.contacts}
-              refresh={refresh}
-              openDraft={(id) => {
-                const d = data.drafts.find((d) => d.id === id);
-                if (d) openDraft(d);
-              }}
-            />
+          {acquisitionTabs.includes(tab) && (
+            <>
+              <div
+                hidden={tab !== "Kontakte finden"}
+                className="acquisition-research"
+              >
+                <section className="studioone-area-intro">
+                  <p className="studioone-area-kicker">STUDIOONE · AKQUISE</p>
+                  <h2>Wen möchtest du erreichen?</h2>
+                  <p>
+                    Passende Unternehmen finden und belegte Kontakte in deine
+                    Liste übernehmen.
+                  </p>
+                </section>
+                <MailAssistant
+                  mode="RESEARCH"
+                  expanded
+                  refresh={refresh}
+                  persistenceKey={`acquisition-research:${data.user.id}`}
+                  contacts={data.contacts}
+                  onOpenContacts={() => setTab("Kontakte")}
+                />
+              </div>
+              <div hidden={tab !== "Mail-Studio"}>
+                <MailStudio
+                  filters={contactFilters}
+                  onFiltersChange={(value) => {
+                    setContactFilters(value);
+                    setSelected([]);
+                  }}
+                  initialDraftIds={mailDraftIds}
+                  initialContactIds={mailContactIds}
+                  drafts={data.drafts}
+                  contacts={data.contacts}
+                  refresh={refresh}
+                  onBusyChange={setBusy}
+                  openContact={(id) => {
+                    const c = data.contacts.find((c) => c.id === id);
+                    if (c) openContact(c);
+                  }}
+                  openDraft={(id) => {
+                    const d = data.drafts.find((d) => d.id === id);
+                    if (d) openDraft(d);
+                  }}
+                />
+              </div>
+            </>
           )}
-          {tab === "Kontakte" && mailContactIds.length > 0 && (
-            <ContactMailFlow
-              ids={mailContactIds}
-              contacts={data.contacts}
-              refresh={refresh}
-              back={() => setMailContactIds([])}
-              onReady={(ids) => {
-                setMailDraftIds(ids);
-                setMailContactIds([]);
-                setTab("Mail-Studio");
-              }}
-            />
-          )}
-          {tab === "Kontakte" && !mailContactIds.length && (
+          {tab === "Kontakte" && (
             <section className="panel">
               <div className="toolbar">
                 <label className="search">
@@ -797,22 +824,17 @@ export default function App() {
                     onChange={(e) => setFilter(e.target.value)}
                   >
                     <option value="">Alle Status</option>
-                    <option value="INTERESTED">Interessiert</option>
-                    <option value="NO_NEED">Derzeit kein Bedarf</option>
-                    <option value="FOLLOW_UP">Wiedervorlage fällig</option>
-                    {Object.entries(labels)
-                      .slice(0, 12)
-                      .map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
+                    {Object.entries(contactStageLabels).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
                         </option>
-                      ))}
+                      ),
+                    )}
+                    <option value="FOLLOW_UP">Wiedervorlage fällig</option>
                   </select>
                 </label>
-                <label
-                  className="file-button"
-                  style={{ background: "var(--cyan)", color: "#101719" }}
-                >
+                <label className="file-button">
                   Kontakte importieren
                   <input
                     type="file"
@@ -846,18 +868,20 @@ export default function App() {
                   {busy ? "Import läuft …" : "Aus Google Drive importieren"}
                 </button>
               </div>
-              <ContactFilters
-                contacts={data.contacts}
-                value={contactFilters}
-                onChange={(value) => {
-                  setContactFilters(value);
-                  setSelected([]);
-                }}
-                disabled={busy}
-              />
+              <details>
+                <summary>Nach Unternehmen oder Branche filtern</summary>
+                <ContactFilters
+                  contacts={data.contacts}
+                  value={contactFilters}
+                  onChange={(value) => {
+                    setContactFilters(value);
+                    setSelected([]);
+                  }}
+                  disabled={busy}
+                />
+              </details>
               <div className="table-note">
-                {contacts.length} Kontakte · {selected.length} ausgewählt ·
-                Importe erhalten keine Versandfreigabe.
+                {contacts.length} Kontakte · {selected.length} ausgewählt
               </div>
               <ContactTable
                 contacts={contacts}
@@ -870,55 +894,62 @@ export default function App() {
                   <strong>{selected.length} Kontakte ausgewählt</strong>
                   <button
                     disabled={busy || selected.length > 200}
-                    onClick={() => setMailContactIds([...selected])}
+                    onClick={() => {
+                      setMailDraftIds([]);
+                      setMailContactIds([...selected]);
+                      setTab("Mail-Studio");
+                    }}
                   >
-                    {selected.length} Mails vorbereiten →
+                    {selected.length} Mails erstellen →
                   </button>
                 </div>
               )}
             </section>
           )}
-          {["E-Mail-Entwürfe", "Freigaben"].includes(tab) && (
-            <section className="panel">
-              <div className="section-head">
-                <h2>
-                  {tab === "Freigaben"
-                    ? "Zur persönlichen Prüfung"
-                    : "Alle Nachrichtenversionen"}
-                </h2>
-                <span className="muted">{data.generator}</span>
-              </div>
-              <div className="draft-list">
-                {drafts.map((d) => {
-                  const c = data.contacts.find((c) => c.id === d.contactId);
-                  return (
-                    <button
-                      className="draft-row"
-                      disabled={busy}
-                      key={d.id}
-                      onClick={() => openDraft(d)}
-                    >
-                      <span className="draft-symbol">↗</span>
-                      <div>
-                        <strong>{d.versions[0].subject}</strong>
-                        <p>
-                          {c?.organisation} · {d.versions[0].recipient}
-                        </p>
-                      </div>
-                      <span className="muted">V{d.version}</span>
-                      <Badge value={latest(d)} />
-                      <span>Öffnen ↗</span>
-                    </button>
-                  );
-                })}
-                {!drafts.length && (
-                  <p className="empty">
-                    Keine Entwürfe in dieser Ansicht. Erstellen Sie einen
-                    Entwurf bei einem verifizierten Kontakt.
-                  </p>
-                )}
-              </div>
-            </section>
+          {["Mail-Studio", "E-Mail-Entwürfe", "Freigaben"].includes(tab) && (
+            <details className="panel">
+              <summary>Alle gespeicherten Entwürfe</summary>
+              <section>
+                <div className="section-head">
+                  <h2>
+                    {tab === "Freigaben"
+                      ? "Zur persönlichen Prüfung"
+                      : "Alle Nachrichtenversionen"}
+                  </h2>
+                  <span className="muted">{data.generator}</span>
+                </div>
+                <div className="draft-list">
+                  {drafts.map((d) => {
+                    const c = data.contacts.find((c) => c.id === d.contactId);
+                    return (
+                      <button
+                        className="draft-row"
+                        disabled={busy}
+                        key={d.id}
+                        onClick={() => openDraft(d)}
+                      >
+                        <span className="draft-symbol">↗</span>
+                        <div>
+                          <strong>{d.versions[0].subject}</strong>
+                          <p>
+                            {c?.organisation} · {d.versions[0].recipient}
+                          </p>
+                        </div>
+                        <span className="muted">V{d.version}</span>
+                        <Badge value={latest(d)} />
+                        <span>Öffnen ↗</span>
+                      </button>
+                    );
+                  })}
+                  {!drafts.length && (
+                    <p className="empty">
+                      Keine Entwürfe in dieser Ansicht. Erstellen Sie einen
+                      Entwurf bei einem verifizierten Kontakt.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </details>
           )}
           {tab === "Versandhistorie" && (
             <MailSchedule
@@ -1141,6 +1172,80 @@ export default function App() {
               </button>
             </div>
             {contact && (
+              <details className="panel">
+                <summary>Bisherige Mails & Kontaktaktionen</summary>
+                {data.drafts
+                  .filter((d) => d.contactId === contact.id)
+                  .map((d) => (
+                    <p key={d.id}>
+                      {d.versions[0]?.subject} ·{" "}
+                      {data.deliveries
+                        .filter((delivery) => delivery.draftId === d.id)
+                        .map(
+                          (delivery) =>
+                            `${labels[delivery.status] || delivery.status} · ${date(delivery.createdAt)}`,
+                        )
+                        .join(" · ") || "Entwurf"}
+                    </p>
+                  ))}
+                {!data.drafts.some((d) => d.contactId === contact.id) && (
+                  <p>Noch keine Mails vorhanden.</p>
+                )}
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={
+                      busy ||
+                      !contact.email ||
+                      contact.status === "DO_NOT_CONTACT"
+                    }
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `${contact.email} nicht mehr kontaktieren? Weitere Akquise-Mails an diese Adresse werden gesperrt.`,
+                        )
+                      )
+                        return;
+                      void action(async () => {
+                        await post("suppression", {
+                          email: contact.email,
+                          reason:
+                            "Im Kontakt ausdrücklich vom Versand ausgeschlossen",
+                        });
+                        setShowContact(false);
+                      }, "Kontakt vom Versand ausgeschlossen.");
+                    }}
+                  >
+                    Nicht mehr kontaktieren
+                  </button>
+                  <button
+                    className="danger"
+                    disabled={busy}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Kontakt ${contact.firstName} ${contact.lastName} bei ${contact.organisation} löschen? Kontakte mit Mailverlauf bleiben geschützt.`,
+                        )
+                      )
+                        return;
+                      void action(async () => {
+                        await post(`contacts/${contact.id}/delete`, {
+                          revision: contact.revision,
+                          confirmed: true,
+                        });
+                        setShowContact(false);
+                        setSelected((ids) =>
+                          ids.filter((id) => id !== contact.id),
+                        );
+                      }, "Kontakt gelöscht.");
+                    }}
+                  >
+                    Kontakt löschen
+                  </button>
+                </div>
+              </details>
+            )}
+            {contact && (
               <ContactReply
                 key={contact.id + ":" + contact.revision}
                 contact={contact}
@@ -1309,7 +1414,9 @@ export default function App() {
                       action(async () => {
                         await post("drafts", { contactId: contact.id });
                         setShowContact(false);
-                        setTab("E-Mail-Entwürfe");
+                        setMailContactIds([contact.id]);
+                        setMailDraftIds([]);
+                        setTab("Mail-Studio");
                       }, "Lokaler Entwurf erstellt.")
                     }
                   >
@@ -1319,8 +1426,8 @@ export default function App() {
               </div>
             </form>
             {contact && (
-              <section className="legal">
-                <h3>Separate rechtliche Versandprüfung</h3>
+              <details className="legal">
+                <summary>Weitere Versandangaben</summary>
                 <p>
                   Eine publizierte Geschäftsadresse ist keine Werbeeinwilligung.
                   Die Kategorie allein erteilt keine Freigabe.
@@ -1387,7 +1494,7 @@ export default function App() {
                     Nicht zulässig
                   </button>
                 </div>
-              </section>
+              </details>
             )}
             {error && (
               <p role="alert" className="error">
@@ -1664,8 +1771,7 @@ function ContactTable({
               />
             </th>
             <th>Organisation / Kontakt</th>
-            <th>Branche / Region</th>
-            <th>Verifikation</th>
+            <th>E-Mail</th>
             <th>Status</th>
             <th>
               <span className="sr-only">Aktion</span>
@@ -1700,21 +1806,11 @@ function ContactTable({
                   <small className="public">Öffentlicher Auftraggeber</small>
                 )}
               </td>
+              <td>{c.email || "E-Mail fehlt"}</td>
               <td>
-                {c.industry || "–"}
-                <small>{c.region || "–"}</small>
-              </td>
-              <td>
-                <span
-                  className={c.confidence === "VERIFIED" ? "verified" : "muted"}
-                >
-                  {c.confidence === "VERIFIED"
-                    ? "● Verifiziert"
-                    : "○ Ungeprüft"}
+                <span className={`badge b-${contactStage(c)}`}>
+                  {contactStageLabels[contactStage(c)]}
                 </span>
-              </td>
-              <td>
-                <Badge value={c.status} />
                 {c.replyOutcome && (
                   <small>{replyLabels[c.replyOutcome] || c.replyOutcome}</small>
                 )}
