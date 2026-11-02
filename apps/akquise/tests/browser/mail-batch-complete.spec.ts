@@ -178,7 +178,7 @@ test("50 selected contacts stay together through shared completion and review", 
   ).toBeVisible();
   expect(prepared).toBe(50);
   await expect(
-    page.getByRole("button", { name: "Sofort senden", exact: true }),
+    page.getByRole("button", { name: "Alle 50 jetzt senden", exact: true }),
   ).toBeDisabled();
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
@@ -188,7 +188,7 @@ test("50 selected contacts stay together through shared completion and review", 
     .getByLabel(/Ich gebe die 50 ausgewählten persönlichen Mails/)
     .check();
   await page
-    .getByRole("button", { name: "Sofort senden", exact: true })
+    .getByRole("button", { name: "Alle 50 jetzt senden", exact: true })
     .click();
   await expect(
     page.getByText("50 von 50 Mails bearbeitet.", { exact: true }),
@@ -331,7 +331,7 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.getByRole("button", { name: "4 persönliche Mails vorbereiten →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
   await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sofort senden", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Jetzt senden", exact: true })).toBeDisabled();
   expect(preparedIds).toEqual(["m0"]);
   expect(dispatchCalls).toBe(0);
 });

@@ -406,3 +406,47 @@ test("Interessiert dokumentiert Antwort; gesendete Mail wird als beantwortet mar
   );
   assert.equal(calls, 1);
 });
+
+test("Jetzt senden aktualisiert eingeplante Mail und verhindert erneuten Versand", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { d } = await prepared();
+  await enqueue(d);
+  const preview = await mailReview(user, "preview", { ids: [d.id] });
+  if (!("rows" in preview) || !preview.rows) throw new Error("Vorschau fehlt");
+  const { id, version, hash, contactRevision } = preview.rows[0];
+  const result = await mailReview(user, "approve-and-send", {
+    items: [{ id, version, hash, contactRevision }], read: true, confirmDispatch: true,
+  }, sender);
+  assert.ok("results" in result && result.results?.[0].ok);
+  assert.equal(calls, 1);
+  const queued = await db.mailQueueItem.findFirstOrThrow({ where: { draftId: d.id } });
+  assert.equal(queued.status, "SENT");
+  assert.ok(queued.deliveryId);
+  await start();
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+});
+
+test("Sofortversand unterscheidet sichere Prüfrückstellung von unklarem SMTP", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { d } = await prepared();
+  const preview = await mailReview(user, "preview", { ids: [d.id] });
+  if (!("rows" in preview) || !preview.rows) throw new Error("Vorschau fehlt");
+  const { id, version, hash, contactRevision } = preview.rows[0];
+  const body = { items: [{ id, version, hash, contactRevision }], read: true, confirmDispatch: true };
+  const stale = await mailReview(user, "approve-and-send", {
+    ...body, items: [{ ...body.items[0], contactRevision: contactRevision + 1 }],
+  }, sender);
+  assert.ok("results" in stale && stale.results);
+  assert.equal(stale.results[0].ok, false);
+  assert.equal("stopBatch" in stale.results[0] && stale.results[0].stopBatch, false);
+  assert.equal(calls, 0);
+  const uncertain = await mailReview(user, "approve-and-send", body, async () => {
+    calls++;
+    throw new Error("Synthetic SMTP timeout");
+  });
+  assert.ok("results" in uncertain && uncertain.results);
+  assert.equal(uncertain.results[0].ok, false);
+  assert.equal("stopBatch" in uncertain.results[0] && uncertain.results[0].stopBatch, true);
+  assert.equal(calls, 1);
+});

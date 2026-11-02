@@ -253,6 +253,14 @@ export async function dispatchApproved(
               },
             });
         }
+        if (!queueId && mode === "PRODUCTION") {
+          // A queued mail can also be sent explicitly now. Reflect that result
+          // immediately; the recipient idempotency claim still prevents races.
+          await tx.mailQueueItem.updateMany({
+            where: { draftId, version, status: "QUEUED" },
+            data: { status, error, deliveryId: delivery.id },
+          });
+        }
         if (mode === "PRODUCTION")
           await tx.contact.update({
             where: { id: d.contactId },
