@@ -1,60 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CURSOR_STATUS_LABEL,
   openableCursorHref,
   type PublicCursorTask,
 } from "@/lib/cursor/status";
 
-type Handoff = { contentId: string; block: "protected" | "unapproved" | null };
-type Content = {
-  id: string;
-  kind: string;
+type Edition = {
+  contentId: string;
   title: string;
   version: number;
-  updatedAt: string;
-  archivedAt: string | null;
+  currentVersion: number;
+  stale: boolean;
+  prUrl: string;
 };
 type Panel = {
   connected: boolean;
+  nextStep: string;
   tasks: PublicCursorTask[];
-  handoffs: Handoff[];
+  editions: Edition[];
 };
-type State = { contents?: Content[]; newsletterCursor?: Panel };
+type State = { newsletterCursor?: Panel };
 
-const blockText = {
-  protected: "Diese Ausgabe ist geschützt.",
-  unapproved:
-    "Für diese Ausgabe ist noch kein freigegebener Arbeitsstand hinterlegt.",
-};
-
-export default function NewsletterCursor() {
+export default function NewsletterCursor({
+  instruction,
+  onOpenTask,
+}: {
+  instruction: string;
+  onOpenTask: () => void;
+}) {
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
-  const [selected, setSelected] = useState("");
-  const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
-  const restoredFor = useRef("");
-  function remember(
-    previous: State | null,
-    task?: PublicCursorTask,
-    connected?: boolean,
-  ) {
-    if (!previous?.newsletterCursor || !task) return previous;
-    return {
-      ...previous,
-      newsletterCursor: {
-        ...previous.newsletterCursor,
-        connected: connected ?? previous.newsletterCursor.connected,
-        tasks: [
-          ...previous.newsletterCursor.tasks.filter(
-            (item) => item.contentId !== task.contentId,
-          ),
-          task,
-        ],
-      },
-    };
+
+  async function load() {
+    const response = await fetch("/api/hub/state", { cache: "no-store" });
+    const data = (await response.json()) as State & { error?: string };
+    if (!response.ok)
+      throw new Error(data.error || "Newsletter konnten nicht geladen werden.");
+    setState(data);
   }
 
   useEffect(() => {
@@ -77,27 +62,19 @@ export default function NewsletterCursor() {
     return () => controller.abort();
   }, []);
 
-  const newsletters = (state?.contents ?? [])
-    .filter((content) => content.kind === "NEWSLETTER" && !content.archivedAt)
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    );
-  const current = selected || newsletters[0]?.id || "";
-  const task = state?.newsletterCursor?.tasks.find(
-    (item) => item.contentId === current,
+  const panel = state?.newsletterCursor;
+  const edition = panel?.editions[0];
+  const task = panel?.tasks.find(
+    (item) => item.contentId === edition?.contentId,
   );
-  const connected = Boolean(state?.newsletterCursor?.connected);
-  const block =
-    state?.newsletterCursor?.handoffs.find((item) => item.contentId === current)
-      ?.block ?? (newsletters.length ? "unapproved" : null);
+  const connected = Boolean(panel?.connected);
   const active =
     task?.status === "HANDED_OFF" || task?.status === "IN_PROGRESS";
 
   useEffect(() => {
-    if (!current || !active) return;
+    if (!edition || !active) return;
     const timer = setInterval(() => {
-      void fetch("/api/hub/newsletter-cursor-refresh/" + current, {
+      void fetch("/api/hub/newsletter-cursor-refresh/" + edition.contentId, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}",
@@ -105,169 +82,165 @@ export default function NewsletterCursor() {
         .then(async (response) => {
           const data = (await response.json()) as {
             error?: string;
-            connected?: boolean;
-            task?: PublicCursorTask | null;
+            task?: PublicCursorTask;
           };
           if (!response.ok) {
             setError(data.error || "Status konnte nicht geprüft werden.");
             return;
           }
-          setState((previous) =>
-            remember(previous, data.task ?? undefined, Boolean(data.connected)),
-          );
+          const task = data.task;
+          if (!task) return;
+          setState((previous) => {
+            if (!previous?.newsletterCursor) return previous;
+            return {
+              ...previous,
+              newsletterCursor: {
+                ...previous.newsletterCursor,
+                tasks: [
+                  ...previous.newsletterCursor.tasks.filter(
+                    (item) => item.contentId !== task.contentId,
+                  ),
+                  task,
+                ],
+              },
+            };
+          });
         })
         .catch(() => setError("Status konnte nicht geprüft werden."));
     }, 15000);
     return () => clearInterval(timer);
-  }, [current, active]);
+  }, [edition, active]);
 
-  useEffect(() => {
-    if (!current || restoredFor.current === current) return;
-    restoredFor.current = current;
-    setInstruction(
-      state?.newsletterCursor?.tasks.find((item) => item.contentId === current)
-        ?.instruction || "",
-    );
-  }, [current, state]);
-
-  const notice = !state
-    ? ""
-    : !connected
-      ? "Cursor noch nicht verbunden."
-      : !newsletters.length
-        ? "Speichere zuerst den Newsletter. Danach kannst du die Änderung hier starten."
-        : block
-          ? blockText[block]
-          : task?.pending
-            ? "Die Übergabe wird geprüft."
-            : "";
-  const previewUrl = openableCursorHref(task?.previewUrl || "");
-  const reviewUrl = openableCursorHref(task?.reviewUrl || "");
-  const disabled =
-    busy ||
-    !connected ||
-    !current ||
-    !instruction.trim() ||
-    Boolean(block) ||
-    Boolean(task?.pending) ||
-    active;
-
-  async function handoff() {
+  async function post(path: string, body: unknown) {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/hub/newsletter-cursor/" + current, {
+      const response = await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction }),
+        body: JSON.stringify(body),
       });
       const data = (await response.json()) as {
         error?: string;
+        route?: string;
         task?: PublicCursorTask;
       };
       if (!response.ok)
         throw new Error(
-          data.error || "Die Änderung konnte nicht gestartet werden.",
+          data.error || "Der Auftrag konnte nicht gestartet werden.",
         );
-      if (data.task)
-        setState((previous) => remember(previous, data.task, true));
+      if (data.route === "gpt") onOpenTask();
+      await load();
     } catch (reason) {
       setError(
         reason instanceof Error
           ? reason.message
-          : "Die Änderung konnte nicht gestartet werden.",
+          : "Der Auftrag konnte nicht gestartet werden.",
       );
     } finally {
       setBusy(false);
     }
   }
 
+  const previewUrl = openableCursorHref(task?.previewUrl || "");
+  const reviewUrl = openableCursorHref(task?.reviewUrl || "");
+
   return (
-    <section
-      className="newsletter-cursor"
-      aria-label="Newsletter an Cursor übergeben"
-    >
-      <h3>Änderung umsetzen</h3>
-      <p>
-        Beschreibe, was am gespeicherten Newsletter geändert werden soll. Die
-        Vorschau prüfst du danach selbst. Nichts wird versendet oder
-        veröffentlicht.
-      </p>
-      <label>
-        Newsletter
-        <select
-          value={current}
-          disabled={!newsletters.length}
-          onChange={(event) => {
-            const id = event.target.value;
-            setSelected(id);
-            setError("");
-            setInstruction(
-              state?.newsletterCursor?.tasks.find(
-                (item) => item.contentId === id,
-              )?.instruction || "",
-            );
-          }}
-        >
-          {!newsletters.length && (
-            <option value="">Noch kein Newsletter</option>
-          )}
-          {newsletters.map((content) => (
-            <option key={content.id} value={content.id}>
-              {content.title} · Version {content.version}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Dein Änderungswunsch
-        <textarea
-          rows={4}
-          maxLength={4000}
-          value={instruction}
-          disabled={!newsletters.length}
-          onChange={(event) => setInstruction(event.target.value)}
-        />
-      </label>
-      <p role="status">Status: {task?.label || CURSOR_STATUS_LABEL.NOT_SENT}</p>
-      {notice && <p>{notice}</p>}
-      {(error || task?.errorMessage) && (
-        <p role="alert">{error || task?.errorMessage}</p>
+    <section className="newsletter-cursor" aria-label="Newsletter-Auftrag">
+      <h3>Auftrag</h3>
+      {!panel?.editions.length && (
+        <>
+          <p>
+            Es gibt noch keine eigene Ausgabe. Lege eine neue Ausgabe als Kopie
+            der geschützten Vorlage an. Die Vorlage selbst bleibt unverändert.
+          </p>
+          <div className="newsletter-cursor-actions">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void post("/api/hub/newsletter-edition", {})}
+            >
+              Neue Ausgabe anlegen
+            </button>
+          </div>
+        </>
       )}
-      <div className="newsletter-cursor-actions">
-        <button
-          type="button"
-          disabled={disabled}
-          aria-busy={busy}
-          onClick={() => void handoff()}
-        >
-          Mit Cursor umsetzen
-        </button>
-        {previewUrl && (
-          <a
-            className="secondary"
-            href={previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vorschau öffnen
-          </a>
-        )}
-        {reviewUrl && (
-          <a
-            className="secondary"
-            href={reviewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Änderungen prüfen
-          </a>
-        )}
-      </div>
-      <p className="muted">
-        Vorschau bereit ist noch keine Freigabe. StudioONE versendet und
-        veröffentlicht den Newsletter nicht.
-      </p>
+      {edition && (
+        <>
+          <p>
+            {edition.title} · Version {edition.currentVersion}
+          </p>
+          <p role="status">
+            Status: {task?.label || CURSOR_STATUS_LABEL.NOT_SENT}
+            {task?.note ? `. ${task.note}` : ""}
+          </p>
+          {edition.stale && (
+            <p role="alert">
+              Diese Ausgabe wurde geändert. Der bisherige Auftrag gilt nur für
+              Version {edition.version} und wird nicht übertragen.
+            </p>
+          )}
+          <div className="newsletter-cursor-actions">
+            {edition.stale ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  void post(
+                    "/api/hub/newsletter-edition-restart/" + edition.contentId,
+                    {},
+                  )
+                }
+              >
+                Für die neue Version neu beginnen
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={busy || active || !instruction.trim()}
+                onClick={() => {
+                  if (!instruction.trim()) {
+                    onOpenTask();
+                    return;
+                  }
+                  void post("/api/hub/newsletter-cursor/" + edition.contentId, {
+                    instruction,
+                  });
+                }}
+              >
+                Auftrag starten
+              </button>
+            )}
+            {previewUrl && (
+              <a
+                className="secondary"
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Vorschau öffnen
+              </a>
+            )}
+            {reviewUrl && (
+              <a
+                className="secondary"
+                href={reviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Änderungen prüfen
+              </a>
+            )}
+          </div>
+        </>
+      )}
+      {!connected && (
+        <p>
+          Cursor ist noch nicht verbunden. Textaufträge kann GPT vorbereiten.
+          Technische Änderungen warten auf den Schlüssel.
+        </p>
+      )}
+      {error && <p role="alert">{error}</p>}
     </section>
   );
 }

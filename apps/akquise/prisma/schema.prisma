@@ -57,6 +57,7 @@ model User {
   marketingContents  MarketingContent[]  @relation("ContentOwner")
   marketingApprovals MarketingApproval[] @relation("MarketingReviewer")
   newsletterCursorTasks NewsletterCursorTask[]
+  newsletterEditions NewsletterEdition[]
 }
 
 model Session {
@@ -323,6 +324,7 @@ model MarketingContent {
   exports        NewsletterExport[]
   mailchimpTransfers MailchimpTransfer[]
   cursorTask     NewsletterCursorTask?
+  edition        NewsletterEdition?
 
   @@index([campaignId, scheduledAt])
   @@index([kind, workspace, status])
@@ -414,10 +416,26 @@ model NewsletterCursorTask {
   prUrl        String           @default("")
   errorMessage String           @default("")
   pendingUntil DateTime?
+  route        String           @default("cursor")
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   @@index([status])
+}
+
+// A V4 edition is an explicit copy of protected V3. It never points at PR 305 or 313.
+model NewsletterEdition {
+  id               String           @id @default(cuid())
+  contentId        String           @unique
+  content          MarketingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  sourceTemplateId String
+  contentVersion   Int
+  baseRef          String
+  prUrl            String           @default("")
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 // Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.

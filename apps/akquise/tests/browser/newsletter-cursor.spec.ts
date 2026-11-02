@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
 
-test("Newsletter-Cursor zeigt einen klaren Status und keine zweite Aufgabe", async ({
+test("Newsletter-Auftrag nutzt ein Feld und zeigt den nächsten Schritt", async ({
   page,
 }) => {
   const writes: string[] = [];
@@ -41,7 +41,9 @@ test("Newsletter-Cursor zeigt einen klaren Status und keine zweite Aufgabe", asy
           },
           newsletterCursor: {
             connected: false,
+            nextStep: "Neue Ausgabe anlegen",
             tasks: [],
+            editions: [],
             handoffs: [],
           },
         },
@@ -74,23 +76,16 @@ test("Newsletter-Cursor zeigt einen klaren Status und keine zweite Aufgabe", asy
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Newsletter/ })
     .click();
-  const panel = page.getByRole("region", {
-    name: "Newsletter an Cursor übergeben",
-  });
-  await expect(
-    panel.getByRole("button", { name: "Mit Cursor umsetzen" }),
-  ).toBeDisabled();
-  await expect(panel.getByText("Cursor noch nicht verbunden.")).toBeVisible();
-  await expect(panel.getByText("Status: Noch nicht gesendet")).toBeVisible();
-  await expect(
-    panel.getByText("Vorschau bereit ist noch keine Freigabe."),
-  ).toBeVisible();
-  await expect(
-    panel.getByRole("button", { name: "Mit Cursor umsetzen" }),
-  ).toHaveCount(1);
   const entry = page.getByRole("region", { name: "GPT für Newsletter" });
+  const panel = entry.getByRole("region", { name: "Newsletter-Auftrag" });
   await expect(
-    entry.getByRole("button", { name: "GPT beauftragen" }),
+    panel.getByRole("button", { name: "Neue Ausgabe anlegen" }),
+  ).toBeVisible();
+  await expect(panel.locator("textarea")).toHaveCount(0);
+  await expect(entry.getByLabel("Dein Auftrag")).toBeVisible();
+  await expect(entry.locator("textarea")).toHaveCount(1);
+  await expect(
+    panel.getByText("Cursor ist noch nicht verbunden."),
   ).toBeVisible();
   mkdirSync("/opt/cursor/artifacts", { recursive: true });
   for (const width of [700, 390, 320]) {

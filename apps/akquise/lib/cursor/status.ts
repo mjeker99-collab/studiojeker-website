@@ -24,6 +24,9 @@ export type PublicCursorTask = {
   errorMessage: string;
   previewUrl: string;
   reviewUrl: string;
+  route: "gpt" | "cursor";
+  complete: false;
+  note: string;
 };
 const AGENT_ID =
   /^bc-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

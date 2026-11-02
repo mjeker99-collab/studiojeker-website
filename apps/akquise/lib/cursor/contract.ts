@@ -17,18 +17,17 @@ export const CURSOR_API = "https://api.cursor.com";
 export const NEWSLETTER_REPO_URL =
   "https://github.com/mjeker99-collab/studiojeker-website";
 
-export type NewsletterEdition = { templateId: string; prUrl: string };
-
-/**
- * Editions this bridge may hand to Cursor. Pull requests are fixed in code.
- * PR 313 (Newsletter V4) and PR 305 (V4 copy of V3) are rejected even if listed.
- */
-export const APPROVED_NEWSLETTER_EDITIONS: readonly NewsletterEdition[] = [];
-
-const PROTECTED_TEMPLATE_IDS = new Set([
-  "newsletter-03",
+export const V3_TEMPLATE_ID = "newsletter-03";
+export const PROTECTED_TEMPLATE_IDS = new Set([
+  V3_TEMPLATE_ID,
   "newsletter-03-promo-nov2026",
 ]);
+/** New draft PRs start from the StudioONE branch. PR 305 and 313 are never reused. */
+export const APPROVED_BASE_REF = "feat/akquise-production-readiness";
+export const NEXT_STEP_CREATE_EDITION = "Neue Ausgabe anlegen";
+
+const TECHNICAL =
+  /layout|vorlage|html|css|responsive|\bcode\b|cursor|technisch|abstand|spalte|template|struktur/i;
 const RUN_STATUSES = new Set([
   "CREATING",
   "RUNNING",
@@ -56,21 +55,20 @@ export function readCursorKey(
   return key;
 }
 
-export function approvedEdition(
-  templateId: string,
-  editions: readonly NewsletterEdition[] = APPROVED_NEWSLETTER_EDITIONS,
-) {
-  const match = editions.find((edition) => edition.templateId === templateId);
-  if (!match || openableCursorHref(match.prUrl) !== match.prUrl) return null;
-  return { templateId, prUrl: match.prUrl };
+export function taskRoute(instruction: string): "editorial" | "technical" {
+  return TECHNICAL.test(instruction) ? "technical" : "editorial";
+}
+
+export function validatedPr(url: string) {
+  return openableCursorHref(url) === url ? url : "";
 }
 
 export function blockReason(
   templateId: string,
-  editions: readonly NewsletterEdition[] = APPROVED_NEWSLETTER_EDITIONS,
+  registered: boolean,
 ): CursorBlock | null {
-  if (PROTECTED_TEMPLATE_IDS.has(templateId)) return "protected";
-  if (!approvedEdition(templateId, editions)) return "unapproved";
+  if (!registered && PROTECTED_TEMPLATE_IDS.has(templateId)) return "protected";
+  if (!registered) return "unapproved";
   return null;
 }
 
@@ -96,9 +94,9 @@ export function buildPrompt(
     "Wunsch:",
     input.instruction,
     "Grenzen:",
-    "- Ändere nur die genannte Vorlage.",
-    "- newsletter-03 und die V3-Ausgabe bleiben unverändert.",
-    "- Newsletter V4 (PR 313) nicht ändern.",
+    "- Lege die Änderung als neue V4-Ausgabe an.",
+    "- Die Datei und der Inhalt der Vorlage newsletter-03 bleiben unverändert.",
+    "- Pull Request 305 und 313 nicht verändern.",
     "- Bilder, Logos und den Layoutstandard nur ändern, wenn der Wunsch das ausdrücklich für genau dieses Element verlangt.",
     "- Kein Merge, kein Deploy, keine Veröffentlichung und kein Mailversand.",
     "- Keine Secrets und keine Änderungen ausserhalb des genannten Newsletters.",
@@ -107,12 +105,27 @@ export function buildPrompt(
   return text;
 }
 
-export function createAgentBody(prompt: string, prUrl: string) {
+export function createAgentBody(
+  prompt: string,
+  target: { prUrl: string } | { startingRef: typeof APPROVED_BASE_REF },
+) {
+  if ("prUrl" in target) {
+    const prUrl = validatedPr(target.prUrl);
+    if (!prUrl) throw new CursorApiError(400, "pr_not_allowed");
+    return {
+      prompt: { text: prompt },
+      repos: [{ url: NEWSLETTER_REPO_URL, prUrl }],
+      workOnCurrentBranch: true as const,
+      autoCreatePR: false as const,
+    };
+  }
+  if (target.startingRef !== APPROVED_BASE_REF)
+    throw new CursorApiError(400, "ref_not_allowed");
   return {
     prompt: { text: prompt },
-    repos: [{ url: NEWSLETTER_REPO_URL, prUrl }],
-    workOnCurrentBranch: true as const,
-    autoCreatePR: false as const,
+    repos: [{ url: NEWSLETTER_REPO_URL, startingRef: APPROVED_BASE_REF }],
+    workOnCurrentBranch: false as const,
+    autoCreatePR: true as const,
   };
 }
 
@@ -188,20 +201,21 @@ export function parseAgentResponse(body: unknown) {
   };
 }
 
-export function matchingPr(body: unknown, expectedPr: string) {
+export function matchingPr(body: unknown) {
   const branches = asRecord(asRecord(body)?.git)?.branches;
-  if (!Array.isArray(branches) || openableCursorHref(expectedPr) !== expectedPr)
-    return "";
-  return branches.some((branch) => asRecord(branch)?.prUrl === expectedPr)
-    ? expectedPr
-    : "";
+  if (!Array.isArray(branches)) return "";
+  for (const branch of branches) {
+    const prUrl = asRecord(branch)?.prUrl;
+    if (typeof prUrl === "string" && validatedPr(prUrl)) return prUrl;
+  }
+  return "";
 }
 
-export function parseRunResponse(body: unknown, expectedPr: string) {
+export function parseRunResponse(body: unknown) {
   const run = asRecord(body);
   const status = runStatus(run?.status);
   if (!status) throw new CursorApiError(502, "invalid_response");
-  const prUrl = matchingPr(body, expectedPr);
+  const prUrl = matchingPr(body);
   return {
     runStatus: status,
     prUrl,

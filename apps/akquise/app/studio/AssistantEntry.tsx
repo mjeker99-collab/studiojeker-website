@@ -50,6 +50,7 @@ export default function AssistantEntry({
   onProjectAssigned?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [taskText, setTaskText] = useState("");
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -208,7 +209,23 @@ export default function AssistantEntry({
           </button>
         )}
       </div>
-      {section === "Newsletter" && <NewsletterCursor />}
+      {section === "Newsletter" && !open && (
+        <label>
+          Dein Auftrag
+          <textarea
+            rows={4}
+            maxLength={4000}
+            value={taskText}
+            onChange={(event) => setTaskText(event.target.value)}
+          />
+        </label>
+      )}
+      {section === "Newsletter" && (
+        <NewsletterCursor
+          instruction={taskText}
+          onOpenTask={() => setOpen(true)}
+        />
+      )}
       {section === "Newsletter" && (
         <button
           type="button"
@@ -324,6 +341,10 @@ export default function AssistantEntry({
                 refresh={refresh}
                 onProjectAssigned={onProjectAssigned}
                 initialRequest={chatRequest}
+                draftMessage={section === "Newsletter" ? taskText : undefined}
+                onDraftChange={
+                  section === "Newsletter" ? setTaskText : undefined
+                }
               />
             )}
           </>

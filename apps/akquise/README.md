@@ -77,15 +77,15 @@ Google Sheets: Service-Account über `GOOGLE_CLIENT_EMAIL` und `GOOGLE_PRIVATE_K
 
 ## Newsletter an Cursor übergeben
 
-Im Newsletter-Bereich steht oben die Aktion **Mit Cursor umsetzen**. Die kaufmännische Person beschreibt die Änderung am gespeicherten Newsletter. StudioONE übergibt den Wunsch serverseitig an die Cursor Cloud Agents API und zeigt danach einen der Status `Noch nicht gesendet`, `An Cursor übergeben`, `In Bearbeitung`, `Vorschau bereit` oder `Fehler`. `Vorschau bereit` ist keine Freigabe: es wird nichts gemergt, veröffentlicht oder versendet.
+Im Newsletter-Bereich gibt es ein Auftragsfeld. Fehlt eine eigene Ausgabe, ist der nächste Schritt **Neue Ausgabe anlegen**. Dabei entsteht eine Kopie der geschützten Vorlage als neuer Entwurf. Die Vorlage selbst und die Pull Requests #305 und #313 bleiben unverändert. Eine technische Änderung an dieser neuen Ausgabe startet einen eigenen Entwurf auf dem Branch `feat/akquise-production-readiness` und darf ein neues Draft-Pull-Request erzeugen. Textänderungen bleiben bei GPT. Der Status `Vorschau bereit` schliesst den Auftrag nicht ab.
 
-Beide aktiven StudioONE-Konten, Martin und Nora, dürfen einen Auftrag starten. Geschützte Ausgaben (Newsletter 03 und die zugehörige Promo) werden abgelehnt. Eine Ausgabe braucht zusätzlich einen fest im Code freigegebenen Pull Request. PR #313 (Newsletter V4) und PR #305 sind ausgeschlossen. Solange keine Ausgabe in dieser Liste steht, startet StudioONE keinen Auftrag und meldet das klar.
+Beide aktiven StudioONE-Konten, Martin und Nora, dürfen eine Ausgabe anlegen und einen Auftrag starten. Passt die gespeicherte Version nicht mehr, stoppt StudioONE den alten Auftrag und überträgt ihn nicht still.
 
 ### Einmalige Schlüssel-Konfiguration
 
 1. Im Cursor-Dashboard unter API Keys einen Schlüssel für StudioONE erstellen.
 2. Den Schlüssel nur als Render-Secret `CURSOR_API_KEY` beim Service `studiojeker-akquise` eintragen. In `render.yaml` steht der Schlüssel mit `sync: false` und ohne Wert. Den Blueprint dafür nicht anwenden.
-3. Den Dienst neu starten, damit der Secret geladen wird. Ohne Schlüssel zeigt StudioONE `Cursor noch nicht verbunden` und meldet keinen Erfolg.
+3. Den Dienst neu starten, damit der Secret geladen wird. Ohne Schlüssel zeigt StudioONE «Cursor ist noch nicht verbunden». Ein technischer Start meldet «Cursor noch nicht verbunden» und legt keinen Cursor-Auftrag an.
 4. Der Schlüssel bleibt serverseitig. Er wird nicht im Browser abgefragt, nicht geloggt und nicht in Git gespeichert.
 
 Wenn Cursor noch an derselben Ausgabe arbeitet, bleibt der Status `In Bearbeitung`. Eine weitere Änderung ist erst danach möglich. Ein Konflikt wird als Hinweis angezeigt, nicht als neuer Erfolg. Nach dem Reload bleibt der gespeicherte Status erhalten.
