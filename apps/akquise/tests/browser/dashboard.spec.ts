@@ -63,6 +63,7 @@ for (const width of [390, 768, 1440]) {
       name: "Globale Mailprüfung",
       exact: true,
     });
+    await panel.locator("details.mail-preview-list > summary").click();
     await panel.locator("details.mail-review-message").nth(0).locator("summary").click();
     await panel.locator("details.mail-review-message").nth(1).locator("summary").click();
     await expect(
@@ -98,7 +99,7 @@ for (const width of [390, 768, 1440]) {
       ),
     ).toBe(true);
     await approve.click();
-    await expect(panel.getByRole("status")).toContainText(
+    await expect(panel.getByRole("status").filter({ hasText: "2 freigegeben und eingeplant" })).toContainText(
       "2 freigegeben und eingeplant · 0 noch offen.",
     );
     const state = await (await page.request.get("/api/state")).json();
@@ -107,9 +108,7 @@ for (const width of [390, 768, 1440]) {
         ids.includes(d.draftId),
       ),
     ).toHaveLength(0);
-    await panel
-      .getByRole("button", { name: "Weiter zum Versand", exact: true })
-      .click();
+    // Scheduling opens the status automatically; no extra navigation required.
     await expect(
       page.getByRole("heading", { name: "Täglicher Mailversand", exact: true }),
     ).toBeVisible();
@@ -352,8 +351,9 @@ for (const width of [390, 768, 1440]) {
     await expect(page.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
       "25",
     );
+    await page.getByRole("button", { name: "Zeitplan starten", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Versand starten" }),
+      page.getByRole("button", { name: "Freigegebene Mails nach Zeitplan senden", exact: true }),
     ).toBeDisabled();
     expect(
       await page.evaluate(
