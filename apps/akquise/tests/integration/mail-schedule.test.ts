@@ -222,13 +222,14 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
   await enqueue(b.d);
   await start(1);
   await dispatchApproved(user, a.d.id, 1, sender);
+  assert.ok((await mailScheduleState()).schedule.lastClaimAt);
   await runMailSchedule(sender);
   assert.equal(calls, 1);
   await start(25);
   await runMailSchedule(sender);
-  // The direct send is already reflected in the queue. The next tick can
-  // send B immediately instead of spending a tick marking A as skipped.
-  assert.equal(calls, 2);
+  // Sending now also counts toward the schedule's spacing. The next queued
+  // recipient must wait, while A is already marked as sent.
+  assert.equal(calls, 1);
   assert.equal(
     (
       await db.mailQueueItem.findUniqueOrThrow({
@@ -239,6 +240,9 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
   );
   assert.equal(await db.delivery.count({ where: { recipient: a.c.email } }), 1);
   assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 1);
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+  await elapsed();
   await runMailSchedule(sender);
   assert.equal(calls, 2);
 });
