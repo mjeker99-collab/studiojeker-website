@@ -468,7 +468,7 @@ test("Sofortversand unterscheidet sichere Prüfrückstellung von unklarem SMTP",
     sender,
   );
   assert.ok("results" in stale && stale.results);
-  assert.equal(stale.results[0].ok, false);
+  assert.equal(stale.results?.[0].ok, false);
   assert.equal(
     "stopBatch" in stale.results[0] && stale.results[0].stopBatch,
     false,
@@ -518,4 +518,25 @@ test("Sofortversand beansprucht die Warteschlange vor SMTP und pausiert bei unkl
   );
   await runMailSchedule(sender);
   assert.equal(calls, 1);
+});
+
+test("discard removes only unsent selected drafts, cancels their queue and keeps contacts", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const a = await prepared();
+  const b = await prepared();
+  await enqueue(a.d);
+  await assert.rejects(mailReview(user, "discard", { items: [{ id: a.d.id, version: 1 }] }));
+  const result = await mailReview(user, "discard", { confirmed: true, items: [{ id: a.d.id, version: 1 }] });
+  assert.equal("results" in result && result.results?.[0].ok, true);
+  assert.equal(await db.draft.findUnique({ where: { id: a.d.id } }), null);
+  assert.ok(await db.contact.findUnique({ where: { id: a.c.id } }));
+  assert.ok(await db.draft.findUnique({ where: { id: b.d.id } }));
+  assert.equal((await db.mailQueueItem.findFirstOrThrow({ where: { draftId: a.d.id } })).status, "CANCELLED");
+  const stale = await mailReview(user, "discard", { confirmed: true, items: [{ id: b.d.id, version: 2 }] });
+  assert.equal("results" in stale && stale.results?.[0].ok, false);
+  await dispatchApproved(user, b.d.id, 1, sender);
+  const sent = await mailReview(user, "discard", { confirmed: true, items: [{ id: b.d.id, version: 1 }] });
+  assert.equal("results" in sent && sent.results?.[0].ok, false);
+  assert.ok(await db.draft.findUnique({ where: { id: b.d.id } }));
+  assert.equal(await db.delivery.count({ where: { draftId: b.d.id } }), 1);
 });

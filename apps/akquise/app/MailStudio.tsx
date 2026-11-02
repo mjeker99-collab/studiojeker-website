@@ -87,6 +87,10 @@ export default function MailStudio({
   const [dispatch, setDispatch] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [selected, setSelected] = useState<string[]>([]);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [discardSnapshot, setDiscardSnapshot] = useState<{ id: string; version: number }[]>([]);
+  const [discardConfirmed, setDiscardConfirmed] = useState(false);
+  const [discardNotice, setDiscardNotice] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [included, setIncluded] = useState<string[]>([]);
   const [read, setRead] = useState(false);
@@ -302,6 +306,8 @@ export default function MailStudio({
   }
   const [selectionNotice, setSelectionNotice] = useState("");
   function resetSelection() {
+    setDiscardOpen(false);
+    setDiscardConfirmed(false);
     setBatchProposals([]);
     setSelected([]);
     setContactIds([]);
@@ -322,6 +328,20 @@ export default function MailStudio({
     setBatchSize(25);
     setPreparing(true);
     setStep(1);
+  }
+  const discardItems = drafts.filter(d =>
+    rows.length ? included.includes(d.id) : selected.length ? selected.includes(d.id) : contactIds.includes(d.contactId)
+  ).map(({ id, version }) => ({ id, version }));
+  async function discardSelection() {
+    if (!discardConfirmed) return;
+    const data = discardSnapshot.length
+      ? await api("discard", { confirmed: true, items: discardSnapshot })
+      : { results: [] as Result[] };
+    const failed = data.results.filter((r: Result) => !r.ok);
+    resetSelection();
+    setDiscardNotice(`${data.results.filter((r: Result) => r.ok).length} Entwürfe verworfen. Auswahl zurückgesetzt. Kontakte bleiben erhalten.${failed.length ? ` ${failed.length} Entwürfe geschützt: ${[...new Set(failed.map((r: Result) => r.message))].join(" ")}` : ""}`);
+    setScheduleRevision(v => v + 1);
+    await refresh();
   }
   async function selectReadyContacts(amount: number) {
     setBatchProposals([]);
@@ -481,6 +501,9 @@ export default function MailStudio({
           >
             Auswahl zurücksetzen
           </button>
+          <button className="secondary" disabled={busy || (!contactIds.length && !selected.length)} onClick={() => { setDiscardSnapshot(discardItems); setDiscardOpen(true); setDiscardConfirmed(false); setDiscardNotice(""); }}>
+            Auswahl und ungesendete Entwürfe verwerfen
+          </button>
           <div className="actions" aria-label="Arbeitsschritte">
             <button
               className="secondary"
@@ -554,6 +577,17 @@ export default function MailStudio({
             </p>
           )}
         </div>
+        {discardNotice && <p role="status">{discardNotice}</p>}
+        {discardOpen && <section className="panel" aria-label="Entwürfe verwerfen">
+          <h3>{discardSnapshot.length} ausgewählte Entwürfe verwerfen?</h3>
+          <p>Die ausgewählten ungesendeten Entwürfe werden gelöscht und aus einem allfälligen Zeitplan genommen. Kontakte und Rechercheangaben bleiben erhalten. Entwürfe mit Versandversuchen bleiben geschützt. Das Löschen kann nicht rückgängig gemacht werden.</p>
+          <label className="check"><input type="checkbox" disabled={busy} checked={discardConfirmed} onChange={e => setDiscardConfirmed(e.target.checked)} />Ich bestätige das Verwerfen dieser Auswahl und der ungesendeten Entwürfe.</label>
+          <div className="actions">
+            <button disabled={busy || !discardConfirmed || discardSnapshot.length > 200} onClick={() => void run(discardSelection)}>Auswahl jetzt verwerfen</button>
+            <button className="secondary" disabled={busy} onClick={() => { setDiscardOpen(false); setDiscardConfirmed(false); }}>Abbrechen</button>
+          </div>
+          {discardSnapshot.length > 200 && <p>Bitte höchstens 200 Entwürfe auf einmal auswählen.</p>}
+        </section>}
         {step === 1 && preparing && (
           <section
             className="panel"

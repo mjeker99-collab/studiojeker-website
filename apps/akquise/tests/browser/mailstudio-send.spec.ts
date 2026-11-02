@@ -289,3 +289,27 @@ test("schedule starts directly from the overview after explicit approval", async
   });
   expect(state.sent).toEqual([]);
 });
+
+test("discard requires confirmation and leaves the selection intact on cancel", async ({ page }) => {
+  await setup(page);
+  let discarded: string[] = [];
+  await page.route("**/api/mail-review/discard", async route => {
+    const body = route.request().postDataJSON();
+    expect(body.confirmed).toBe(true);
+    discarded = body.items.map((item: { id: string }) => item.id);
+    await route.fulfill({ json: { results: body.items.map((item: { id: string }) => ({ id: item.id, ok: true })) } });
+  });
+  await page.getByRole("button", { name: "Alle jetzt senden (3) →", exact: true }).click();
+  const open = page.getByRole("button", { name: "Auswahl und ungesendete Entwürfe verwerfen", exact: true });
+  await open.click();
+  const panel = page.getByRole("region", { name: "Entwürfe verwerfen" });
+  await expect(panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true })).toBeDisabled();
+  await panel.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  expect(discarded).toEqual([]);
+  await expect(page.getByRole("button", { name: "Alle 3 jetzt senden", exact: true })).toBeVisible();
+  await open.click();
+  await panel.getByLabel(/Ich bestätige das Verwerfen/).check();
+  await panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true }).click();
+  await expect(page.getByText(/3 Entwürfe verworfen. Auswahl zurückgesetzt/)).toBeVisible();
+  expect(discarded).toEqual(["d0", "d1", "d2"]);
+});
