@@ -4,12 +4,18 @@ test("50 selected contacts stay together through shared completion and review", 
   page,
 }) => {
   test.setTimeout(45000);
+  await page.setViewportSize({ width: 1366, height: 1024 });
+  await page.clock.setFixedTime(new Date("2026-11-02T10:47:00Z"));
   let saved = false;
   let prepared = 0;
   let releasePreparation!: () => void;
-  const preparationWait = new Promise<void>((resolve) => { releasePreparation = resolve; });
+  const preparationWait = new Promise<void>((resolve) => {
+    releasePreparation = resolve;
+  });
   let markPreparationStarted!: () => void;
-  const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
+  const preparationStarted = new Promise<void>((resolve) => {
+    markPreparationStarted = resolve;
+  });
   const sent: string[] = [];
   const contacts = Array.from({ length: 50 }, (_, i) => ({
     id: `c${i}`,
@@ -68,10 +74,10 @@ test("50 selected contacts stay together through shared completion and review", 
             changed: false,
             patch: {},
             values: {
-              sourceUrl: "https://example.test/team",
-              verifiedAt: "2026-10-17T00:00:00.000Z",
+              sourceUrl: saved ? "https://Search.ch" : "",
+              verifiedAt: saved ? "2026-10-28T00:00:00.000Z" : "",
               confidence: saved ? "VERIFIED" : "UNCONFIRMED",
-              hook: "Dokumentierter Bedarf",
+              hook: saved ? "Recherche Firmenwebseite" : "",
             },
             origins: [],
             issues:
@@ -84,7 +90,10 @@ test("50 selected contacts stay together through shared completion and review", 
     if (path.endsWith("/preparation/save")) {
       expect(body.contacts).toHaveLength(50);
       expect(body.shared.confidence).toBe("VERIFIED");
-      saved = true;
+      expect(body.shared.sourceUrl).toBe("https://Search.ch");
+      expect(body.shared.hook).toBe("Recherche Firmenwebseite");
+      expect(body.shared.verifiedAt).toBe("2026-10-28T00:00:00.000Z");
+      saved = body.shared.confidence === "VERIFIED";
       return route.fulfill({
         json: {
           results: contacts.map((c) => ({
@@ -152,7 +161,7 @@ test("50 selected contacts stay together through shared completion and review", 
     .click();
   await page
     .getByRole("button", {
-      name: "50 persönliche Mails vorbereiten →",
+      name: "Sofort senden (50) →",
       exact: true,
     })
     .click();
@@ -161,26 +170,62 @@ test("50 selected contacts stay together through shared completion and review", 
   ).toBeVisible();
   expect(prepared).toBe(0);
   await expect(
-    page.getByRole("button", { name: "Weiter zur Mailprüfung →", exact: true }),
+    page.getByRole("button", {
+      name: "Weiter zum Sofortversand →",
+      exact: true,
+    }),
   ).toBeDisabled();
   const shared = page.getByRole("group", {
     name: "Gemeinsame Angaben für die Auswahl",
     exact: true,
   });
+  await expect(
+    shared.getByRole("combobox", { name: "Prüfstatus" }),
+  ).toHaveCount(0);
+  await shared.getByLabel("Quellen-URL").fill("https://Search.ch");
   await shared
-    .getByRole("combobox", { name: "Prüfstatus", exact: true })
-    .selectOption("VERIFIED");
-  await page.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    .getByLabel("Dokumentierter Anknüpfungspunkt")
+    .fill("Recherche Firmenwebseite");
+  // Reproduce the screenshot: a future date must produce an actionable error,
+  // never a misleading successful save with all 50 still blocked.
+  await shared.getByLabel("Prüfdatum").fill("2026-11-28");
+  await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
+  await page
+    .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+    .click();
+  await expect(page.locator(".contact-preparation").getByRole("alert")).toContainText(
+    "Prüfdatum liegt in der Zukunft",
+  );
+  expect(saved).toBe(false);
+  await expect(shared.getByLabel("Quellen-URL")).toHaveValue(
+    "https://Search.ch",
+  );
+  await shared.getByLabel("Prüfdatum").fill("2026-10-28");
+  await expect(
+    page.getByRole("button", {
+      name: "Weiter zum Sofortversand →",
+      exact: true,
+    }),
+  ).toBeDisabled();
+  await page.screenshot({
+    path: ".local/mailstudio-confirmation-ipad.png",
+    fullPage: true,
+  });
+  await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
   await page
     .getByRole("button", {
-      name: "Angaben für alle speichern und weiter →",
+      name: "Weiter zum Sofortversand →",
       exact: true,
     })
     .click();
   await preparationStarted;
   try {
-    await expect(page.getByText("Persönliche Mails werden vorbereitet …", { exact: true })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Globale Mailprüfung" })).toHaveCount(0);
+    await expect(
+      page.getByText("Persönliche Mails werden vorbereitet …", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Globale Mailprüfung" }),
+    ).toHaveCount(0);
   } finally {
     releasePreparation();
   }
@@ -196,7 +241,6 @@ test("50 selected contacts stay together through shared completion and review", 
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill("Dokumentierte Einwilligung für alle synthetischen Testkontakte.");
-  await page.getByLabel(/Ich bestätige die Zulässigkeit/).check();
   await page
     .getByLabel(/Ich gebe die 50 ausgewählten persönlichen Mails/)
     .check();
@@ -215,7 +259,6 @@ test("50 selected contacts stay together through shared completion and review", 
     page.getByRole("heading", { name: "0 Kontakte ausgewählt", exact: true }),
   ).toBeVisible();
 });
-
 
 test("partly prepared group reviews successful drafts without retrying or sending failed contacts", async ({ page }) => {
   const contacts = [
@@ -267,7 +310,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   await page.goto("/");
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "2 persönliche Mails vorbereiten →", exact: true }).click();
+  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
   await expect(page.getByText(/1 Mails bereit/)).toBeVisible();
   await expect(page.getByText(/1 Kontakte zurückgestellt/)).toBeVisible();
@@ -341,7 +384,7 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.goto("/");
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "4 persönliche Mails vorbereiten →", exact: true }).click();
+  await page.getByRole("button", { name: "Sofort senden (4) →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
   await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Jetzt senden", exact: true })).toBeDisabled();
