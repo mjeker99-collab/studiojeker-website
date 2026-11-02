@@ -42,6 +42,18 @@ for (const width of [768, 1440]) {
       await expect(selection.getByRole("button", { name: "Gewählten Newsletter anzeigen" })).toBeVisible();
       await expect(selection.locator(".newsletter-preview")).toHaveCount(0);
     }
+    await page.route("**/api/newsletter/check-links", async (route) => {
+      const urls = (route.request().postDataJSON() as { urls: string[] }).urls;
+      await route.fulfill({ status: 200, json: {
+        results: urls.map((url) => ({ url, status: "reachable", detail: "Server erreichbar" })),
+      } });
+    });
+    const tester = editor.getByRole("region", { name: "Newsletter-Links testen" });
+    await tester.getByRole("button", { name: /Links testen/ }).click();
+    await expect(tester.getByText("Server erreichbar").first()).toBeVisible();
+    await expect(tester.locator('a[target="_blank"]').first()).toHaveAttribute("rel", /noopener/);
+    await tester.getByRole("checkbox").first().check();
+    await expect(tester.getByText(/1 von [0-9]+ Zielen manuell geprüft/)).toBeVisible();
     const x = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
     expect(x).toBe(true);
   });
