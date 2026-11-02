@@ -177,6 +177,10 @@ for (const width of [390, 1024]) {
     await page
       .getByLabel(/Ich gebe die 3 ausgewählten persönlichen Mails/)
       .check();
+    await page.screenshot({
+      path: `.local/mailstudio-${width}.png`,
+      fullPage: true,
+    });
     await send.click();
     await expect(
       page.getByText("3 von 3 Mails bearbeitet.", { exact: true }),

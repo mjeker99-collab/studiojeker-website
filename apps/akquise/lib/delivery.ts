@@ -178,6 +178,14 @@ export async function dispatchApproved(
           data: { lastClaimAt: now },
         });
       }
+      if (!queueId && mode === "PRODUCTION") {
+        // Explicit send-now claims the matching queue entry before SMTP as well.
+        // A concurrent worker must not treat it as still waiting.
+        await tx.mailQueueItem.updateMany({
+          where: { draftId, version, status: "QUEUED" },
+          data: { status: "SENDING", deliveryId: delivery.id },
+        });
+      }
       await audit(tx, userId, "DELIVERY_CLAIMED", delivery.id, {
         mode,
         version,
@@ -256,10 +264,26 @@ export async function dispatchApproved(
         if (!queueId && mode === "PRODUCTION") {
           // A queued mail can also be sent explicitly now. Reflect that result
           // immediately; the recipient idempotency claim still prevents races.
-          await tx.mailQueueItem.updateMany({
-            where: { draftId, version, status: "QUEUED" },
-            data: { status, error, deliveryId: delivery.id },
+          const updated = await tx.mailQueueItem.updateMany({
+            where: {
+              draftId,
+              version,
+              deliveryId: delivery.id,
+              status: "SENDING",
+            },
+            data: { status, error },
           });
+          if (updated.count && status !== "SENT") {
+            await tx.mailSchedule.update({
+              where: { id: "studiojeker" },
+              data: {
+                enabled: false,
+                pauseReason:
+                  "Versandfehler: Versandhistorie prüfen. Keine automatische Wiederholung.",
+                revision: { increment: 1 },
+              },
+            });
+          }
         }
         if (mode === "PRODUCTION")
           await tx.contact.update({
@@ -305,6 +329,28 @@ export async function dispatchApproved(
           },
         });
       });
+    if (!queueId && mode === "PRODUCTION") {
+      await db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('delivery-global'))`;
+        const updated = await tx.mailQueueItem.updateMany({
+          where: { deliveryId: delivery.id, status: "SENDING" },
+          data: {
+            status: "UNKNOWN",
+            error:
+              "Versand unterbrochen. Manuell abgleichen; keine Wiederholung.",
+          },
+        });
+        if (updated.count)
+          await tx.mailSchedule.update({
+            where: { id: "studiojeker" },
+            data: {
+              enabled: false,
+              pauseReason: "Unklarer Versandstatus. Versandhistorie prüfen.",
+              revision: { increment: 1 },
+            },
+          });
+      });
+    }
     await audit(db, userId, "DELIVERY_UNKNOWN", delivery.id, {
       reason: "Interrupted; manual reconciliation required",
     });
