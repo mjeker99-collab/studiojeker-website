@@ -1,3 +1,4 @@
+import { mailImageAttachments } from "./mail-images";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { db } from "./db";
 import { contactInput, type ContactInput } from "./import";
@@ -193,6 +194,7 @@ export async function editDraft(
   version: number,
   input: { recipient: string; subject: string; body: string },
 ) {
+  await mailImageAttachments(input.body);
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     const d = await tx.draft.findUniqueOrThrow({ where: { id } });

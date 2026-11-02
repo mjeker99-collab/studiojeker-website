@@ -1,3 +1,4 @@
+import { uploadMailImage } from "@/lib/mail-images";
 import { dashboardState } from "@/lib/dashboard";
 import { projectDrafts, saveProjectDraft } from "@/lib/projects/service";
 import {
@@ -464,6 +465,9 @@ async function handler(
         },
       });
     }
+    if (route === "mail-images" && req.method === "POST") {
+      return NextResponse.json(await uploadMailImage(user.id, await boundedBody(req, 8 * 1024 * 1024)));
+    }
     if (route === "studio/upload" && req.method === "POST") {
       const kind =
         req.headers.get("x-studio-kind") === "FONT"
@@ -623,6 +627,7 @@ async function handler(
         });
       throw new PolicyError("Nicht gefunden.", 404);
     }
+    if (route === "mail-review/test") return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "mail-review" && path.length === 2)
       return NextResponse.json(await mailReview(user.id, path[1], body), {
         headers: { "Cache-Control": "no-store" },

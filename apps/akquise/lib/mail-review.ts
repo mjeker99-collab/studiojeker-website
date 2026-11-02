@@ -9,7 +9,9 @@ import {
   PolicyError,
   verificationIssues,
 } from "./policy";
-import { reviewDraft } from "./workflow";
+import { appendMailContent, mailImageIds } from "./mail-content";
+import { mailImageAttachments } from "./mail-images";
+import { editDraft, reviewDraft } from "./workflow";
 
 const ids = z
   .array(z.string().min(1).max(100))
@@ -30,6 +32,56 @@ export async function mailReview(
   raw: unknown,
   sender?: SmtpSender,
 ) {
+  if (action === "content") {
+    const input = z
+      .object({
+        items: z
+          .array(
+            z
+              .object({ id: z.string(), version: z.number().int().positive() })
+              .strict(),
+          )
+          .min(1)
+          .max(200),
+        content: z.string().trim().min(1).max(4000),
+      })
+      .strict()
+      .parse(raw);
+    await mailImageAttachments(input.content);
+    const results = [];
+    for (const entry of input.items) {
+      try {
+        const v = await db.draftVersion.findUniqueOrThrow({
+          where: {
+            draftId_version: { draftId: entry.id, version: entry.version },
+          },
+        });
+        const body = appendMailContent(v.body, input.content);
+        if (body.length > 12000)
+          throw new PolicyError("Mail ist zu lang. Bitte den Text kürzen.");
+        if (mailImageIds(body).length > 3)
+          throw new PolicyError("Maximal drei Bilder pro Mail verwenden.");
+        await editDraft(userId, entry.id, entry.version, {
+          recipient: v.recipient,
+          subject: v.subject,
+          body,
+        });
+        results.push({
+          id: entry.id,
+          ok: true,
+          message: "Bilder und Links gespeichert",
+        });
+      } catch (e) {
+        results.push({
+          id: entry.id,
+          ok: false,
+          message:
+            e instanceof Error ? e.message : "Ergänzung nicht gespeichert",
+        });
+      }
+    }
+    return { results };
+  }
   if (action === "preview") {
     const input = z.object({ ids }).strict().parse(raw);
     const drafts = await db.draft.findMany({

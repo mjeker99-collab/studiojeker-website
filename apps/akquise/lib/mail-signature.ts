@@ -1,3 +1,4 @@
+import { renderMailContent } from "./mail-content";
 // Approved by Martin on 20 October 2026. No role/title requested.
 // Asset hashes bind the exact original images to the reviewed message.
 export const signatureAssets = [
@@ -21,15 +22,6 @@ export const signatureAssets = [
 
 const signatureText =
   "Nora Jeker\nStudiojeker GmbH\nHauptstrasse 73\nCH-4528 Zuchwil\n+41 78 601 78 85\nnjeker@studiojeker.ch\nstudiojeker.ch\nWE CREATE VISIBILITY.";
-const escapeHtml = (value: string) =>
-  value.replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ]!,
-  );
-
 // Only replace a known Nora closing, preserving all following custom/opt-out text.
 export function signatureParts(body: string) {
   const normalized = body.replace(/\r\n?/g, "\n").trim();
@@ -54,7 +46,7 @@ export function signedMessage(body: string, preview = false) {
       ? `/brand/mail/${signatureAssets[index].file}?v=${signatureAssets[index].sha256}-${signatureAssets[index].width}x${signatureAssets[index].height}`
       : `cid:${signatureAssets[index].cid}`;
   const block = (value: string) =>
-    `<div style="margin:0 0 20px;line-height:1.6;overflow-wrap:anywhere">${escapeHtml(value).replace(/\n/g, "<br>")}</div>`;
+    `<div style="margin:0 0 20px;line-height:1.6;overflow-wrap:anywhere">${renderMailContent(value, preview).html}</div>`;
   const textStyle =
     "font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#333333;-webkit-text-size-adjust:100%;";
   const image = (index: number, alt: string) => {
@@ -67,7 +59,13 @@ export function signedMessage(body: string, preview = false) {
 <tr><td width="240" style="width:240px;padding:0 0 8px;border:0;${textStyle}"><a href="https://studiojeker.ch">${image(0, "Studiojeker")}</a></td></tr>
 <tr><td width="240" style="width:240px;padding:0 0 20px;border:0;${textStyle}"><font face="Arial,Helvetica,sans-serif" size="3" style="font-size:13px;line-height:20px;font-weight:bold;color:#333333">WE CREATE VISIBILITY.</font></td></tr></table><div style="clear:both"></div>`;
   return {
-    text: [before, signatureText, after].filter(Boolean).join("\n\n"),
+    text: [
+      renderMailContent(before).text,
+      signatureText,
+      renderMailContent(after).text,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
     html: `<div style="background:#ffffff;color:#333333;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;text-align:left">${block(before)}${signature}${after ? block(after) : ""}</div>`,
   };
 }
