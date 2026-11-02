@@ -17,7 +17,7 @@ import SocialConnections from "./SocialConnections";
 import SocialMediaField from "./SocialMediaField";
 import ChatGptIntegration from "./ChatGptIntegration";
 import DialogManager from "../dialogs/DialogManager";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
 import { displayTime, zurichInput, zurichInstant } from "@/lib/hub/time";
@@ -154,6 +154,8 @@ export default function Hub({
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
+  const editorRef = useRef<HTMLElement | null>(null);
+  const [editorNavigation, setEditorNavigation] = useState(0);
   const [showNewsletterTrash, setShowNewsletterTrash] = useState(false);
   const [manualNewsletter, setManualNewsletter] = useState(false);
   const [newsletterSessionKey, setNewsletterSessionKey] = useState(0);
@@ -274,8 +276,15 @@ export default function Hub({
   }
   function edit(c: Content, resetDialog = true) {
     if (resetDialog) setNewsletterSessionKey((key) => key + 1);
+    const selected = c.versions[0].payload as unknown as ContentInput;
+    // Keep the template preview tied to the actual selected newsletter.
+    if (selected.newsletter) {
+      setTemplateId(selected.newsletter.templateId);
+      setShowOriginal(false);
+    }
     setEditing(c);
-    setForm(c.versions[0].payload as unknown as ContentInput);
+    setForm(selected);
+    if (resetDialog) setEditorNavigation((n) => n + 1);
     setRead(false);
     setPublication({
       channel:
@@ -286,6 +295,11 @@ export default function Hub({
       confirmed: false,
     });
   }
+  useEffect(() => {
+    if (!editorNavigation || !form || !editorRef.current) return;
+    editorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    editorRef.current.focus({ preventScroll: true });
+  }, [editorNavigation, editing?.id, form?.kind]);
   const dirty =
     !!form &&
     (!editing ||
@@ -1032,13 +1046,13 @@ export default function Hub({
                   fresh.preheader = template.preheader;
                   fresh.body = newsletterText(fresh.newsletter);
                   setForm(fresh);
+                  setEditorNavigation((n) => n + 1);
                 }}>Grundvorlage bearbeiten</button>
                 <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER" && !item.archivedAt)} onClick={() => {
                   const latest = data?.contents
                     .filter((item) => item.kind === "NEWSLETTER" && !item.archivedAt)
                     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
                   if (latest) edit(latest);
-                  setShowOriginal(false);
                 }}>Letzte gespeicherte Version bearbeiten</button>
               </div>
               <p className="muted">Die neueste gespeicherte Newsletter-Version wird geöffnet. Ältere Versionen bleiben in der Übersicht erhalten.</p>
@@ -1049,11 +1063,27 @@ export default function Hub({
                   }, "GitHub-Vorlagen importiert. Bereits vorhandene Ausgaben bleiben erhalten.")}>
                   Aus GitHub importieren
                 </button>
-                <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
-                  {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
+                <button type="button" className="secondary" onClick={() => {
+                  if (form?.kind === "NEWSLETTER" && form.newsletter) {
+                    setShowOriginal(false);
+                    setEditorNavigation((n) => n + 1);
+                  } else {
+                    setShowOriginal(!showOriginal);
+                  }
+                }}>
+                  {form?.kind === "NEWSLETTER" && form.newsletter
+                    ? "Gewählten Newsletter anzeigen"
+                    : showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
-              {showOriginal && (
+              {form?.kind === "NEWSLETTER" && form.newsletter && (
+                <p role="status" className="muted">
+                  Ausgewählt: <strong>{form.title}</strong>
+                  {editing ? ` · Version ${editing.version}` : " · neuer Entwurf"}.
+                  Die Vorschau und Bearbeitung erscheinen beim Öffnen direkt im Editor.
+                </p>
+              )}
+              {showOriginal && !form && (
                 <NewsletterPreview html={newsletterLibrary.find((template) => template.id === templateId)!.html} />
               )}
             </section>
@@ -1080,6 +1110,8 @@ export default function Hub({
                 }
                 setForm(fresh);
                 setRead(false);
+                setShowOriginal(false);
+                setEditorNavigation((n) => n + 1);
               }}
             >
               {" "}
@@ -1101,7 +1133,7 @@ export default function Hub({
         </>
       )}
       {form && (
-        <section className="panel padded hub-editor" aria-label="Inhaltseditor">
+        <section ref={editorRef} tabIndex={-1} style={{ scrollMarginTop: 28 }} className="panel padded hub-editor" aria-label="Inhaltseditor">
           <div className="section-head">
             <h2>
               {editing
