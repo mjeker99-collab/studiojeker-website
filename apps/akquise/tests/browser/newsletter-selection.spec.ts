@@ -54,6 +54,34 @@ for (const width of [768, 1440]) {
     await expect(tester.locator('a[target="_blank"]').first()).toHaveAttribute("rel", /noopener/);
     await tester.getByRole("checkbox").first().check();
     await expect(tester.getByText(/1 von [0-9]+ Zielen manuell geprüft/)).toBeVisible();
+    // Every viewport test works on its own duplicate. Never update the shared
+    // imported V4 newsletter: parallel browser tests must remain independent.
+    const original = page.locator("article[data-content-id]").filter({
+      has: page.getByRole("heading", { name: "Newsletter 04 · Sichtbarkeit", exact: true }),
+    }).first();
+    const duplicateResponse = page.waitForResponse((response) =>
+      response.url().includes("/api/hub/newsletter-duplicate/") &&
+      response.request().method() === "POST"
+    );
+    await original.getByRole("button", { name: "Duplizieren", exact: true }).click();
+    const duplicated = await (await duplicateResponse).json();
+    const id = duplicated.id as string;
+    expect(id).toBeTruthy();
+    await expect(editor.getByRole("button", { name: "Video-Vorlage übernehmen" })).toBeVisible();
+    const before = await (await page.request.get("/api/hub/state")).json();
+    const prior = before.contents.find((c: { id: string }) => c.id === id);
+    expect(prior.versions[0].payload.newsletter.templateId).toBe("newsletter-04-github-364bba2");
+    const oldImage = prior.versions[0].payload.newsletter.fields["promo_image.image.1"];
+    await editor.getByRole("button", { name: "Video-Vorlage übernehmen" }).click();
+    await expect(editor.getByRole("button", { name: "Video-Vorlage übernehmen" })).toHaveCount(0);
+    const after = await (await page.request.get("/api/hub/state")).json();
+    const updated = after.contents.find((c: { id: string }) => c.id === id);
+    expect(updated.version).toBe(prior.version + 1);
+    expect(updated.versions[0].payload.newsletter.templateId).toBe("newsletter-04-video-promo-20261102");
+    expect(updated.versions[0].payload.newsletter.fields["promo_image.image.1"]).toBe(oldImage);
+    await expect.poll(async () =>
+      (await editor.locator('iframe[title="Newsletter HTML-Vorschau"]').getAttribute("srcdoc")) || "",
+    ).toContain("sj-promo-video");
     const x = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
     expect(x).toBe(true);
   });
