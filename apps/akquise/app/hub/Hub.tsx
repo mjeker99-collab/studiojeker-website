@@ -1073,7 +1073,7 @@ export default function Hub({
                 }}>
                   {form?.kind === "NEWSLETTER" && form.newsletter
                     ? "Gewählten Newsletter anzeigen"
-                    : showOriginal ? "Vorlage schliessen" : "Grundvorlage ansehen"}
+                    : showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
               {form?.kind === "NEWSLETTER" && form.newsletter && (
