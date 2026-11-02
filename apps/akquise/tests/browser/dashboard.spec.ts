@@ -334,8 +334,9 @@ for (const width of [390, 768, 1440]) {
     await expect(
       page.getByRole("heading", { name: "Täglicher Mailversand" }),
     ).toBeVisible();
-    await page.getByText("Zeitplan bearbeiten", { exact: true }).click();
-    await expect(page.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
+    const schedule = page.getByRole("region", { name: "Täglicher Mailversand", exact: true });
+    await schedule.getByText("Zeitplan bearbeiten", { exact: true }).click();
+    await expect(schedule.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
       "25",
     );
     await page.getByRole("button", { name: "Zeitplan starten", exact: true }).click();
@@ -513,9 +514,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .first()
     .click();
   await editor.getByRole("button", { name: "Lokal simulieren" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "Keine E-Mail wurde versandt",
-  );
+  await expect(page.getByRole("status").filter({ hasText: "Keine E-Mail wurde versandt" })).toBeVisible();
   await editor
     .getByLabel("Betreff", { exact: true })
     .fill("Überarbeitete synthetische Nachricht");
