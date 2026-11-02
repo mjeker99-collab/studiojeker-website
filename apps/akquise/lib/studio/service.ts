@@ -8,6 +8,7 @@ import { campaignConcept } from "../concepts/service";
 import { conceptInput } from "../concepts/input";
 import { customerKnowledgeContext } from "../customer-knowledge";
 import { assistantContext } from "./context";
+import { resultSnapshot } from "./result-snapshot";
 import { brandDefaults } from "../library/input";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -1015,7 +1016,7 @@ export async function applyJob(actor: string, id: string) {
             409,
           );
         const p = contentInput.parse(c.versions[0].payload),
-          s = p.studio!;
+          s = resultSnapshot(p.studio, job.seriesId, logoHash());
         let updated: ContentInput;
         if (job.kind === "TEXT") {
           const post = generatedPostSchema.parse(result.posts[i]);

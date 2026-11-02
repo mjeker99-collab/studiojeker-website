@@ -2299,7 +2299,7 @@ test("Chat follow-up: exact proposal snapshot, same-series access and explicit i
   }
 });
 
-test("Photo edit: selected source, separate result, explicit version adoption and stale version protection", async () => {
+for (const legacy of [false, true]) test(`Photo edit: ${legacy ? "legacy dialog without layout" : "current layout"}, separate result, explicit adoption and stale protection`, async () => {
   const names = [
     "OPENAI_API_KEY",
     "CONTENT_AI_ENABLED",
@@ -2320,6 +2320,12 @@ test("Photo edit: selected source, separate result, explicit version adoption an
     const source = await testMotif();
     const original = await studioAssets.readAsset(martin, source.id, testStore);
     const s = await studio.createSeries(martin, studioBrief());
+    if (legacy) {
+      const before = await studioContent(s.id);
+      const { studio: _layout, ...payload } = studioContentInput.parse(before.versions[0].payload);
+      void _layout;
+      await db.marketingVersion.update({ where: { id: before.versions[0].id }, data: { payload } });
+    }
     const request = {
       seriesId: s.id,
       kind: "IMAGE",
