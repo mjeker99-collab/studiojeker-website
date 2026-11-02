@@ -5,7 +5,11 @@ import {
   contactFilterOptions,
   matchesContactFilters,
 } from "../lib/contact-filters";
-import { mailAssistantInput } from "../lib/mail-assistant/input";
+import { z } from "zod";
+import {
+  mailAssistantInput,
+  mailAssistantResult,
+} from "../lib/mail-assistant/input";
 import { parseMailAssistantResponse } from "../lib/mail-assistant/provider";
 test("Master filters combine company and industry, including missing industry", () => {
   const contacts = [
@@ -131,5 +135,21 @@ test("Personalized texts must match the entire selected version-bound batch", ()
       }),
       input,
     ),
+  );
+});
+
+test("Provider schema omits unsupported URI format while runtime validates URLs", () => {
+  assert.equal(
+    JSON.stringify(z.toJSONSchema(mailAssistantResult)).includes(
+      '"format":"uri"',
+    ),
+    false,
+  );
+  assert.equal(
+    mailAssistantResult.safeParse({
+      ...result,
+      leads: [{ ...lead, sourceUrl: "not a URL" }],
+    }).success,
+    false,
   );
 });
