@@ -185,6 +185,12 @@ export async function dispatchApproved(
           where: { draftId, version, status: "QUEUED" },
           data: { status: "SENDING", deliveryId: delivery.id },
         });
+        // A manual send counts toward the automated schedule's spacing as well.
+        // Without this, the worker can send the next recipient immediately.
+        await tx.mailSchedule.updateMany({
+          where: { id: "studiojeker", enabled: true },
+          data: { lastClaimAt: now },
+        });
       }
       await audit(tx, userId, "DELIVERY_CLAIMED", delivery.id, {
         mode,
