@@ -5,6 +5,7 @@ import type { ContentInput } from "@/lib/hub/input";
 import { newsletterEditReply } from "@/lib/hub/newsletter-edit";
 import type { studioState } from "@/lib/studio/service";
 import { NewsletterPreview } from "./NewsletterEditor";
+import NewsletterLinkTester from "./NewsletterLinkTester";
 
 type State = Awaited<ReturnType<typeof studioState>>;
 type Saved = { id: string; version: number; studioSeriesId: string | null };
@@ -107,6 +108,7 @@ export default function NewsletterWorkspace({ value, saved, save, reload, onBusy
     <section className="newsletter-dialog-workspace" aria-label="Newsletter mit GPT bearbeiten">
       <div>
         <h3>Dein Newsletter</h3>
+        {value.newsletter && <NewsletterLinkTester newsletter={value.newsletter} />}
         <NewsletterPreview subject={value.subject} preheader={value.preheader} newsletter={value.newsletter} />
       </div>
       <div className="newsletter-dialog-panel">
