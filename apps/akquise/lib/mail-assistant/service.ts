@@ -11,7 +11,11 @@ import {
   mailAssistantResult,
 } from "./input";
 import { z } from "zod";
-import { normalizeEmail, personKey } from "../contact-identity";
+import {
+  isTeamMailbox,
+  normalizeEmail,
+  personKey,
+} from "../contact-identity";
 import { contactInput } from "../import";
 import { importContacts, editDraft } from "../workflow";
 import { blockedAiMessage, qualifyResearchLead } from "./qualify";
@@ -162,6 +166,9 @@ export async function assistMail(
           hook: d.contact.hook,
           service: d.contact.service,
           sourceUrl: d.contact.sourceUrl,
+          mailbox: isTeamMailbox(d.contact.email)
+            ? "Team-Postfach, Unternehmensadresse"
+            : "",
         },
       }));
     }

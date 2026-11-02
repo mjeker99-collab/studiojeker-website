@@ -1,5 +1,4 @@
 export const permanentPreparationIssues = [
-  "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
   "Allgemeine E-Mail-Adressen sind nicht freigabefähig.",
   "Kontakt ist gesperrt.",
   "Antwort erfasst. Keine weitere automatische Akquise.",

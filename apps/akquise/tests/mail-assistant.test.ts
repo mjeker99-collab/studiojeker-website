@@ -190,13 +190,13 @@ test("Deferred contacts keep the exact reason and a count", () => {
     {
       organisation: "A",
       name: "Anna",
-      issues: ["Team-Postfach. Für den persönlichen Versand nicht freigabefähig."],
+      issues: ["Adresse auf Sperrliste."],
       changed: false,
     },
     {
       organisation: "B",
       name: "Ben",
-      issues: ["Team-Postfach. Für den persönlichen Versand nicht freigabefähig."],
+      issues: ["Adresse auf Sperrliste."],
       changed: false,
     },
     {
@@ -206,16 +206,17 @@ test("Deferred contacts keep the exact reason and a count", () => {
       changed: true,
     },
   ]);
-  assert.deepEqual(summary.counts[0], [
-    "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
-    2,
-  ]);
+  assert.deepEqual(summary.counts[0], ["Adresse auf Sperrliste.", 2]);
   assert.match(summary.lines[2], /zuerst bestätigt/);
   assert.equal(
-    isPermanentPreparationBlock([
-      "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
-    ]),
+    isPermanentPreparationBlock(["Adresse auf Sperrliste."]),
     true,
+  );
+  assert.equal(
+    isPermanentPreparationBlock([
+      "Team-Postfach noch nicht als Unternehmensadresse bestätigt.",
+    ]),
+    false,
   );
   assert.equal(
     isPermanentPreparationBlock(["Quellen-URL fehlt."]),

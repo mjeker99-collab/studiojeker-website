@@ -6,6 +6,7 @@ import type {
 } from "../lib/contact-preparation";
 
 import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
+import { isTeamMailbox } from "../lib/contact-identity";
 import { isPermanentPreparationBlock } from "../lib/mail-batch-status";
 
 type Result = { id: string; ok: boolean; message: string; revision?: number };
@@ -178,8 +179,9 @@ export default function ContactPreparation({
       const data = await post<{ results: Result[] }>("save", {
         confirmed: true,
         // The visible checkbox explicitly confirms address verification as well
-        // as the data. The server still preserves existing non-UNCONFIRMED
-        // classifications and requires source, date and a documented context.
+        // as the data. A team mailbox may move from a general address to a
+        // confirmed company address. Every other classification stays until
+        // source, date and a documented context make the record ready.
         shared: requireComplete
           ? { ...shared, confidence: "VERIFIED" }
           : shared,
@@ -232,6 +234,7 @@ export default function ContactPreparation({
   const permanent = proposals.filter((p) =>
     isPermanentPreparationBlock(p.issues),
   );
+  const teamCount = proposals.filter((p) => isTeamMailbox(p.email || "")).length;
   const unconfirmed = proposals.filter(
     (p) =>
       (edits[p.id]?.values.confidence ?? p.values.confidence) === "UNCONFIRMED",
@@ -252,22 +255,25 @@ export default function ContactPreparation({
         Angaben und bestätige die Auswahl einmal. Danach erscheinen die Mails
         zur gemeinsamen Versandfreigabe.
       </p>
-      {requireComplete && open.length > 0 && issueCounts.length > 0 && (
-        <div role="status">
-          <p>
-            <strong>
-              Noch nicht bereit: {open.length} von {proposals.length}
-            </strong>
-          </p>
-          <ul>
-            {issueCounts.map(([issue, count]) => (
-              <li key={issue}>
-                {count} Kontakte: {issue}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {requireComplete &&
+        open.length > 0 &&
+        issueCounts.length > 0 &&
+        results.length === 0 && (
+          <div role="status">
+            <p>
+              <strong>
+                Noch nicht bereit: {open.length} von {proposals.length}
+              </strong>
+            </p>
+            <ul>
+              {issueCounts.map(([issue, count]) => (
+                <li key={issue}>
+                  {count} Kontakte: {issue}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       {onExclude && permanent.length > 0 && (
         <button
           type="button"
@@ -318,7 +324,11 @@ export default function ContactPreparation({
           onChange={(e) => setConfirmed(e.target.checked)}
         />
         {requireComplete
-          ? `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
+          ? teamCount === proposals.length && teamCount > 0
+            ? `Ich habe die Unternehmens- und Abteilungsadressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass. Diese Adressen sind keine persönlichen Einzeladressen.`
+            : teamCount > 0
+              ? `Ich habe die persönlichen E-Mail-Adressen und die ${teamCount} Unternehmensadressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
+              : `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
           : "Ich bestätige die eingetragenen Angaben und die unten angezeigten Ergänzungen aus den Notizen."}
       </label>
       <div className="actions">
@@ -367,6 +377,20 @@ export default function ContactPreparation({
                 ))}
             </ul>
           )}
+        </div>
+      )}
+      {requireComplete && open.length > 0 && results.length > 0 && (
+        <div role="status">
+          <p>
+            <strong>Noch zu korrigieren für {open.length} Kontakte:</strong>
+          </p>
+          <ul>
+            {issueCounts.map(([issue, count]) => (
+              <li key={issue}>
+                {count} Kontakte: {issue}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {onExclude && open.length > 0 && open.length < proposals.length && (

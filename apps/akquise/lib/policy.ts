@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
-import { normalizeEmail, personKey } from "./contact-identity";
+import { isTeamMailbox, normalizeEmail, personKey } from "./contact-identity";
 import { signedMessage, signatureAssets } from "./mail-signature";
 export { normalizeEmail, personKey };
 export class PolicyError extends Error {
@@ -39,18 +39,20 @@ export function verificationIssues(
   if (c.replyOutcome)
     issues.push("Antwort erfasst. Keine weitere automatische Akquise.");
   if (c.status === "DO_NOT_CONTACT") issues.push("Kontakt ist gesperrt.");
+  const team = isTeamMailbox(c.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
     issues.push("Gültige E-Mail-Adresse fehlt.");
   if (c.confidence !== "VERIFIED")
-    issues.push("Persönliche Adresse noch nicht als verifiziert bestätigt.");
+    issues.push(
+      team
+        ? "Team-Postfach noch nicht als Unternehmensadresse bestätigt."
+        : "Persönliche Adresse noch nicht als verifiziert bestätigt.",
+    );
   if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
   if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
   if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");
-  if (/^(?:marketing|kommunikation)(?:[.+_-][^@]*)?@/i.test(c.email))
-    issues.push(
-      "Team-Postfach. Für den persönlichen Versand nicht freigabefähig.",
-    );
-  else if (
+  if (
+    !team &&
     /^(info|kontakt|contact|office|admin|hello|mail|sales|support|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
       c.email,
     )

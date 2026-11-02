@@ -1,4 +1,11 @@
-import { normalizeEmail, personKey } from "../contact-identity";
+import {
+  hasPersonName,
+  isInfoAddress,
+  isTeamMailbox,
+  normalizeEmail,
+  personKey,
+} from "../contact-identity";
+export { hasPersonName, isInfoAddress, isTeamMailbox };
 
 export const researchRegions = [
   "Solothurn",
@@ -24,12 +31,6 @@ export const researchPriorities = [
   "Architekturbüros",
   "Immobilien",
 ];
-const infoAddress = /^info(?:[.+_-][^@]*)?@/i;
-const teamAddress = /^(?:marketing|kommunikation)(?:[.+_-][^@]*)?@/i;
-export const isInfoAddress = (email: string) =>
-  infoAddress.test(normalizeEmail(email));
-export const isTeamMailbox = (email: string) =>
-  teamAddress.test(normalizeEmail(email));
 export type KnownLeads = { emails: Set<string>; keys: Set<string> };
 export function qualifyResearchLead(
   lead: {

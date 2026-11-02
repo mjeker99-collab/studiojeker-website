@@ -174,6 +174,51 @@ test("Gemeinsame Angaben füllen Lücken, Notizen und Bestandswerte behalten Vor
     false,
   );
 });
+test("Bewusst bestätigtes Team-Postfach wird Unternehmensadresse, info@ bleibt ausgeschlossen", () => {
+  const shared = {
+    confidence: "VERIFIED" as const,
+    sourceUrl: "https://example.test/team",
+    verifiedAt: "2026-01-02T00:00:00.000Z",
+    hook: "Öffentlich genanntes Abteilungspostfach",
+  };
+  for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
+    const confirmed = contactPreparation(
+      {
+        ...contact,
+        notes: "Postfachart: Team-Postfach.",
+        email,
+        sourceUrl: "",
+        confidence: "GENERAL",
+        firstName: "Team",
+        lastName: "Postfach",
+      },
+      now,
+      { shared },
+    );
+    assert.equal(confirmed.ready, true);
+    assert.equal(confirmed.values.confidence, "VERIFIED");
+    assert.match(confirmed.origins.join(" "), /Unternehmensadresse/);
+    const pending = contactPreparation(
+      {
+        ...contact,
+        notes: "",
+        email,
+        sourceUrl: "",
+        confidence: "GENERAL",
+      },
+      now,
+    );
+    assert.equal(pending.ready, false);
+    assert.match(pending.issues.join(" "), /Unternehmensadresse/);
+  }
+  const info = contactPreparation(
+    { ...contact, notes: "", email: "info@example.test", sourceUrl: "" },
+    now,
+    { shared },
+  );
+  assert.equal(info.ready, false);
+  assert.match(info.issues.join(" "), /Allgemeine/);
+});
 test("Einzelkorrekturen in der Sammelansicht ersetzen nur ausdrücklich bearbeitete Felder", () => {
   const p = contactPreparation(contact, now, {
     shared: { hook: "Gemeinsame Angabe" },

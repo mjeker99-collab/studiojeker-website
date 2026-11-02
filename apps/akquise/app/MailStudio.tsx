@@ -174,6 +174,7 @@ export default function MailStudio({
     );
   });
   const chosen = rows.filter((r) => included.includes(r.id));
+  const teamChosen = chosen.filter((r) => isTeamMailbox(r.recipient)).length;
   const missingLegal = chosen.filter((r) => r.needsLegal);
   const publicLegal = missingLegal.some((r) => r.publicAuthority);
   const canApprove =
@@ -1067,8 +1068,11 @@ export default function MailStudio({
                   setLegal(e.target.checked);
                 }}
               />
-              Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
-              Empfänger, Betreff und Signatur zum Versand frei.
+              {teamChosen > 0 && teamChosen === chosen.length
+                ? `Ich gebe die ${chosen.length} ausgewählten Unternehmensadressen mit Empfänger, Betreff und Signatur zum Versand frei.`
+                : teamChosen > 0
+                  ? `Ich gebe die ${chosen.length} ausgewählten Mails mit Empfänger, Betreff und Signatur zum Versand frei. ${teamChosen} davon sind Unternehmensadressen, keine persönlichen Einzeladressen.`
+                  : `Ich gebe die ${chosen.length} ausgewählten persönlichen Mails mit Empfänger, Betreff und Signatur zum Versand frei.`}
               {missingLegal.length > 0 &&
                 " Ich bestätige die Zulässigkeit und die oben angegebene Grundlage für diese Kontakte."}
             </label>
