@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   CURSOR_STATUS_LABEL,
+  htmlPreviewHref,
   openableCursorHref,
   type PublicCursorTask,
 } from "@/lib/cursor/status";
@@ -142,7 +143,7 @@ export default function NewsletterCursor({
     }
   }
 
-  const previewUrl = openableCursorHref(task?.previewUrl || "");
+  const previewUrl = htmlPreviewHref(task?.previewUrl || "");
   const reviewUrl = openableCursorHref(task?.reviewUrl || "");
 
   return (

@@ -15,7 +15,11 @@ import {
   validatedPr,
   CursorApiError,
 } from "../lib/cursor/contract";
-import { CURSOR_STATUS_LABEL, statusFromRun } from "../lib/cursor/status";
+import {
+  CURSOR_STATUS_LABEL,
+  htmlPreviewHref,
+  statusFromRun,
+} from "../lib/cursor/status";
 import { toPublicTask } from "../lib/cursor/newsletter";
 
 const agentId = "bc-00000000-0000-0000-0000-000000000001";
@@ -128,12 +132,20 @@ test("Cursor-Status ist erst nach echten IDs sichtbar und nie erledigt", () => {
     runId,
     agentUrl: `https://cursor.com/agents/${agentId}`,
     prUrl: freshPr,
+    previewHtml: "https://preview.studiojeker.ch/newsletter/v4.html?sig=secret",
     errorMessage: "",
     pendingUntil: null,
     route: "cursor",
   });
   assert.equal(task.complete, false);
   assert.equal(task.label, "Vorschau bereit");
+  assert.equal(task.previewUrl, "");
+  assert.equal(task.reviewUrl, freshPr);
+  assert.equal(
+    htmlPreviewHref("https://preview.studiojeker.ch/newsletter/v4.html"),
+    "https://preview.studiojeker.ch/newsletter/v4.html",
+  );
+  assert.equal(htmlPreviewHref(freshPr), "");
   assert.match(task.note, /nicht erledigt/);
   assert.equal(
     cursorUserMessage(401, "").message,

@@ -18,6 +18,7 @@ const { saveContent } = await import("../../lib/hub/workflow");
 const {
   createV4Edition,
   handoffNewsletter,
+  newsletterCursorState,
   refreshNewsletterCursor,
   resetCursorRateLimit,
 } = await import("../../lib/cursor/newsletter");
@@ -82,6 +83,8 @@ const fetchImpl: typeof fetch = async (input, init) => {
     return json({
       id: runId,
       status: "FINISHED",
+      previewUrl: freshPr,
+      htmlPreviewUrl: "https://preview.studiojeker.ch/newsletter/v4.html",
       git: {
         branches: [
           {
@@ -227,11 +230,119 @@ test("Freigegebene aktuelle V4 kann gestartet werden, Doppelstart und Versionswe
   });
   assert.equal(refreshed.task?.status, "PREVIEW_READY");
   assert.equal(refreshed.task?.complete, false);
-  assert.equal(refreshed.task?.previewUrl, freshPr);
+  assert.equal(
+    refreshed.task?.previewUrl,
+    "https://preview.studiojeker.ch/newsletter/v4.html",
+  );
+  assert.equal(refreshed.task?.reviewUrl, freshPr);
   assert.match(refreshed.task?.note || "", /nicht erledigt/);
   const storedEdition = await db.newsletterEdition.findUniqueOrThrow({
     where: { contentId: edition.contentId },
   });
   assert.equal(storedEdition.prUrl, freshPr);
   assert.equal(storedEdition.prUrl.includes("/313"), false);
+  const storedTask = await db.newsletterCursorTask.findUniqueOrThrow({
+    where: { contentId: edition.contentId },
+  });
+  assert.equal(
+    storedTask.previewHtml,
+    "https://preview.studiojeker.ch/newsletter/v4.html",
+  );
+  assert.equal(storedTask.previewHtml.includes("github.com"), false);
+});
+
+test("Versionswechsel unmittelbar vor dem Cursor-Aufruf verhindert die Übertragung", async () => {
+  resetCursorRateLimit();
+  calls.length = 0;
+  const edition = await createV4Edition(actor);
+  await assert.rejects(
+    handoffNewsletter(
+      actor,
+      edition.contentId,
+      "Bitte das Layout der Vorlage ändern.",
+      {
+        env: { CURSOR_API_KEY: key },
+        fetchImpl,
+        beforeCursorCall: async () => {
+          await db.marketingContent.update({
+            where: { id: edition.contentId },
+            data: { version: edition.version + 1 },
+          });
+        },
+      },
+    ),
+    /nicht übertragen/,
+  );
+  assert.equal(calls.length, 0);
+});
+
+test("Ein fremdes Testkonto sieht und steuert den Newsletter eines anderen nicht", async () => {
+  resetCursorRateLimit();
+  calls.length = 0;
+  const other = await db.user.create({
+    data: {
+      name: "Externe Testperson",
+      email: "extern-cursor@example.test",
+      passwordHash: "synthetic",
+    },
+  });
+  const nora = await db.user.create({
+    data: {
+      name: "Nora Jeker",
+      email: "nora-cursor@example.test",
+      passwordHash: "synthetic",
+    },
+  });
+  const edition = await createV4Edition(actor);
+  await db.newsletterCursorTask.create({
+    data: {
+      contentId: edition.contentId,
+      userId: actor,
+      version: edition.version,
+      templateId: "newsletter-03",
+      instruction: "Geheime Anweisung des Besitzers",
+      status: "PREVIEW_READY",
+      prUrl: freshPr,
+      previewHtml: "https://preview.studiojeker.ch/newsletter/secret.html",
+      route: "cursor",
+    },
+  });
+  const content = {
+    id: edition.contentId,
+    kind: "NEWSLETTER",
+    title: "Newsletter V4 · Entwurf",
+    version: edition.version,
+    ownerId: actor,
+    organizationId: "studiojeker",
+    versions: [{ payload: { newsletter: { templateId: "newsletter-03" } } }],
+  };
+  const hidden = await newsletterCursorState(other.id, [content]);
+  assert.equal(hidden.tasks.length, 0);
+  assert.equal(hidden.editions.length, 0);
+  assert.equal(JSON.stringify(hidden).includes("Geheime Anweisung"), false);
+  assert.equal(JSON.stringify(hidden).includes(freshPr), false);
+  assert.equal(JSON.stringify(hidden).includes("secret.html"), false);
+  await assert.rejects(
+    handoffNewsletter(
+      other.id,
+      edition.contentId,
+      "Bitte das Layout der Vorlage ändern.",
+      {
+        env: { CURSOR_API_KEY: key },
+        fetchImpl,
+      },
+    ),
+    /Keine Berechtigung/,
+  );
+  await assert.rejects(
+    refreshNewsletterCursor(other.id, edition.contentId, {
+      env: { CURSOR_API_KEY: key },
+      fetchImpl,
+    }),
+    /Keine Berechtigung/,
+  );
+  assert.equal(calls.length, 0);
+  const shared = await newsletterCursorState(nora.id, [content]);
+  assert.equal(shared.tasks.length, 1);
+  assert.equal(shared.tasks[0]?.reviewUrl, freshPr);
 });

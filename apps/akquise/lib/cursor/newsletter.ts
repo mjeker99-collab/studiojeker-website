@@ -1,3 +1,4 @@
+import { allowedAccount, isolatedTestEnvironment } from "../config.mjs";
 import { db } from "../db";
 import { PolicyError } from "../policy";
 import { audit, type Tx } from "../workflow";
@@ -20,6 +21,7 @@ import {
   cursorUserMessage,
   CursorApiError,
   followUpBody,
+  htmlPreviewFromRun,
   matchingPr,
   parseAgentResponse,
   parseCreateResponse,
@@ -34,6 +36,7 @@ import {
   isAgentId,
   isCursorStatus,
   isRunId,
+  htmlPreviewHref,
   openableCursorHref,
   statusFromRun,
   type CursorStatus,
@@ -80,6 +83,7 @@ type TaskRow = {
   runId: string;
   agentUrl: string;
   prUrl: string;
+  previewHtml?: string;
   errorMessage: string;
   pendingUntil: Date | null;
   route?: string;
@@ -91,11 +95,9 @@ export function toPublicTask(row: TaskRow): PublicCursorTask {
     : "ERROR";
   const route = row.route === "gpt" ? "gpt" : "cursor";
   const previewUrl =
-    status === "PREVIEW_READY" ? openableCursorHref(row.prUrl) : "";
+    status === "PREVIEW_READY" ? htmlPreviewHref(row.previewHtml || "") : "";
   const reviewUrl =
-    status === "PREVIEW_READY"
-      ? openableCursorHref(row.agentUrl) || previewUrl
-      : "";
+    status === "PREVIEW_READY" ? openableCursorHref(row.prUrl) : "";
   const note =
     status === "PREVIEW_READY"
       ? "Auftrag offen. Die Vorschau wartet auf deine Freigabe und ist nicht erledigt."
@@ -127,18 +129,71 @@ function templateIdFrom(payload: unknown) {
     : "";
 }
 
+const ORG = "studiojeker";
+
+type AccessEnv = NodeJS.ProcessEnv | { CURSOR_API_KEY?: string };
+
+function sharesWorkspace(
+  user: { name: string; email: string },
+  env: AccessEnv = process.env,
+) {
+  const nodeEnv = "NODE_ENV" in env ? env.NODE_ENV : process.env.NODE_ENV;
+  const sandbox =
+    "STUDIOONE_TEST_SANDBOX" in env
+      ? env.STUDIOONE_TEST_SANDBOX
+      : process.env.STUDIOONE_TEST_SANDBOX;
+  if (sandbox === "true" || isolatedTestEnvironment()) return false;
+  if (nodeEnv !== "production")
+    return user.name === "Martin Jeker" || user.name === "Nora Jeker";
+  return allowedAccount(user, process.env);
+}
+
+async function requireActor(actor: string) {
+  const user = await db.user.findFirst({ where: { id: actor, active: true } });
+  if (!user || !allowedAccount(user, process.env))
+    throw new PolicyError("Keine Berechtigung.", 403);
+  return user;
+}
+
+function canAccessNewsletter(
+  user: { id: string; name: string; email: string },
+  content: { organizationId: string; ownerId: string },
+  env: AccessEnv = process.env,
+) {
+  return (
+    content.organizationId === ORG &&
+    (sharesWorkspace(user, env) || content.ownerId === user.id)
+  );
+}
+
 export async function newsletterCursorState(
+  actor: string,
   contents: {
     id: string;
     kind: string;
     title: string;
     version: number;
+    ownerId: string;
+    organizationId: string;
     versions: { payload: unknown }[];
   }[],
+  env: AccessEnv = process.env,
 ) {
+  const user = await requireActor(actor);
+  const visible = contents.filter((content) =>
+    canAccessNewsletter(user, content, env),
+  );
+  const visibleIds = visible.map((content) => content.id);
+  const ownOnly = sharesWorkspace(user, env) ? {} : { userId: user.id };
   const [tasks, editions] = await Promise.all([
-    db.newsletterCursorTask.findMany({ orderBy: { updatedAt: "desc" } }),
-    db.newsletterEdition.findMany({ orderBy: { updatedAt: "desc" } }),
+    db.newsletterCursorTask.findMany({
+      where: { contentId: { in: visibleIds }, ...ownOnly },
+      orderBy: { updatedAt: "desc" },
+    }),
+    db.newsletterEdition.findMany({
+      where: { contentId: { in: visibleIds }, ...ownOnly },
+      orderBy: { updatedAt: "desc" },
+    }),
   ]);
   const registered = new Set(editions.map((edition) => edition.contentId));
   return {
@@ -153,10 +208,9 @@ export async function newsletterCursorState(
         version: edition.contentVersion,
         currentVersion: content?.version ?? edition.contentVersion,
         stale: Boolean(content && content.version !== edition.contentVersion),
-        prUrl: validatedPr(edition.prUrl),
       };
     }),
-    handoffs: contents
+    handoffs: visible
       .filter((content) => content.kind === "NEWSLETTER")
       .map((content) => ({
         contentId: content.id,
@@ -213,7 +267,7 @@ export async function createV4Edition(actor: string) {
 }
 
 export async function restartEditionVersion(actor: string, contentId: string) {
-  const loaded = await loadNewsletter(contentId);
+  const loaded = await loadNewsletter(actor, contentId);
   return db.$transaction(async (tx) => {
     await hubActor(tx, actor);
     await lock(tx, contentId);
@@ -237,14 +291,20 @@ export async function restartEditionVersion(actor: string, contentId: string) {
 type Hooks = {
   env?: NodeJS.ProcessEnv | { CURSOR_API_KEY?: string };
   fetchImpl?: typeof fetch;
+  beforeCursorCall?: () => Promise<void>;
 };
 
 function hooks(options?: Hooks) {
   if (process.env.NODE_ENV === "production")
-    return { env: process.env, fetchImpl: fetch };
+    return {
+      env: process.env,
+      fetchImpl: fetch,
+      beforeCursorCall: undefined as Hooks["beforeCursorCall"],
+    };
   return {
     env: options?.env ?? process.env,
     fetchImpl: options?.fetchImpl ?? fetch,
+    beforeCursorCall: options?.beforeCursorCall,
   };
 }
 
@@ -252,25 +312,64 @@ async function lock(tx: Tx, contentId: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"cursor-newsletter:" + contentId}))`;
 }
 
-async function loadNewsletter(contentId: string) {
+async function loadNewsletter(
+  actor: string,
+  contentId: string,
+  env: AccessEnv = process.env,
+) {
+  const user = await requireActor(actor);
   const content = await db.marketingContent.findFirst({
     where: {
       id: contentId,
       kind: "NEWSLETTER",
-      organizationId: "studiojeker",
+      organizationId: ORG,
       archivedAt: null,
     },
     include: { versions: { orderBy: { version: "desc" }, take: 1 } },
   });
   if (!content?.versions[0])
     throw new PolicyError("Newsletter nicht gefunden.", 404);
+  if (!canAccessNewsletter(user, content, env))
+    throw new PolicyError("Keine Berechtigung.", 403);
   const templateId = templateIdFrom(content.versions[0].payload);
   if (!templateId)
     throw new PolicyError(
       "Dieser Newsletter hat keine gespeicherte Vorlage.",
       400,
     );
-  return { content, templateId };
+  return { content, templateId, user };
+}
+
+async function versionStillCurrent(tx: Tx, contentId: string, version: number) {
+  const fresh = await tx.marketingContent.findFirst({
+    where: {
+      id: contentId,
+      kind: "NEWSLETTER",
+      organizationId: ORG,
+      archivedAt: null,
+    },
+    select: { version: true },
+  });
+  const edition = await tx.newsletterEdition.findUnique({
+    where: { contentId },
+  });
+  if (
+    !fresh ||
+    !edition ||
+    fresh.version !== version ||
+    edition.contentVersion !== version
+  )
+    throw new PolicyError(
+      `Die Ausgabe wurde geändert. Der Auftrag gilt nur für Version ${edition?.contentVersion ?? version} und wird nicht übertragen.`,
+      409,
+    );
+}
+
+async function assertLockedVersion(contentId: string, version: number) {
+  await db.$transaction(async (tx) => {
+    await lock(tx, contentId);
+    await versionStillCurrent(tx, contentId, version);
+  });
 }
 
 export async function handoffNewsletter(
@@ -279,7 +378,7 @@ export async function handoffNewsletter(
   rawInstruction: string,
   options?: Hooks,
 ) {
-  const { env, fetchImpl } = hooks(options);
+  const { env, fetchImpl, beforeCursorCall } = hooks(options);
   const key = readCursorKey(env);
   await db.$transaction(async (tx) => {
     await hubActor(tx, actor);
@@ -290,7 +389,7 @@ export async function handoffNewsletter(
     throw new PolicyError(
       "Bitte beschreibe die Änderung in höchstens 4000 Zeichen.",
     );
-  const loaded = await loadNewsletter(contentId);
+  const loaded = await loadNewsletter(actor, contentId, env);
   const edition = await db.newsletterEdition.findUnique({
     where: { contentId },
   });
@@ -311,6 +410,7 @@ export async function handoffNewsletter(
   if (route === "editorial") {
     const saved = await db.$transaction(async (tx) => {
       await lock(tx, contentId);
+      await versionStillCurrent(tx, contentId, loaded.content.version);
       const existing = await tx.newsletterCursorTask.findUnique({
         where: { contentId },
       });
@@ -354,6 +454,7 @@ export async function handoffNewsletter(
   const mode = await db.$transaction(async (tx) => {
     await hubActor(tx, actor);
     await lock(tx, contentId);
+    await versionStillCurrent(tx, contentId, loaded.content.version);
     const existing = await tx.newsletterCursorTask.findUnique({
       where: { contentId },
     });
@@ -409,6 +510,8 @@ export async function handoffNewsletter(
     let runId = "";
     let agentUrl = "";
     let status: CursorStatus = "ERROR";
+    if (beforeCursorCall) await beforeCursorCall();
+    await assertLockedVersion(contentId, loaded.content.version);
     if (mode.followUp) {
       const body = await cursorRequest(
         key,
@@ -515,17 +618,19 @@ export async function refreshNewsletterCursor(
   contentId: string,
   options?: Hooks,
 ) {
-  const { env, fetchImpl } = hooks(options);
+  const { env, fetchImpl, beforeCursorCall } = hooks(options);
   await db.$transaction(async (tx) => {
     await hubActor(tx, actor);
   });
   limit(`refresh:${actor}`, 60);
+  const loaded = await loadNewsletter(actor, contentId, env);
   const task = await db.newsletterCursorTask.findUnique({
     where: { contentId },
   });
   const key = readCursorKey(env);
-  const loaded = await loadNewsletter(contentId).catch(() => null);
-  if (task && loaded && task.version !== loaded.content.version)
+  if (task && !sharesWorkspace(loaded.user, env) && task.userId !== actor)
+    throw new PolicyError("Keine Berechtigung.", 403);
+  if (task && task.version !== loaded.content.version)
     throw new PolicyError(
       `Die Ausgabe wurde geändert. Der Auftrag gilt nur für Version ${task.version} und wird nicht übertragen.`,
       409,
@@ -534,6 +639,8 @@ export async function refreshNewsletterCursor(
   if (!key || !isAgentId(task.agentId) || !isRunId(task.runId))
     return { connected: Boolean(key), task: toPublicTask(task) };
   try {
+    if (beforeCursorCall) await beforeCursorCall();
+    await assertLockedVersion(contentId, loaded.content.version);
     const agent = parseAgentResponse(
       await cursorRequest(
         key,
@@ -561,6 +668,7 @@ export async function refreshNewsletterCursor(
         runId,
         status: run.status,
         prUrl: run.prUrl || task.prUrl,
+        previewHtml: htmlPreviewFromRun(runBody),
         pendingUntil: null,
         errorMessage:
           run.status === "ERROR"

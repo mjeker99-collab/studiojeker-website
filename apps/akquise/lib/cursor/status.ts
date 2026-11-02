@@ -52,6 +52,26 @@ export function openableCursorHref(url: string) {
     return url;
   return "";
 }
+/** A rendered HTML preview, never a GitHub pull request or a signed download URL. */
+export function htmlPreviewHref(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return "";
+  }
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash ||
+    parsed.hostname === "github.com" ||
+    !parsed.pathname.toLowerCase().endsWith(".html")
+  )
+    return "";
+  return parsed.origin + parsed.pathname;
+}
 export function safeAgentUrl(agentId: string, url: unknown) {
   if (!isAgentId(agentId)) return "";
   const expected = `https://cursor.com/agents/${agentId}`;

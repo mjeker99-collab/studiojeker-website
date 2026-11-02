@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   isAgentId,
   isRunId,
+  htmlPreviewHref,
   openableCursorHref,
   safeAgentUrl,
   statusFromRun,
@@ -199,6 +200,18 @@ export function parseAgentResponse(body: unknown) {
   return {
     latestRunId: typeof latest === "string" && isRunId(latest) ? latest : "",
   };
+}
+
+export function htmlPreviewFromRun(body: unknown) {
+  const run = asRecord(body);
+  if (!run) return "";
+  for (const key of ["htmlPreviewUrl", "previewHtmlUrl", "previewUrl"]) {
+    const value = run[key];
+    if (typeof value !== "string") continue;
+    const href = htmlPreviewHref(value);
+    if (href) return href;
+  }
+  return "";
 }
 
 export function matchingPr(body: unknown) {

@@ -473,18 +473,18 @@ async function handler(
             : "ORIGINAL";
       if (req.headers.get("x-rights-confirmed") !== "true")
         throw new PolicyError("Nutzungsrechte an der Datei bestätigen.");
-      const name = decodeURIComponent(req.headers.get("x-file-name") || "datei");
-      const bytes = await boundedBody(req, kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD);
-      const a = await storeAsset(
-        user.id,
-        bytes,
-        name,
-        kind,
+      const name = decodeURIComponent(
+        req.headers.get("x-file-name") || "datei",
       );
+      const bytes = await boundedBody(
+        req,
+        kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD,
+      );
+      const a = await storeAsset(user.id, bytes, name, kind);
       return NextResponse.json(a);
     }
     if (route === "hub/state" && req.method === "GET")
-      return NextResponse.json(await hubState());
+      return NextResponse.json(await hubState(user.id));
     if (route === "customers/masterlist" && req.method === "GET")
       return NextResponse.json(await customerMasterlist(user.id));
     if (route === "customers/state" && req.method === "GET")
@@ -825,4 +825,3 @@ async function handler(
   }
 }
 export { handler as GET, handler as POST };
-

@@ -414,6 +414,7 @@ model NewsletterCursorTask {
   runId        String           @default("")
   agentUrl     String           @default("")
   prUrl        String           @default("")
+  previewHtml  String           @default("")
   errorMessage String           @default("")
   pendingUntil DateTime?
   route        String           @default("cursor")

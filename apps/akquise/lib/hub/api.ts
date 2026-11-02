@@ -29,7 +29,7 @@ import {
 import { instant, safeUrl, channels } from "./input";
 import { linkedinOrganizationPattern } from "../social/linkedin";
 const version = z.number().int().positive();
-export async function hubState() {
+export async function hubState(actor?: string) {
   const [campaigns, contents, users, drafts, social, customers] =
     await Promise.all([
       db.campaign.findMany({
@@ -120,7 +120,15 @@ export async function hubState() {
         : "NOT_CONNECTED",
       mailchimp: process.env.MAILCHIMP_API_KEY ? "CONFIGURED" : "NOT_CONNECTED",
     },
-    newsletterCursor: await newsletterCursorState(contents),
+    newsletterCursor: actor
+      ? await newsletterCursorState(actor, contents)
+      : {
+          connected: false,
+          nextStep: "Neue Ausgabe anlegen",
+          tasks: [],
+          editions: [],
+          handoffs: [],
+        },
   };
 }
 export async function hubMutation(
