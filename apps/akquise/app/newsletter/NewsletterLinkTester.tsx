@@ -28,7 +28,6 @@ export default function NewsletterLinkTester({ newsletter }: { newsletter: Newsl
     }
     return [...items.values()];
   }, [newsletter]);
-  const signature = links.map((link) => link.url).join("\n");
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
