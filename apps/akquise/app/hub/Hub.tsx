@@ -1046,6 +1046,7 @@ export default function Hub({
                   fresh.preheader = template.preheader;
                   fresh.body = newsletterText(fresh.newsletter);
                   setForm(fresh);
+                  setEditorNavigation((n) => n + 1);
                 }}>Grundvorlage bearbeiten</button>
                 <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER" && !item.archivedAt)} onClick={() => {
                   const latest = data?.contents
