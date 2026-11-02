@@ -75,6 +75,16 @@ Synthetische Beispiel AG,Anna,Muster,anna.muster@example.test,Architektur,Soloth
 
 Google Sheets: Service-Account über `GOOGLE_CLIENT_EMAIL` und `GOOGLE_PRIVATE_KEY` konfigurieren, Masterliste lesend mit diesem Konto teilen und `GOOGLE_SHEET_ID` setzen. `GOOGLE_SHEET_RANGE` muss zur Spaltenzahl und maximal 500 Datenzeilen passen. In den Einstellungen manuell synchronisieren. Der Adapter liest nur erlaubte Kontaktfelder und verwendet denselben Validator. V1 importiert neue Datensätze und überspringt bestehende Identitäten; keine automatischen Überschreibungen, kein bidirektionaler Sync und keine Statusübernahme.
 
+## GPT-Auftrags-Engine (Pilot, ohne Versand)
+
+Im Newsletter-Editor gibt es ein Feld «Dein Wunsch» und die Aktion **Newslettertext überarbeiten**. Der Auftrag wird in PostgreSQL gespeichert. Der Worker übernimmt ihn mit einer Lease, lässt den bestehenden OpenAI-Client nur Textfelder vorschlagen und speichert eine neue Inhaltsversion. Die HTML-Vorschau kommt aus `renderNewsletter`. Bilder, Links und die Vorlage bleiben unverändert. Es gibt keinen Mailchimp- oder SMTP-Aufruf.
+
+Ein Wunschfeld, eine Aktion **Auftrag starten**. Technische Wünsche werden an `handoffNewsletter` aus PR #322 delegiert, sobald dieser Branch konfliktfrei vorliegt. Bis dahin sendet StudioONE keinen Cursor-Auftrag. Ein Cursor-Link wird nie als erledigter Newsletter gewertet.
+
+Der Worker läuft im bestehenden Prozess: `scripts/start-production.mjs` ruft einmal pro Minute `/api/internal/task-tick` mit demselben kurzlebigen Bearer wie den Mail-Tick. Zusätzlich stösst das Öffnen des Auftrags fällige Arbeit an. Ein eigener Render-Worker ist nicht eingerichtet. Ohne `OPENAI_API_KEY` und `CONTENT_AI_ENABLED=true` bleibt die Textüberarbeitung sichtbar blockiert.
+
+Details: [docs/GPT_TASK_ENGINE_PILOT.md](docs/GPT_TASK_ENGINE_PILOT.md).
+
 ## Tests
 
 ```sh

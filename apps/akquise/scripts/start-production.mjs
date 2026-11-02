@@ -47,22 +47,29 @@ const child = spawn(
   },
 );
 let ticking = false;
+async function postTick(path) {
+  const response = await fetch(
+    `http://127.0.0.1:${process.env.PORT || "3100"}${path}`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${tickToken}` },
+      signal: AbortSignal.timeout(90000),
+    },
+  );
+  if (!response.ok) console.error(`${path} unavailable:`, response.status);
+}
 const timer = setInterval(async () => {
   if (ticking) return;
   ticking = true;
   try {
-    const response = await fetch(
-      `http://127.0.0.1:${process.env.PORT || "3100"}/api/internal/mail-tick`,
-      {
-        method: "POST",
-        headers: { authorization: `Bearer ${tickToken}` },
-        signal: AbortSignal.timeout(90000),
-      },
-    );
-    if (!response.ok)
-      console.error("Mail scheduler unavailable:", response.status);
+    await postTick("/api/internal/mail-tick");
   } catch {
     console.error("Mail scheduler unavailable; retrying next minute.");
+  }
+  try {
+    await postTick("/api/internal/task-tick");
+  } catch {
+    console.error("GPT task worker unavailable; retrying next minute.");
   } finally {
     ticking = false;
   }

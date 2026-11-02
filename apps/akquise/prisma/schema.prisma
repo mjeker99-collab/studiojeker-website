@@ -56,6 +56,7 @@ model User {
   campaigns          Campaign[]          @relation("CampaignOwner")
   marketingContents  MarketingContent[]  @relation("ContentOwner")
   marketingApprovals MarketingApproval[] @relation("MarketingReviewer")
+  gptTasks           GptTask[]
 }
 
 model Session {
@@ -292,6 +293,7 @@ model Campaign {
   updatedAt      DateTime           @updatedAt
   contents       MarketingContent[]
   drafts         Draft[]
+  gptTasks       GptTask[]
 
   @@index([customerId])
 }
@@ -321,6 +323,7 @@ model MarketingContent {
   publications   ManualPublication[]
   exports        NewsletterExport[]
   mailchimpTransfers MailchimpTransfer[]
+  gptTasks       GptTask[]
 
   @@index([campaignId, scheduledAt])
   @@index([kind, workspace, status])
@@ -411,6 +414,7 @@ model StudioOrganization {
   campaigns     Campaign[]
   contents      MarketingContent[]
   customers     Customer[]
+  gptTasks      GptTask[]
 }
 
 // Internal customer record. Customers are never User accounts and cannot sign in.
@@ -430,6 +434,7 @@ model Customer {
   updatedAt      DateTime           @updatedAt
   campaigns      Campaign[]
   series         StudioSeries[]
+  gptTasks       GptTask[]
 
   @@index([organizationId, name])
 }
@@ -673,6 +678,77 @@ model GptWriteGrant {
 
   @@unique([entityType, entityId])
   @@index([entityType, grantedAt])
+}
+
+enum GptTaskStatus {
+  QUEUED
+  RUNNING
+  WAITING_APPROVAL
+  BLOCKED
+  FAILED
+  SUCCEEDED
+}
+
+// Durable StudioONE task. Provider calls stay in typed tools; the row survives restarts.
+model GptTask {
+  id             String             @id @default(cuid())
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  campaignId     String?
+  campaign       Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  contentId      String
+  content        MarketingContent   @relation(fields: [contentId], references: [id])
+  contentVersion Int
+  type           String
+  instruction    String
+  status         GptTaskStatus      @default(QUEUED)
+  step           String             @default("queued")
+  attempt        Int                @default(0)
+  maxAttempts    Int                @default(3)
+  externalJobId  String?
+  result         Json               @default("{}")
+  error          String?
+  idempotencyKey String             @unique
+  leaseOwner     String?
+  leaseUntil     DateTime?
+  nextAttemptAt  DateTime           @default(now())
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  steps          GptTaskStep[]
+  approval       GptTaskApproval?
+
+  @@index([status, nextAttemptAt])
+  @@index([contentId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model GptTaskStep {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      GptTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  name      String
+  status    String
+  detail    String   @default("")
+  attempt   Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+// Revision-bound consent. Recording approval does not publish or send.
+model GptTaskApproval {
+  id             String   @id @default(cuid())
+  taskId         String   @unique
+  task           GptTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actionType     String
+  contentVersion Int
+  hash           String
+  userId         String
+  createdAt      DateTime @default(now())
 }
 
 // Idempotency keys for ChatGPT draft creates (avoid duplicate drafts).
