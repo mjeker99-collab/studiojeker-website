@@ -8,7 +8,8 @@ import { PolicyError } from "../policy";
 import { ProviderFailure } from "../studio/provider";
 import { studioConfig } from "../studio/config";
 import { connectionRegistry } from "./adapters";
-import { layoutDecision, CURSOR_ADAPTER_BLOCK, type LayoutReport } from "./layout";
+import { instructionRoute, unavailableCursorLayout } from "./cursor-bridge";
+import { layoutDecision, type LayoutReport } from "./layout";
 import { statusHeadline, nextStepText } from "./messages";
 import { acceptTextProposal, editableTextSlots, mergeTextSlots } from "./proposal";
 import { proposeNewsletterText } from "./revise";
@@ -34,8 +35,11 @@ type Deps = {
   now: () => Date;
   layout: (input: {
     taskId: string;
+    userId: string;
+    contentId: string;
     instruction: string;
     contentVersion: number;
+    externalJobId: string | null;
   }) => Promise<LayoutReport>;
   beforeApply?: () => Promise<void>;
 };
@@ -44,7 +48,7 @@ const defaultDeps: Deps = {
   providerReady: () => studioConfig().connected,
   propose: proposeNewsletterText,
   now: () => new Date(),
-  layout: async () => ({ blocked: CURSOR_ADAPTER_BLOCK }),
+  layout: async () => unavailableCursorLayout(),
 };
 
 let deps: Deps = { ...defaultDeps };
@@ -89,13 +93,15 @@ export function presentTask(
     error: task.error,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
-    result: result.version
-      ? {
-          version: result.version,
-          changedSlots: result.changedSlots || [],
-          previewReady: result.previewReady === true,
-        }
-      : null,
+    result:
+      result.version || result.reviewUrl
+        ? {
+            version: result.version,
+            changedSlots: result.changedSlots || [],
+            previewReady: result.previewReady === true,
+            reviewUrl: result.reviewUrl,
+          }
+        : null,
     headline: statusHeadline(task.status, task.error),
     nextStep: nextStepText(task.status),
     steps: (task.steps || []).map((step) => ({
@@ -122,6 +128,12 @@ async function recordStep(
 
 export async function createTask(actor: string, raw: unknown) {
   const input = taskInput.parse(raw);
+  const routed =
+    input.type === "NEWSLETTER_PUBLISH" || input.type === "NEWSLETTER_SEND"
+      ? input.type
+      : instructionRoute(input.instruction) === "technical"
+        ? "NEWSLETTER_LAYOUT"
+        : "NEWSLETTER_REVISE_TEXT";
   const task = await db.$transaction(async (tx) => {
     await hubActor(tx, actor);
     const since = dayStart(deps.now());
@@ -153,29 +165,17 @@ export async function createTask(actor: string, raw: unknown) {
         "Dieser Newsletter hat keine gespeicherte Vorlage.",
         409,
       );
-    const key = idempotencyKey({ ...input, userId: actor });
+    const key = idempotencyKey({ ...input, type: routed, userId: actor });
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"gpt-task:" + key}))`;
     const existing = await tx.gptTask.findUnique({
       where: { idempotencyKey: key },
       include: { steps: { orderBy: { createdAt: "asc" } } },
     });
     if (existing) return existing;
-    const approval = requiresApproval(input.type);
-    const layout = input.type === "NEWSLETTER_LAYOUT";
-    const aiMissing =
-      input.type === "NEWSLETTER_REVISE_TEXT" && !deps.providerReady();
-    const status = approval
-      ? "WAITING_APPROVAL"
-      : layout || aiMissing
-        ? "BLOCKED"
-        : "QUEUED";
-    const error = approval
-      ? null
-      : layout
-        ? CURSOR_ADAPTER_BLOCK
-        : aiMissing
-          ? AI_MISSING
-          : null;
+    const approval = requiresApproval(routed);
+    const aiMissing = routed === "NEWSLETTER_REVISE_TEXT" && !deps.providerReady();
+    const status = approval ? "WAITING_APPROVAL" : aiMissing ? "BLOCKED" : "QUEUED";
+    const error = approval ? null : aiMissing ? AI_MISSING : null;
     const step = approval ? "approval" : status === "BLOCKED" ? "blocked" : "queued";
     const created = await tx.gptTask.create({
       data: {
@@ -184,7 +184,8 @@ export async function createTask(actor: string, raw: unknown) {
         campaignId: content.campaignId,
         contentId: content.id,
         contentVersion: content.version,
-        type: input.type,
+        type: routed,
+        maxAttempts: routed === "NEWSLETTER_LAYOUT" ? 8 : 3,
         instruction: input.instruction,
         status,
         step,
@@ -203,7 +204,7 @@ export async function createTask(actor: string, raw: unknown) {
       0,
     );
     await audit(tx, actor, "GPT_TASK_QUEUED", created.id, {
-      type: input.type,
+      type: routed,
       contentId: content.id,
       version: content.version,
       status,
@@ -616,21 +617,48 @@ async function applyProposal(id: string, owner: string, proposal: TextSlot[]) {
 async function runLayout(task: Prisma.GptTaskGetPayload<object>, owner: string) {
   const report = await deps.layout({
     taskId: task.id,
+    userId: task.userId,
+    contentId: task.contentId,
     instruction: task.instruction,
     contentVersion: task.contentVersion,
+    externalJobId: task.externalJobId,
   });
   const decision = layoutDecision(report);
+  const stored = readResult(task.result);
+  if (decision.kind === "waiting" && task.attempt < task.maxAttempts) {
+    await settle(
+      task.id,
+      owner,
+      {
+        status: "QUEUED",
+        step: "cursor_waiting",
+        error: null,
+        externalJobId: decision.externalJobId,
+        nextAttemptAt: new Date(deps.now().getTime() + 20000),
+        result: stored,
+      },
+      decision.detail,
+    );
+    return;
+  }
+  const error =
+    decision.kind === "waiting"
+      ? "Cursor arbeitet noch. Der Auftrag ist nicht erledigt und nicht veröffentlicht."
+      : decision.error;
   await settle(
     task.id,
     owner,
     {
       status: "BLOCKED",
-      step: "layout_blocked",
-      error: decision.error,
+      step: decision.kind === "blocked" && decision.reviewUrl ? "preview_ready" : "layout_blocked",
+      error,
       externalJobId: decision.externalJobId,
-      result: readResult(task.result),
+      result: {
+        ...stored,
+        reviewUrl: decision.kind === "blocked" ? decision.reviewUrl : stored.reviewUrl,
+      },
     },
-    decision.error,
+    error,
   );
 }
 

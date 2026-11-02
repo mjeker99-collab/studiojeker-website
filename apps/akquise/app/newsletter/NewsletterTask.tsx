@@ -11,7 +11,12 @@ type TaskView = {
   headline: string;
   nextStep: string;
   attempt: number;
-  result: { version: number; changedSlots: string[]; previewReady: boolean } | null;
+  result: {
+    version?: number;
+    changedSlots: string[];
+    previewReady: boolean;
+    reviewUrl?: string;
+  } | null;
   steps: Step[];
 };
 type Connection = { id: string; state: string; detail: string };
@@ -136,10 +141,11 @@ export default function NewsletterTask({
 
   return (
     <section className="newsletter-task" aria-label="Newsletter-Auftrag">
-      <h3>Newslettertext überarbeiten</h3>
+      <h3>Newsletter bearbeiten</h3>
       <p>
-        StudioONE speichert eine neue Version des geöffneten Entwurfs. Bilder,
-        Links und die Gestaltung bleiben unverändert. Es wird nichts versendet.
+        Ein Wunsch genügt. Textänderungen speichert GPT als neue Version.
+        Layoutänderungen gehen an Cursor, sobald die Verbindung aus PR #322
+        eingebunden ist. Es wird nichts versendet.
       </p>
       <label>
         Dein Wunsch
@@ -161,23 +167,15 @@ export default function NewsletterTask({
             disabled={busy || dirty || running}
             onClick={() => start("NEWSLETTER_REVISE_TEXT")}
           >
-            Newslettertext überarbeiten
+            Auftrag starten
           </button>
         )}
-        <button
-          type="button"
-          className="secondary"
-          disabled={busy || dirty || running || waiting}
-          onClick={() => start("NEWSLETTER_LAYOUT")}
-        >
-          Layoutänderung umsetzen
-        </button>
       </div>
       {dirty && (
         <p className="muted">Bitte zuerst die Version speichern.</p>
       )}
       <p className="task-status" role="status">
-        {note || task?.headline || "Bereit für eine Textüberarbeitung."}
+        {note || task?.headline || "Bereit. Formuliere den Wunsch und starte den Auftrag."}
       </p>
       {task && <p className="muted">{task.nextStep}</p>}
       <details>
@@ -188,8 +186,15 @@ export default function NewsletterTask({
             {` · Versuch ${task.attempt}`}
           </p>
         )}
-        {task?.result?.previewReady && (
+        {task?.result?.previewReady && task.result.version && (
           <p>Vorschau bereit für Version {task.result.version}.</p>
+        )}
+        {task?.result?.reviewUrl && (
+          <p>
+            <a href={task.result.reviewUrl} target="_blank" rel="noopener noreferrer">
+              Gemeldeten Link prüfen
+            </a>
+          </p>
         )}
         {shown
           .filter((item) => item.detail !== task?.headline && item.detail !== last?.detail)

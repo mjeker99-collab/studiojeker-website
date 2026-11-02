@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { newsletterDefaults } from "../lib/hub/newsletter-template";
 import { connectionRegistry } from "../lib/tasks/adapters";
-import { layoutDecision, CURSOR_ADAPTER_BLOCK } from "../lib/tasks/layout";
+import { instructionRoute, mapCursorHandoff, CURSOR_INTEGRATION_GAP } from "../lib/tasks/cursor-bridge";
+import { layoutDecision } from "../lib/tasks/layout";
 import { nextStepText, statusHeadline } from "../lib/tasks/messages";
 import {
   acceptTextProposal,
@@ -76,23 +77,43 @@ test("approval boundary, backoff and idempotency stay deterministic", () => {
   );
 });
 
-test("cursor finished is never treated as success", () => {
-  for (const report of [
-    { blocked: CURSOR_ADAPTER_BLOCK },
-    { state: "finished" as const },
-    { state: "finished" as const, version: 4 },
-    {
-      state: "finished" as const,
-      version: 4,
-      url: "https://github.com/example/pull/1",
-      externalJobId: "agent-1",
-    },
-    { state: "running" as const, externalJobId: "agent-1" },
-  ]) {
-    const decision = layoutDecision(report);
-    assert.equal(decision.status, "BLOCKED");
-    assert.equal(JSON.stringify(decision).includes("SUCCEEDED"), false);
-  }
+test("cursor progress is delegated and never marked succeeded", () => {
+  assert.equal(instructionRoute("Text redaktionell kürzen"), "editorial");
+  assert.equal(instructionRoute("Mehr Abstand im Hero"), "technical");
+  const handed = layoutDecision(
+    mapCursorHandoff({ contentId: "content", status: "HANDED_OFF" }),
+  );
+  assert.equal(handed.kind, "waiting");
+  const preview = layoutDecision(
+    mapCursorHandoff({
+      contentId: "content",
+      status: "PREVIEW_READY",
+      reviewUrl: "https://github.com/mjeker99-collab/studiojeker-website/pull/400",
+      complete: false,
+    }),
+  );
+  assert.equal(preview.kind, "blocked");
+  if (preview.kind === "blocked")
+    assert.equal(
+      preview.reviewUrl,
+      "https://github.com/mjeker99-collab/studiojeker-website/pull/400",
+    );
+  const forced = layoutDecision(
+    mapCursorHandoff({
+      contentId: "content",
+      status: "PREVIEW_READY",
+      complete: true,
+      reviewUrl: "https://github.com/mjeker99-collab/studiojeker-website/pull/400",
+    }),
+  );
+  assert.equal(forced.kind, "blocked");
+  assert.equal(JSON.stringify(forced).includes("SUCCEEDED"), false);
+  const missing = layoutDecision({ blocked: CURSOR_INTEGRATION_GAP });
+  assert.equal(missing.kind, "blocked");
+  assert.match(
+    missing.kind === "blocked" ? missing.error : "",
+    /kein Cursor-Auftrag/,
+  );
 });
 
 test("status copy stays in plain language", () => {

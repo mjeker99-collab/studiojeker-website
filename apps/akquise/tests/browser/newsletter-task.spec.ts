@@ -46,10 +46,9 @@ test("Newsletter task: one wish, one primary action, status survives reload", as
   await expect(page.getByRole("status").filter({ hasText: "Version gespeichert" })).toBeVisible();
   const task = editor.getByRole("region", { name: "Newsletter-Auftrag" });
   await expect(task.getByLabel("Dein Wunsch")).toHaveValue("Text redaktionell kürzen");
-  const primary = task.getByRole("button", { name: "Newslettertext überarbeiten", exact: true });
-  const layout = task.getByRole("button", { name: "Layoutänderung umsetzen", exact: true });
+  const primary = task.getByRole("button", { name: "Auftrag starten", exact: true });
   await expect(primary).toBeEnabled();
-  await expect(layout).toBeEnabled();
+  await expect(task.getByRole("button")).toHaveCount(1);
   await primary.click();
   await expect(task.getByRole("status")).toContainText(/nicht verbunden|gespeichert und wird bearbeitet/);
   await expect(task.getByRole("status")).toContainText("nicht verbunden", { timeout: 10000 });
@@ -65,8 +64,11 @@ test("Newsletter task: one wish, one primary action, status survives reload", as
   const reopened = page.getByRole("region", { name: "Inhaltseditor" });
   const reopenedTask = reopened.getByRole("region", { name: "Newsletter-Auftrag" });
   await expect(reopenedTask.getByRole("status")).toContainText("nicht verbunden");
-  await reopenedTask.getByRole("button", { name: "Layoutänderung umsetzen", exact: true }).click();
-  await expect(reopenedTask.getByRole("status")).toContainText("PR #322");
+  await reopenedTask.getByLabel("Dein Wunsch").fill("Mehr Abstand im Hero");
+  await reopenedTask.getByRole("button", { name: "Auftrag starten", exact: true }).click();
+  await expect(reopenedTask.getByRole("status")).toContainText("kein Cursor-Auftrag", {
+    timeout: 10000,
+  });
   for (const width of [700, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     const box = await reopened.boundingBox();

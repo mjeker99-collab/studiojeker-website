@@ -416,30 +416,58 @@ test("publish stays waiting and approval never sends", async () => {
   assert.equal(await db.mailchimpTransfer.count(), 0);
 });
 
-test("layout adapter cannot finish the task without a checked version", async () => {
+test("layout delegation waits for Cursor and does not finish from a link", async () => {
   const created = await engine.createTask(actor, {
     contentId,
     version: await currentVersion(),
-    type: "NEWSLETTER_LAYOUT",
+    type: "NEWSLETTER_REVISE_TEXT",
     instruction: "Mehr Abstand im Hero",
   });
-  assert.equal(created.status, "BLOCKED");
-  assert.match(created.error || "", /PR #322/);
+  assert.equal(created.type, "NEWSLETTER_LAYOUT");
+  assert.equal(created.status, "QUEUED");
+  await engine.runTaskWorker("layout-missing");
+  const blocked = await db.gptTask.findUniqueOrThrow({ where: { id: created.id } });
+  assert.equal(blocked.status, "BLOCKED");
+  assert.match(blocked.error || "", /kein Cursor-Auftrag/);
   await db.gptTask.update({
     where: { id: created.id },
-    data: { status: "QUEUED", step: "queued", error: null, attempt: 0 },
+    data: { status: "QUEUED", step: "queued", error: null, attempt: 0, leaseOwner: null, leaseUntil: null },
   });
+  let calls = 0;
   engine.setTaskDeps({
-    layout: async () => ({
-      state: "finished",
-      externalJobId: "agent-1",
-      version: 9,
-      url: "https://github.com/mjeker99-collab/studiojeker-website/pull/322",
-    }),
+    now: () => new Date(),
+    layout: async (input) => {
+      calls += 1;
+      if (!input.externalJobId)
+        return { state: "running", externalJobId: "cursor:content" };
+      return {
+        state: "finished",
+        externalJobId: input.externalJobId,
+        url: "https://github.com/mjeker99-collab/studiojeker-website/pull/400",
+      };
+    },
   });
-  await engine.runTaskWorker("layout");
+  await engine.runTaskWorker("layout-handoff");
+  const waiting = await db.gptTask.findUniqueOrThrow({ where: { id: created.id } });
+  assert.equal(waiting.status, "QUEUED");
+  assert.equal(waiting.externalJobId, "cursor:content");
+  assert.notEqual(waiting.status, "SUCCEEDED");
+  engine.setTaskDeps({
+    now: () => new Date(Date.now() + 60_000),
+    layout: async (input) => {
+      calls += 1;
+      assert.equal(input.externalJobId, "cursor:content");
+      return {
+        state: "finished",
+        externalJobId: input.externalJobId || "",
+        url: "https://github.com/mjeker99-collab/studiojeker-website/pull/400",
+      };
+    },
+  });
+  await engine.runTaskWorker("layout-preview");
   const row = await db.gptTask.findUniqueOrThrow({ where: { id: created.id } });
   assert.equal(row.status, "BLOCKED");
   assert.notEqual(row.status, "SUCCEEDED");
-  assert.equal(row.externalJobId, "agent-1");
+  assert.equal(calls, 2);
+  assert.match(JSON.stringify(row.result), /pull\/400/);
 });

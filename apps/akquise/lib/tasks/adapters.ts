@@ -2,7 +2,7 @@ import { driveConfigured } from "../drive/service";
 import { deployIdentity } from "../deploy-identity";
 import { getSanityWriteToken } from "../site-cms/config";
 import { studioConfig } from "../studio/config";
-import { CURSOR_ADAPTER_BLOCK } from "./layout";
+import { CURSOR_INTEGRATION_GAP } from "./cursor-bridge";
 
 export type ConnectionState = "CONNECTED" | "CONFIGURED" | "NOT_CONNECTED";
 
@@ -38,7 +38,7 @@ export function connectionRegistry(
     {
       id: "cursor",
       state: "NOT_CONNECTED",
-      detail: CURSOR_ADAPTER_BLOCK,
+      detail: CURSOR_INTEGRATION_GAP,
     },
     {
       id: "github",

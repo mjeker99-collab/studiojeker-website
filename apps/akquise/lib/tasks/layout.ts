@@ -6,39 +6,52 @@ export type LayoutReport = {
   url?: string;
 };
 
+export type LayoutOutcome =
+  | {
+      kind: "blocked";
+      error: string;
+      externalJobId: string | null;
+      reviewUrl?: string;
+    }
+  | { kind: "waiting"; externalJobId: string; detail: string };
+
+const SAFE_LINK = /^https:\/\/[^\s@]+$/;
+
 /**
- * A Cursor "finished" signal is not success. P1 never promotes a layout task
- * to SUCCEEDED; a later adapter must still prove a stored version and link.
+ * Cursor progress is not a finished newsletter. PREVIEW_READY keeps the link
+ * and stays blocked until a StudioONE version exists. There is no SUCCEEDED.
  */
-export function layoutDecision(report: LayoutReport): {
-  status: "BLOCKED";
-  error: string;
-  externalJobId: string | null;
-} {
+export function layoutDecision(report: LayoutReport): LayoutOutcome {
   const externalJobId = report.externalJobId || null;
+  const reviewUrl =
+    report.url && SAFE_LINK.test(report.url) ? report.url : undefined;
   if (report.blocked)
-    return { status: "BLOCKED", error: report.blocked, externalJobId };
-  if (report.state === "finished" && report.version && report.url)
+    return { kind: "blocked", error: report.blocked, externalJobId };
+  if (report.state === "running" && externalJobId)
     return {
-      status: "BLOCKED",
-      error:
-        "Cursor meldet eine Version und einen Link. Die Ausgabe wird erst übernommen, wenn sie in StudioONE geprüft ist. Nichts wurde veröffentlicht.",
+      kind: "waiting",
       externalJobId,
+      detail: "An Cursor übergeben. Der Auftrag ist nicht abgeschlossen.",
+    };
+  if (report.state === "finished" && reviewUrl)
+    return {
+      kind: "blocked",
+      error:
+        "Cursor hat einen Link gemeldet. Die Newsletter-Version in StudioONE ist dadurch nicht geändert und nicht veröffentlicht.",
+      externalJobId,
+      reviewUrl,
     };
   if (report.state === "finished")
     return {
-      status: "BLOCKED",
+      kind: "blocked",
       error:
-        "Cursor meldet Abschluss ohne prüfbare Version oder ohne Link. Der Auftrag ist nicht erledigt.",
+        "Cursor meldet Abschluss ohne prüfbaren Link. Der Auftrag ist nicht erledigt.",
       externalJobId,
     };
   return {
-    status: "BLOCKED",
+    kind: "blocked",
     error:
-      "Der Cursor-Adapter ist in diesem Pilot nicht angebunden. Es wurde kein Layoutauftrag gesendet.",
+      "Die Cursor-Verbindung hat keinen übernehmbaren Stand gemeldet. Es wurde nichts veröffentlicht.",
     externalJobId,
   };
 }
-
-export const CURSOR_ADAPTER_BLOCK =
-  "Layoutänderungen warten auf den Cursor-Adapter aus PR #322. Es wurde nichts an Cursor gesendet.";

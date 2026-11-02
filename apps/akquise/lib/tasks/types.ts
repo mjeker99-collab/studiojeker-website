@@ -68,6 +68,7 @@ export type StoredResult = {
   hash?: string;
   changedSlots?: string[];
   previewReady?: boolean;
+  reviewUrl?: string;
 };
 
 export function readResult(value: unknown): StoredResult {
@@ -92,5 +93,6 @@ export function readResult(value: unknown): StoredResult {
       ? record.changedSlots.filter((key) => typeof key === "string")
       : undefined,
     previewReady: record.previewReady === true,
+    reviewUrl: typeof record.reviewUrl === "string" ? record.reviewUrl : undefined,
   };
 }

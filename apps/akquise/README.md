@@ -79,7 +79,7 @@ Google Sheets: Service-Account über `GOOGLE_CLIENT_EMAIL` und `GOOGLE_PRIVATE_K
 
 Im Newsletter-Editor gibt es ein Feld «Dein Wunsch» und die Aktion **Newslettertext überarbeiten**. Der Auftrag wird in PostgreSQL gespeichert. Der Worker übernimmt ihn mit einer Lease, lässt den bestehenden OpenAI-Client nur Textfelder vorschlagen und speichert eine neue Inhaltsversion. Die HTML-Vorschau kommt aus `renderNewsletter`. Bilder, Links und die Vorlage bleiben unverändert. Es gibt keinen Mailchimp- oder SMTP-Aufruf.
 
-**Layoutänderung umsetzen** bleibt blockiert, bis der Cursor-Adapter aus PR #322 geprüft eingebunden ist. Dieser Branch kopiert den Adapter nicht. Ein Cursor-Status «finished» wird nie als Erfolg gewertet.
+Ein Wunschfeld, eine Aktion **Auftrag starten**. Technische Wünsche werden an `handoffNewsletter` aus PR #322 delegiert, sobald dieser Branch konfliktfrei vorliegt. Bis dahin sendet StudioONE keinen Cursor-Auftrag. Ein Cursor-Link wird nie als erledigter Newsletter gewertet.
 
 Der Worker läuft im bestehenden Prozess: `scripts/start-production.mjs` ruft einmal pro Minute `/api/internal/task-tick` mit demselben kurzlebigen Bearer wie den Mail-Tick. Zusätzlich stösst das Öffnen des Auftrags fällige Arbeit an. Ein eigener Render-Worker ist nicht eingerichtet. Ohne `OPENAI_API_KEY` und `CONTENT_AI_ENABLED=true` bleibt die Textüberarbeitung sichtbar blockiert.
 
