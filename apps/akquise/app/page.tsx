@@ -744,7 +744,10 @@ export default function App() {
           {tab === "Mail-Studio" && (
             <MailStudio
               filters={contactFilters}
-              onFiltersChange={setContactFilters}
+              onFiltersChange={(value) => {
+                setContactFilters(value);
+                setSelected([]);
+              }}
               initialDraftIds={mailDraftIds}
               drafts={data.drafts}
               contacts={data.contacts}
