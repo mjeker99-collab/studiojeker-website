@@ -487,6 +487,7 @@ export default function StudioChat({
       );
     }
   }
+  const SaveContainer = projectArea === "Content-Studio" ? "details" : "div";
   const submission = (
     <>
       <div hidden={!message.trim()}>
@@ -547,8 +548,12 @@ export default function StudioChat({
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
       <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
-      <details className="studio-project-options">
-        <summary>Gesicherte Projekte öffnen oder Arbeitsstand sichern</summary>
+      <SaveContainer className="studio-project-options">
+        {projectArea === "Content-Studio" && (
+          <summary>
+            Gesicherte Projekte öffnen oder Arbeitsstand sichern
+          </summary>
+        )}
         <ProjectSave
           area={projectArea}
           identity={seriesId}
@@ -587,7 +592,7 @@ export default function StudioChat({
             setError("");
           }}
         />
-      </details>
+      </SaveContainer>
 
       {!!dialogContents.length && (
         <DialogManager
