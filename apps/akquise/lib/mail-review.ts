@@ -11,7 +11,7 @@ import {
 } from "./policy";
 import { appendMailContent, mailImageIds } from "./mail-content";
 import { mailImageAttachments } from "./mail-images";
-import { editDraft, reviewDraft } from "./workflow";
+import { editDraft, reviewDraft, discardDrafts } from "./workflow";
 
 const ids = z
   .array(z.string().min(1).max(100))
@@ -32,6 +32,14 @@ export async function mailReview(
   raw: unknown,
   sender?: SmtpSender,
 ) {
+  if (action === "discard") {
+    const input = z.object({
+      confirmed: z.literal(true),
+      items: z.array(z.object({ id: z.string().min(1), version: z.number().int().positive() }).strict()).min(1).max(200),
+    }).strict().parse(raw);
+    const result = await discardDrafts(userId, input.items);
+    return { results: result.results };
+  }
   if (action === "content") {
     const input = z
       .object({

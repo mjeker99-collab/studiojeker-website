@@ -33,6 +33,40 @@ async function actor(tx: Tx, userId: string) {
 async function lock(tx: Tx, key: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
 }
+// Use the same lock order as dispatch. Never remove delivery history or the
+// recipient records that enforce duplicate-send protection.
+export async function discardDrafts(userId: string, items: { id: string; version: number }[]) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    const drafts = await tx.draft.findMany({ where: { id: { in: items.map(i => i.id) } } });
+    for (const contactId of [...new Set(drafts.map(d => d.contactId))].sort())
+      await lock(tx, "contact:" + contactId);
+    const results = [];
+    for (const item of items.filter((v, i, a) => a.findIndex(x => x.id === v.id) === i)) {
+      const draft = await tx.draft.findUnique({ where: { id: item.id } });
+      if (!draft) {
+        results.push({ id: item.id, ok: true, message: "Bereits verworfen." });
+        continue;
+      }
+      const delivery = await tx.delivery.findFirst({ where: { draftId: item.id } });
+      const active = await tx.mailQueueItem.findFirst({ where: { draftId: item.id, status: { in: ["SENDING", "SENT", "UNKNOWN"] } } });
+      if (draft.version !== item.version || delivery || active) {
+        results.push({ id: item.id, ok: false, message: draft.version !== item.version
+          ? "Entwurf wurde geändert. Auswahl neu laden."
+          : "Versand oder Versandversuch vorhanden. Entwurf und Verlauf bleiben erhalten." });
+        continue;
+      }
+      await tx.mailQueueItem.updateMany({ where: { draftId: item.id, status: "QUEUED" }, data: { status: "CANCELLED", error: "Entwurf ausdrücklich verworfen." } });
+      await tx.approval.deleteMany({ where: { draftId: item.id } });
+      await tx.draftVersion.deleteMany({ where: { draftId: item.id } });
+      await tx.draft.delete({ where: { id: item.id } });
+      await audit(tx, userId, "DRAFT_DISCARDED", item.id, { contactId: draft.contactId, version: draft.version });
+      results.push({ id: item.id, ok: true, message: "Ungesendeten Entwurf verworfen. Kontakt bleibt erhalten." });
+    }
+    return { results };
+  }, { timeout: 30000 });
+}
 async function invalidate(tx: Tx, contactId: string, userId: string) {
   await tx.approval.updateMany({
     where: { contactId, status: { in: ["PENDING", "APPROVED"] } },
