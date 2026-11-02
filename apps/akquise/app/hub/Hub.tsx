@@ -1,4 +1,6 @@
 "use client";
+import NewsletterWorkspace from "../newsletter/NewsletterWorkspace";
+import "../newsletter/newsletter-workspace.css";
 import {
   NewsletterFields,
   NewsletterPreview,
@@ -152,6 +154,8 @@ export default function Hub({
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
+  const [manualNewsletter, setManualNewsletter] = useState(false);
+  const [newsletterSessionKey, setNewsletterSessionKey] = useState(0);
   const [data, setData] = useState<HubState | null>(null);
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -267,7 +271,8 @@ export default function Hub({
       setBusy(false);
     }
   }
-  function edit(c: Content) {
+  function edit(c: Content, resetDialog = true) {
+    if (resetDialog) setNewsletterSessionKey((key) => key + 1);
     setEditing(c);
     setForm(c.versions[0].payload as unknown as ContentInput);
     setRead(false);
@@ -287,6 +292,22 @@ export default function Hub({
   function update(patch: Partial<ContentInput>) {
     setForm((f) => f && { ...f, ...patch });
     setRead(false);
+  }
+  async function reloadNewsletter(id: string) {
+    const response = await fetch("/api/hub/state", { cache: "no-store" });
+    const updated: HubState = await response.json();
+    if (!response.ok) throw new Error("Gespeicherter Newsletter konnte nicht geladen werden.");
+    const current = updated.contents.find((item) => item.id === id);
+    if (!current) throw new Error("Newsletter nicht gefunden.");
+    setData(updated);
+    edit(current, false);
+    return current;
+  }
+  async function saveNewsletter(next: ContentInput) {
+    if (editing && JSON.stringify(next) === JSON.stringify(editing.versions[0].payload)) return editing;
+    const saved = await post(editing ? "contents/" + editing.id : "contents",
+      editing ? { version: editing.version, data: next } : next);
+    return reloadNewsletter(saved.id);
   }
   if (!data)
     return (
@@ -497,7 +518,7 @@ export default function Hub({
                     ? "Exportiert · nicht übertragen · nicht versandt"
                     : "Nicht exportiert · nicht übertragen · nicht versandt"}
               </p>
-              <button onClick={() => edit(c)}>Inhalt öffnen ↗</button>
+              <button disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
               {c.kind === "NEWSLETTER" && (
                 <button
                   className="secondary"
@@ -947,9 +968,10 @@ export default function Hub({
               <h2>Newsletter bearbeiten</h2>
               <p>Wähle entweder die Grundvorlage oder die neueste Ausgabe. Ältere Versionen bleiben in der Newsletter-Übersicht erhalten.</p>
               <div className="actions" role="group" aria-label="Newsletter-Bearbeitung starten">
-                <button type="button" className="secondary" onClick={() => {
+                <button type="button" className="secondary" disabled={busy} onClick={() => {
                   setTemplateId("master-v7");
                   setShowOriginal(false);
+                  setNewsletterSessionKey((key) => key + 1);
                   setEditing(null);
                   const fresh = newContent("NEWSLETTER", userId);
                   const template = newsletterLibrary.find((item) => item.id === "master-v7")!;
@@ -960,7 +982,7 @@ export default function Hub({
                   fresh.body = newsletterText(fresh.newsletter);
                   setForm(fresh);
                 }}>Grundvorlage bearbeiten</button>
-                <button type="button" disabled={!data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
+                <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
                   const latest = data?.contents
                     .filter((item) => item.kind === "NEWSLETTER")
                     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
@@ -981,8 +1003,10 @@ export default function Hub({
           )}
           <div className="actions">
             <button
+              disabled={busy}
               onClick={() => {
-                setEditing(null);
+                setNewsletterSessionKey((key) => key + 1);
+                  setEditing(null);
                 const fresh = newContent(
                   section === "Newsletter" ? "NEWSLETTER" : "SOCIAL",
                   userId,
@@ -1027,10 +1051,22 @@ export default function Hub({
                 ? `Inhalt bearbeiten · V${editing.version}`
                 : "Neuer Inhalt"}
             </h2>
-            <button className="secondary" onClick={() => setForm(null)}>
+            <button className="secondary" disabled={busy} onClick={() => setForm(null)}>
               Editor schliessen
             </button>
           </div>
+          {form.kind === "NEWSLETTER" && form.newsletter && (
+            <>
+              <NewsletterWorkspace key={newsletterSessionKey}
+                value={form} saved={editing} save={saveNewsletter}
+                reload={async (id) => { await reloadNewsletter(id); }} onBusy={setBusy} />
+              <button type="button" className="secondary" disabled={busy}
+                aria-expanded={manualNewsletter} onClick={() => setManualNewsletter(!manualNewsletter)}>
+                {manualNewsletter ? "Manuelle Bearbeitung schliessen" : "Texte und Bilder manuell bearbeiten"}
+              </button>
+            </>
+          )}
+          <div hidden={form.kind === "NEWSLETTER" && !!form.newsletter && !manualNewsletter}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -1043,10 +1079,11 @@ export default function Hub({
                 const updated: HubState = await r.json();
                 const c = updated.contents.find((x) => x.id === saved.id)!;
                 setData(updated);
-                edit(c);
+                edit(c, false);
               }, "Version gespeichert. Eine bisherige Freigabe ist ungültig.");
             }}
           >
+            <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <label>
               Interner Titel
               <input
@@ -1226,7 +1263,9 @@ export default function Hub({
             >
               Version speichern
             </button>
+            </fieldset>
           </form>
+          </div>
           {form.studio && editing && (
             <StudioLayoutPreview
               snapshot={form.studio}
@@ -1273,13 +1312,7 @@ export default function Hub({
                   </p>
                 </article>
               ))
-            ) : form.newsletter ? (
-              <NewsletterPreview
-                subject={form.subject}
-                preheader={form.preheader}
-                newsletter={form.newsletter}
-              />
-            ) : (
+            ) : form.newsletter ? null : (
               <article>
                 <strong>studiojeker®</strong>
                 <p className="muted">{form.preheader}</p>
@@ -1841,3 +1874,4 @@ function DraftPlanning({
     </section>
   );
 }
+
