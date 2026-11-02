@@ -239,12 +239,13 @@ test("Einzelversand zählt mit und kein Duplikat aus der Warteschlange", async (
     "SENT",
   );
   assert.equal(await db.delivery.count({ where: { recipient: a.c.email } }), 1);
-  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 1);
+  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 0);
   await runMailSchedule(sender);
   assert.equal(calls, 1);
   await elapsed();
   await runMailSchedule(sender);
   assert.equal(calls, 2);
+  assert.equal(await db.delivery.count({ where: { recipient: b.c.email } }), 1);
 });
 test("Unklarer SMTP-Ausgang pausiert dauerhaft; Abgleich erlaubt keine Wiederholung", async () => {
   const a = await prepared();
