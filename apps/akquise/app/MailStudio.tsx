@@ -66,6 +66,7 @@ export default function MailStudio({
 }) {
   const operation = useRef(false);
   const approvalRef = useRef<HTMLElement>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleRevision, setScheduleRevision] = useState(0);
   const [sendableQueuedIds, setSendableQueuedIds] = useState<string[]>([]);
   const [queuedIds, setQueuedIds] = useState<string[]>([]);
@@ -256,6 +257,7 @@ export default function MailStudio({
         old.filter((id) => !completed.some((r) => r.id === id && r.ok)),
       );
       setScheduleRevision((v) => v + 1);
+      if (mode === "schedule") setScheduleOpen(true);
       await refresh();
     }
   }
@@ -467,11 +469,14 @@ export default function MailStudio({
             <button
               className="secondary"
               disabled={busy}
-              onClick={() =>
-                document
-                  .getElementById("mail-schedule-title")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
+              onClick={() => {
+                setScheduleOpen(true);
+                requestAnimationFrame(() =>
+                  document
+                    .getElementById("mail-schedule-title")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                );
+              }}
             >
               Zeitplan & Versandstatus
             </button>
@@ -995,17 +1000,24 @@ export default function MailStudio({
           )}
         </section>
       )}
-      <MailSchedule
-        key={scheduleRevision}
-        drafts={drafts}
-        openDraft={openDraft}
-        compact={false}
-        readyCount={candidates.length}
-        onQueueChange={setQueuedIds}
-        onSendableQueueChange={setSendableQueuedIds}
-        reviewBusy={busy}
-        onSendNow={(ids) => void run(() => reviewForSending(ids))}
-      />
+      <details
+        className="panel"
+        open={scheduleOpen}
+        onToggle={(e) => setScheduleOpen(e.currentTarget.open)}
+      >
+        <summary>Zeitplan, Warteschlange und Verlauf</summary>
+        <MailSchedule
+          key={scheduleRevision}
+          drafts={drafts}
+          openDraft={openDraft}
+          compact={false}
+          readyCount={candidates.length}
+          onQueueChange={setQueuedIds}
+          onSendableQueueChange={setSendableQueuedIds}
+          reviewBusy={busy}
+          onSendNow={(ids) => void run(() => reviewForSending(ids))}
+        />
+      </details>
     </section>
   );
 }

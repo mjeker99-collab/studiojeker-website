@@ -258,6 +258,9 @@ test("schedule starts directly from the overview after explicit approval", async
 }) => {
   const state = await setup(page, { queued: true });
   await page
+    .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Zeitplan starten", exact: true })
     .click();
   const start = page.getByRole("button", {
