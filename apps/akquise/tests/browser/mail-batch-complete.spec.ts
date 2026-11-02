@@ -360,7 +360,7 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\\/Akquise/ }).click();
+  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await expect(page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/)).toBeVisible();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await expect(page.getByRole("heading", { name: "2 Kontakte ausgewählt" })).toBeVisible();
