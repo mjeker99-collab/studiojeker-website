@@ -368,3 +368,58 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
   await expect(page.getByText(/2 info@-Adressen von der Auswahl ausgeschlossen/)).toBeVisible();
   expect(mailCalls).toBe(0);
 });
+
+
+test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
+  const contacts = [
+    { id: "good", revision: 1, organisation: "Marketing", firstName: "Mia", lastName: "Test", email: "marketing@example.test", status: "NEW" },
+    { id: "info", revision: 1, organisation: "Info", firstName: "Ina", lastName: "Test", email: "info@example.test", status: "NEW" },
+    { id: "stale", revision: 1, organisation: "Changed", firstName: "Ada", lastName: "Test", email: "kommunikation@example.test", status: "NEW" },
+  ];
+  const makeDraft = (id: string, contactId: string, recipient: string) => ({
+    id, contactId, version: 1,
+    versions: [{ version: 1, recipient, subject: "Persönliches Angebot", signatureCurrent: true }],
+    approvals: [],
+  });
+  const drafts = [
+    makeDraft("d-good", "good", "marketing@example.test"),
+    makeDraft("d-info", "info", "info@example.test"),
+    // Contact was updated, but the old draft still contains an info@ recipient.
+    makeDraft("d-stale", "stale", "INFO+old@example.test"),
+  ];
+  let previewIds: string[] = [];
+  let dispatchCalls = 0;
+  await page.route("**/api/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
+    if (path === "/api/state") return route.fulfill({ json: {
+      user: { id: "test", name: "Test" }, users: [], contacts, drafts,
+      deliveries: [], suppressions: [], audits: [],
+      generator: "disabled", externalSending: false, mailMode: "disabled",
+    } });
+    if (path === "/api/hub/state") return route.fulfill({ json: {
+      campaigns: [], contents: [], users: [], drafts: [], customers: [],
+      integrations: {}, events: [],
+    } });
+    if (path === "/api/mail-review/preview") {
+      previewIds = body.ids;
+      return route.fulfill({ json: { rows: body.ids.map((id: string) => ({
+        id, version: 1, hash: "a".repeat(64), contactRevision: 1,
+        recipient: "marketing@example.test", subject: "Persönliches Angebot",
+        body: "Guten Tag", organisation: "Marketing", publicAuthority: false,
+        needsLegal: true, issues: [],
+      })) } });
+    }
+    if (path.startsWith("/api/mail-review/approve")) dispatchCalls += 1;
+    return route.fulfill({ status: 503, json: { error: "Not used in selection test" } });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await expect(page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })).toBeVisible();
+  await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }).click();
+  await expect(page.getByRole("heading", { name: "1 persönliche Mails vorhanden" })).toBeVisible();
+  await page.getByRole("button", { name: "1 Mails gemeinsam freigeben →" }).click();
+  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
+  expect(previewIds).toEqual(["d-good"]);
+  expect(dispatchCalls).toBe(0);
+});
