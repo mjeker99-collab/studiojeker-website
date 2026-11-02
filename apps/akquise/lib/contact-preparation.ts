@@ -147,7 +147,11 @@ export function contactPreparation(
   // Shared entries fill gaps after note extraction. Only explicit row edits
   // may replace existing values. A preview never writes or grants permission.
   for (const key of ["sourceUrl", "verifiedAt", "hook"] as const) {
-    if (!values[key].trim() && input.shared?.[key]) {
+    const invalidDate = key === "verifiedAt" &&
+      (Number.isNaN(Date.parse(values[key])) || new Date(values[key]) > now);
+    // An explicitly entered review date may also repair an invalid/future
+    // stored date. Valid historical evidence keeps its original date.
+    if ((!values[key].trim() || invalidDate) && input.shared?.[key]) {
       values[key] = input.shared[key];
       origins.push(
         `${key === "sourceUrl" ? "Quelle" : key === "verifiedAt" ? "Prüfdatum" : "Anknüpfungspunkt"} aus gemeinsamer Angabe`,

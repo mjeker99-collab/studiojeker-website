@@ -80,14 +80,12 @@ for (const width of [390, 768, 1440]) {
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
-    await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
     await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
     await expect(approve).toBeEnabled();
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Aktualisierter synthetischer Nachweis für beide Testkontakte.");
     await expect(approve).toBeDisabled();
-    await panel.getByLabel(/Ich bestätige die Zulässigkeit/).check();
     await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
     expect(
       (await new AxeBuilder({ page }).include(".mail-studio").analyze())
@@ -237,23 +235,27 @@ for (const width of [390, 768, 1440]) {
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
     await page.getByLabel("Kontakte suchen").fill(suffix);
-    await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-    await page.getByRole("button", { name: "2 persönliche Mails vorbereiten →", exact: true }).click();
+    await page
+      .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Sofort senden (2) →", exact: true })
+      .click();
     const panel = page.getByRole("region", {
-      name: "2 Kontakte ergänzen und speichern",
+      name: "Angaben für 2 Mails bestätigen",
     });
     const common = panel.getByRole("group", {
       name: "Gemeinsame Angaben für die Auswahl",
     });
-    await common.getByLabel("Prüfstatus").selectOption("VERIFIED");
-    await common.getByLabel("Verifikationsdatum").fill("2026-01-02");
+    await expect(common.getByLabel("Prüfstatus")).toHaveCount(0);
+    await common.getByLabel("Prüfdatum").fill("2026-01-02");
     await expect(
       panel.getByText(/Bei 2 Kontakten fehlt die Bestätigung/),
     ).toBeHidden();
     await common.getByLabel("Quellen-URL").fill("keine adresse");
-    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Angaben für alle speichern und weiter →", exact: true })
+      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
       .click();
     await expect(panel.getByRole("alert")).toContainText(
       "Bitte die markierte Quellenadresse korrigieren",
@@ -261,12 +263,12 @@ for (const width of [390, 768, 1440]) {
     await expect(common.getByLabel("Quellen-URL")).toHaveValue("keine adresse");
     await common.getByLabel("Quellen-URL").fill("");
     // Saving useful partial data must not require a source or create a draft.
-    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Angaben für alle speichern und weiter →", exact: true })
+      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
       .click();
     await expect(
-      panel.getByText("2 Kontakte gespeichert · 0 nicht gespeichert"),
+      panel.getByText("Noch zu korrigieren für 2 Kontakte:"),
     ).toBeVisible();
     const partial = await (await page.request.get("/api/state")).json();
     for (const id of ids) {
@@ -279,20 +281,27 @@ for (const width of [390, 768, 1440]) {
     }
     await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
-      name: "Angaben für alle speichern und weiter →",
+      name: "Weiter zum Sofortversand →",
       exact: true,
     });
     await expect(prepare).toBeDisabled();
-    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await expect(prepare).toBeEnabled();
-    const rowDetails = panel.locator("details.preparation-contact").filter({ hasText: "Eva Muster" });
+    await panel
+      .getByText("Details und Ausnahmen (2 Kontakte)", { exact: true })
+      .click();
+    const rowDetails = panel
+      .locator("details.preparation-contact")
+      .filter({ hasText: "Eva Muster" });
     await rowDetails.locator("summary").click();
-    const row = rowDetails.getByRole("group", { name: "Angaben für Eva Muster" });
+    const row = rowDetails.getByRole("group", {
+      name: "Angaben für Eva Muster",
+    });
     await row
       .getByLabel("Quellen-URL")
       .fill("example.test/individueller-beleg");
     await expect(prepare).toBeDisabled();
-    await panel.getByLabel(/Ich bestätige die eingetragenen Angaben/).check();
+    await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     expect(
       (await new AxeBuilder({ page }).include(".contact-preparation").analyze())
         .violations,
