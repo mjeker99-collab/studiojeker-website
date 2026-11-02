@@ -1,3 +1,8 @@
+import {
+  assistMail,
+  applyMailAssistant,
+  mailAssistantHistory,
+} from "@/lib/mail-assistant/service";
 import { uploadMailImage } from "@/lib/mail-images";
 import { dashboardState } from "@/lib/dashboard";
 import { projectDrafts, saveProjectDraft } from "@/lib/projects/service";
@@ -466,7 +471,9 @@ async function handler(
       });
     }
     if (route === "mail-images" && req.method === "POST") {
-      return NextResponse.json(await uploadMailImage(user.id, await boundedBody(req, 8 * 1024 * 1024)));
+      return NextResponse.json(
+        await uploadMailImage(user.id, await boundedBody(req, 8 * 1024 * 1024)),
+      );
     }
     if (route === "studio/upload" && req.method === "POST") {
       const kind =
@@ -511,6 +518,8 @@ async function handler(
       jar.delete(sessionCookieName());
       return NextResponse.json({ ok: true });
     }
+    if (route === "mail-assistant/history" && req.method === "GET")
+      return NextResponse.json(await mailAssistantHistory(user.id));
     if (route === "state" && req.method === "GET") {
       const [contacts, drafts, deliveries, suppressions, audits, users] =
         await Promise.all([
@@ -627,7 +636,12 @@ async function handler(
         });
       throw new PolicyError("Nicht gefunden.", 404);
     }
-    if (route === "mail-review/test") return NextResponse.json(await sendInternalSmtpTest(user.id, body));
+    if (route === "mail-assistant/generate")
+      return NextResponse.json(await assistMail(user.id, body));
+    if (route === "mail-assistant/apply")
+      return NextResponse.json(await applyMailAssistant(user.id, body));
+    if (route === "mail-review/test")
+      return NextResponse.json(await sendInternalSmtpTest(user.id, body));
     if (path[0] === "mail-review" && path.length === 2)
       return NextResponse.json(await mailReview(user.id, path[1], body), {
         headers: { "Cache-Control": "no-store" },

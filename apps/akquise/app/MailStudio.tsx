@@ -2,6 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import "./mailstudio-visual.css";
 import { signedMessage } from "../lib/mail-signature";
+import ContactFilters from "./ContactFilters";
+import MailAssistant from "./MailAssistant";
+import {
+  matchesContactFilters,
+  emptyContactFilters,
+  type ContactFilters as Filters,
+} from "../lib/contact-filters";
 import MailContentEditor from "./MailContentEditor";
 import MailSchedule from "./MailSchedule";
 import ContactPreparationEditor from "./ContactPreparation";
@@ -45,17 +52,22 @@ async function api(action: string, body: unknown) {
   return data;
 }
 export default function MailStudio({
+  filters = emptyContactFilters,
+  onFiltersChange,
   initialDraftIds = EMPTY_IDS,
   drafts,
   contacts,
   refresh,
   openDraft,
 }: {
+  filters?: Filters;
+  onFiltersChange?: (value: Filters) => void;
   initialDraftIds?: string[];
   drafts: Draft[];
   contacts: {
     id: string;
     organisation: string;
+    industry?: string;
     status: string;
     replyOutcome?: string;
     firstName: string;
@@ -96,6 +108,7 @@ export default function MailStudio({
   const [contactIds, setContactIds] = useState<string[]>([]);
   const matchingContacts = contacts.filter(
     (c) =>
+      matchesContactFilters(c, filters) &&
       !drafts.some((d) => d.contactId === c.id && queuedIds.includes(d.id)) &&
       !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
@@ -130,6 +143,7 @@ export default function MailStudio({
     return (
       !queuedIds.includes(d.id) &&
       c &&
+      matchesContactFilters(c, filters) &&
       !c.replyOutcome &&
       !["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) &&
       d.versions[0] &&
@@ -143,6 +157,17 @@ export default function MailStudio({
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+  const filteredQueuedIds = sendableQueuedIds.filter((id) => {
+    const d = drafts.find((d) => d.id === id);
+    const c = contacts.find((c) => c.id === d?.contactId);
+    return (
+      c &&
+      matchesContactFilters(c, filters) &&
+      `${c.organisation} ${c.firstName} ${c.lastName} ${c.email}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  });
   const chosen = rows.filter((r) => included.includes(r.id));
   const missingLegal = chosen.filter((r) => r.needsLegal);
   const publicLegal = missingLegal.some((r) => r.publicAuthority);
@@ -291,6 +316,7 @@ export default function MailStudio({
     setSkipped([]);
     setError("");
     setSearch("");
+    onFiltersChange?.(emptyContactFilters);
     setSendProgress("");
     setSelectionNotice("");
     setBatchSize(25);
@@ -492,7 +518,7 @@ export default function MailStudio({
             </button>
           </div>
           {step === 1 &&
-            (visible.length > 0 || sendableQueuedIds.length > 0) && (
+            (visible.length > 0 || filteredQueuedIds.length > 0) && (
               <button
                 disabled={busy}
                 onClick={() =>
@@ -500,7 +526,7 @@ export default function MailStudio({
                     reviewForSending([
                       ...new Set([
                         ...visible.map((d) => d.id),
-                        ...sendableQueuedIds,
+                        ...filteredQueuedIds,
                       ]),
                     ]),
                   )
@@ -509,14 +535,14 @@ export default function MailStudio({
                 Alle jetzt senden (
                 {Math.min(
                   200,
-                  new Set([...visible.map((d) => d.id), ...sendableQueuedIds])
+                  new Set([...visible.map((d) => d.id), ...filteredQueuedIds])
                     .size,
                 )}
                 ) →
               </button>
             )}
           {step === 1 &&
-            (visible.length > 0 || sendableQueuedIds.length > 0) && (
+            (visible.length > 0 || filteredQueuedIds.length > 0) && (
               <p>
                 Öffnet die gemeinsame Vorschau und Freigabe für bis zu 200
                 Mails.
@@ -533,6 +559,28 @@ export default function MailStudio({
             className="panel"
             aria-label="Kontakte im Mail-Studio vorbereiten"
           >
+            <MailAssistant
+              onBusyChange={setBusy}
+              mode="RESEARCH"
+              refresh={refresh}
+              disabled={busy}
+              industry={
+                filters.industry === "__empty__" ? "" : filters.industry
+              }
+            />
+            <ContactFilters
+              contacts={contacts}
+              value={filters}
+              disabled={busy}
+              onChange={(value) => {
+                onFiltersChange?.(value);
+                setContactIds([]);
+                setSelected([]);
+                setRows([]);
+                setIncluded([]);
+                setSelectionNotice("");
+              }}
+            />
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
             <button
               disabled={busy || !contactIds.length || contactIds.length > 200}
@@ -810,6 +858,21 @@ export default function MailStudio({
               zurückgestellt
             </strong>
           </p>
+          <MailAssistant
+            onBusyChange={setBusy}
+            mode="WRITE"
+            disabled={busy}
+            items={chosen.map((r) => ({ id: r.id, version: r.version }))}
+            refresh={async () => {
+              const keep = [...included];
+              setRead(false);
+              setDispatch(false);
+              setLegal(false);
+              await preview(rows.map((r) => r.id));
+              setIncluded(keep);
+              await refresh();
+            }}
+          />
           <MailContentEditor
             count={chosen.length}
             disabled={busy}
@@ -838,11 +901,24 @@ export default function MailStudio({
               }
             }}
           />
-          <button type="button" className="secondary" disabled={busy || !chosen.length} onClick={() => void run(async () => {
-            const first = chosen[0];
-            const result = await api("test", {confirmed:true, requestId:crypto.randomUUID(),draft:{id:first.id,version:first.version}});
-            setSendProgress(result.message);
-          })}>Erste Mail als Test an njeker@studiojeker.ch senden</button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={busy || !chosen.length}
+            onClick={() =>
+              void run(async () => {
+                const first = chosen[0];
+                const result = await api("test", {
+                  confirmed: true,
+                  requestId: crypto.randomUUID(),
+                  draft: { id: first.id, version: first.version },
+                });
+                setSendProgress(result.message);
+              })
+            }
+          >
+            Erste Mail als Test an njeker@studiojeker.ch senden
+          </button>
           <section
             id="mailstudio-send-approval"
             ref={approvalRef}

@@ -1,4 +1,9 @@
 "use client";
+import ContactFilters from "./ContactFilters";
+import {
+  matchesContactFilters,
+  emptyContactFilters,
+} from "../lib/contact-filters";
 import MailContentEditor from "./MailContentEditor";
 import { appendMailContent } from "../lib/mail-content";
 import { signedMessage } from "../lib/mail-signature";
@@ -138,6 +143,7 @@ function AppLogo() {
   );
 }
 export default function App() {
+  const [contactFilters, setContactFilters] = useState(emptyContactFilters);
   const [data, setData] = useState<State | null>(null),
     [loaded, setLoaded] = useState(false),
     [conceptDirty, setConceptDirty] = useState(false),
@@ -356,6 +362,7 @@ export default function App() {
   const contacts =
     data?.contacts.filter(
       (c) =>
+        matchesContactFilters(c, contactFilters) &&
         (!filter ||
           c.status === filter ||
           c.replyOutcome === filter ||
@@ -736,6 +743,11 @@ export default function App() {
           )}
           {tab === "Mail-Studio" && (
             <MailStudio
+              filters={contactFilters}
+              onFiltersChange={(value) => {
+                setContactFilters(value);
+                setSelected([]);
+              }}
               initialDraftIds={mailDraftIds}
               drafts={data.drafts}
               contacts={data.contacts}
@@ -826,6 +838,15 @@ export default function App() {
                   {busy ? "Import läuft …" : "Aus Google Drive importieren"}
                 </button>
               </div>
+              <ContactFilters
+                contacts={data.contacts}
+                value={contactFilters}
+                onChange={(value) => {
+                  setContactFilters(value);
+                  setSelected([]);
+                }}
+                disabled={busy}
+              />
               <div className="table-note">
                 {contacts.length} Kontakte · {selected.length} ausgewählt ·
                 Importe erhalten keine Versandfreigabe.
@@ -1440,9 +1461,16 @@ export default function App() {
                   }}
                 />
               </label>
-              <MailContentEditor disabled={busy} onApply={async (content) => {
-                setMessage({...message, body:appendMailContent(message.body, content)}); setRead(false);
-              }}/>
+              <MailContentEditor
+                disabled={busy}
+                onApply={async (content) => {
+                  setMessage({
+                    ...message,
+                    body: appendMailContent(message.body, content),
+                  });
+                  setRead(false);
+                }}
+              />
               <button disabled={busy || !dirty}>
                 Als neue Version speichern
               </button>
