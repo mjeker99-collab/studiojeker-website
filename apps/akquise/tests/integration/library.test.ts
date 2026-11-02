@@ -1058,3 +1058,167 @@ test("Grafikstudio rendert jede Vorlage und Format mit Originalschrift und separ
   );
   assert.equal((await sharp(jpg).metadata()).format, "jpeg");
 });
+
+test("folders: nested moves, scoped associations, conflicts, trash and restoration preserve assets", async () => {
+  const { saveLibraryFolder, moveLibraryItems, trashLibraryEntry } =
+    await import("../../lib/library/folders");
+  const { folderVisible } = await import("../../lib/library/tree");
+  const folder = (name: string, parentId: string | null = null) => ({
+    name,
+    parentId,
+    customerId: null,
+    projectId: null,
+  });
+  const root = await saveLibraryFolder(martin, folder("SYNTHETISCH Kunde"));
+  const child = await saveLibraryFolder(martin, folder("Projekt", root.id));
+  const other = await saveLibraryFolder(martin, folder("Anderes Projekt"));
+  const text = await saveLibraryItem(martin, { ...item(), folderId: child.id });
+  await assert.rejects(
+    saveLibraryFolder(martin, folder("synthetisch kunde")),
+    /bereits vorhanden/,
+  );
+  await assert.rejects(
+    saveLibraryFolder(martin, {
+      ...folder("Zyklus", child.id),
+      id: root.id,
+      revision: 1,
+    }),
+    /Unterordner/,
+  );
+  await assert.rejects(
+    saveLibraryFolder(martin, {
+      ...folder("Kein Kunde"),
+      customerId: "foreign-customer",
+    }),
+    /nicht zugänglich/,
+  );
+  await assert.rejects(
+    saveLibraryFolder(martin, {
+      ...folder("Kein Projekt"),
+      projectId: "foreign-project",
+    }),
+    /nicht zugänglich/,
+  );
+  await assert.rejects(
+    moveLibraryItems(martin, {
+      items: [{ id: text.id, revision: 8 }],
+      folderId: other.id,
+    }),
+    /geändert/,
+  );
+  assert.equal(
+    (await db.libraryItem.findUniqueOrThrow({ where: { id: text.id } }))
+      .folderId,
+    child.id,
+  );
+  await trashLibraryEntry(martin, {
+    id: root.id,
+    revision: 1,
+    type: "folder",
+    restore: false,
+  });
+  let state = await libraryState(martin);
+  assert.equal(folderVisible(state.folders, child.id), false);
+  await assert.rejects(
+    saveLibraryItem(martin, { ...item(), folderId: child.id }),
+    /nicht verfügbar/,
+  );
+  await assert.rejects(
+    moveLibraryItems(martin, {
+      items: [{ id: text.id, revision: 1 }],
+      folderId: other.id,
+    }),
+    /nicht verfügbar/,
+  );
+  await trashLibraryEntry(martin, {
+    id: root.id,
+    revision: 2,
+    type: "folder",
+    restore: true,
+  });
+  state = await libraryState(martin);
+  assert.equal(folderVisible(state.folders, child.id), true);
+  await moveLibraryItems(martin, {
+    items: [{ id: text.id, revision: 1 }],
+    folderId: other.id,
+  });
+  assert.equal(
+    (await db.libraryItem.findUniqueOrThrow({ where: { id: text.id } }))
+      .folderId,
+    other.id,
+  );
+  await trashLibraryEntry(martin, {
+    id: text.id,
+    revision: 2,
+    type: "item",
+    restore: false,
+  });
+  await trashLibraryEntry(martin, {
+    id: text.id,
+    revision: 3,
+    type: "item",
+    restore: true,
+  });
+  assert.equal(
+    (await db.libraryItem.findUniqueOrThrow({ where: { id: text.id } }))
+      .deletedAt,
+    null,
+  );
+  const uploaded = await storeAsset(
+    martin,
+    Buffer.from("Folder upload test"),
+    "folder-test.txt",
+    "DOCUMENT",
+    undefined,
+    store,
+    child.id,
+  );
+  const libraryItem = await db.libraryItem.findUniqueOrThrow({
+    where: { assetId: uploaded.id },
+  });
+  assert.equal(libraryItem.folderId, child.id);
+  const reused = await storeAsset(
+    martin,
+    Buffer.from("Folder upload test"),
+    "copy.txt",
+    "DOCUMENT",
+    undefined,
+    store,
+    other.id,
+  );
+  assert.equal(reused.reused, true);
+  assert.equal(
+    (
+      await db.libraryItem.findUniqueOrThrow({
+        where: { assetId: uploaded.id },
+      })
+    ).folderId,
+    child.id,
+  );
+  await trashLibraryEntry(martin, {
+    id: libraryItem.id,
+    revision: 1,
+    type: "item",
+    restore: false,
+  });
+  assert.equal(
+    (await readAsset(martin, uploaded.id, store)).bytes.toString(),
+    "Folder upload test",
+  );
+  // Concurrent opposite moves cannot form a cycle.
+  const left = await saveLibraryFolder(martin, folder("Links"));
+  const right = await saveLibraryFolder(martin, folder("Rechts"));
+  const attempts = await Promise.allSettled([
+    saveLibraryFolder(martin, {
+      ...folder("Links", right.id),
+      id: left.id,
+      revision: 1,
+    }),
+    saveLibraryFolder(martin, {
+      ...folder("Rechts", left.id),
+      id: right.id,
+      revision: 1,
+    }),
+  ]);
+  assert.equal(attempts.filter((a) => a.status === "fulfilled").length, 1);
+});

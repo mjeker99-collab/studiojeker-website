@@ -34,6 +34,7 @@ import {
   archiveItem,
   saveBrand,
 } from "@/lib/library/service";
+import { saveLibraryFolder, moveLibraryItems, trashLibraryEntry } from "@/lib/library/folders";
 import { studioState } from "@/lib/studio/service";
 import { studioMutation } from "@/lib/studio/api";
 import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
@@ -491,7 +492,8 @@ async function handler(
         req,
         kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD,
       );
-      const a = await storeAsset(user.id, bytes, name, kind);
+      const folderId = req.headers.get("x-library-folder");
+      const a = await storeAsset(user.id, bytes, name, kind, undefined, undefined, folderId);
       return NextResponse.json(a);
     }
     if (route === "hub/state" && req.method === "GET")
@@ -672,6 +674,9 @@ async function handler(
       return NextResponse.json(await saveCustomer(user.id, body));
     if (path[0] === "customers" && path.length === 2)
       return NextResponse.json(await saveCustomer(user.id, body, path[1]));
+    if (route === "library/folder") return NextResponse.json(await saveLibraryFolder(user.id, body));
+    if (route === "library/move") return NextResponse.json(await moveLibraryItems(user.id, body));
+    if (route === "library/trash") return NextResponse.json(await trashLibraryEntry(user.id, body));
     if (route === "library/item")
       return NextResponse.json(await saveLibraryItem(user.id, body));
     if (route === "library/archive")
