@@ -48,6 +48,7 @@ export async function setup(
       route.request().method() === "POST" && path !== "/api/mail-images"
         ? route.request().postDataJSON()
         : {};
+    if (path === "/api/mail-assistant/history") return route.fulfill({ json: [] });
     if (path === "/api/mail-review/content") {
       expect(body.items).toHaveLength(3);
       addition = body.content;

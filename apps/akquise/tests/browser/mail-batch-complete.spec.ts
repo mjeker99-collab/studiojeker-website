@@ -388,7 +388,7 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.getByRole("button", { name: "4 Mails erstellen →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
   await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Jetzt senden", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "1 Mail jetzt senden", exact: true })).toBeDisabled();
   expect(preparedIds).toEqual(["m0"]);
   expect(dispatchCalls).toBe(0);
 });

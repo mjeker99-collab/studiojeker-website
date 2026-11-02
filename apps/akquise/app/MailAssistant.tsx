@@ -145,7 +145,7 @@ export default function MailAssistant({
     }
   }
   useEffect(() => {
-    if (expanded) void loadHistory();
+    if (expanded) void Promise.resolve().then(loadHistory);
   }, [expanded]);
   const research = mode === "RESEARCH";
   async function generate() {

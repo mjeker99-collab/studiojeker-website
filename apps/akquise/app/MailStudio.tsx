@@ -976,74 +976,6 @@ export default function MailStudio({
               zurückgestellt
             </strong>
           </p>
-          <MailAssistant
-            onBusyChange={setBusy}
-            mode="WRITE"
-            expanded
-            disabled={busy || editingDirty}
-            items={chosen.map((r) => ({ id: r.id, version: r.version }))}
-            refresh={async () => {
-              const keep = [...included];
-              setRead(false);
-              setDispatch(false);
-              setLegal(false);
-              await preview(rows.map((r) => r.id));
-              setIncluded(keep);
-              await refresh();
-            }}
-          />
-          <details>
-            <summary>Bilder oder Links für alle Mails ergänzen</summary>
-            <MailContentEditor
-              count={chosen.length}
-              disabled={busy || editingDirty}
-              onApply={async (content) => {
-                setBusy(true);
-                setRead(false);
-                setLegal(false);
-                const previousIncluded = [...included];
-                try {
-                  const data = await api("content", {
-                    items: chosen.map((r) => ({
-                      id: r.id,
-                      version: r.version,
-                    })),
-                    content,
-                  });
-                  await preview();
-                  setIncluded(previousIncluded);
-                  await refresh();
-                  if (data.results.some((r: Result) => !r.ok))
-                    throw new Error(
-                      data.results
-                        .filter((r: Result) => !r.ok)
-                        .map((r: Result) => r.message)
-                        .join(" · "),
-                    );
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            />
-          </details>
-          <button
-            type="button"
-            className="secondary"
-            disabled={busy || editingDirty || !chosen.length}
-            onClick={() =>
-              void run(async () => {
-                const first = chosen[0];
-                const result = await api("test", {
-                  confirmed: true,
-                  requestId: crypto.randomUUID(),
-                  draft: { id: first.id, version: first.version },
-                });
-                setSendProgress(result.message);
-              })
-            }
-          >
-            Erste Mail als Test an njeker@studiojeker.ch senden
-          </button>
           <div className="mail-workbench" id="mail-workbench">
             <nav className="mail-recipient-list" aria-label="Mail-Empfänger">
               {rows.map((r) => (
@@ -1153,6 +1085,74 @@ export default function MailStudio({
               </div>
             )}
           </div>
+          <MailAssistant
+            onBusyChange={setBusy}
+            mode="WRITE"
+            expanded
+            disabled={busy || editingDirty}
+            items={chosen.map((r) => ({ id: r.id, version: r.version }))}
+            refresh={async () => {
+              const keep = [...included];
+              setRead(false);
+              setDispatch(false);
+              setLegal(false);
+              await preview(rows.map((r) => r.id));
+              setIncluded(keep);
+              await refresh();
+            }}
+          />
+          <details>
+            <summary>Bilder oder Links für alle Mails ergänzen</summary>
+            <MailContentEditor
+              count={chosen.length}
+              disabled={busy || editingDirty}
+              onApply={async (content) => {
+                setBusy(true);
+                setRead(false);
+                setLegal(false);
+                const previousIncluded = [...included];
+                try {
+                  const data = await api("content", {
+                    items: chosen.map((r) => ({
+                      id: r.id,
+                      version: r.version,
+                    })),
+                    content,
+                  });
+                  await preview();
+                  setIncluded(previousIncluded);
+                  await refresh();
+                  if (data.results.some((r: Result) => !r.ok))
+                    throw new Error(
+                      data.results
+                        .filter((r: Result) => !r.ok)
+                        .map((r: Result) => r.message)
+                        .join(" · "),
+                    );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+          </details>
+          <button
+            type="button"
+            className="secondary"
+            disabled={busy || editingDirty || !chosen.length}
+            onClick={() =>
+              void run(async () => {
+                const first = chosen[0];
+                const result = await api("test", {
+                  confirmed: true,
+                  requestId: crypto.randomUUID(),
+                  draft: { id: first.id, version: first.version },
+                });
+                setSendProgress(result.message);
+              })
+            }
+          >
+            Erste Mail als Test an njeker@studiojeker.ch senden
+          </button>
           <section
             id="mailstudio-send-approval"
             ref={approvalRef}
