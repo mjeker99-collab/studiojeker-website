@@ -27,5 +27,27 @@
       "scrollWidth": 320,
       "clientWidth": 320
     }
-  }
+  },
+  "links": [
+    "file:///workspace/mailchimp/*%7CARCHIVE%7C*",
+    "file:///workspace/mailchimp/*%7CUNSUB%7C*",
+    "file:///workspace/mailchimp/*%7CUPDATE_PROFILE%7C*",
+    "https://vimeo.com/1216347773",
+    "https://vimeo.com/1226148277",
+    "https://www.facebook.com/studiojeker/",
+    "https://www.instagram.com/studiojeker/",
+    "https://www.linkedin.com/company/studiojeker/",
+    "https://www.studiojeker.ch/",
+    "https://www.studiojeker.ch/agb/",
+    "https://www.studiojeker.ch/contact/",
+    "https://www.studiojeker.ch/content-abo/",
+    "https://www.studiojeker.ch/datenschutz/",
+    "https://www.studiojeker.ch/impressum/",
+    "https://www.studiojeker.ch/services/architecture/",
+    "https://www.studiojeker.ch/services/business-communication/",
+    "https://www.studiojeker.ch/services/digital-marketing/",
+    "https://www.studiojeker.ch/services/product-communication/"
+  ],
+  "has_list_address_literal": false,
+  "has_unsub_literal_as_text": false
 }
