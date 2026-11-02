@@ -67,6 +67,24 @@ export async function discardDrafts(userId: string, items: { id: string; version
     return { results };
   }, { timeout: 30000 });
 }
+// Only unused contacts can be removed. Preserve all mail and suppression history.
+export async function deleteUnusedContact(userId: string, id: string, revision: number) {
+  return db.$transaction(async tx => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    await lock(tx, "contact:" + id);
+    const contact = await tx.contact.findFirst({ where: { id, organizationId: "studiojeker" } });
+    if (!contact) throw new PolicyError("Kontakt nicht gefunden.", 404);
+    if (contact.revision !== revision) throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
+    const drafts = await tx.draft.count({ where: { contactId: id } });
+    if (drafts || contact.status === "SENT" || contact.status === "REPLIED" || contact.status === "DO_NOT_CONTACT" || contact.replyOutcome)
+      throw new PolicyError("Dieser Kontakt hat einen Mailverlauf oder eine Versandsperre. Bitte «Nicht mehr kontaktieren» verwenden; der Verlauf bleibt erhalten.", 409);
+    await tx.legalReview.deleteMany({ where: { contactId: id } });
+    await tx.contact.delete({ where: { id } });
+    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, { revision });
+    return { ok: true };
+  });
+}
 async function invalidate(tx: Tx, contactId: string, userId: string) {
   await tx.approval.updateMany({
     where: { contactId, status: { in: ["PENDING", "APPROVED"] } },

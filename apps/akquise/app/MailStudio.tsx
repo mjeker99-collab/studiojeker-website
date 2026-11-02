@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import "./mailstudio-visual.css";
-import { signedMessage } from "../lib/mail-signature";
+import MailPreview from "./MailPreview";
 import ContactFilters from "./ContactFilters";
 import MailAssistant from "./MailAssistant";
 import {
@@ -55,6 +55,9 @@ export default function MailStudio({
   filters = emptyContactFilters,
   onFiltersChange,
   initialDraftIds = EMPTY_IDS,
+  initialContactIds = EMPTY_IDS,
+  onBusyChange,
+  openContact,
   drafts,
   contacts,
   refresh,
@@ -63,6 +66,9 @@ export default function MailStudio({
   filters?: Filters;
   onFiltersChange?: (value: Filters) => void;
   initialDraftIds?: string[];
+  initialContactIds?: string[];
+  onBusyChange?: (busy: boolean) => void;
+  openContact?: (id: string) => void;
   drafts: Draft[];
   contacts: {
     id: string;
@@ -85,10 +91,14 @@ export default function MailStudio({
   const [sendableQueuedIds, setSendableQueuedIds] = useState<string[]>([]);
   const [queuedIds, setQueuedIds] = useState<string[]>([]);
   const [dispatch, setDispatch] = useState(false);
+  const [activeId, setActiveId] = useState("");
+  const [editingDirty, setEditingDirty] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [discardSnapshot, setDiscardSnapshot] = useState<{ id: string; version: number }[]>([]);
+  const [discardSnapshot, setDiscardSnapshot] = useState<
+    { id: string; version: number }[]
+  >([]);
   const [discardConfirmed, setDiscardConfirmed] = useState(false);
   const [discardNotice, setDiscardNotice] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
@@ -180,6 +190,7 @@ export default function MailStudio({
     read &&
     dispatch &&
     !busy &&
+    !editingDirty &&
     chosen.every((r) => !r.issues.length) &&
     (!missingLegal.length ||
       (legal &&
@@ -194,13 +205,16 @@ export default function MailStudio({
         : !read || !dispatch || (missingLegal.length && !legal)
           ? "Bestätige die Versandfreigabe für die ausgewählten Mails."
           : "Bereit. Jetzt senden startet sofort, unabhängig vom Zeitplan.";
+  const activeRow = rows.find((r) => r.id === activeId) || rows[0];
+  useEffect(() => {
+    onBusyChange?.(busy || editingDirty);
+  }, [busy, editingDirty, onBusyChange]);
   function focusApproval() {
     requestAnimationFrame(() => {
-      approvalRef.current?.scrollIntoView({
+      document.getElementById("mail-workbench")?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-      approvalRef.current?.focus({ preventScroll: true });
     });
   }
   async function reviewForSending(ids?: string[]) {
@@ -329,9 +343,15 @@ export default function MailStudio({
     setPreparing(true);
     setStep(1);
   }
-  const discardItems = drafts.filter(d =>
-    rows.length ? included.includes(d.id) : selected.length ? selected.includes(d.id) : contactIds.includes(d.contactId)
-  ).map(({ id, version }) => ({ id, version }));
+  const discardItems = drafts
+    .filter((d) =>
+      rows.length
+        ? included.includes(d.id)
+        : selected.length
+          ? selected.includes(d.id)
+          : contactIds.includes(d.contactId),
+    )
+    .map(({ id, version }) => ({ id, version }));
   async function discardSelection() {
     if (!discardConfirmed) return;
     const data = discardSnapshot.length
@@ -339,8 +359,10 @@ export default function MailStudio({
       : { results: [] as Result[] };
     const failed = data.results.filter((r: Result) => !r.ok);
     resetSelection();
-    setDiscardNotice(`${data.results.filter((r: Result) => r.ok).length} Entwürfe verworfen. Auswahl zurückgesetzt. Kontakte bleiben erhalten.${failed.length ? ` ${failed.length} Entwürfe geschützt: ${[...new Set(failed.map((r: Result) => r.message))].join(" ")}` : ""}`);
-    setScheduleRevision(v => v + 1);
+    setDiscardNotice(
+      `${data.results.filter((r: Result) => r.ok).length} Entwürfe verworfen. Auswahl zurückgesetzt. Kontakte bleiben erhalten.${failed.length ? ` ${failed.length} Entwürfe geschützt: ${[...new Set(failed.map((r: Result) => r.message))].join(" ")}` : ""}`,
+    );
+    setScheduleRevision((v) => v + 1);
     await refresh();
   }
   async function selectReadyContacts(amount: number) {
@@ -458,6 +480,23 @@ export default function MailStudio({
     setStep(2);
   }
   useEffect(() => {
+    if (!initialContactIds.length) return;
+    Promise.resolve().then(() => {
+      setContactIds(initialContactIds);
+      setSelected([]);
+      setRows([]);
+      setIncluded([]);
+      setRead(false);
+      setDispatch(false);
+      setLegal(false);
+      setPreparing(true);
+      setStep(1);
+      setSelectionNotice(
+        `${initialContactIds.length} Kontakte aus deiner Liste ausgewählt.`,
+      );
+    });
+  }, [initialContactIds]);
+  useEffect(() => {
     if (!initialDraftIds.length) return;
     let active = true;
     Promise.resolve()
@@ -493,21 +532,11 @@ export default function MailStudio({
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel mail-studio-workspace">
         <div className="mail-studio-toolbar">
-          <h2>Persönliche Mails senden</h2>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={resetSelection}
-          >
-            Auswahl zurücksetzen
-          </button>
-          <button className="secondary" disabled={busy || (!contactIds.length && !selected.length)} onClick={() => { setDiscardSnapshot(discardItems); setDiscardOpen(true); setDiscardConfirmed(false); setDiscardNotice(""); }}>
-            Auswahl und ungesendete Entwürfe verwerfen
-          </button>
+          <h2>Persönliche Mails erstellen &amp; versenden</h2>
           <div className="actions" aria-label="Arbeitsschritte">
             <button
               className="secondary"
-              disabled={busy}
+              disabled={busy || editingDirty}
               aria-pressed={step === 1}
               onClick={() => {
                 setStep(1);
@@ -515,62 +544,64 @@ export default function MailStudio({
                 setDispatch(false);
               }}
             >
-              1 · Kontakte auswählen
+              Empfänger & Entwürfe
             </button>
             <button
               className="secondary"
-              disabled={busy}
+              disabled={
+                busy ||
+                editingDirty ||
+                (!rows.length &&
+                  !selected.length &&
+                  !contactIds.length &&
+                  !visible.length)
+              }
               aria-pressed={step === 2}
               onClick={() => void run(() => reviewForSending())}
             >
-              2 · Prüfen & senden
+              Vorschau & Versand
             </button>
-            <button
-              className="secondary"
-              disabled={busy}
-              onClick={() => {
-                setScheduleOpen(true);
-                requestAnimationFrame(() =>
-                  document
-                    .getElementById("mail-schedule-title")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-                );
-              }}
-            >
-              Zeitplan & Versandstatus
-            </button>
-          </div>
-          {step === 1 &&
-            (visible.length > 0 || filteredQueuedIds.length > 0) && (
+            <details>
+              <summary>Weitere Optionen</summary>
               <button
-                disabled={busy}
-                onClick={() =>
-                  void run(() =>
-                    reviewForSending([
-                      ...new Set([
-                        ...visible.map((d) => d.id),
-                        ...filteredQueuedIds,
-                      ]),
-                    ]),
-                  )
-                }
+                className="secondary"
+                disabled={busy || editingDirty}
+                onClick={resetSelection}
               >
-                Alle jetzt senden (
-                {Math.min(
-                  200,
-                  new Set([...visible.map((d) => d.id), ...filteredQueuedIds])
-                    .size,
-                )}
-                ) →
+                Auswahl zurücksetzen
               </button>
-            )}
-          {step === 1 &&
-            (visible.length > 0 || filteredQueuedIds.length > 0) && (
-              <p>
-                Öffnet die gemeinsame Vorschau und Freigabe für bis zu 200
-                Mails.
-              </p>
-            )}
+              <button
+                className="secondary"
+                disabled={
+                  busy ||
+                  editingDirty ||
+                  (!contactIds.length && !selected.length)
+                }
+                onClick={() => {
+                  setDiscardSnapshot(discardItems);
+                  setDiscardOpen(true);
+                  setDiscardConfirmed(false);
+                  setDiscardNotice("");
+                }}
+              >
+                Auswahl und ungesendete Entwürfe verwerfen
+              </button>
+              <button
+                className="secondary"
+                disabled={busy || editingDirty}
+                onClick={() => {
+                  setScheduleOpen(true);
+                  requestAnimationFrame(() =>
+                    document
+                      .getElementById("mail-schedule-title")
+                      ?.scrollIntoView({ block: "start" }),
+                  );
+                }}
+              >
+                Zeitplan & Versandstatus
+              </button>
+            </details>
+          </div>
           {error && (
             <p role="alert" className="error">
               {error}
@@ -578,43 +609,70 @@ export default function MailStudio({
           )}
         </div>
         {discardNotice && <p role="status">{discardNotice}</p>}
-        {discardOpen && <section className="panel" aria-label="Entwürfe verwerfen">
-          <h3>{discardSnapshot.length} ausgewählte Entwürfe verwerfen?</h3>
-          <p>Die ausgewählten ungesendeten Entwürfe werden gelöscht und aus einem allfälligen Zeitplan genommen. Kontakte und Rechercheangaben bleiben erhalten. Entwürfe mit Versandversuchen bleiben geschützt. Das Löschen kann nicht rückgängig gemacht werden.</p>
-          <label className="check"><input type="checkbox" disabled={busy} checked={discardConfirmed} onChange={e => setDiscardConfirmed(e.target.checked)} />Ich bestätige das Verwerfen dieser Auswahl und der ungesendeten Entwürfe.</label>
-          <div className="actions">
-            <button disabled={busy || !discardConfirmed || discardSnapshot.length > 200} onClick={() => void run(discardSelection)}>Auswahl jetzt verwerfen</button>
-            <button className="secondary" disabled={busy} onClick={() => { setDiscardOpen(false); setDiscardConfirmed(false); }}>Abbrechen</button>
-          </div>
-          {discardSnapshot.length > 200 && <p>Bitte höchstens 200 Entwürfe auf einmal auswählen.</p>}
-        </section>}
+        {discardOpen && (
+          <section className="panel" aria-label="Entwürfe verwerfen">
+            <h3>{discardSnapshot.length} ausgewählte Entwürfe verwerfen?</h3>
+            <p>
+              Die ausgewählten ungesendeten Entwürfe werden gelöscht und aus
+              einem allfälligen Zeitplan genommen. Kontakte und Rechercheangaben
+              bleiben erhalten. Entwürfe mit Versandversuchen bleiben geschützt.
+              Das Löschen kann nicht rückgängig gemacht werden.
+            </p>
+            <label className="check">
+              <input
+                type="checkbox"
+                disabled={busy}
+                checked={discardConfirmed}
+                onChange={(e) => setDiscardConfirmed(e.target.checked)}
+              />
+              Ich bestätige das Verwerfen dieser Auswahl und der ungesendeten
+              Entwürfe.
+            </label>
+            <div className="actions">
+              <button
+                disabled={
+                  busy || !discardConfirmed || discardSnapshot.length > 200
+                }
+                onClick={() => void run(discardSelection)}
+              >
+                Auswahl jetzt verwerfen
+              </button>
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => {
+                  setDiscardOpen(false);
+                  setDiscardConfirmed(false);
+                }}
+              >
+                Abbrechen
+              </button>
+            </div>
+            {discardSnapshot.length > 200 && (
+              <p>Bitte höchstens 200 Entwürfe auf einmal auswählen.</p>
+            )}
+          </section>
+        )}
         {step === 1 && preparing && (
           <section
             className="panel"
             aria-label="Kontakte im Mail-Studio vorbereiten"
           >
-            <MailAssistant
-              onBusyChange={setBusy}
-              mode="RESEARCH"
-              refresh={refresh}
-              disabled={busy}
-              industry={
-                filters.industry === "__empty__" ? "" : filters.industry
-              }
-            />
-            <ContactFilters
-              contacts={contacts}
-              value={filters}
-              disabled={busy}
-              onChange={(value) => {
-                onFiltersChange?.(value);
-                setContactIds([]);
-                setSelected([]);
-                setRows([]);
-                setIncluded([]);
-                setSelectionNotice("");
-              }}
-            />
+            <details>
+              <summary>Nach Unternehmen oder Branche filtern</summary>
+              <ContactFilters
+                contacts={contacts}
+                value={filters}
+                disabled={busy}
+                onChange={(value) => {
+                  onFiltersChange?.(value);
+                  setContactIds([]);
+                  setSelected([]);
+                  setRows([]);
+                  setIncluded([]);
+                }}
+              />
+            </details>
             <h3>{contactIds.length} Kontakte ausgewählt</h3>
             <button
               disabled={busy || !contactIds.length || contactIds.length > 200}
@@ -622,21 +680,47 @@ export default function MailStudio({
             >
               {busy
                 ? "Mails werden vorbereitet …"
-                : `Sofort senden (${contactIds.length}) →`}
+                : `${contactIds.length} Mails erstellen →`}
             </button>
-            <p>Du prüfst und bestätigst die Mails vor dem Versand gemeinsam.</p>
+            <p>
+              Die persönlichen Entwürfe erscheinen anschliessend in der
+              Vorschau.
+            </p>
             <p>
               {contactOptions.length} Kontakte mit E-Mail-Adresse für die
               Auswahl verfügbar (ohne info@). Wähle die gewünschte Menge.
             </p>
-            {candidates.length > 0 && (
-              <button
-                className="secondary"
-                disabled={busy}
-                onClick={() => setPreparing(false)}
-              >
-                Gespeicherte Entwürfe öffnen ({candidates.length})
-              </button>
+            {(candidates.length > 0 || filteredQueuedIds.length > 0) && (
+              <div className="actions">
+                <button
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(() =>
+                      reviewForSending([
+                        ...new Set([
+                          ...visible.map((d) => d.id),
+                          ...filteredQueuedIds,
+                        ]),
+                      ]),
+                    )
+                  }
+                >
+                  Gespeicherte Entwürfe öffnen (
+                  {
+                    new Set([...visible.map((d) => d.id), ...filteredQueuedIds])
+                      .size
+                  }
+                  )
+                </button>
+                <button
+                  className="quiet"
+                  disabled={busy}
+                  onClick={() => setPreparing(false)}
+                >
+                  Entwürfe auswählen
+                </button>
+              </div>
             )}
             <label>
               Kontakte suchen
@@ -647,8 +731,8 @@ export default function MailStudio({
             </label>
             <p>
               Wähle 25, 50 oder 100 Kontakte. Vorhandene Rechercheangaben werden
-              automatisch übernommen und persönliche Mails vorbereitet. Die
-              Auswahl gilt für das aktuelle Suchergebnis.
+              für persönliche Mails verwendet. Die Auswahl gilt für das aktuelle
+              Suchergebnis.
             </p>
             <div className="actions">
               {[25, 50, 100].map((amount) => (
@@ -752,7 +836,7 @@ export default function MailStudio({
             >
               {busy
                 ? "Mails werden geladen …"
-                : `${selected.length || Math.min(batchSize, visible.length)} Mails gemeinsam freigeben →`}
+                : `${selected.length || Math.min(batchSize, visible.length)} Entwürfe öffnen →`}
             </button>
             <button
               className="secondary"
@@ -863,7 +947,7 @@ export default function MailStudio({
       )}
       {step === 2 && batchProposals.length === 0 && rows.length > 0 && (
         <section className="panel" aria-label="Globale Mailprüfung">
-          <h3>{rows.length} Nachrichten in der Prüfvorschau</h3>
+          <h3>{rows.length} persönliche Mails</h3>
           <p>
             Empfänger, Betreff und vollständige Nachricht einschliesslich
             Signatur prüfen. Nachrichten können aus der gemeinsamen Freigabe
@@ -871,7 +955,7 @@ export default function MailStudio({
           </p>
           <button
             className="secondary"
-            disabled={busy}
+            disabled={busy || editingDirty}
             onClick={() => void run(() => preview())}
           >
             Prüfvorschau neu laden
@@ -892,10 +976,120 @@ export default function MailStudio({
               zurückgestellt
             </strong>
           </p>
+          <div className="mail-workbench" id="mail-workbench">
+            <nav className="mail-recipient-list" aria-label="Mail-Empfänger">
+              {rows.map((r) => (
+                <div key={r.id} className="mail-recipient">
+                  <input
+                    type="checkbox"
+                    aria-label={`${r.recipient} für Versand auswählen`}
+                    disabled={
+                      busy ||
+                      editingDirty ||
+                      !!r.issues.length ||
+                      results.some((x) => x.id === r.id && x.ok)
+                    }
+                    checked={included.includes(r.id)}
+                    onChange={(e) => {
+                      setIncluded((old) =>
+                        e.target.checked
+                          ? [...old, r.id]
+                          : old.filter((id) => id !== r.id),
+                      );
+                      setRead(false);
+                      setDispatch(false);
+                      setLegal(false);
+                    }}
+                  />
+                  <button
+                    className="quiet"
+                    aria-current={activeRow?.id === r.id ? "true" : undefined}
+                    disabled={busy || editingDirty}
+                    onClick={() => setActiveId(r.id)}
+                  >
+                    <strong>{r.organisation}</strong>
+                    <span>{r.recipient}</span>
+                    <small>
+                      {r.issues.length
+                        ? "Angaben ergänzen"
+                        : results.some((x) => x.id === r.id && x.ok)
+                          ? "Erledigt"
+                          : "Entwurf"}
+                    </small>
+                  </button>
+                </div>
+              ))}
+            </nav>
+            {activeRow && (
+              <div className="mail-preview-pane">
+                <MailPreview
+                  key={activeRow.id}
+                  message={activeRow}
+                  disabled={
+                    busy || results.some((x) => x.id === activeRow.id && x.ok)
+                  }
+                  onDirty={(dirty) => {
+                    setEditingDirty(dirty);
+                    setRead(false);
+                    setDispatch(false);
+                    setLegal(false);
+                  }}
+                  onSave={async (value) => {
+                    setBusy(true);
+                    try {
+                      const response = await fetch(
+                        `/api/drafts/${activeRow.id}`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            version: activeRow.version,
+                            ...value,
+                          }),
+                        },
+                      );
+                      const result = await response.json();
+                      if (!response.ok)
+                        throw new Error(
+                          result.error || "Speichern fehlgeschlagen.",
+                        );
+                      const keep = [...included];
+                      await preview(rows.map((r) => r.id));
+                      setIncluded(keep);
+                      setEditingDirty(false);
+                      await refresh();
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                />
+                {activeRow.issues.length > 0 && (
+                  <div className="error">
+                    <ul>
+                      {activeRow.issues.map((issue) => (
+                        <li key={issue}>{issue}</li>
+                      ))}
+                    </ul>
+                    <button
+                      className="secondary"
+                      disabled={busy || editingDirty}
+                      onClick={() => {
+                        const draft = drafts.find((d) => d.id === activeRow.id);
+                        if (draft) openContact?.(draft.contactId);
+                      }}
+                    >
+                      Kontakt ergänzen
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <MailAssistant
             onBusyChange={setBusy}
             mode="WRITE"
-            disabled={busy}
+            expanded
+            disabled={busy || editingDirty}
             items={chosen.map((r) => ({ id: r.id, version: r.version }))}
             refresh={async () => {
               const keep = [...included];
@@ -907,38 +1101,44 @@ export default function MailStudio({
               await refresh();
             }}
           />
-          <MailContentEditor
-            count={chosen.length}
-            disabled={busy}
-            onApply={async (content) => {
-              setBusy(true);
-              setRead(false);
-              setLegal(false);
-              const previousIncluded = [...included];
-              try {
-                const data = await api("content", {
-                  items: chosen.map((r) => ({ id: r.id, version: r.version })),
-                  content,
-                });
-                await preview();
-                setIncluded(previousIncluded);
-                await refresh();
-                if (data.results.some((r: Result) => !r.ok))
-                  throw new Error(
-                    data.results
-                      .filter((r: Result) => !r.ok)
-                      .map((r: Result) => r.message)
-                      .join(" · "),
-                  );
-              } finally {
-                setBusy(false);
-              }
-            }}
-          />
+          <details>
+            <summary>Bilder oder Links für alle Mails ergänzen</summary>
+            <MailContentEditor
+              count={chosen.length}
+              disabled={busy || editingDirty}
+              onApply={async (content) => {
+                setBusy(true);
+                setRead(false);
+                setLegal(false);
+                const previousIncluded = [...included];
+                try {
+                  const data = await api("content", {
+                    items: chosen.map((r) => ({
+                      id: r.id,
+                      version: r.version,
+                    })),
+                    content,
+                  });
+                  await preview();
+                  setIncluded(previousIncluded);
+                  await refresh();
+                  if (data.results.some((r: Result) => !r.ok))
+                    throw new Error(
+                      data.results
+                        .filter((r: Result) => !r.ok)
+                        .map((r: Result) => r.message)
+                        .join(" · "),
+                    );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+          </details>
           <button
             type="button"
             className="secondary"
-            disabled={busy || !chosen.length}
+            disabled={busy || editingDirty || !chosen.length}
             onClick={() =>
               void run(async () => {
                 const first = chosen[0];
@@ -1005,7 +1205,7 @@ export default function MailStudio({
             <label className="check">
               <input
                 type="checkbox"
-                disabled={busy || !chosen.length}
+                disabled={busy || editingDirty || !chosen.length}
                 checked={read && dispatch && (!missingLegal.length || legal)}
                 onChange={(e) => {
                   setRead(e.target.checked);
@@ -1031,104 +1231,18 @@ export default function MailStudio({
                 {busy && sendMode === "now"
                   ? "Versand läuft …"
                   : chosen.length > 1
-                    ? `Alle ${chosen.length} jetzt senden`
-                    : "Jetzt senden"}
+                    ? `${chosen.length} Mails jetzt senden`
+                    : "1 Mail jetzt senden"}
               </button>
               <button
                 className="secondary"
                 disabled={!canApprove}
                 onClick={() => void run(() => submitMails("schedule"))}
               >
-                Nach Zeitplan einplanen
+                Versand planen
               </button>
             </div>
           </section>
-          <details className="mail-preview-list" open={rows.length === 1}>
-            <summary>
-              Nachrichten ansehen oder Auswahl anpassen ({rows.length})
-            </summary>
-            {rows.map((r) => (
-              <details className="mail-review-message" key={r.id}>
-                <summary>
-                  {r.organisation} · {r.recipient} — {r.subject}
-                  {r.issues.length ? " · Zurückgestellt" : ""}
-                </summary>
-                <p>
-                  Empfänger: {r.recipient} · Version {r.version}
-                </p>
-                <p>
-                  <strong>Betreff: {r.subject}</strong>
-                </p>
-                <div
-                  className="mail-review-body"
-                  dangerouslySetInnerHTML={{
-                    __html: signedMessage(r.body, true).html,
-                  }}
-                />
-                {r.issues.length > 0 && (
-                  <ul className="error">
-                    {r.issues.map((issue) => (
-                      <li key={issue}>{issue}</li>
-                    ))}
-                  </ul>
-                )}
-                <p>
-                  {r.needsLegal
-                    ? "Versandprüfung offen"
-                    : "Versandprüfung dokumentiert"}
-                  {r.publicAuthority ? " · Öffentlicher Auftraggeber" : ""}
-                </p>
-                <button
-                  className="secondary"
-                  disabled={
-                    busy ||
-                    !!r.issues.length ||
-                    results.some((x) => x.id === r.id && x.ok)
-                  }
-                  onClick={() => {
-                    setIncluded([r.id]);
-                    setRead(false);
-                    setDispatch(false);
-                    setLegal(false);
-                    focusApproval();
-                  }}
-                >
-                  Nur diese Mail senden
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    setRead(false);
-                    setLegal(false);
-                    openDraft(r.id);
-                  }}
-                >
-                  Nachricht bearbeiten
-                </button>
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    disabled={
-                      busy ||
-                      !!r.issues.length ||
-                      results.some((x) => x.id === r.id && x.ok)
-                    }
-                    checked={included.includes(r.id)}
-                    onChange={(e) => {
-                      setIncluded((old) =>
-                        e.target.checked
-                          ? [...old, r.id]
-                          : old.filter((id) => id !== r.id),
-                      );
-                      setRead(false);
-                      setLegal(false);
-                    }}
-                  />
-                  {r.recipient} gemeinsam freigeben
-                </label>
-              </details>
-            ))}
-          </details>
           {sendProgress && <p role="status">{sendProgress}</p>}
           {results.length > 0 && (
             <div role="status">
