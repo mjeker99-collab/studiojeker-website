@@ -1879,3 +1879,18 @@ button.dashboard-status:hover { background: #f2f8fd; border-color: var(--cyan); 
 .studio-project-options { margin: 12px 0; }
 .studio-workspace .studio-series { position: static; max-height: 65vh; }
 @media (max-width: 1200px) { .studio-columns { grid-template-columns: 1fr; } .studio-workspace .studio-series { max-height: 280px; } }
+/* Library folders reuse the existing panels, palette and button styles. */
+.library-breadcrumb, .library-folder-actions, .library-move { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0; }
+.library-breadcrumb { overflow-wrap:anywhere; }
+.library-breadcrumb button { max-width:100%; white-space:normal; }
+.library-folder-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin:16px 0; }
+.library-folder-card { border:1px solid #cbd3d7; min-width:0; padding:8px; }
+.library-folder-card > button { width:100%; min-height:64px; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+.library-folder-card small { display:block; margin-top:6px; font-weight:400; }
+.library-entry { min-width:0; display:flex; flex-direction:column; }
+.library-entry .library-card { width:100%; height:100%; }
+.library-select { display:flex; align-items:center; gap:6px; padding:6px; }
+.library-folders .panel { max-width:720px; }
+.library-move label { min-width:0; }
+.library-move select { max-width:100%; }
+@media(max-width:600px) { .library-folder-grid { grid-template-columns:1fr; } .library-move { align-items:stretch; flex-direction:column; } }
