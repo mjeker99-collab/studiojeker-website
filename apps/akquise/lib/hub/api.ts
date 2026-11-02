@@ -20,6 +20,7 @@ import { manageDialogs } from "./dialogs";
 import { exportNewsletter } from "./newsletter";
 import { instant, safeUrl, channels } from "./input";
 import { linkedinOrganizationPattern } from "../social/linkedin";
+import { approveTask, createTask } from "../tasks/engine";
 const version = z.number().int().positive();
 export async function hubState() {
   const [campaigns, contents, users, drafts, social, customers] =
@@ -120,6 +121,11 @@ export async function hubMutation(
   body: unknown,
 ) {
   const id = path[2];
+  if (path[1] === "tasks" && path.length === 2) return createTask(actor, body);
+  if (path[1] === "tasks" && path[3] === "approve" && path.length === 4) {
+    const approval = z.object({ version }).strict().parse(body);
+    return approveTask(actor, id, approval.version);
+  }
   if (path.join("/") === "hub/newsletter/import") {
     z.object({}).strict().parse(body);
     return importNewsletters(actor);

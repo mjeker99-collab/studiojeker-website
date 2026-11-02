@@ -30,3 +30,6 @@ GitHub Issue #325. Die Bedienerin wählt im StudioONE-Bereich eine normale Aufga
 
 ## Deliverable
 Eigenständige PR-Implementierung auf diesem Branch; README + getestete Pilotstrecke; Screenshots, Sicherheits-/Testsbericht, gegebenenfalls Verweis auf PR #322 als Abhängigkeit. **Kein Merge, Deploy oder extern wirksame Aktion durch Cursor selbst.** GPT prüft und integriert regulär nach Tests.
+
+## Umsetzung auf diesem Branch
+Code, Migration und Tests sind im Verzeichnis `apps/akquise` ergänzt. Betriebsnotiz: `apps/akquise/docs/GPT_TASK_ENGINE_PILOT.md`. Der Cursor-Adapter aus PR #322 wird nicht dupliziert. Ohne KI-Schlüssel bleibt die Textüberarbeitung blockiert. Kein Merge und kein Deploy aus diesem Stand.

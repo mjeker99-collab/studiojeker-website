@@ -63,6 +63,7 @@ import {
   audit,
 } from "@/lib/workflow";
 import { hubState, hubMutation } from "@/lib/hub/api";
+import { listTasks } from "@/lib/tasks/engine";
 import {
   customerState,
   saveCustomer,
@@ -489,6 +490,11 @@ async function handler(
     }
     if (route === "hub/state" && req.method === "GET")
       return NextResponse.json(await hubState());
+    if (route === "hub/tasks" && req.method === "GET")
+      return NextResponse.json(
+        await listTasks(user.id, req.nextUrl.searchParams.get("contentId") || ""),
+        { headers: { "Cache-Control": "no-store, private" } },
+      );
     if (route === "customers/masterlist" && req.method === "GET")
       return NextResponse.json(await customerMasterlist(user.id));
     if (route === "customers/state" && req.method === "GET")

@@ -9,6 +9,7 @@ import {
   newsletterText,
 } from "@/lib/hub/newsletter-template";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
+import NewsletterTask from "../newsletter/NewsletterTask";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
 import SocialConnections from "./SocialConnections";
@@ -1031,6 +1032,20 @@ export default function Hub({
               Editor schliessen
             </button>
           </div>
+          {editing && form.kind === "NEWSLETTER" && form.newsletter && (
+            <NewsletterTask
+              contentId={editing.id}
+              version={editing.version}
+              dirty={dirty}
+              onCompleted={async () => {
+                const r = await fetch("/api/hub/state", { cache: "no-store" });
+                const updated: HubState = await r.json();
+                const c = updated.contents.find((item) => item.id === editing.id);
+                setData(updated);
+                if (c) edit(c);
+              }}
+            />
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
