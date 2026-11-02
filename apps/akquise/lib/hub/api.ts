@@ -18,10 +18,18 @@ import {
 } from "./workflow";
 import { manageDialogs } from "./dialogs";
 import { exportNewsletter } from "./newsletter";
+import {
+  createV4Edition,
+  handoffInput,
+  handoffNewsletter,
+  newsletterCursorState,
+  refreshNewsletterCursor,
+  restartEditionVersion,
+} from "../cursor/newsletter";
 import { instant, safeUrl, channels } from "./input";
 import { linkedinOrganizationPattern } from "../social/linkedin";
 const version = z.number().int().positive();
-export async function hubState() {
+export async function hubState(actor?: string) {
   const [campaigns, contents, users, drafts, social, customers] =
     await Promise.all([
       db.campaign.findMany({
@@ -112,6 +120,15 @@ export async function hubState() {
         : "NOT_CONNECTED",
       mailchimp: process.env.MAILCHIMP_API_KEY ? "CONFIGURED" : "NOT_CONNECTED",
     },
+    newsletterCursor: actor
+      ? await newsletterCursorState(actor, contents)
+      : {
+          connected: false,
+          nextStep: "Neue Ausgabe anlegen",
+          tasks: [],
+          editions: [],
+          handoffs: [],
+        },
   };
 }
 export async function hubMutation(
@@ -126,6 +143,20 @@ export async function hubMutation(
   }
   if (path[1] === "newsletter-duplicate" && path.length === 3)
     return duplicateNewsletter(actor, id, duplicateInput.parse(body).version);
+  if (path.join("/") === "hub/newsletter-edition") {
+    z.object({}).strict().parse(body);
+    return createV4Edition(actor);
+  }
+  if (path[1] === "newsletter-edition-restart" && path.length === 3) {
+    z.object({}).strict().parse(body);
+    return restartEditionVersion(actor, id);
+  }
+  if (path[1] === "newsletter-cursor" && path.length === 3)
+    return handoffNewsletter(actor, id, handoffInput.parse(body).instruction);
+  if (path[1] === "newsletter-cursor-refresh" && path.length === 3) {
+    z.object({}).strict().parse(body);
+    return refreshNewsletterCursor(actor, id);
+  }
   if (path[1] === "mailchimp-transfer" && path.length === 3) {
     const d = z
       .object({ version, audienceId: z.string().min(1).max(64) })

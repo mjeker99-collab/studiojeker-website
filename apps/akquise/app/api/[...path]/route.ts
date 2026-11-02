@@ -495,7 +495,7 @@ async function handler(
       return NextResponse.json(a);
     }
     if (route === "hub/state" && req.method === "GET")
-      return NextResponse.json(await hubState());
+      return NextResponse.json(await hubState(user.id));
     if (route === "customers/masterlist" && req.method === "GET")
       return NextResponse.json(await customerMasterlist(user.id));
     if (route === "customers/state" && req.method === "GET")

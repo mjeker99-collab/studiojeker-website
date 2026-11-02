@@ -56,6 +56,8 @@ model User {
   campaigns          Campaign[]          @relation("CampaignOwner")
   marketingContents  MarketingContent[]  @relation("ContentOwner")
   marketingApprovals MarketingApproval[] @relation("MarketingReviewer")
+  newsletterCursorTasks NewsletterCursorTask[]
+  newsletterEditions NewsletterEdition[]
 }
 
 model Session {
@@ -321,6 +323,8 @@ model MarketingContent {
   publications   ManualPublication[]
   exports        NewsletterExport[]
   mailchimpTransfers MailchimpTransfer[]
+  cursorTask     NewsletterCursorTask?
+  edition        NewsletterEdition?
 
   @@index([campaignId, scheduledAt])
   @@index([kind, workspace, status])
@@ -393,6 +397,46 @@ model MailchimpTransfer {
   updatedAt  DateTime         @updatedAt
 
   @@unique([contentId, version])
+}
+
+// One Cursor handoff per newsletter. Status stays NOT_SENT until agent and run ids exist.
+model NewsletterCursorTask {
+  id           String           @id @default(cuid())
+  contentId    String           @unique
+  content      MarketingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  version      Int
+  templateId   String
+  instruction  String
+  status       String           @default("NOT_SENT")
+  agentId      String           @default("")
+  runId        String           @default("")
+  agentUrl     String           @default("")
+  prUrl        String           @default("")
+  previewHtml  String           @default("")
+  errorMessage String           @default("")
+  pendingUntil DateTime?
+  route        String           @default("cursor")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([status])
+}
+
+// A V4 edition is an explicit copy of protected V3. It never points at PR 305 or 313.
+model NewsletterEdition {
+  id               String           @id @default(cuid())
+  contentId        String           @unique
+  content          MarketingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  sourceTemplateId String
+  contentVersion   Int
+  baseRef          String
+  prUrl            String           @default("")
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 // Internal Studiojeker workspace only. Customer authentication is deliberately not enabled.

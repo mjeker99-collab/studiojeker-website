@@ -48,6 +48,8 @@ export default function StudioChat({
   onProjectAssigned,
   taskRef,
   hideStartOptions = false,
+  draftMessage,
+  onDraftChange,
 }: {
   state: State;
   refresh: () => Promise<void>;
@@ -65,6 +67,8 @@ export default function StudioChat({
   onProjectAssigned?: () => void;
   taskRef?: Ref<StudioChatHandle>;
   hideStartOptions?: boolean;
+  draftMessage?: string;
+  onDraftChange?: (value: string) => void;
 }) {
   const [seriesId, setSeriesId] = useState(initialRequest?.seriesId || "");
   const [campaignId, setCampaignId] = useState(
@@ -203,7 +207,14 @@ export default function StudioChat({
       setBusy(false);
     }
   }
-  const [message, setMessage] = useState(initialRequest?.message || "");
+  const [messageState, setMessageState] = useState(
+    draftMessage ?? initialRequest?.message ?? "",
+  );
+  const message = draftMessage !== undefined ? draftMessage : messageState;
+  function setMessage(value: string) {
+    setMessageState(value);
+    onDraftChange?.(value);
+  }
   const [mediaIntent, setMediaIntent] = useState<
     "TEXT" | "IMAGE" | "VIDEO" | "EDIT"
   >(initialRequest?.intent || "TEXT");
