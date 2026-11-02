@@ -154,6 +154,7 @@ export default function Hub({
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showNewsletterTrash, setShowNewsletterTrash] = useState(false);
   const [manualNewsletter, setManualNewsletter] = useState(false);
   const [newsletterSessionKey, setNewsletterSessionKey] = useState(0);
   const [data, setData] = useState<HubState | null>(null);
@@ -303,6 +304,21 @@ export default function Hub({
     edit(current, false);
     return current;
   }
+  async function manageNewsletter(id: string, version: number, title: string, action: "trash" | "restore" | "delete") {
+    const prompt = action === "trash"
+      ? `«${title}» in den Papierkorb verschieben? Du kannst den Newsletter später wiederherstellen.`
+      : action === "restore"
+        ? `«${title}» wiederherstellen?`
+        : `«${title}» endgültig löschen? Alle Entwurfsversionen gehen verloren. Diese Aktion kann nicht rückgängig gemacht werden.`;
+    if (!window.confirm(prompt)) return;
+    await act(async () => {
+      await post("newsletter-manage/" + id, {
+        version, action, ...(action === "delete" ? { confirmedTitle: title } : {}),
+      });
+      if (editing?.id === id) { setEditing(null); setForm(null); }
+    }, action === "trash" ? "Newsletter in den Papierkorb verschoben." :
+       action === "restore" ? "Newsletter wiederhergestellt." : "Newsletter endgültig gelöscht.");
+  }
   async function saveNewsletter(next: ContentInput) {
     if (editing && JSON.stringify(next) === JSON.stringify(editing.versions[0].payload)) return editing;
     const saved = await post(editing ? "contents/" + editing.id : "contents",
@@ -355,7 +371,8 @@ export default function Hub({
         return !c.publications.some((p) => p.version === c.version);
       return true;
     }
-    if (section === "Newsletter") return c.kind === "NEWSLETTER";
+    if (section === "Newsletter")
+      return c.kind === "NEWSLETTER" && (showNewsletterTrash ? !!c.archivedAt : !c.archivedAt);
     return true;
   });
   const managedDialogs = data.contents.filter(
@@ -518,8 +535,10 @@ export default function Hub({
                     ? "Exportiert · nicht übertragen · nicht versandt"
                     : "Nicht exportiert · nicht übertragen · nicht versandt"}
               </p>
-              <button disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
-              {c.kind === "NEWSLETTER" && (
+              {(!c.archivedAt || c.kind !== "NEWSLETTER") && (
+                <button disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
+              )}
+              {c.kind === "NEWSLETTER" && !c.archivedAt && (
                 <button
                   className="secondary"
                   disabled={busy}
@@ -540,6 +559,27 @@ export default function Hub({
                 >
                   Duplizieren
                 </button>
+              )}
+              {c.kind === "NEWSLETTER" && (
+                <div className="actions">
+                  {c.archivedAt ? (
+                    <>
+                      <button type="button" className="secondary" disabled={busy}
+                        onClick={() => void manageNewsletter(c.id, c.version, c.title, "restore")}>
+                        Wiederherstellen
+                      </button>
+                      <button type="button" className="secondary" disabled={busy}
+                        onClick={() => void manageNewsletter(c.id, c.version, c.title, "delete")}>
+                        Endgültig löschen
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="secondary" disabled={busy}
+                      onClick={() => void manageNewsletter(c.id, c.version, c.title, "trash")}>
+                      In Papierkorb
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </article>
@@ -808,7 +848,7 @@ export default function Hub({
                   {data.contents
                     .filter(
                       (x) =>
-                        x.campaignId === c.id &&
+                        x.campaignId === c.id && !x.archivedAt &&
                         (x.kind === "NEWSLETTER" || isSocialPublishingPost(x)),
                     )
                     .map((x) => (
@@ -961,6 +1001,17 @@ export default function Hub({
         </section>
       )}
       {section === "Newsletter" && <MailchimpTemplates />}
+      {section === "Newsletter" && (
+        <div className="actions" role="group" aria-label="Newsletter verwalten">
+          <button type="button" className={showNewsletterTrash ? "secondary" : undefined}
+            disabled={busy} onClick={() => setShowNewsletterTrash(false)}>Aktive Newsletter</button>
+          <button type="button" className={!showNewsletterTrash ? "secondary" : undefined}
+            disabled={busy} onClick={() => { setShowNewsletterTrash(true); setForm(null); setEditing(null); }}>
+            Papierkorb ({data.contents.filter((item) => item.kind === "NEWSLETTER" && !!item.archivedAt).length})
+          </button>
+          <p className="muted">Eigene Entwürfe und importierte Kopien lassen sich entfernen. GitHub-Grundvorlagen und Mailchimp-Vorlagen bleiben erhalten.</p>
+        </div>
+      )}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
@@ -982,9 +1033,9 @@ export default function Hub({
                   fresh.body = newsletterText(fresh.newsletter);
                   setForm(fresh);
                 }}>Grundvorlage bearbeiten</button>
-                <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
+                <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER" && !item.archivedAt)} onClick={() => {
                   const latest = data?.contents
-                    .filter((item) => item.kind === "NEWSLETTER")
+                    .filter((item) => item.kind === "NEWSLETTER" && !item.archivedAt)
                     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
                   if (latest) edit(latest);
                   setShowOriginal(false);
