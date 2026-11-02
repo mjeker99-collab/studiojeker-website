@@ -145,3 +145,91 @@ test("authorization, single-start, caching, shared budget, failure isolation and
     /nicht verbunden/,
   );
 });
+
+test("Mail assistant saves sourced leads without approval, deduplicates imports and binds texts to draft versions", async () => {
+  const { assistMail, applyMailAssistant } =
+    await import("../../lib/mail-assistant/service");
+  const { newDraft } = await import("../../lib/workflow");
+  process.env.CONTENT_AI_ENABLED = "true";
+  process.env.CONTENT_DAILY_REQUEST_LIMIT = "1000";
+  process.env.CONTENT_DAILY_BUDGET_USD = "1000";
+  const lead = {
+    organisation: "Test Lead AG",
+    firstName: "Anna",
+    lastName: "Lead",
+    email: "anna@lead.example",
+    industry: "Architektur",
+    region: "Bern",
+    position: "Partnerin",
+    website: "https://lead.example",
+    sourceUrl: "https://lead.example/team",
+    hook: "Wohnbauten in Bern.",
+    service: "Architekturvisualisierungen",
+  };
+  const input = {
+    requestKey: randomUUID(),
+    mode: "RESEARCH",
+    briefing: "Architekturbüros in Bern",
+  };
+  const provider = async () => ({
+    result: { leads: [lead], mails: [], note: "" },
+    usage: {},
+    requestId: "test",
+  });
+  await assert.rejects(assistMail("missing", input, provider), /Berechtigung/);
+  const generated = await assistMail(actor, input, provider);
+  const cached = await assistMail(actor, input, async () => {
+    throw new Error("Must not run again");
+  });
+  assert.equal(cached.id, generated.id);
+  const imported = await applyMailAssistant(actor, { id: generated.id });
+  assert.ok("imported" in imported);
+  assert.equal(imported.imported, 1);
+  const duplicate = await applyMailAssistant(actor, { id: generated.id });
+  assert.ok("duplicates" in duplicate);
+  assert.equal(duplicate.duplicates, 1);
+  const c = await db.contact.findFirstOrThrow({ where: { email: lead.email } });
+  assert.equal(c.confidence, "UNCONFIRMED");
+  assert.equal(await db.approval.count({ where: { contactId: c.id } }), 0);
+  await db.contact.update({
+    where: { id: c.id },
+    data: { confidence: "VERIFIED", verifiedAt: new Date() },
+  });
+  const draft = await newDraft(actor, c.id);
+  const write = await assistMail(
+    actor,
+    {
+      requestKey: randomUUID(),
+      mode: "WRITE",
+      briefing: "Persönlich und knapp schreiben",
+      items: [{ id: draft.id, version: 1 }],
+    },
+    async () => ({
+      result: {
+        leads: [],
+        mails: [
+          {
+            id: draft.id,
+            version: 1,
+            subject: "Persönlicher Vorschlag",
+            body: "Guten Tag Anna Lead\n\nIhr Wohnbauprojekt.",
+          },
+        ],
+        note: "",
+      },
+      usage: {},
+      requestId: "test",
+    }),
+  );
+  const applied = await applyMailAssistant(actor, { id: write.id });
+  assert.ok("results" in applied);
+  assert.ok(applied.results[0].ok);
+  const again = await applyMailAssistant(actor, { id: write.id });
+  assert.ok("results" in again);
+  assert.ok(again.results[0].ok);
+  assert.equal(
+    (await db.draft.findUniqueOrThrow({ where: { id: draft.id } })).version,
+    2,
+  );
+  assert.equal(await db.delivery.count(), 0);
+});
