@@ -18,6 +18,7 @@ SOURCES = [
  ('newsletter-03', 'Newsletter 03 · Sichtbarkeit im Abo', 'mailchimp/studiojeker-newsletter-03-content-abo.html', 'Sichtbarkeit im Abo. Damit Ihr Unternehmen präsent bleibt.', 'Angebotsbedingungen und Gültigkeit vor Versand prüfen und freigeben.'),
  ('newsletter-04-github-364bba2', 'Newsletter 04 · Sichtbarkeit', 'mailchimp/studiojeker-newsletter-04-visibility.html', '', 'GitHub-Fassung vom 2. November 2026. Inhalte und Videolinks vor Versand prüfen.'),
  ('newsletter-04-video-promo-20261102', 'Newsletter 04 · Video & Promo', 'mailchimp/studiojeker-newsletter-04-video-promo.html', '', 'Bildfüllende Video-/Promo-Bausteine. Videolinks vor Versand prüfen.'),
+ ('newsletter-04-video-promo-20261103', 'Newsletter 04 · Video & Promo – Nora', 'mailchimp/studiojeker-newsletter-04-video-promo-corrected.html', '', 'Korrigierte V4-Vorlage. Nora mit Tafel, Hero randlos, beide Videolinks vor Versand prüfen.'),
 ]
 VOID = {'img','br','hr','meta','link','input','source','wbr','area','base','embed','param','col','track'}
 LABELS = {'meta_left':'Ausgabe','hero':'Hero','intro':'Einleitung','ai':'Hauptartikel','services':'Kompetenzen','service_digital':'Digital Marketing','service_business':'Business Communication','service_product':'Product Communication','service_architecture':'Architecture','contact':'Kontakt'}
