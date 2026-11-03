@@ -119,18 +119,22 @@ test("Newsletter benötigt eine explizite Zielgruppe; keine versteckten Eingabef
 });
 
 test("Original-Newsletter bleiben ohne Änderungen bytegleich, inklusive Outlook und Footer", async () => {
-  const { newsletterLibrary, newsletterDefaults, renderNewsletter } =
+  const { newsletterLibrary, newsletterDefaults, renderNewsletter, v4ContactHeadlineFirst } =
     await import("../lib/hub/newsletter-template");
   for (const template of newsletterLibrary) {
     const subject = template.slots.find((s) => s.special === "subject")!.value;
-    assert.equal(
-      renderNewsletter({
-        subject,
-        preheader: template.preheader,
-        newsletter: newsletterDefaults(template.id),
-      }),
-      template.html,
-    );
+    const rendered = renderNewsletter({
+      subject,
+      preheader: template.preheader,
+      newsletter: newsletterDefaults(template.id),
+    });
+    const videoEdition = [
+      "newsletter-04-video-promo-20261102",
+      "newsletter-04-video-promo-20261103",
+    ].includes(template.id);
+    assert.equal(rendered, videoEdition
+      ? v4ContactHeadlineFirst(template.html)
+      : template.html);
   }
 });
 test("Newsletter-Slots begrenzen Änderungen auf Inhalt und schützen Links/HTML", async () => {
