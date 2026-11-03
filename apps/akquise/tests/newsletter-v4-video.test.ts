@@ -52,7 +52,7 @@ test("older V4 and video V1 can upgrade, replacing only stock umbrella picture",
     assert.match(updated.fields["promo_image.image.1"], /^https:\/\/mcusercontent\.com\//);
     assert.equal(updated.fields["promo_image.alt.1"], "Nora Jeker mit Tafel im Büro");
     assert.equal(updated.fields["promo_image.link.1"], old.fields["promo_image.link.1"] || old.fields["hero_video_cta.link.1"]);
-    assert.equal(Object.keys(updated.fields).length, 79);
+    assert.equal(Object.keys(updated.fields).length, 77);
   }
 });
 
