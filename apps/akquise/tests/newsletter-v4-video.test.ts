@@ -31,3 +31,32 @@ test("newsletter renders two accessible clickable video posters without embeds o
   assert.equal((output.match(/sj-video-play/g) || []).length >= 2, true);
   assert.doesNotMatch(output, /<video\b|<iframe\b/i);
 });
+
+test("V4 contact heading precedes its paragraph in preview and Mailchimp export", async () => {
+  const { newsletterHtml } = await import("../lib/hub/newsletter");
+  const newsletter = newsletterDefaults(videoId);
+  newsletter.fields["contact_headline.text.1"] = "Persönliches Gespräch vereinbaren.";
+  newsletter.fields["contact_body.text.1"] = "Ich freue mich auf ein persönliches Erstgespräch.";
+  const data = { subject: "V4 Test", preheader: "Vorschau", newsletter };
+  const preview = renderNewsletter(data);
+  const exported = newsletterHtml({ ...data, body: "" });
+  assert.equal(preview, exported, "StudioONE-Vorschau und Mailchimp-HTML müssen übereinstimmen");
+  const heading = preview.indexOf('mc:edit="contact_headline"');
+  const paragraph = preview.indexOf('mc:edit="contact_body"');
+  const action = preview.indexOf('mc:edit="contact_cta"');
+  const photo = preview.indexOf('mc:edit="contact_image"');
+  assert.ok(heading >= 0 && heading < paragraph && paragraph < action && action < photo);
+  assert.ok(preview.includes("Ich freue mich auf ein persönliches Erstgespräch."));
+  assert.ok(preview.includes("Persönliches Gespräch vereinbaren."));
+  assert.ok(preview.includes("sj-promo-video"), "Promo-Playbutton unverändert");
+  // The stored source remains intact and the fix is scoped only to its rendering.
+  const source = getNewsletterTemplate(videoId).html;
+  assert.ok(source.indexOf('mc:edit="contact_body"') < source.indexOf('mc:edit="contact_headline"'));
+  const original = getNewsletterTemplate(oldId);
+  assert.ok(original.html.indexOf('mc:edit="contact_body"') < original.html.indexOf('mc:edit="contact_headline"'));
+  const oldPreview = renderNewsletter({
+    ...data,
+    newsletter: newsletterDefaults(oldId),
+  });
+  assert.ok(oldPreview.indexOf('mc:edit="contact_body"') < oldPreview.indexOf('mc:edit="contact_headline"'));
+});
