@@ -117,7 +117,34 @@ export function renderNewsletter(input: {
           : escapeHtml(value);
     cursor = slot.end;
   }
-  return result + template.html.slice(cursor);
+  const rendered = result + template.html.slice(cursor);
+  // The V4 video edition is already in use by newsletter drafts. Fix only
+  // this edition's contact block at render time so no stored content, media,
+  // original template or newsletter version is silently rewritten.
+  return snapshot.templateId === "newsletter-04-video-promo-20261102"
+    ? contactHeadingFirst(rendered)
+    : rendered;
+}
+
+// In the source V4 video template, the contact paragraph mistakenly precedes
+// its heading. Swap only these two complete HTML siblings. This also applies
+// to Mailchimp HTML export, which uses the same renderer as StudioONE preview.
+export function contactHeadingFirst(html: string): string {
+  const bodyStart = html.indexOf('<div mc:edit="contact_body"');
+  if (bodyStart < 0) return html;
+  const headingOpen = '<div style="padding-top:14px;"><h2 class="sj-heading" mc:edit="contact_headline"';
+  const headingStart = html.indexOf(headingOpen, bodyStart);
+  if (headingStart < 0) return html;
+  const bodyEnd = headingStart;
+  const body = html.slice(bodyStart, bodyEnd);
+  if (!body.endsWith("</div>")) return html;
+  const headingEndTag = "</h2></div>";
+  const headingEnd = html.indexOf(headingEndTag, headingStart);
+  if (headingEnd < 0) return html;
+  const afterHeading = headingEnd + headingEndTag.length;
+  const heading = html.slice(headingStart, afterHeading)
+    .replace('style="padding-top:14px;"', 'style="padding-top:0;"');
+  return html.slice(0, bodyStart) + heading + body + html.slice(afterHeading);
 }
 export function newsletterText(snapshot: NewsletterSnapshot) {
   const template = getNewsletterTemplate(snapshot.templateId);
