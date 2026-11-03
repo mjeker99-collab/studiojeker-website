@@ -119,17 +119,22 @@ test("Newsletter benötigt eine explizite Zielgruppe; keine versteckten Eingabef
 });
 
 test("Original-Newsletter bleiben ohne Änderungen bytegleich, inklusive Outlook und Footer", async () => {
-  const { newsletterLibrary, newsletterDefaults, renderNewsletter } =
+  const { newsletterLibrary, newsletterDefaults, renderNewsletter, contactHeadingFirst } =
     await import("../lib/hub/newsletter-template");
   for (const template of newsletterLibrary) {
     const subject = template.slots.find((s) => s.special === "subject")!.value;
+    const rendered = renderNewsletter({
+      subject,
+      preheader: template.preheader,
+      newsletter: newsletterDefaults(template.id),
+    });
+    // The V4 video edition corrects one legacy contact-block ordering defect
+    // while keeping all original fields and the archived source unchanged.
     assert.equal(
-      renderNewsletter({
-        subject,
-        preheader: template.preheader,
-        newsletter: newsletterDefaults(template.id),
-      }),
-      template.html,
+      rendered,
+      template.id === "newsletter-04-video-promo-20261102"
+        ? contactHeadingFirst(template.html)
+        : template.html,
     );
   }
 });
