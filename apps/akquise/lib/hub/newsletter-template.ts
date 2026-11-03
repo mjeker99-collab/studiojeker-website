@@ -122,7 +122,7 @@ export function correctedV4Newsletter(source: NewsletterSnapshot): NewsletterSna
   for (const key of Object.keys(fields))
     if (!newTemplate.slots.some((s) => !s.special && s.key === key))
       throw new Error(`Unbekanntes Newsletter-Feld: ${key}`);
-  if (prior.slots.filter((s) => !s.special).length < 78)
+  if (prior.slots.filter((s) => !s.special).length < 76)
     throw new Error("Ungültige V4-Vorlage.");
   return newsletterSnapshot.parse({
     templateId: "newsletter-04-video-promo-20261103",
