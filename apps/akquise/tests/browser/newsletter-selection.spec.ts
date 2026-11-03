@@ -67,21 +67,26 @@ for (const width of [768, 1440]) {
     const duplicated = await (await duplicateResponse).json();
     const id = duplicated.id as string;
     expect(id).toBeTruthy();
-    await expect(editor.getByRole("button", { name: "Video-Vorlage übernehmen" })).toBeVisible();
+    await expect(editor.getByRole("button", { name: "Korrigierte Video-Vorlage übernehmen" })).toBeVisible();
     const before = await (await page.request.get("/api/hub/state")).json();
     const prior = before.contents.find((c: { id: string }) => c.id === id);
     expect(prior.versions[0].payload.newsletter.templateId).toBe("newsletter-04-github-364bba2");
     const oldImage = prior.versions[0].payload.newsletter.fields["promo_image.image.1"];
-    await editor.getByRole("button", { name: "Video-Vorlage übernehmen" }).click();
-    await expect(editor.getByRole("button", { name: "Video-Vorlage übernehmen" })).toHaveCount(0);
+    expect(oldImage).toContain("umbrella");
+    await editor.getByRole("button", { name: "Korrigierte Video-Vorlage übernehmen" }).click();
+    await expect(editor.getByRole("button", { name: "Korrigierte Video-Vorlage übernehmen" })).toHaveCount(0);
     const after = await (await page.request.get("/api/hub/state")).json();
     const updated = after.contents.find((c: { id: string }) => c.id === id);
     expect(updated.version).toBe(prior.version + 1);
-    expect(updated.versions[0].payload.newsletter.templateId).toBe("newsletter-04-video-promo-20261102");
-    expect(updated.versions[0].payload.newsletter.fields["promo_image.image.1"]).toBe(oldImage);
+    expect(updated.versions[0].payload.newsletter.templateId).toBe("newsletter-04-video-promo-20261103");
+    expect(updated.versions[0].payload.newsletter.fields["promo_image.image.1"]).toContain("mcusercontent.com");
+    expect(updated.versions[0].payload.newsletter.fields["promo_image.alt.1"]).toBe("Nora Jeker mit Tafel im Büro");
     await expect.poll(async () =>
       (await editor.locator('iframe[title="Newsletter HTML-Vorschau"]').getAttribute("srcdoc")) || "",
     ).toContain("sj-promo-video");
+    await expect.poll(async () =>
+      (await editor.locator('iframe[title="Newsletter HTML-Vorschau"]').getAttribute("srcdoc")) || "",
+    ).toContain("transform:scale(1.35)");
     const x = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
     expect(x).toBe(true);
   });

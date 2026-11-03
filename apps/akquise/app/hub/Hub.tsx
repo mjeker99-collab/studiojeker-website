@@ -9,6 +9,7 @@ import {
   newsletterLibrary,
   newsletterDefaults,
   newsletterText,
+  correctedV4Newsletter,
 } from "@/lib/hub/newsletter-template";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
@@ -1146,30 +1147,21 @@ export default function Hub({
           </div>
           {form.kind === "NEWSLETTER" && form.newsletter && (
             <>
-              {editing && form.newsletter.templateId === "newsletter-04-github-364bba2" && (
+              {editing && ["newsletter-04-github-364bba2", "newsletter-04-video-promo-20261102"].includes(form.newsletter.templateId) && (
                 <div className="panel padded" style={{ marginBottom: 14 }}>
-                  <p>Für V4 ist eine neue Video-Vorlage verfügbar: Hero und Promobild sind bildfüllend und haben je einen Playbutton.</p>
-                  <button type="button" disabled={busy} onClick={() => act(async () => {
-                    // Preserve all current content and the uploaded Nora image. Only the
-                    // template ID and independently editable promo video target change.
-                    const newsletter = {
-                      ...form.newsletter!,
-                      templateId: "newsletter-04-video-promo-20261102",
-                      fields: {
-                        ...form.newsletter!.fields,
-                        "promo_image.link.1": form.newsletter!.fields["hero_video_cta.link.1"],
-                      },
-                    };
+                  <p>Die korrigierte V4-Video-Vorlage entfernt die schwarzen Hero-Ränder und zeigt Nora mit Tafel statt des alten Regenschirms.</p>
+                  <button type="button" disabled={busy || dirty} onClick={() => act(async () => {
+                    const newsletter = correctedV4Newsletter(form.newsletter!);
                     const next = { ...form, newsletter, body: newsletterText(newsletter) };
                     const result = await post("contents/" + editing.id, {
                       version: editing.version,
                       data: next,
                     });
                     await reloadNewsletter(result.id);
-                  }, "Video-Vorlage als neue Version gespeichert. Bitte beide Videoziele vor Versand prüfen.")}>
-                    Video-Vorlage übernehmen
+                  }, "Korrigierte Video-Vorlage als neue V4-Version gespeichert. Bitte beide Videoziele prüfen.")}>
+                    Korrigierte Video-Vorlage übernehmen
                   </button>
-                  <p className="muted">Die bestehenden Inhalte bleiben erhalten. Vorerst verwenden beide Playbuttons den bisherigen Vimeo-Link; vor dem Versand prüfen.</p>
+                  <p className="muted">Texte und selbst gewählte Bilder bleiben erhalten. Nur das alte Regenschirm-Standardbild wird durch Nora ersetzt. Keine Freigabe oder Versendung.</p>
                 </div>
               )}
               <NewsletterWorkspace key={newsletterSessionKey}
