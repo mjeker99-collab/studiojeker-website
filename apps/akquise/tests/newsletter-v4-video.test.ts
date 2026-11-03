@@ -66,3 +66,27 @@ test("manual library photos and their descriptions are never overwritten", () =>
   assert.equal(updated.fields["promo_image.alt.1"], old.fields["promo_image.alt.1"]);
   assert.equal(updated.fields["promo_image.link.1"], old.fields["promo_image.link.1"]);
 });
+test("Kontakt-Headline steht in beiden Video-Ausgaben vor Lauftext und CTA", async () => {
+  const { newsletterHtml } = await import("../lib/hub/newsletter");
+  for (const id of ["newsletter-04-video-promo-20261102", "newsletter-04-video-promo-20261103"]) {
+    const newsletter = newsletterDefaults(id);
+    newsletter.fields["contact_headline.text.1"] = "Persönliches Gespräch vereinbaren.";
+    newsletter.fields["contact_body.text.1"] = "Ich freue mich auf ein persönliches Gespräch.";
+    const data = { subject: "V4 Test", preheader: "Vorschau", newsletter };
+    const html = renderNewsletter(data);
+    assert.equal(html, newsletterHtml({ ...data, body: "" }), "Vorschau und Mailchimp müssen übereinstimmen");
+    const headingAt = html.indexOf('mc:edit="contact_headline"');
+    const bodyAt = html.indexOf('mc:edit="contact_body"');
+    const ctaAt = html.indexOf('mc:edit="contact_cta"');
+    assert.ok(headingAt >= 0 && headingAt < bodyAt && bodyAt < ctaAt, "Headline vor Body und CTA");
+    assert.ok(html.includes("Ich freue mich auf ein persönliches Gespräch."));
+    assert.ok(html.includes("sj-promo-video"), "Video-Overlay bleibt bestehen");
+  }
+  const original = getNewsletterTemplate(oldId);
+  const html = renderNewsletter({
+    subject: original.subject,
+    preheader: original.preheader,
+    newsletter: newsletterDefaults(oldId),
+  });
+  assert.equal(html, original.html, "ursprüngliche V4 Vorlage unverändert");
+});
