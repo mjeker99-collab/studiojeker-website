@@ -1471,11 +1471,11 @@ pre {
 @media(max-width:900px) { .studio-columns { grid-template-columns:1fr; } .studio-series { position:static; max-height:260px; } }
 @media(max-width:600px) { .studio-fields { grid-template-columns:1fr; } .studio-editor>section,.studio-generation,.studio-upload,.studio-brief { padding:12px; } }
 
-/* User-supplied StudioONE app logo: exact original JPEG, no recolouring/cropping. */
+/* Approved transparent StudioONE logo: white wordmark/claim and button cyan. */
 .app-brand {
   width: 100%;
   max-width: 360px;
-  background: #000;
+  background: transparent;
   line-height: 0;
   letter-spacing: normal;
 }
