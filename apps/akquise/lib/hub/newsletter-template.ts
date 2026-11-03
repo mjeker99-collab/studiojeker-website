@@ -156,7 +156,31 @@ export function renderNewsletter(input: {
           : escapeHtml(value);
     cursor = slot.end;
   }
-  return result + template.html.slice(cursor);
+  const rendered = result + template.html.slice(cursor);
+  // Existing V4 video drafts must show the contact heading before its body,
+  // without altering stored slot content or the immutable source template.
+  return [
+    "newsletter-04-video-promo-20261102",
+    "newsletter-04-video-promo-20261103",
+  ].includes(snapshot.templateId) ? v4ContactHeadlineFirst(rendered) : rendered;
+}
+
+/** Make the correction in rendered HTML, shared by preview and Mailchimp export. */
+export function v4ContactHeadlineFirst(html: string): string {
+  const bodyStart = html.indexOf('<div mc:edit="contact_body"');
+  if (bodyStart < 0) return html;
+  const headingOpen = '<div style="padding-top:14px;"><h2 class="sj-heading" mc:edit="contact_headline"';
+  const headingStart = html.indexOf(headingOpen, bodyStart);
+  if (headingStart < 0) return html;
+  const body = html.slice(bodyStart, headingStart);
+  if (!body.endsWith("</div>")) return html;
+  const closing = "</h2></div>";
+  const headingEnd = html.indexOf(closing, headingStart);
+  if (headingEnd < 0) return html;
+  const afterHeading = headingEnd + closing.length;
+  const headline = html.slice(headingStart, afterHeading)
+    .replace('style="padding-top:14px;"', 'style="padding-top:0;"');
+  return html.slice(0, bodyStart) + headline + body + html.slice(afterHeading);
 }
 export function newsletterText(snapshot: NewsletterSnapshot) {
   const template = getNewsletterTemplate(snapshot.templateId);
