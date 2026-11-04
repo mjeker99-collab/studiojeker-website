@@ -119,6 +119,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
     page.getByRole("heading", { name: "100 Kontakte ausgewählt", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "100 Mails erstellen →", exact: true }).click();
+  await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen der 100 ausgewählten Kontakte/).check();
   await page.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true }).click();
   await expect(
     page.getByText("Gemeinsame Versandprüfung für 100 ausgewählte Kontakte", {
