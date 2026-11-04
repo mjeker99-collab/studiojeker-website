@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
-import { isTeamMailbox, normalizeEmail, personKey } from "../lib/contact-identity";
+import {
+  isTeamMailbox,
+  normalizeEmail,
+  personKey,
+} from "../lib/contact-identity";
 import { qualifyResearchLead } from "../lib/mail-assistant/qualify";
 type Job = {
   id: string;
@@ -107,15 +111,6 @@ export default function MailAssistant({
     persistenceKey,
     preferencesLoaded,
   ]);
-  const normalize = (value: string) => value.trim().toLocaleLowerCase("de-CH");
-  const existing = (lead: AssistantResult["leads"][number]) =>
-    contacts.some(
-      (c) =>
-        (lead.email && normalize(c.email) === normalize(lead.email)) ||
-        (normalize(c.organisation) === normalize(lead.organisation) &&
-          normalize(c.firstName) === normalize(lead.firstName) &&
-          normalize(c.lastName) === normalize(lead.lastName)),
-    );
   // The client mirrors the backend's qualification for an understandable preview.
   // The server revalidates on import; UI selection is not a security boundary.
   const knownLeads = {
