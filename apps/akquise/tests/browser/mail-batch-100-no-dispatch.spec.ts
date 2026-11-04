@@ -63,9 +63,27 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
             ready: true,
             changed: false,
             patch: {},
-            values: {},
+            values: {
+              sourceUrl: "https://example.test/team",
+              verifiedAt: "2026-10-28T00:00:00.000Z",
+              confidence: "VERIFIED",
+              hook: "Synthetische Firmenrecherche",
+            },
             origins: [],
             issues: [],
+          })),
+        },
+      });
+    }
+    if (path.endsWith("/preparation/save")) {
+      expect(body.contacts).toHaveLength(100);
+      expect(body.confirmed).toBe(true);
+      return route.fulfill({
+        json: {
+          results: contacts.map((contact) => ({
+            id: contact.id,
+            ok: true,
+            message: "Synthetisch bestätigt",
           })),
         },
       });
