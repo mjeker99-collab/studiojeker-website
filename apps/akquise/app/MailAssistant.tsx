@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
+import { isTeamMailbox, normalizeEmail, personKey } from "../lib/contact-identity";
+import { qualifyResearchLead } from "../lib/mail-assistant/qualify";
 type Job = {
   id: string;
   status: string;
@@ -114,10 +116,33 @@ export default function MailAssistant({
           normalize(c.firstName) === normalize(lead.firstName) &&
           normalize(c.lastName) === normalize(lead.lastName)),
     );
-  const available =
-    job?.result.leads
-      .map((lead, index) => (existing(lead) ? -1 : index))
-      .filter((index) => index >= 0) || [];
+  // The client mirrors the backend's qualification for an understandable preview.
+  // The server revalidates on import; UI selection is not a security boundary.
+  const knownLeads = {
+    emails: new Set(contacts.map((item) => normalizeEmail(item.email))),
+    keys: new Set(
+      contacts.map((item) =>
+        personKey(item.firstName, item.lastName, item.organisation),
+      ),
+    ),
+  };
+  const qualifications =
+    job?.result.leads.map((lead) => {
+      const result = qualifyResearchLead(lead, knownLeads);
+      if (result.ok) {
+        knownLeads.emails.add(result.email);
+        knownLeads.keys.add(
+          personKey(lead.firstName, lead.lastName, lead.organisation),
+        );
+      }
+      return result;
+    }) || [];
+  const available = qualifications.flatMap((result, index) =>
+    result.ok ? [index] : [],
+  );
+  const excludedReasons = qualifications.map((result) =>
+    result.ok ? "" : result.reason,
+  );
   const selectedLeads = chosen.filter((index) => available.includes(index));
   const Container = expanded ? "section" : "details";
 
@@ -310,14 +335,14 @@ export default function MailAssistant({
               }
               onChange={(e) => setChosen(e.target.checked ? available : [])}
             />
-            Alle neuen Kontakte auswählen
+            Alle geeigneten Kontakte auswählen
           </label>
           {job.result.leads.map((lead, i) => (
             <div key={i}>
               <label className="check">
                 <input
                   type="checkbox"
-                  disabled={disabled || working || existing(lead)}
+                  disabled={disabled || working || !qualifications[i]?.ok}
                   checked={selectedLeads.includes(i)}
                   onChange={(e) =>
                     setChosen((old) =>
@@ -329,7 +354,11 @@ export default function MailAssistant({
                 />
                 {lead.organisation} · {lead.firstName} {lead.lastName} ·{" "}
                 {lead.email || "E-Mail nicht gefunden"}
-                {existing(lead) ? " · Bereits vorhanden" : ""}
+                {excludedReasons[i]
+                  ? ` · ${excludedReasons[i]}`
+                  : isTeamMailbox(lead.email)
+                    ? " · Team-Postfach"
+                    : ""}
               </label>
               <p>
                 {lead.hook}{" "}
@@ -349,8 +378,18 @@ export default function MailAssistant({
                   indices: selectedLeads,
                 });
                 await refresh();
+                const excluded = Array.isArray(r.excluded) ? r.excluded : [];
                 setNotice(
-                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden. Du findest sie unter «Kontakte verwalten».`,
+                  `${r.imported} neue Kontakte übernommen, ${r.duplicates} bereits vorhanden.${
+                    excluded.length
+                      ? ` Nicht übernommen: ${excluded
+                          .map(
+                            (item: { count: number; reason: string }) =>
+                              `${item.count} ${item.reason}`,
+                          )
+                          .join(" ")}`
+                      : ""
+                  } Du findest sie unter «Kontakte verwalten».`,
                 );
               })
             }
