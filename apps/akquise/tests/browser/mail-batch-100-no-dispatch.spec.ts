@@ -15,6 +15,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
     email: `nina${i}@example.test`,
     status: "NEW",
   }));
+  let saved = false;
   let preparedIds: string[] = [];
   let approvalCalls = 0;
 
@@ -60,7 +61,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
           contacts: body.ids.map((id: string) => ({
             ...contacts.find((contact) => contact.id === id),
             name: "Nina Test",
-            ready: true,
+            ready: saved,
             changed: false,
             patch: {},
             values: {
@@ -70,7 +71,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
               hook: "Synthetische Firmenrecherche",
             },
             origins: [],
-            issues: [],
+            issues: saved ? [] : ["Rechercheangaben bestätigen."],
           })),
         },
       });
@@ -78,6 +79,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
     if (path.endsWith("/preparation/save")) {
       expect(body.contacts).toHaveLength(100);
       expect(body.confirmed).toBe(true);
+      saved = true;
       return route.fulfill({
         json: {
           results: contacts.map((contact) => ({
