@@ -90,6 +90,7 @@ export default function MailStudio({
   openDraft: (id: string) => void;
 }) {
   const operation = useRef(false);
+  const selectionEpoch = useRef(0);
   const approvalRef = useRef<HTMLElement>(null);
   const preparationRef = useRef<HTMLDivElement>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -214,6 +215,7 @@ export default function MailStudio({
     (id) => !rows.some((r) => contactIdFor(r) === id),
   );
   function removeFromBatch(ids: string[]) {
+    selectionEpoch.current++;
     const removedDrafts = rows
       .filter((r) => ids.includes(contactIdFor(r)))
       .map((r) => r.id);
@@ -352,6 +354,7 @@ export default function MailStudio({
   }
   const [selectionNotice, setSelectionNotice] = useState("");
   function resetSelection() {
+    selectionEpoch.current++;
     setDeferredIds([]);
     setRecipientSearch("");
     setDiscardOpen(false);
@@ -719,6 +722,7 @@ export default function MailStudio({
   ]);
   const reconcile = useEffectEvent(async () => {
     if (busy || editingDirty) return;
+    const epoch = selectionEpoch.current;
     const known = new Set(
       contacts.filter((c) => !c.archivedAt).map((c) => c.id),
     );
@@ -738,6 +742,7 @@ export default function MailStudio({
     }
     try {
       const data = await api("preview", { ids: retained.map((r) => r.id) });
+      if (epoch !== selectionEpoch.current) return;
       // A version/content/contact change invalidates the visible approval.
       if (JSON.stringify(data.rows) !== JSON.stringify(rows)) {
         setRows(data.rows);

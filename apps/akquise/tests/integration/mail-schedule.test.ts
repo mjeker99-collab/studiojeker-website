@@ -564,12 +564,13 @@ test("missing contact and draft do not abort the remaining previews", async () =
   const preview = await prepareContacts(user, "preview", {
     ids: ["deleted-contact", c.id],
   });
-  assert.ok("contacts" in preview);
+  assert.ok(preview.contacts);
   assert.equal(preview.contacts.length, 1);
   const review = await mailReview(user, "preview", {
     ids: ["deleted-draft", d.id],
   });
-  assert.ok("rows" in review);
+  assert.ok(review.rows);
+  assert.ok(review.unavailable);
   assert.equal(review.rows.length, 1);
   assert.equal(review.rows[0].id, d.id);
   assert.equal(review.unavailable.length, 1);

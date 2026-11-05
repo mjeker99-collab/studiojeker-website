@@ -254,7 +254,7 @@ for (const failure of ["review", "unknown"] as const) {
       ).toBeVisible();
       expect(state.sent).toEqual(["d0", "d1", "d2"]);
     } else {
-      await expect(page.getByRole("alert")).toContainText(
+      await expect(page.getByRole("alert").filter({ hasText: "Versand unterbrochen" })).toContainText(
         "Versand unterbrochen",
       );
       expect(state.sent).toEqual([]);

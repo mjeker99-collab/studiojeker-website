@@ -331,7 +331,9 @@ export async function newDraft(
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "contact:" + contactId);
-    const c = await tx.contact.findUniqueOrThrow({ where: { id: contactId } });
+    const c = await tx.contact.findUnique({ where: { id: contactId } });
+    if (!c) throw new PolicyError("Kontakt wurde entfernt.", 409);
+    if (c.archivedAt) throw new PolicyError("Kontakt ist archiviert.");
     if (await tx.suppression.findUnique({ where: { email: c.email } }))
       throw new PolicyError("Adresse auf Sperrliste.");
     const generated = await generateDraft(c);
