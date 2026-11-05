@@ -1034,10 +1034,14 @@ export default function MailStudio({
             onDone={() => void run(completeOpenContacts)}
             onExclude={(ids) => {
               setContactIds((old) => old.filter((id) => !ids.includes(id)));
-              const remaining = batchProposals
-                .filter((p) => !ids.includes(p.id))
-                .map((p) => p.id);
-              void run(() => completeOpenContacts(remaining));
+              const remaining = batchProposals.filter(
+                (p) => !ids.includes(p.id),
+              );
+              // Suggested values still need explicit confirmation even when
+              // excluding other contacts. Keep that editor and the ready mails.
+              setBatchProposals(remaining);
+              setDeferredIds(remaining.map((p) => p.id));
+              setSkipped([]);
             }}
           />
         </div>
