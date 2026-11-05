@@ -426,9 +426,76 @@ test("25 Kontakte gemeinsam vervollständigen und Entwürfe erstellen ohne Einze
       contacts: selection,
     }),
   );
+  await assert.rejects(
+    prepareContacts(martin, "preview", {
+      ids: [contacts[0].id],
+      shared: { sourceUrl: "javascript:alert(1)" },
+    }),
+  );
+  const result = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: selection,
+  });
+  assert.ok(result.results);
+  assert.equal(result.results.filter((r) => r.ok).length, 25);
+  for (const [i, c] of contacts.entries()) {
+    const saved = await db.contact.findUniqueOrThrow({ where: { id: c.id } });
+    assert.equal(
+      saved.sourceUrl,
+      i === 0 ? "https://example.test/einzelbeleg" : shared.sourceUrl,
+    );
+    assert.equal(saved.revision, c.revision + 1);
+    assert.equal(saved.newsletterConsent, false);
+    assert.equal(saved.legalCategory, "UNASSESSED");
+    const version = await db.draftVersion.findFirstOrThrow({
+      where: { draft: { contactId: c.id } },
+    });
+    assert.equal(version.subject, `Persönlicher Entwurf ${i}`);
+    assert.match(
+      version.body,
+      new RegExp(`Individueller dokumentierter Bezug ${i}\\.`),
+    );
+  }
+  const fresh = await prepareContacts(martin, "preview", {
+    ids: contacts.map((c) => c.id),
+    shared,
+  });
+  assert.ok(fresh.contacts);
+  const repeat = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: fresh.contacts.map((c) => ({ id: c.id, revision: c.revision })),
+  });
+  assert.ok(repeat.results);
+  assert.equal(repeat.results.filter((r) => r.ok).length, 25);
+  assert.equal(
+    await db.draft.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    25,
+  );
+  assert.equal(
+    await db.approval.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    0,
+  );
+  assert.equal(
+    await db.legalReview.count({
+      where: { contactId: { in: contacts.map((c) => c.id) } },
+    }),
+    0,
+  );
+  const stale = await prepareContacts(martin, "prepare", {
+    confirmed: true,
+    shared,
+    contacts: selection,
+  });
+  assert.ok(stale.results);
+  assert.equal(stale.results.filter((r) => r.ok).length, 0);
   const stalePreview = await prepareContacts(martin, "preview", {
-    ids: [contacts[0].id, contacts[1].id],
-    edits: [selection[0]],
+    ids: [contacts[0].id, contacts[1].id], edits: [selection[0]],
   });
   assert.ok(stalePreview.contacts);
   assert.equal(stalePreview.contacts.length, 2);
@@ -2234,168 +2301,150 @@ test("Chat follow-up: exact proposal snapshot, same-series access and explicit i
   }
 });
 
-for (const legacy of [false, true])
-  test(`Photo edit: ${legacy ? "legacy dialog without layout" : "current layout"}, separate result, explicit adoption and stale protection`, async () => {
-    const names = [
-      "OPENAI_API_KEY",
-      "CONTENT_AI_ENABLED",
-      "CONTENT_DAILY_REQUEST_LIMIT",
-      "CONTENT_DAILY_BUDGET_USD",
-      "STUDIO_LOCAL_ASSETS",
-    ];
-    const old = names.map((k) => process.env[k]);
-    Object.assign(process.env, {
-      OPENAI_API_KEY: "synthetic",
-      CONTENT_AI_ENABLED: "true",
-      CONTENT_DAILY_REQUEST_LIMIT: "1000",
-      CONTENT_DAILY_BUDGET_USD: "1000",
-      STUDIO_LOCAL_ASSETS: "true",
-    });
-    try {
-      const { randomUUID } = await import("node:crypto");
-      const source = await testMotif();
-      const original = await studioAssets.readAsset(
-        martin,
-        source.id,
-        testStore,
-      );
-      const s = await studio.createSeries(martin, studioBrief());
-      if (legacy) {
-        const before = await studioContent(s.id);
-        const { studio: _layout, ...payload } = studioContentInput.parse(
-          before.versions[0].payload,
-        );
-        void _layout;
-        await db.marketingVersion.update({
-          where: { id: before.versions[0].id },
-          data: { payload },
-        });
-      }
-      const request = {
-        seriesId: s.id,
-        kind: "IMAGE",
-        photoEdit: true,
-        message: "Schatten aufhellen",
-        contentId: null,
-        requestKey: randomUUID(),
-        referenceIds: [source.id],
-        referenceRights: true,
-        referenceTransfer: true,
-        confirmedCosts: true,
-      };
-      await assert.rejects(
-        studio.queueJob(martin, { ...request, referenceIds: [] }),
-        /genau ein/,
-      );
-      await assert.rejects(
-        studio.queueJob(martin, {
-          ...request,
-          referenceIds: [source.id, source.id],
-        }),
-        /genau ein/,
-      );
-      await assert.rejects(
-        studio.queueJob(martin, {
-          ...request,
-          referenceIds: ["foreign-asset"],
-        }),
-        /nicht zugänglich/,
-      );
-      await assert.rejects(
-        studio.queueJob(martin, { ...request, referenceTransfer: false }),
-        /ausdrücklich/,
-      );
-      const j = await studio.queueJob(martin, request);
-      assert.equal(j.reserveUsd, 0.25);
-      assert.equal((await studio.queueJob(martin, request)).id, j.id);
-      const edited = await sharp(original.bytes)
-        .modulate({ brightness: 1.3 })
-        .png()
-        .toBuffer();
-      let calls = 0;
-      const provider: import("../../lib/studio/provider").AIProvider = {
-        async text() {
-          throw new Error("No text call");
-        },
-        async image(prompt, _model, refs, options) {
-          calls++;
-          assert.equal(prompt, request.message);
-          assert.equal(options?.edit, true);
-          assert.equal(refs.length, 1);
-          assert.deepEqual(refs[0].bytes, original.bytes);
-          return { bytes: edited, requestId: "synthetic-photo", usage: {} };
-        },
-      };
-      await studio.runJob(martin, j.id, provider, testStore);
-      const done = await db.studioJob.findUniqueOrThrow({
-        where: { id: j.id },
-      });
-      assert.equal(done.status, "SUCCEEDED");
-      const result = done.result as {
-        assetId: string;
-        sourceAssetIds: string[];
-      };
-      assert.notEqual(result.assetId, source.id);
-      assert.deepEqual(result.sourceAssetIds, [source.id]);
-      assert.deepEqual(
-        (await studioAssets.readAsset(martin, source.id, testStore)).bytes,
-        original.bytes,
-      );
-      assert.equal((await studioContent(s.id)).version, 1);
-      await studio.applyJob(martin, j.id);
-      const c = await studioContent(s.id);
-      assert.equal(c.version, 2);
-      assert.equal(
-        studioContentInput.parse(c.versions[0].payload).studio?.motifAssetId,
-        result.assetId,
-      );
-      await assert.rejects(
-        studio.runJob(martin, j.id, provider, testStore),
-        /bereits gestartet/,
-      );
-      await assert.rejects(studio.applyJob(martin, j.id), /noch nicht/);
-      const stale = await studio.queueJob(martin, {
-        ...request,
-        requestKey: randomUUID(),
-      });
-      await studio.runJob(martin, stale.id, provider, testStore);
-      const p = studioContentInput.parse(c.versions[0].payload);
-      await hub.saveContent(
-        martin,
-        { ...p, title: "Manuell verändert" },
-        c.id,
-        c.version,
-      );
-      await assert.rejects(
-        studio.applyJob(martin, stale.id),
-        /seit Auftrag geändert/,
-      );
-      const archived = await studio.queueJob(martin, {
-        ...request,
-        requestKey: randomUUID(),
-      });
-      await db.libraryItem.updateMany({
-        where: { assetId: source.id },
-        data: { archivedAt: new Date() },
-      });
-      await studio.runJob(martin, archived.id, provider, testStore);
-      assert.equal(
-        (await db.studioJob.findUniqueOrThrow({ where: { id: archived.id } }))
-          .status,
-        "FAILED",
-      );
-      assert.equal(calls, 2);
-      await db.libraryItem.updateMany({
-        where: { assetId: source.id },
-        data: { archivedAt: null },
-      });
-    } finally {
-      names.forEach((k, i) => {
-        if (old[i] === undefined) delete process.env[k];
-        else process.env[k] = old[i];
-      });
-    }
+for (const legacy of [false, true]) test(`Photo edit: ${legacy ? "legacy dialog without layout" : "current layout"}, separate result, explicit adoption and stale protection`, async () => {
+  const names = [
+    "OPENAI_API_KEY",
+    "CONTENT_AI_ENABLED",
+    "CONTENT_DAILY_REQUEST_LIMIT",
+    "CONTENT_DAILY_BUDGET_USD",
+    "STUDIO_LOCAL_ASSETS",
+  ];
+  const old = names.map((k) => process.env[k]);
+  Object.assign(process.env, {
+    OPENAI_API_KEY: "synthetic",
+    CONTENT_AI_ENABLED: "true",
+    CONTENT_DAILY_REQUEST_LIMIT: "1000",
+    CONTENT_DAILY_BUDGET_USD: "1000",
+    STUDIO_LOCAL_ASSETS: "true",
   });
+  try {
+    const { randomUUID } = await import("node:crypto");
+    const source = await testMotif();
+    const original = await studioAssets.readAsset(martin, source.id, testStore);
+    const s = await studio.createSeries(martin, studioBrief());
+    if (legacy) {
+      const before = await studioContent(s.id);
+      const { studio: _layout, ...payload } = studioContentInput.parse(before.versions[0].payload);
+      void _layout;
+      await db.marketingVersion.update({ where: { id: before.versions[0].id }, data: { payload } });
+    }
+    const request = {
+      seriesId: s.id,
+      kind: "IMAGE",
+      photoEdit: true,
+      message: "Schatten aufhellen",
+      contentId: null,
+      requestKey: randomUUID(),
+      referenceIds: [source.id],
+      referenceRights: true,
+      referenceTransfer: true,
+      confirmedCosts: true,
+    };
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceIds: [] }),
+      /genau ein/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, {
+        ...request,
+        referenceIds: [source.id, source.id],
+      }),
+      /genau ein/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceIds: ["foreign-asset"] }),
+      /nicht zugänglich/,
+    );
+    await assert.rejects(
+      studio.queueJob(martin, { ...request, referenceTransfer: false }),
+      /ausdrücklich/,
+    );
+    const j = await studio.queueJob(martin, request);
+    assert.equal(j.reserveUsd, 0.25);
+    assert.equal((await studio.queueJob(martin, request)).id, j.id);
+    const edited = await sharp(original.bytes)
+      .modulate({ brightness: 1.3 })
+      .png()
+      .toBuffer();
+    let calls = 0;
+    const provider: import("../../lib/studio/provider").AIProvider = {
+      async text() {
+        throw new Error("No text call");
+      },
+      async image(prompt, _model, refs, options) {
+        calls++;
+        assert.equal(prompt, request.message);
+        assert.equal(options?.edit, true);
+        assert.equal(refs.length, 1);
+        assert.deepEqual(refs[0].bytes, original.bytes);
+        return { bytes: edited, requestId: "synthetic-photo", usage: {} };
+      },
+    };
+    await studio.runJob(martin, j.id, provider, testStore);
+    const done = await db.studioJob.findUniqueOrThrow({ where: { id: j.id } });
+    assert.equal(done.status, "SUCCEEDED");
+    const result = done.result as { assetId: string; sourceAssetIds: string[] };
+    assert.notEqual(result.assetId, source.id);
+    assert.deepEqual(result.sourceAssetIds, [source.id]);
+    assert.deepEqual(
+      (await studioAssets.readAsset(martin, source.id, testStore)).bytes,
+      original.bytes,
+    );
+    assert.equal((await studioContent(s.id)).version, 1);
+    await studio.applyJob(martin, j.id);
+    const c = await studioContent(s.id);
+    assert.equal(c.version, 2);
+    assert.equal(
+      studioContentInput.parse(c.versions[0].payload).studio?.motifAssetId,
+      result.assetId,
+    );
+    await assert.rejects(
+      studio.runJob(martin, j.id, provider, testStore),
+      /bereits gestartet/,
+    );
+    await assert.rejects(studio.applyJob(martin, j.id), /noch nicht/);
+    const stale = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await studio.runJob(martin, stale.id, provider, testStore);
+    const p = studioContentInput.parse(c.versions[0].payload);
+    await hub.saveContent(
+      martin,
+      { ...p, title: "Manuell verändert" },
+      c.id,
+      c.version,
+    );
+    await assert.rejects(
+      studio.applyJob(martin, stale.id),
+      /seit Auftrag geändert/,
+    );
+    const archived = await studio.queueJob(martin, {
+      ...request,
+      requestKey: randomUUID(),
+    });
+    await db.libraryItem.updateMany({
+      where: { assetId: source.id },
+      data: { archivedAt: new Date() },
+    });
+    await studio.runJob(martin, archived.id, provider, testStore);
+    assert.equal(
+      (await db.studioJob.findUniqueOrThrow({ where: { id: archived.id } }))
+        .status,
+      "FAILED",
+    );
+    assert.equal(calls, 2);
+    await db.libraryItem.updateMany({
+      where: { assetId: source.id },
+      data: { archivedAt: null },
+    });
+  } finally {
+    names.forEach((k, i) => {
+      if (old[i] === undefined) delete process.env[k];
+      else process.env[k] = old[i];
+    });
+  }
+});
 
 test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und escaped Text", async (t) => {
   const { readFileSync, existsSync } = await import("node:fs");
@@ -2449,36 +2498,18 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
     await import("../../lib/hub/newsletter-library");
   const { newsletterLibrary, newsletterDefaults, newsletterText } =
     await import("../../lib/hub/newsletter-template");
-  const v4 = newsletterLibrary.find(
-    (item) => item.id === "newsletter-04-github-364bba2",
-  )!;
+  const v4 = newsletterLibrary.find((item) => item.id === "newsletter-04-github-364bba2")!;
   const newsletter = newsletterDefaults(v4.id);
   const connectedDraft = await hub.saveContent(martin, {
-    ...social(martin),
-    kind: "NEWSLETTER",
-    variants: [],
-    title: v4.name,
-    subject: v4.subject,
-    preheader: v4.preheader,
-    newsletter,
-    body: newsletterText(newsletter),
-    audience: "Synthetische Zielgruppe",
+    ...social(martin), kind: "NEWSLETTER", variants: [], title: v4.name,
+    subject: v4.subject, preheader: v4.preheader, newsletter,
+    body: newsletterText(newsletter), audience: "Synthetische Zielgruppe",
   });
   const first = await importNewsletters(martin);
   assert.equal(first.imported, newsletterLibrary.length - 1);
   assert.equal(first.ids.length, newsletterLibrary.length - 1);
-  assert.equal(
-    await db.marketingContent.count({ where: { title: v4.name } }),
-    1,
-  );
-  assert.equal(
-    (
-      await db.marketingContent.findUniqueOrThrow({
-        where: { id: connectedDraft.id },
-      })
-    ).version,
-    1,
-  );
+  assert.equal(await db.marketingContent.count({ where: { title: v4.name } }), 1);
+  assert.equal((await db.marketingContent.findUniqueOrThrow({ where: { id: connectedDraft.id } })).version, 1);
   assert.equal((await importNewsletters(nora)).imported, 0);
   const original = await db.marketingContent.findUniqueOrThrow({
     where: { id: first.ids[1] },
@@ -2520,71 +2551,32 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
   );
 });
 
+
+
 test("unused contact deletion respects revision, actor, mail history and suppression", async () => {
   const unused = await saveContact(martin, input("delete-unused"));
-  await assert.rejects(
-    deleteUnusedContact("missing-actor", unused.id, unused.revision),
-  );
-  await assert.rejects(
-    deleteUnusedContact(martin, unused.id, unused.revision + 1),
-  );
+  await assert.rejects(deleteUnusedContact("missing-actor", unused.id, unused.revision));
+  await assert.rejects(deleteUnusedContact(martin, unused.id, unused.revision + 1));
   assert.ok(await db.contact.findUnique({ where: { id: unused.id } }));
   await deleteUnusedContact(martin, unused.id, unused.revision);
   assert.equal(await db.contact.findUnique({ where: { id: unused.id } }), null);
   const drafted = await saveContact(martin, input("delete-drafted"));
   const draft = await newDraft(martin, drafted.id);
-  await db.mailQueueItem.create({
-    data: {
-      draftId: draft.id,
-      version: 1,
-      hash: "a".repeat(64),
-      userId: martin,
-      recipient: drafted.email,
-      subject: "Synthetischer Entwurf",
-      status: "QUEUED",
-    },
-  });
+  await db.mailQueueItem.create({ data: { draftId: draft.id, version: 1, hash: "a".repeat(64), userId: martin, recipient: drafted.email, subject: "Synthetischer Entwurf", status: "QUEUED" } });
   await deleteUnusedContact(martin, drafted.id, drafted.revision);
-  assert.equal(
-    await db.contact.findUnique({ where: { id: drafted.id } }),
-    null,
-  );
+  assert.equal(await db.contact.findUnique({ where: { id: drafted.id } }), null);
   assert.equal(await db.draft.findUnique({ where: { id: draft.id } }), null);
-  assert.equal(
-    await db.draftVersion.count({ where: { draftId: draft.id } }),
-    0,
-  );
-  assert.equal(
-    (await db.mailQueueItem.findFirstOrThrow({ where: { draftId: draft.id } }))
-      .status,
-    "CANCELLED",
-  );
+  assert.equal(await db.draftVersion.count({ where: { draftId: draft.id } }), 0);
+  assert.equal((await db.mailQueueItem.findFirstOrThrow({ where: { draftId: draft.id } })).status, "CANCELLED");
   const attempted = await saveContact(martin, input("delete-attempted"));
   const attemptedDraft = await newDraft(martin, attempted.id);
-  await db.delivery.create({
-    data: {
-      draftId: attemptedDraft.id,
-      version: 1,
-      hash: "b".repeat(64),
-      recipient: attempted.email,
-      status: "FAILED",
-      messageId: "delete-attempted-test",
-      idempotencyKey: "delete-attempted-test",
-    },
-  });
-  await assert.rejects(
-    deleteUnusedContact(martin, attempted.id, attempted.revision),
-    /Versandprotokoll vorhanden \(FAILED\)/,
-  );
+  await db.delivery.create({ data: { draftId: attemptedDraft.id, version: 1, hash: "b".repeat(64), recipient: attempted.email, status: "FAILED", messageId: "delete-attempted-test", idempotencyKey: "delete-attempted-test" } });
+  await assert.rejects(deleteUnusedContact(martin, attempted.id, attempted.revision), /Versandprotokoll vorhanden \(FAILED\)/);
   assert.ok(await db.contact.findUnique({ where: { id: attempted.id } }));
   assert.ok(await db.draft.findUnique({ where: { id: attemptedDraft.id } }));
   const blocked = await saveContact(martin, input("delete-blocked"));
   await suppress(martin, blocked.email, "Synthetischer Widerspruch");
-  await assert.rejects(
-    deleteUnusedContact(martin, blocked.id, blocked.revision),
-    /Versandsperrliste/,
-  );
-  assert.ok(
-    await db.suppression.findUnique({ where: { email: blocked.email } }),
-  );
+  await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperrliste/);
+  assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
 });
+
