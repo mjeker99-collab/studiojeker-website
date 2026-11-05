@@ -249,3 +249,19 @@
 .mail-selection-toolbar {
   position: static;
 }
+
+.mail-studio .panel.mail-studio-workspace {
+  padding: 16px;
+}
+.mail-studio .panel.mail-studio-workspace .mail-studio-toolbar {
+  padding: 16px 20px;
+}
+.mail-studio .panel.mail-studio-workspace .mail-studio-toolbar h2 {
+  font-size: 24px;
+}
+.mail-studio .mail-selection-toolbar {
+  font-size: 13px;
+}
+.mail-studio .mail-selection-toolbar label {
+  margin-block: 6px;
+}

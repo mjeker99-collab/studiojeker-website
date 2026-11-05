@@ -201,7 +201,7 @@ test("50 selected contacts stay together through shared completion and review", 
     .click();
   await expect(
     page.locator(".contact-preparation").getByRole("alert"),
-  ).toContainText("gemeinsame Prüfdatum");
+  ).toContainText("Prüfdatum liegt in der Zukunft");
   expect(saved).toBe(false);
   await expect(shared.getByLabel("Quellen-URL")).toHaveValue(
     "https://Search.ch",

@@ -605,8 +605,16 @@ export default function MailStudio({
   }
   const previousInitialContacts = useRef(initialContactIds);
   useEffect(() => {
-    const wasSelected = previousInitialContacts.current.length > 0;
+    const previous = previousInitialContacts.current;
+    const wasSelected = previous.length > 0;
     previousInitialContacts.current = initialContactIds;
+    // Deletion/archive only prunes that contact through reconciliation.
+    if (
+      wasSelected &&
+      initialContactIds.length < previous.length &&
+      initialContactIds.every((id) => previous.includes(id))
+    )
+      return;
     if (!initialContactIds.length && !wasSelected) return;
     Promise.resolve().then(() => {
       setContactIds(initialContactIds);
@@ -1457,77 +1465,6 @@ export default function MailStudio({
                 </div>
               )}
             </div>
-            <details>
-              <summary>Texte mit KI überarbeiten</summary>
-              <MailAssistant
-                onBusyChange={setBusy}
-                mode="WRITE"
-                expanded
-                disabled={busy || editingDirty}
-                items={chosen.map((r) => ({ id: r.id, version: r.version }))}
-                refresh={async () => {
-                  const keep = [...included];
-                  setRead(false);
-                  setDispatch(false);
-                  setLegal(false);
-                  await preview(rows.map((r) => r.id));
-                  setIncluded(keep);
-                  await refresh();
-                }}
-              />
-            </details>
-            <details>
-              <summary>Bilder oder Links für alle Mails ergänzen</summary>
-              <MailContentEditor
-                count={chosen.length}
-                disabled={busy || editingDirty}
-                onApply={async (content) => {
-                  setBusy(true);
-                  setRead(false);
-                  setLegal(false);
-                  const previousIncluded = [...included];
-                  try {
-                    const data = await api("content", {
-                      items: chosen.map((r) => ({
-                        id: r.id,
-                        version: r.version,
-                      })),
-                      content,
-                    });
-                    await preview();
-                    setIncluded(previousIncluded);
-                    await refresh();
-                    if (data.results.some((r: Result) => !r.ok))
-                      throw new Error(
-                        data.results
-                          .filter((r: Result) => !r.ok)
-                          .map((r: Result) => r.message)
-                          .join(" · "),
-                      );
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              />
-            </details>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy || editingDirty || !chosen.length}
-              onClick={() =>
-                void run(async () => {
-                  const first = chosen[0];
-                  const result = await api("test", {
-                    confirmed: true,
-                    requestId: crypto.randomUUID(),
-                    draft: { id: first.id, version: first.version },
-                  });
-                  setSendProgress(result.message);
-                })
-              }
-            >
-              Erste Mail als Test an njeker@studiojeker.ch senden
-            </button>
             {chosen.length > 0 && (
               <section
                 id="mailstudio-send-approval"
@@ -1628,6 +1565,77 @@ export default function MailStudio({
                 </div>
               </section>
             )}
+            <details>
+              <summary>Texte mit KI überarbeiten</summary>
+              <MailAssistant
+                onBusyChange={setBusy}
+                mode="WRITE"
+                expanded
+                disabled={busy || editingDirty}
+                items={chosen.map((r) => ({ id: r.id, version: r.version }))}
+                refresh={async () => {
+                  const keep = [...included];
+                  setRead(false);
+                  setDispatch(false);
+                  setLegal(false);
+                  await preview(rows.map((r) => r.id));
+                  setIncluded(keep);
+                  await refresh();
+                }}
+              />
+            </details>
+            <details>
+              <summary>Bilder oder Links für alle Mails ergänzen</summary>
+              <MailContentEditor
+                count={chosen.length}
+                disabled={busy || editingDirty}
+                onApply={async (content) => {
+                  setBusy(true);
+                  setRead(false);
+                  setLegal(false);
+                  const previousIncluded = [...included];
+                  try {
+                    const data = await api("content", {
+                      items: chosen.map((r) => ({
+                        id: r.id,
+                        version: r.version,
+                      })),
+                      content,
+                    });
+                    await preview();
+                    setIncluded(previousIncluded);
+                    await refresh();
+                    if (data.results.some((r: Result) => !r.ok))
+                      throw new Error(
+                        data.results
+                          .filter((r: Result) => !r.ok)
+                          .map((r: Result) => r.message)
+                          .join(" · "),
+                      );
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+            </details>
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy || editingDirty || !chosen.length}
+              onClick={() =>
+                void run(async () => {
+                  const first = chosen[0];
+                  const result = await api("test", {
+                    confirmed: true,
+                    requestId: crypto.randomUUID(),
+                    draft: { id: first.id, version: first.version },
+                  });
+                  setSendProgress(result.message);
+                })
+              }
+            >
+              Erste Mail als Test an njeker@studiojeker.ch senden
+            </button>
             {sendProgress && <p role="status">{sendProgress}</p>}
             {results.length > 0 && (
               <div role="status">

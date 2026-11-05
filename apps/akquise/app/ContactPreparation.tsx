@@ -146,14 +146,19 @@ export default function ContactPreparation({
   }
   async function save() {
     if (!confirmed || busy) return;
+    if (sourceUrlIssue(shared.sourceUrl ?? "")) {
+      setError(
+        "Bitte die markierte Quellenadresse korrigieren. Deine Eingaben bleiben erhalten.",
+      );
+      return;
+    }
     if (
-      sourceUrlIssue(shared.sourceUrl ?? "") ||
-      (shared.verifiedAt &&
-        (Number.isNaN(Date.parse(shared.verifiedAt)) ||
-          shared.verifiedAt.slice(0, 10) > today))
+      shared.verifiedAt &&
+      (Number.isNaN(Date.parse(shared.verifiedAt)) ||
+        shared.verifiedAt.slice(0, 10) > today)
     ) {
       setError(
-        "Bitte die gemeinsame Quellenadresse oder das gemeinsame Prüfdatum korrigieren.",
+        "Das Prüfdatum liegt in der Zukunft oder ist ungültig. Bitte das tatsächliche Prüfdatum wählen; deine Eingaben bleiben erhalten.",
       );
       return;
     }
