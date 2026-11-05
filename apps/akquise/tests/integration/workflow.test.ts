@@ -2561,10 +2561,21 @@ test("unused contact deletion respects revision, actor, mail history and suppres
   assert.equal(await db.contact.findUnique({ where: { id: unused.id } }), null);
   const drafted = await saveContact(martin, input("delete-drafted"));
   const draft = await newDraft(martin, drafted.id);
-  await assert.rejects(deleteUnusedContact(martin, drafted.id, drafted.revision), /Mailverlauf/);
-  assert.ok(await db.draft.findUnique({ where: { id: draft.id } }));
+  await db.mailQueueItem.create({ data: { draftId: draft.id, version: 1, hash: "a".repeat(64), userId: martin, recipient: drafted.email, subject: "Synthetischer Entwurf", status: "QUEUED" } });
+  await deleteUnusedContact(martin, drafted.id, drafted.revision);
+  assert.equal(await db.contact.findUnique({ where: { id: drafted.id } }), null);
+  assert.equal(await db.draft.findUnique({ where: { id: draft.id } }), null);
+  assert.equal(await db.draftVersion.count({ where: { draftId: draft.id } }), 0);
+  assert.equal((await db.mailQueueItem.findFirstOrThrow({ where: { draftId: draft.id } })).status, "CANCELLED");
+  const attempted = await saveContact(martin, input("delete-attempted"));
+  const attemptedDraft = await newDraft(martin, attempted.id);
+  await db.delivery.create({ data: { draftId: attemptedDraft.id, version: 1, hash: "b".repeat(64), recipient: attempted.email, status: "FAILED", messageId: "delete-attempted-test", idempotencyKey: "delete-attempted-test" } });
+  await assert.rejects(deleteUnusedContact(martin, attempted.id, attempted.revision), /Mailverlauf/);
+  assert.ok(await db.contact.findUnique({ where: { id: attempted.id } }));
+  assert.ok(await db.draft.findUnique({ where: { id: attemptedDraft.id } }));
   const blocked = await saveContact(martin, input("delete-blocked"));
   await suppress(martin, blocked.email, "Synthetischer Widerspruch");
   await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperre/);
   assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
 });
+

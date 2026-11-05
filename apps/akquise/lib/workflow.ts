@@ -76,12 +76,20 @@ export async function deleteUnusedContact(userId: string, id: string, revision: 
     const contact = await tx.contact.findFirst({ where: { id, organizationId: "studiojeker" } });
     if (!contact) throw new PolicyError("Kontakt nicht gefunden.", 404);
     if (contact.revision !== revision) throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
-    const drafts = await tx.draft.count({ where: { contactId: id } });
-    if (drafts || contact.status === "SENT" || contact.status === "REPLIED" || contact.status === "DO_NOT_CONTACT" || contact.replyOutcome)
+    const drafts = await tx.draft.findMany({ where: { contactId: id }, select: { id: true } });
+    const draftIds = drafts.map((draft) => draft.id);
+    const delivery = await tx.delivery.findFirst({ where: { draftId: { in: draftIds } } });
+    const active = await tx.mailQueueItem.findFirst({ where: { draftId: { in: draftIds }, status: { in: ["SENDING", "SENT", "UNKNOWN"] } } });
+    const suppression = contact.email ? await tx.suppression.findUnique({ where: { email: normalizeEmail(contact.email) } }) : null;
+    if (delivery || active || suppression || contact.status === "SENT" || contact.status === "REPLIED" || contact.status === "DO_NOT_CONTACT" || contact.replyOutcome)
       throw new PolicyError("Dieser Kontakt hat einen Mailverlauf oder eine Versandsperre. Bitte «Nicht mehr kontaktieren» verwenden; der Verlauf bleibt erhalten.", 409);
+    await tx.mailQueueItem.updateMany({ where: { draftId: { in: draftIds }, status: "QUEUED" }, data: { status: "CANCELLED", error: "Kontakt samt ungesendeten Entwürfen ausdrücklich gelöscht." } });
+    await tx.approval.deleteMany({ where: { draftId: { in: draftIds } } });
+    await tx.draftVersion.deleteMany({ where: { draftId: { in: draftIds } } });
+    await tx.draft.deleteMany({ where: { id: { in: draftIds } } });
     await tx.legalReview.deleteMany({ where: { contactId: id } });
     await tx.contact.delete({ where: { id } });
-    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, { revision });
+    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, { revision, discardedDraftIds: draftIds });
     return { ok: true };
   });
 }
@@ -653,3 +661,4 @@ export async function recordContactReply(
     { timeout: 35000 },
   );
 }
+
