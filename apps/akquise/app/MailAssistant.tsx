@@ -171,17 +171,22 @@ export default function MailAssistant({
   async function generate() {
     setNotice("");
     if (research) {
-      const value = await request("generate", {
-        requestKey: crypto.randomUUID(),
-        mode,
-        briefing,
-        region,
-        industry: selectedIndustry,
-        count,
-      });
-      setJob(value);
-      setChosen(value.result.leads.map((_: unknown, i: number) => i));
-      await loadHistory();
+      try {
+        const value = await request("generate", {
+          requestKey: crypto.randomUUID(),
+          mode,
+          briefing,
+          region,
+          industry: selectedIndustry,
+          count,
+        });
+        setJob(value);
+        setChosen(value.result.leads.map((_: unknown, i: number) => i));
+      } finally {
+        // A failed provider call can still create a saved job. Show its
+        // recorded status before the user considers another paid request.
+        await loadHistory();
+      }
       return;
     }
     const selection = [...items];
