@@ -615,7 +615,7 @@ export default function MailSchedule({
                   setSelection(candidates.slice(0, 200).map((d) => d.id))
                 }
               >
-                Bis zu 200 angezeigte Mails auswählen
+                {candidates.length <= 200 ? "Alle auswählen" : "Erste 200 auswählen"}
               </button>{" "}
               <button
                 disabled={busy || !selection.length}
