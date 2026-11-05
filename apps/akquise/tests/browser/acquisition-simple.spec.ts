@@ -1,19 +1,18 @@
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 for (const width of [390, 1024]) {
-  test(`three tasks, persistent selection and visible preview at ${width}px`, async ({
+  test(`two workspaces, persistent selection and visible preview at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 960 });
     const state = await setup(page);
     const nav = page.getByRole("navigation", { name: "Akquise-Navigation" });
     await expect(nav.getByRole("button")).toHaveText([
-      "1 · Kontakte finden",
-      "2 · Kontakte verwalten",
-      "3 · Mails erstellen & versenden",
+      "Kontakte",
+      "Mails",
       "Versandverlauf",
     ]);
-    await nav.getByRole("button", { name: "2 · Kontakte verwalten" }).click();
+    await nav.getByRole("button", { name: "Kontakte" }).click();
     await page.getByLabel("Atelier 1 auswählen", { exact: true }).check();
     await page
       .getByRole("button", { name: "1 Mails erstellen →", exact: true })
@@ -21,13 +20,14 @@ for (const width of [390, 1024]) {
     await expect(
       page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
     ).toBeVisible();
-    await nav.getByRole("button", { name: "1 · Kontakte finden" }).click();
+    await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Industrieunternehmen für Businessfotografie finden");
     await page.getByLabel("Region", { exact: true }).fill("Solothurn");
     await nav
-      .getByRole("button", { name: "3 · Mails erstellen & versenden" })
+      .getByRole("button", { name: "Mails" })
       .click();
     await expect(
       page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
@@ -52,6 +52,12 @@ for (const width of [390, 1024]) {
         .locator(".mail-preview-pane")
         .getByRole("heading", { name: "Anfrage 1" }),
     ).toBeVisible();
+    const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
+    await recipients.getByRole("button", { name: "Auswahl aufheben", exact: true }).click();
+    await expect(recipients.getByRole("checkbox", { checked: true })).toHaveCount(0);
+    await recipients.getByRole("button", { name: "Alle auswählen", exact: true }).click();
+    await expect(recipients.getByRole("checkbox", { checked: true })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "3 Mails jetzt senden", exact: true })).toBeDisabled();
     expect(state.sent).toEqual([]);
     expect(
       await page.evaluate(
@@ -62,7 +68,8 @@ for (const width of [390, 1024]) {
       path: `.local/acquisition-${width}.png`,
       fullPage: true,
     });
-    await nav.getByRole("button", { name: "1 · Kontakte finden" }).click();
+    await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
     await expect(page.getByLabel("Region", { exact: true })).toHaveValue(
       "Solothurn",
     );
@@ -142,3 +149,4 @@ test("inline edits autosave the exact version and invalidate dispatch approval",
   ).toBeVisible();
   expect(state.sent).toEqual([]);
 });
+

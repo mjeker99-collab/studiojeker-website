@@ -98,4 +98,86 @@
     white-space: normal;
   }
 }
-.mail-recipient button.quiet { display: block; }
+.mail-recipient button.quiet {
+  display: block;
+}
+
+/* Compact acquisition workspace; keep the established black/cyan identity. */
+.mail-studio .mail-studio-toolbar {
+  padding: 20px 24px;
+  min-height: 0;
+}
+.mail-studio .mail-studio-toolbar h2 {
+  font-size: 24px;
+}
+.mail-studio .mail-studio-toolbar .actions {
+  margin-bottom: 0;
+}
+.mail-selection-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  padding: 12px;
+  border-bottom: 1px solid #dce5e9;
+}
+.mail-selection-toolbar label {
+  display: grid;
+  gap: 6px;
+}
+.mail-selection-toolbar input {
+  width: 100%;
+  min-width: 0;
+}
+.mail-selection-toolbar .actions {
+  gap: 8px;
+  margin: 10px 0;
+}
+.mail-selection-toolbar button {
+  padding: 8px 12px;
+  min-height: 44px;
+}
+.mail-open-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: #fff8e8;
+  border-radius: 12px;
+}
+.mail-open-notice p {
+  margin: 0;
+  flex: 1 1 280px;
+}
+.mail-approval-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 16px;
+  background: #fff;
+  border-top: 2px solid var(--mail-cyan, #00bfd8);
+  box-shadow: 0 -4px 20px #1721260d;
+}
+.mail-approval-bar p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+.mail-studio #mailstudio-send-approval {
+  display: contents;
+}
+.mail-studio #mailstudio-send-approval fieldset {
+  margin-block: 16px;
+}
+@media (max-width: 760px) {
+  .mail-recipient-list {
+    max-height: 330px;
+  }
+  .mail-approval-bar {
+    position: static;
+  }
+  .mail-studio .mail-studio-toolbar {
+    padding: 16px;
+  }
+}

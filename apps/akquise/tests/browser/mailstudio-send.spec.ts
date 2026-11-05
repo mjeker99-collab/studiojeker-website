@@ -307,3 +307,4 @@ test("discard requires confirmation and leaves the selection intact on cancel", 
   await expect(page.getByText(/3 Entwürfe verworfen. Auswahl zurückgesetzt/)).toBeVisible();
   expect(discarded).toEqual(["d0", "d1", "d2"]);
 });
+

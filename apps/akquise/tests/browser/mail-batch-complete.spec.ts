@@ -312,9 +312,9 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();
   await expect(page.getByText(/1 Mails bereit/)).toBeVisible();
-  await expect(page.getByText(/1 Kontakte zurückgestellt/)).toBeVisible();
+  await expect(page.locator("summary").filter({ hasText: /1 Kontakte mit offenen Angaben/ })).toBeVisible();
   expect(preparationCalls).toBe(1);
   expect(dispatchCalls).toBe(0);
 });
@@ -386,9 +386,13 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await page.getByRole("button", { name: "4 Mails erstellen →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
-  await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();
+  await expect(page.locator("summary").filter({ hasText: /3 Kontakte mit offenen Angaben/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "1 Mail jetzt senden", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Angaben gemeinsam ergänzen", exact: true }).click();
+  await expect(page.getByText("3 Kontakte bleiben ausgewählt.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Zurück zur Mailvorschau", exact: true }).click();
+  await expect(page.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("checkbox", { checked: true })).toHaveCount(1);
   expect(preparedIds).toEqual(["m0"]);
   expect(dispatchCalls).toBe(0);
 });
@@ -474,7 +478,8 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
   await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
   await expect(page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })).toBeVisible();
   await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }).click();
-  await expect(page.getByRole("heading", { name: "1 persönliche Mails" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();
   expect(previewIds).toEqual(["d-good"]);
   expect(dispatchCalls).toBe(0);
 });
+
