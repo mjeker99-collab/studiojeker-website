@@ -181,3 +181,30 @@
     padding: 16px;
   }
 }
+.mail-studio .mail-studio-workspace .mail-studio-toolbar {
+  margin: 0;
+  gap: 10px;
+}
+.mail-studio .mail-studio-workspace .mail-studio-toolbar .actions {
+  align-items: center;
+  margin: 0;
+}
+.mail-studio .mail-studio-workspace .mail-studio-toolbar details {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.mail-studio .mail-studio-toolbar button.secondary[aria-pressed="true"] {
+  background: #1e272c;
+  color: #fff;
+  border-color: var(--mail-cyan);
+}
+.mail-studio .mail-preview-pane {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+@media (max-width: 760px) {
+  .mail-studio .mail-preview-pane {
+    max-height: none;
+  }
+}

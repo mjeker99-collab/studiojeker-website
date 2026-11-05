@@ -491,11 +491,10 @@ export default function MailStudio({
       preparationRef.current?.scrollIntoView({ block: "start" }),
     );
   }
-  async function completeOpenContacts() {
+  async function completeOpenContacts(ids = batchProposals.map((p) => p.id)) {
     // Keep existing drafts and exclusions while adding newly completed contacts.
     const previousRows = rows;
     const previousIncluded = included;
-    const ids = batchProposals.map((p) => p.id);
     const data = await preparation("preview", { ids });
     const proposals: ContactPreparation[] = data.contacts;
     const eligible = proposals.filter((p) => p.ready && !p.changed);
@@ -1034,15 +1033,11 @@ export default function MailStudio({
             requireComplete
             onDone={() => void run(completeOpenContacts)}
             onExclude={(ids) => {
-              setDeferredIds((old) => old.filter((id) => !ids.includes(id)));
               setContactIds((old) => old.filter((id) => !ids.includes(id)));
-              setBatchProposals((old) =>
-                old.filter((p) => !ids.includes(p.id)),
-              );
-              setSkipped((old) => [
-                ...old,
-                `${ids.length} Kontakte bewusst ausgelassen.`,
-              ]);
+              const remaining = batchProposals
+                .filter((p) => !ids.includes(p.id))
+                .map((p) => p.id);
+              void run(() => completeOpenContacts(remaining));
             }}
           />
         </div>
@@ -1057,7 +1052,7 @@ export default function MailStudio({
           </ul>
         </details>
       )}
-      {step === 2 && batchProposals.length === 0 && !rows.length && busy && (
+      {step === 2 && !rows.length && busy && (
         <p role="status">Persönliche Mails werden vorbereitet …</p>
       )}
       {step === 2 && batchProposals.length === 0 && rows.length > 0 && (
