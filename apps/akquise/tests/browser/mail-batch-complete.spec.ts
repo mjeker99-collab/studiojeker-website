@@ -391,6 +391,11 @@ test("mixed contact group advances only verified unchanged records without sendi
   await expect(page.getByRole("button", { name: "1 Mail jetzt senden", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Angaben gemeinsam ergänzen", exact: true }).click();
   await expect(page.getByText("3 Kontakte bleiben ausgewählt.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/ }).click();
+  await expect(page.getByRole("region", { name: "Angaben für 1 Mails bestätigen" })).toBeVisible();
+  await expect(page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/)).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })).toBeDisabled();
+
   await page.getByRole("button", { name: "Zurück zur Mailvorschau", exact: true }).click();
   await expect(page.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("checkbox", { checked: true })).toHaveCount(1);
   expect(preparedIds).toEqual(["m0"]);
