@@ -341,6 +341,32 @@ export default function App() {
       setBusy(false);
     }
   }
+  function archive(c: C) {
+    const archived = !c.archivedAt;
+    if (
+      !window.confirm(
+        archived
+          ? `${c.organisation} archivieren? Geplante Mails werden abgebrochen. Der Verlauf bleibt erhalten.`
+          : `${c.organisation} wiederherstellen? Es wird keine Mail freigegeben.`,
+      )
+    )
+      return;
+    void action(
+      async () => {
+        await post(`contacts/${c.id}/archive`, {
+          revision: c.revision,
+          confirmed: true,
+          archived,
+        });
+        setShowContact(false);
+        setSelected((ids) => ids.filter((id) => id !== c.id));
+        setMailContactIds((ids) => ids.filter((id) => id !== c.id));
+      },
+      archived
+        ? "Kontakt archiviert. Verlauf bleibt erhalten."
+        : "Kontakt wiederhergestellt.",
+    );
+  }
   function removeContact(c: C) {
     if (
       !window.confirm(
@@ -393,6 +419,7 @@ export default function App() {
   const contacts =
     data?.contacts.filter(
       (c) =>
+        (filter === "ARCHIVED" ? !!c.archivedAt : !c.archivedAt) &&
         matchesContactFilters(c, contactFilters) &&
         (!filter ||
           contactStage(c) === filter ||
@@ -537,7 +564,11 @@ export default function App() {
               <span className="nav-index" aria-hidden="true">
                 0{i + 1}
               </span>
-              {n === "Kontakte/Akquise" ? "Akquise" : n === "Content-Studio" ? "Content Studio" : n}
+              {n === "Kontakte/Akquise"
+                ? "Akquise"
+                : n === "Content-Studio"
+                  ? "Content Studio"
+                  : n}
               {n === "Freigaben" && (
                 <small>
                   {data.drafts.filter((d) => latest(d) === "PENDING").length}
@@ -824,6 +855,7 @@ export default function App() {
               </div>
               <div hidden={tab !== "Mail-Studio"}>
                 <MailStudio
+                  persistenceKey={`mail-work:${data.user.id}`}
                   filters={contactFilters}
                   onFiltersChange={(value) => {
                     setContactFilters(value);
@@ -940,6 +972,23 @@ export default function App() {
               {selected.length > 0 && (
                 <div className="mail-selection-bar">
                   <strong>{selected.length} Kontakte ausgewählt</strong>
+                  {selected.length === 1 && (
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        const c = data.contacts.find(
+                          (c) => c.id === selected[0],
+                        );
+                        if (c) archive(c);
+                      }}
+                    >
+                      {data.contacts.find((c) => c.id === selected[0])
+                        ?.archivedAt
+                        ? "Wiederherstellen"
+                        : "Kontakt archivieren"}
+                    </button>
+                  )}
                   {selected.length === 1 && (
                     <button
                       className="danger"
@@ -1255,6 +1304,15 @@ export default function App() {
                   <p>Noch keine Mails vorhanden.</p>
                 )}
                 <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => archive(contact)}
+                  >
+                    {contact.archivedAt
+                      ? "Kontakt wiederherstellen"
+                      : "Kontakt archivieren"}
+                  </button>
                   <button
                     className="secondary"
                     disabled={

@@ -34,7 +34,11 @@ import {
   archiveItem,
   saveBrand,
 } from "@/lib/library/service";
-import { saveLibraryFolder, moveLibraryItems, trashLibraryEntry } from "@/lib/library/folders";
+import {
+  saveLibraryFolder,
+  moveLibraryItems,
+  trashLibraryEntry,
+} from "@/lib/library/folders";
 import { studioState } from "@/lib/studio/service";
 import { studioMutation } from "@/lib/studio/api";
 import { readAsset, storeAsset, MAX_UPLOAD } from "@/lib/studio/assets";
@@ -59,6 +63,7 @@ import { mailReview } from "@/lib/mail-review";
 import {
   saveContact,
   deleteUnusedContact,
+  archiveContact,
   recordContactReply,
   importContacts,
   newDraft,
@@ -494,7 +499,15 @@ async function handler(
         kind === "ORIGINAL" ? uploadLimit(name) : MAX_UPLOAD,
       );
       const folderId = req.headers.get("x-library-folder");
-      const a = await storeAsset(user.id, bytes, name, kind, undefined, undefined, folderId);
+      const a = await storeAsset(
+        user.id,
+        bytes,
+        name,
+        kind,
+        undefined,
+        undefined,
+        folderId,
+      );
       return NextResponse.json(a);
     }
     if (route === "hub/state" && req.method === "GET")
@@ -675,9 +688,12 @@ async function handler(
       return NextResponse.json(await saveCustomer(user.id, body));
     if (path[0] === "customers" && path.length === 2)
       return NextResponse.json(await saveCustomer(user.id, body, path[1]));
-    if (route === "library/folder") return NextResponse.json(await saveLibraryFolder(user.id, body));
-    if (route === "library/move") return NextResponse.json(await moveLibraryItems(user.id, body));
-    if (route === "library/trash") return NextResponse.json(await trashLibraryEntry(user.id, body));
+    if (route === "library/folder")
+      return NextResponse.json(await saveLibraryFolder(user.id, body));
+    if (route === "library/move")
+      return NextResponse.json(await moveLibraryItems(user.id, body));
+    if (route === "library/trash")
+      return NextResponse.json(await trashLibraryEntry(user.id, body));
     if (route === "library/item")
       return NextResponse.json(await saveLibraryItem(user.id, body));
     if (route === "library/archive")
@@ -706,9 +722,30 @@ async function handler(
         await recordContactReply(user.id, path[1], body),
       );
     }
+    if (path[0] === "contacts" && path[2] === "archive" && path.length === 3) {
+      const input = z
+        .object({
+          revision: z.number().int().positive(),
+          confirmed: z.literal(true),
+          archived: z.boolean(),
+        })
+        .strict()
+        .parse(body);
+      return NextResponse.json(
+        await archiveContact(user.id, path[1], input.revision, input.archived),
+      );
+    }
     if (path[0] === "contacts" && path[2] === "delete" && path.length === 3) {
-      const input = z.object({ revision: z.number().int().positive(), confirmed: z.literal(true) }).strict().parse(body);
-      return NextResponse.json(await deleteUnusedContact(user.id, path[1], input.revision));
+      const input = z
+        .object({
+          revision: z.number().int().positive(),
+          confirmed: z.literal(true),
+        })
+        .strict()
+        .parse(body);
+      return NextResponse.json(
+        await deleteUnusedContact(user.id, path[1], input.revision),
+      );
     }
     if (route === "contacts") {
       return NextResponse.json(await saveContact(user.id, body));
@@ -854,4 +891,3 @@ async function handler(
   }
 }
 export { handler as GET, handler as POST };
-

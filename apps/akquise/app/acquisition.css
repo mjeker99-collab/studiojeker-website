@@ -208,3 +208,60 @@
     max-height: none;
   }
 }
+
+/* Keep the message readable on iPad; approval never covers the preview. */
+.mail-approval-bar {
+  position: static;
+  padding: 12px;
+  box-shadow: none;
+}
+.mail-recipient {
+  flex-wrap: wrap;
+}
+.mail-recipient > button:not(.mail-remove) {
+  flex: 1 1 140px;
+}
+.mail-recipient .mail-remove {
+  flex: 1 1 100%;
+  min-height: 44px;
+  font-size: 13px;
+}
+.mail-pending {
+  display: grid;
+  gap: 6px;
+}
+.mail-pending small {
+  color: #77551b;
+}
+.mail-selection-toolbar select {
+  width: 100%;
+  min-width: 0;
+}
+.mail-studio .mail-preview-pane {
+  max-height: 72vh;
+}
+@media (max-width: 760px) {
+  .mail-studio .mail-preview-pane {
+    max-height: none;
+  }
+}
+
+.mail-selection-toolbar {
+  position: static;
+}
+
+.mail-studio .panel.mail-studio-workspace {
+  padding: 16px;
+}
+.mail-studio .panel.mail-studio-workspace .mail-studio-toolbar {
+  padding: 16px 20px;
+}
+.mail-studio .panel.mail-studio-workspace .mail-studio-toolbar h2 {
+  font-size: 24px;
+}
+.mail-studio .mail-selection-toolbar {
+  font-size: 13px;
+}
+.mail-studio .mail-selection-toolbar label {
+  margin-block: 6px;
+}

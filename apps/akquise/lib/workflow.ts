@@ -35,61 +35,188 @@ async function lock(tx: Tx, key: string) {
 }
 // Use the same lock order as dispatch. Never remove delivery history or the
 // recipient records that enforce duplicate-send protection.
-export async function discardDrafts(userId: string, items: { id: string; version: number }[]) {
+export async function discardDrafts(
+  userId: string,
+  items: { id: string; version: number }[],
+) {
+  return db.$transaction(
+    async (tx) => {
+      await actor(tx, userId);
+      await lock(tx, "delivery-global");
+      const drafts = await tx.draft.findMany({
+        where: { id: { in: items.map((i) => i.id) } },
+      });
+      for (const contactId of [
+        ...new Set(drafts.map((d) => d.contactId)),
+      ].sort())
+        await lock(tx, "contact:" + contactId);
+      const results = [];
+      for (const item of items.filter(
+        (v, i, a) => a.findIndex((x) => x.id === v.id) === i,
+      )) {
+        const draft = await tx.draft.findUnique({ where: { id: item.id } });
+        if (!draft) {
+          results.push({
+            id: item.id,
+            ok: true,
+            message: "Bereits verworfen.",
+          });
+          continue;
+        }
+        const delivery = await tx.delivery.findFirst({
+          where: { draftId: item.id },
+        });
+        const active = await tx.mailQueueItem.findFirst({
+          where: {
+            draftId: item.id,
+            status: { in: ["SENDING", "SENT", "UNKNOWN"] },
+          },
+        });
+        if (draft.version !== item.version || delivery || active) {
+          results.push({
+            id: item.id,
+            ok: false,
+            message:
+              draft.version !== item.version
+                ? "Entwurf wurde geändert. Auswahl neu laden."
+                : "Versand oder Versandversuch vorhanden. Entwurf und Verlauf bleiben erhalten.",
+          });
+          continue;
+        }
+        await tx.mailQueueItem.updateMany({
+          where: { draftId: item.id, status: "QUEUED" },
+          data: {
+            status: "CANCELLED",
+            error: "Entwurf ausdrücklich verworfen.",
+          },
+        });
+        await tx.approval.deleteMany({ where: { draftId: item.id } });
+        await tx.draftVersion.deleteMany({ where: { draftId: item.id } });
+        await tx.draft.delete({ where: { id: item.id } });
+        await audit(tx, userId, "DRAFT_DISCARDED", item.id, {
+          contactId: draft.contactId,
+          version: draft.version,
+        });
+        results.push({
+          id: item.id,
+          ok: true,
+          message: "Ungesendeten Entwurf verworfen. Kontakt bleibt erhalten.",
+        });
+      }
+      return { results };
+    },
+    { timeout: 30000 },
+  );
+}
+// Only unused contacts can be removed. Preserve all mail and suppression history.
+export async function deleteUnusedContact(
+  userId: string,
+  id: string,
+  revision: number,
+) {
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "delivery-global");
-    const drafts = await tx.draft.findMany({ where: { id: { in: items.map(i => i.id) } } });
-    for (const contactId of [...new Set(drafts.map(d => d.contactId))].sort())
-      await lock(tx, "contact:" + contactId);
-    const results = [];
-    for (const item of items.filter((v, i, a) => a.findIndex(x => x.id === v.id) === i)) {
-      const draft = await tx.draft.findUnique({ where: { id: item.id } });
-      if (!draft) {
-        results.push({ id: item.id, ok: true, message: "Bereits verworfen." });
-        continue;
-      }
-      const delivery = await tx.delivery.findFirst({ where: { draftId: item.id } });
-      const active = await tx.mailQueueItem.findFirst({ where: { draftId: item.id, status: { in: ["SENDING", "SENT", "UNKNOWN"] } } });
-      if (draft.version !== item.version || delivery || active) {
-        results.push({ id: item.id, ok: false, message: draft.version !== item.version
-          ? "Entwurf wurde geändert. Auswahl neu laden."
-          : "Versand oder Versandversuch vorhanden. Entwurf und Verlauf bleiben erhalten." });
-        continue;
-      }
-      await tx.mailQueueItem.updateMany({ where: { draftId: item.id, status: "QUEUED" }, data: { status: "CANCELLED", error: "Entwurf ausdrücklich verworfen." } });
-      await tx.approval.deleteMany({ where: { draftId: item.id } });
-      await tx.draftVersion.deleteMany({ where: { draftId: item.id } });
-      await tx.draft.delete({ where: { id: item.id } });
-      await audit(tx, userId, "DRAFT_DISCARDED", item.id, { contactId: draft.contactId, version: draft.version });
-      results.push({ id: item.id, ok: true, message: "Ungesendeten Entwurf verworfen. Kontakt bleibt erhalten." });
-    }
-    return { results };
-  }, { timeout: 30000 });
-}
-// Only unused contacts can be removed. Preserve all mail and suppression history.
-export async function deleteUnusedContact(userId: string, id: string, revision: number) {
-  return db.$transaction(async tx => {
-    await actor(tx, userId);
-    await lock(tx, "delivery-global");
     await lock(tx, "contact:" + id);
-    const contact = await tx.contact.findFirst({ where: { id, organizationId: "studiojeker" } });
+    const contact = await tx.contact.findFirst({
+      where: { id, organizationId: "studiojeker" },
+    });
     if (!contact) throw new PolicyError("Kontakt nicht gefunden.", 404);
-    if (contact.revision !== revision) throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
-    const drafts = await tx.draft.findMany({ where: { contactId: id }, select: { id: true } });
+    if (contact.revision !== revision)
+      throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
+    const drafts = await tx.draft.findMany({
+      where: { contactId: id },
+      select: { id: true },
+    });
     const draftIds = drafts.map((draft) => draft.id);
-    const delivery = await tx.delivery.findFirst({ where: { draftId: { in: draftIds } } });
-    const active = await tx.mailQueueItem.findFirst({ where: { draftId: { in: draftIds }, status: { in: ["SENDING", "SENT", "UNKNOWN"] } } });
-    const suppression = contact.email ? await tx.suppression.findUnique({ where: { email: normalizeEmail(contact.email) } }) : null;
-    if (delivery || active || suppression || contact.status === "SENT" || contact.status === "REPLIED" || contact.status === "DO_NOT_CONTACT" || contact.replyOutcome)
-      throw new PolicyError("Dieser Kontakt hat einen Mailverlauf oder eine Versandsperre. Bitte «Nicht mehr kontaktieren» verwenden; der Verlauf bleibt erhalten.", 409);
-    await tx.mailQueueItem.updateMany({ where: { draftId: { in: draftIds }, status: "QUEUED" }, data: { status: "CANCELLED", error: "Kontakt samt ungesendeten Entwürfen ausdrücklich gelöscht." } });
+    const delivery = await tx.delivery.findFirst({
+      where: { draftId: { in: draftIds } },
+    });
+    const active = await tx.mailQueueItem.findFirst({
+      where: {
+        draftId: { in: draftIds },
+        status: { in: ["SENDING", "SENT", "UNKNOWN"] },
+      },
+    });
+    const suppression = contact.email
+      ? await tx.suppression.findUnique({
+          where: { email: normalizeEmail(contact.email) },
+        })
+      : null;
+    if (
+      delivery ||
+      active ||
+      suppression ||
+      contact.status === "SENT" ||
+      contact.status === "REPLIED" ||
+      contact.status === "DO_NOT_CONTACT" ||
+      contact.replyOutcome
+    )
+      throw new PolicyError(
+        `${delivery ? "Versandprotokoll vorhanden (" + delivery.status + ")." : active ? "Versand läuft oder ist noch unklar (" + active.status + ")." : suppression ? "Adresse steht auf der Versandsperrliste." : "Kontakt hat einen Versand- oder Antwortverlauf."} Bitte den Kontakt archivieren. Verlauf und Schutz vor Doppelversand bleiben erhalten.`,
+        409,
+      );
+    await tx.mailQueueItem.updateMany({
+      where: { draftId: { in: draftIds }, status: "QUEUED" },
+      data: {
+        status: "CANCELLED",
+        error: "Kontakt samt ungesendeten Entwürfen ausdrücklich gelöscht.",
+      },
+    });
     await tx.approval.deleteMany({ where: { draftId: { in: draftIds } } });
     await tx.draftVersion.deleteMany({ where: { draftId: { in: draftIds } } });
     await tx.draft.deleteMany({ where: { id: { in: draftIds } } });
     await tx.legalReview.deleteMany({ where: { contactId: id } });
     await tx.contact.delete({ where: { id } });
-    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, { revision, discardedDraftIds: draftIds });
+    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, {
+      revision,
+      discardedDraftIds: draftIds,
+    });
+    return { ok: true };
+  });
+}
+export async function archiveContact(
+  userId: string,
+  id: string,
+  revision: number,
+  archived: boolean,
+) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    await lock(tx, "contact:" + id);
+    const c = await tx.contact.findFirst({
+      where: { id, organizationId: "studiojeker" },
+    });
+    if (!c || c.revision !== revision)
+      throw new PolicyError("Kontakt wurde geändert. Neu öffnen.", 409);
+    const drafts = await tx.draft.findMany({
+      where: { contactId: id },
+      select: { id: true },
+    });
+    if (archived)
+      await tx.mailQueueItem.updateMany({
+        where: {
+          draftId: { in: drafts.map((d) => d.id) },
+          status: { in: ["QUEUED", "BLOCKED"] },
+        },
+        data: { status: "CANCELLED", error: "Kontakt archiviert." },
+      });
+    await invalidate(tx, id, userId);
+    await tx.contact.update({
+      where: { id },
+      data: {
+        archivedAt: archived ? new Date() : null,
+        revision: { increment: 1 },
+      },
+    });
+    await audit(
+      tx,
+      userId,
+      archived ? "CONTACT_ARCHIVED" : "CONTACT_RESTORED",
+      id,
+      {},
+    );
     return { ok: true };
   });
 }
@@ -204,7 +331,9 @@ export async function newDraft(
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "contact:" + contactId);
-    const c = await tx.contact.findUniqueOrThrow({ where: { id: contactId } });
+    const c = await tx.contact.findUnique({ where: { id: contactId } });
+    if (!c) throw new PolicyError("Kontakt wurde entfernt.", 409);
+    if (c.archivedAt) throw new PolicyError("Kontakt ist archiviert.");
     if (await tx.suppression.findUnique({ where: { email: c.email } }))
       throw new PolicyError("Adresse auf Sperrliste.");
     const generated = await generateDraft(c);
@@ -661,4 +790,3 @@ export async function recordContactReply(
     { timeout: 35000 },
   );
 }
-

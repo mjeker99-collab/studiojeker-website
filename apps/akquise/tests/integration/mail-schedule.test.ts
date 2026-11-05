@@ -525,18 +525,108 @@ test("discard removes only unsent selected drafts, cancels their queue and keeps
   const a = await prepared();
   const b = await prepared();
   await enqueue(a.d);
-  await assert.rejects(mailReview(user, "discard", { items: [{ id: a.d.id, version: 1 }] }));
-  const result = await mailReview(user, "discard", { confirmed: true, items: [{ id: a.d.id, version: 1 }] });
+  await assert.rejects(
+    mailReview(user, "discard", { items: [{ id: a.d.id, version: 1 }] }),
+  );
+  const result = await mailReview(user, "discard", {
+    confirmed: true,
+    items: [{ id: a.d.id, version: 1 }],
+  });
   assert.equal("results" in result && result.results?.[0].ok, true);
   assert.equal(await db.draft.findUnique({ where: { id: a.d.id } }), null);
   assert.ok(await db.contact.findUnique({ where: { id: a.c.id } }));
   assert.ok(await db.draft.findUnique({ where: { id: b.d.id } }));
-  assert.equal((await db.mailQueueItem.findFirstOrThrow({ where: { draftId: a.d.id } })).status, "CANCELLED");
-  const stale = await mailReview(user, "discard", { confirmed: true, items: [{ id: b.d.id, version: 2 }] });
+  assert.equal(
+    (await db.mailQueueItem.findFirstOrThrow({ where: { draftId: a.d.id } }))
+      .status,
+    "CANCELLED",
+  );
+  const stale = await mailReview(user, "discard", {
+    confirmed: true,
+    items: [{ id: b.d.id, version: 2 }],
+  });
   assert.equal("results" in stale && stale.results?.[0].ok, false);
   await dispatchApproved(user, b.d.id, 1, sender);
-  const sent = await mailReview(user, "discard", { confirmed: true, items: [{ id: b.d.id, version: 1 }] });
+  const sent = await mailReview(user, "discard", {
+    confirmed: true,
+    items: [{ id: b.d.id, version: 1 }],
+  });
   assert.equal("results" in sent && sent.results?.[0].ok, false);
   assert.ok(await db.draft.findUnique({ where: { id: b.d.id } }));
   assert.equal(await db.delivery.count({ where: { draftId: b.d.id } }), 1);
+});
+
+test("missing contact and draft do not abort the remaining previews", async () => {
+  const { c, d } = await prepared();
+  const { prepareContacts } =
+    await import("../../lib/contact-preparation-service");
+  const { mailReview } = await import("../../lib/mail-review");
+  const preview = await prepareContacts(user, "preview", {
+    ids: ["deleted-contact", c.id],
+  });
+  assert.ok(preview.contacts);
+  assert.equal(preview.contacts.length, 1);
+  const review = await mailReview(user, "preview", {
+    ids: ["deleted-draft", d.id],
+  });
+  assert.ok(review.rows);
+  assert.ok(review.unavailable);
+  assert.equal(review.rows.length, 1);
+  assert.equal(review.rows[0].id, d.id);
+  assert.equal(review.unavailable.length, 1);
+});
+
+test("queued group starts durably once and recipient rejection leaves other mails running", async () => {
+  const first = await prepared();
+  const second = await prepared();
+  await enqueue(first.d);
+  await enqueue(second.d);
+  // Repeat queue request is idempotent, not a second job.
+  await enqueue(first.d);
+  assert.equal(
+    await db.mailQueueItem.count({ where: { status: "QUEUED" } }),
+    2,
+  );
+  await mutate(user, "start", { confirmDispatch: true });
+  await runMailSchedule(async (mail) => ({
+    accepted: [],
+    rejected: mail.envelopeRecipients,
+  }));
+  assert.equal((await mailScheduleState()).schedule.enabled, true);
+  assert.equal(
+    await db.mailQueueItem.count({ where: { status: "FAILED" } }),
+    1,
+  );
+  await db.mailSchedule.update({
+    where: { id: "studiojeker" },
+    data: { lastClaimAt: null },
+  });
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+  assert.equal(await db.mailQueueItem.count({ where: { status: "SENT" } }), 1);
+});
+
+test("archive cancels pending mail and restore never restores approval", async () => {
+  const { c, d } = await prepared();
+  await enqueue(d);
+  const { archiveContact } = await import("../../lib/workflow");
+  await archiveContact(user, c.id, c.revision, true);
+  assert.equal(
+    await db.mailQueueItem.count({
+      where: { draftId: d.id, status: "CANCELLED" },
+    }),
+    1,
+  );
+  assert.ok(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).archivedAt,
+  );
+  await archiveContact(user, c.id, c.revision + 1, false);
+  assert.equal(
+    (await db.contact.findUniqueOrThrow({ where: { id: c.id } })).archivedAt,
+    null,
+  );
+  assert.equal(
+    await db.approval.count({ where: { draftId: d.id, status: "APPROVED" } }),
+    0,
+  );
 });

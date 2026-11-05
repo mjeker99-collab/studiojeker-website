@@ -115,25 +115,23 @@ async function setup(
         },
       });
     }
-    if (path === "/api/mail-review/approve-and-send") {
+    if (path === "/api/mail-review/approve-and-start") {
       expect(body.confirmDispatch).toBe(true);
       expect(body.read).toBe(true);
-      expect(body.items).toHaveLength(1);
-      const id = body.items[0].id;
-      sent.push(id);
-      const failed = id === "d0" && !!options.failure;
+      if (options.failure === "unknown")
+        return route.fulfill({
+          status: 409,
+          json: { error: "Ein Versand ist unklar. Versandverlauf prüfen." },
+        });
+      const ids = body.items.map((item: { id: string }) => item.id);
+      sent.push(...ids);
       return route.fulfill({
         json: {
-          results: [
-            {
-              id,
-              ok: !failed,
-              stopBatch: failed && options.failure === "unknown",
-              message: failed
-                ? "Test: Prüfung oder Versand nicht bestätigt"
-                : "Simuliert übergeben",
-            },
-          ],
+          results: ids.map((id: string) => ({
+            id,
+            ok: !(id === "d0" && options.failure === "review"),
+            message: "Eingeplant",
+          })),
         },
       });
     }
@@ -160,12 +158,15 @@ for (const width of [390, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const state = await setup(page, { queued: true });
     await page
-      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
+      .getByRole("button", {
+        name: "Gespeicherte Entwürfe öffnen (3)",
+        exact: true,
+      })
       .click();
-    expect(state.previews).toEqual([["d0", "d1", "d2"]]);
+    expect(state.previews[0]).toEqual(["d0", "d1", "d2"]);
     expect(state.sent).toEqual([]);
     const send = page.getByRole("button", {
-      name: "3 Mails jetzt senden",
+      name: "Versand starten · 3 Mails",
       exact: true,
     });
     await expect(send).toBeDisabled();
@@ -183,7 +184,10 @@ for (const width of [390, 1024]) {
     });
     await send.click();
     await expect(
-      page.getByText("3 von 3 Mails bearbeitet.", { exact: true }),
+      page.getByText(
+        "3 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+        { exact: true },
+      ),
     ).toBeVisible();
     expect(state.sent).toEqual(["d0", "d1", "d2"]);
     expect(
@@ -199,19 +203,27 @@ test("single mail action changes the approval scope and sends only that recipien
 }) => {
   const state = await setup(page);
   await page
-    .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
+    .getByRole("button", {
+      name: "Gespeicherte Entwürfe öffnen (3)",
+      exact: true,
+    })
     .click();
   await page.getByLabel("anna0@example.test für Versand auswählen").uncheck();
   await page.getByLabel("anna2@example.test für Versand auswählen").uncheck();
   await expect(
-    page.getByRole("button", { name: "1 Mail jetzt senden", exact: true }),
+    page.getByRole("button", { name: "Versand starten · 1 Mail", exact: true }),
   ).toBeDisabled();
   await page
     .getByLabel(/Ich gebe die 1 ausgewählten persönlichen Mails/)
     .check();
-  await page.getByRole("button", { name: "1 Mail jetzt senden", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Versand starten · 1 Mail", exact: true })
+    .click();
   await expect(
-    page.getByText("1 von 1 Mails bearbeitet.", { exact: true }),
+    page.getByText(
+      "1 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+      { exact: true },
+    ),
   ).toBeVisible();
   expect(state.sent).toEqual(["d1"]);
 });
@@ -222,23 +234,31 @@ for (const failure of ["review", "unknown"] as const) {
   }) => {
     const state = await setup(page, { failure });
     await page
-      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
+      .getByRole("button", {
+        name: "Gespeicherte Entwürfe öffnen (3)",
+        exact: true,
+      })
       .click();
     await page
       .getByLabel(/Ich gebe die 3 ausgewählten persönlichen Mails/)
       .check();
     await page
-      .getByRole("button", { name: "3 Mails jetzt senden", exact: true })
+      .getByRole("button", { name: "Versand starten · 3 Mails", exact: true })
       .click();
-    await expect(
-      page.getByText(
-        `${failure === "review" ? 3 : 1} von 3 Mails bearbeitet.`,
-        { exact: true },
-      ),
-    ).toBeVisible();
-    expect(state.sent).toEqual(
-      failure === "review" ? ["d0", "d1", "d2"] : ["d0"],
-    );
+    if (failure === "review") {
+      await expect(
+        page.getByText(
+          "2 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      expect(state.sent).toEqual(["d0", "d1", "d2"]);
+    } else {
+      await expect(page.getByRole("alert").filter({ hasText: "Versand unterbrochen" })).toContainText(
+        "Versand unterbrochen",
+      );
+      expect(state.sent).toEqual([]);
+    }
     await expect(
       page.getByLabel(/Ich gebe die .* ausgewählten persönlichen Mails/),
     ).not.toBeChecked();
@@ -283,28 +303,55 @@ test("schedule starts directly from the overview after explicit approval", async
   expect(state.sent).toEqual([]);
 });
 
-test("discard requires confirmation and leaves the selection intact on cancel", async ({ page }) => {
+test("discard requires confirmation and leaves the selection intact on cancel", async ({
+  page,
+}) => {
   await setup(page);
   let discarded: string[] = [];
-  await page.route("**/api/mail-review/discard", async route => {
+  await page.route("**/api/mail-review/discard", async (route) => {
     const body = route.request().postDataJSON();
     expect(body.confirmed).toBe(true);
     discarded = body.items.map((item: { id: string }) => item.id);
-    await route.fulfill({ json: { results: body.items.map((item: { id: string }) => ({ id: item.id, ok: true })) } });
+    await route.fulfill({
+      json: {
+        results: body.items.map((item: { id: string }) => ({
+          id: item.id,
+          ok: true,
+        })),
+      },
+    });
   });
-  await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true }).click();
+  await page
+    .getByRole("button", {
+      name: "Gespeicherte Entwürfe öffnen (3)",
+      exact: true,
+    })
+    .click();
   await page.getByText("Weitere Optionen", { exact: true }).click();
-  const open = page.getByRole("button", { name: "Auswahl und ungesendete Entwürfe verwerfen", exact: true });
+  const open = page.getByRole("button", {
+    name: "Auswahl und ungesendete Entwürfe verwerfen",
+    exact: true,
+  });
   await open.click();
   const panel = page.getByRole("region", { name: "Entwürfe verwerfen" });
-  await expect(panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true })).toBeDisabled();
+  await expect(
+    panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true }),
+  ).toBeDisabled();
   await panel.getByRole("button", { name: "Abbrechen", exact: true }).click();
   expect(discarded).toEqual([]);
-  await expect(page.getByRole("button", { name: "3 Mails jetzt senden", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: "Versand starten · 3 Mails",
+      exact: true,
+    }),
+  ).toBeVisible();
   await open.click();
   await panel.getByLabel(/Ich bestätige das Verwerfen/).check();
-  await panel.getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true }).click();
-  await expect(page.getByText(/3 Entwürfe verworfen. Auswahl zurückgesetzt/)).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Auswahl jetzt verwerfen", exact: true })
+    .click();
+  await expect(
+    page.getByText(/3 Entwürfe verworfen. Auswahl zurückgesetzt/),
+  ).toBeVisible();
   expect(discarded).toEqual(["d0", "d1", "d2"]);
 });
-

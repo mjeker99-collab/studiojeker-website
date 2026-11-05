@@ -256,7 +256,7 @@ export async function dispatchApproved(
             where: { id: queueId },
             data: { status, error },
           });
-          if (status !== "SENT")
+          if (status === "UNKNOWN")
             await tx.mailSchedule.update({
               where: { id: "studiojeker" },
               data: {
@@ -279,7 +279,7 @@ export async function dispatchApproved(
             },
             data: { status, error },
           });
-          if (updated.count && status !== "SENT") {
+          if (updated.count && status === "UNKNOWN") {
             await tx.mailSchedule.update({
               where: { id: "studiojeker" },
               data: {

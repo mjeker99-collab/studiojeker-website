@@ -494,13 +494,14 @@ test("25 Kontakte gemeinsam vervollständigen und Entwürfe erstellen ohne Einze
   });
   assert.ok(stale.results);
   assert.equal(stale.results.filter((r) => r.ok).length, 0);
-  await assert.rejects(
-    prepareContacts(martin, "preview", {
-      ids: [contacts[0].id],
-      edits: [selection[0]],
-    }),
-    /geändert/,
-  );
+  const stalePreview = await prepareContacts(martin, "preview", {
+    ids: [contacts[0].id, contacts[1].id], edits: [selection[0]],
+  });
+  assert.ok(stalePreview.contacts);
+  assert.equal(stalePreview.contacts.length, 2);
+  assert.equal(stalePreview.contacts[0].ready, false);
+  assert.match(stalePreview.contacts[0].issues.join(" "), /geändert/);
+  assert.equal(stalePreview.contacts[1].ready, true);
   await suppress(
     martin,
     contacts[0].email,
@@ -2570,12 +2571,12 @@ test("unused contact deletion respects revision, actor, mail history and suppres
   const attempted = await saveContact(martin, input("delete-attempted"));
   const attemptedDraft = await newDraft(martin, attempted.id);
   await db.delivery.create({ data: { draftId: attemptedDraft.id, version: 1, hash: "b".repeat(64), recipient: attempted.email, status: "FAILED", messageId: "delete-attempted-test", idempotencyKey: "delete-attempted-test" } });
-  await assert.rejects(deleteUnusedContact(martin, attempted.id, attempted.revision), /Mailverlauf/);
+  await assert.rejects(deleteUnusedContact(martin, attempted.id, attempted.revision), /Versandprotokoll vorhanden \(FAILED\)/);
   assert.ok(await db.contact.findUnique({ where: { id: attempted.id } }));
   assert.ok(await db.draft.findUnique({ where: { id: attemptedDraft.id } }));
   const blocked = await saveContact(martin, input("delete-blocked"));
   await suppress(martin, blocked.email, "Synthetischer Widerspruch");
-  await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperre/);
+  await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperrliste/);
   assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
 });
 

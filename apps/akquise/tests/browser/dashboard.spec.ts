@@ -56,17 +56,33 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await page.getByRole("button", { name: "Entwürfe auswählen", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Entwürfe auswählen", exact: true })
+      .click();
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
-    await page.getByRole("button", { name: "2 Entwürfe öffnen →", exact: true }).click();
+    await page
+      .getByRole("button", { name: "2 Entwürfe öffnen →", exact: true })
+      .click();
     const panel = page.getByRole("region", {
       name: "Globale Mailprüfung",
       exact: true,
     });
-    await panel.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("button").filter({ hasText: `${suffix} 0` }).click();
-    await expect(panel.getByText("Persönlicher Architekturtext 0.", { exact: false })).toBeVisible();
-    await panel.getByRole("navigation", { name: "Mail-Empfänger" }).getByRole("button").filter({ hasText: `${suffix} 1` }).click();
-    await expect(panel.getByText("Persönlicher Architekturtext 1.", { exact: false })).toBeVisible();
+    await panel
+      .getByRole("navigation", { name: "Mail-Empfänger" })
+      .getByRole("button")
+      .filter({ hasText: `${suffix} 0` })
+      .click();
+    await expect(
+      panel.getByText("Persönlicher Architekturtext 0.", { exact: false }),
+    ).toBeVisible();
+    await panel
+      .getByRole("navigation", { name: "Mail-Empfänger" })
+      .getByRole("button")
+      .filter({ hasText: `${suffix} 1` })
+      .click();
+    await expect(
+      panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
+    ).toBeVisible();
     const approve = panel.getByRole("button", {
       name: "Versand planen",
       exact: true,
@@ -75,13 +91,17 @@ for (const width of [390, 768, 1440]) {
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
-    await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
+    await panel
+      .getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/)
+      .check();
     await expect(approve).toBeEnabled();
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Aktualisierter synthetischer Nachweis für beide Testkontakte.");
     await expect(approve).toBeDisabled();
-    await panel.getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/).check();
+    await panel
+      .getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/)
+      .check();
     expect(
       (await new AxeBuilder({ page }).include(".mail-studio").analyze())
         .violations,
@@ -92,9 +112,11 @@ for (const width of [390, 768, 1440]) {
       ),
     ).toBe(true);
     await approve.click();
-    await expect(panel.getByRole("status").filter({ hasText: "2 freigegeben und eingeplant" })).toContainText(
-      "2 freigegeben und eingeplant · 0 noch offen.",
-    );
+    await expect(
+      panel
+        .getByRole("status")
+        .filter({ hasText: "2 freigegeben und eingeplant" }),
+    ).toContainText("2 freigegeben und eingeplant · 0 noch offen.");
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.deliveries.filter((d: { draftId: string }) =>
@@ -150,17 +172,45 @@ for (const width of [390, 768, 1440]) {
     await page
       .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
       .check();
-    await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
-    await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
-    const panel = page.getByRole("region", { name: "Angaben für 2 Mails bestätigen" });
+    await page
+      .getByRole("button", { name: "2 Mails erstellen →", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "2 Mails erstellen →", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
+      .click();
+    const panel = page.getByRole("region", {
+      name: "Angaben für 2 Mails bestätigen",
+    });
     await expect(panel).toBeVisible();
-    await panel.getByRole("button", { name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/ }).click();
-    const ready = page.getByRole("region", { name: "Angaben für 1 Mails bestätigen" });
+    await panel
+      .getByRole("button", {
+        name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/,
+      })
+      .click();
+    const ready = page.getByRole("region", {
+      name: "Angaben für 1 Mails bestätigen",
+    });
     await ready.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
-    await ready.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true }).click();
+    await ready
+      .getByRole("button", {
+        name: "Angaben speichern und weiter →",
+        exact: true,
+      })
+      .click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await expect(page.locator(".mail-preview-pane").getByRole("heading", { name: "Persönliche Projektbilder" })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await expect(
+      page
+        .locator(".mail-preview-pane")
+        .getByRole("heading", { name: "Persönliche Projektbilder" }),
+    ).toBeVisible();
     const state = await (await page.request.get("/api/state")).json();
     expect(
       state.contacts.find((contact: { id: string }) => contact.id === c.id)
@@ -219,6 +269,9 @@ for (const width of [390, 768, 1440]) {
     await page
       .getByRole("button", { name: "2 Mails erstellen →", exact: true })
       .click();
+    await page
+      .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
+      .click();
     const panel = page.getByRole("region", {
       name: "Angaben für 2 Mails bestätigen",
     });
@@ -233,7 +286,10 @@ for (const width of [390, 768, 1440]) {
     await common.getByLabel("Quellen-URL").fill("keine adresse");
     await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+      .getByRole("button", {
+        name: "Angaben speichern und weiter →",
+        exact: true,
+      })
       .click();
     await expect(panel.getByRole("alert")).toContainText(
       "Bitte die markierte Quellenadresse korrigieren",
@@ -243,7 +299,10 @@ for (const width of [390, 768, 1440]) {
     // Saving useful partial data must not require a source or create a draft.
     await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+      .getByRole("button", {
+        name: "Angaben speichern und weiter →",
+        exact: true,
+      })
       .click();
     await expect(
       panel.getByText("Noch zu korrigieren für 2 Kontakte:"),
@@ -259,7 +318,7 @@ for (const width of [390, 768, 1440]) {
     }
     await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
-      name: "Weiter zum Sofortversand →",
+      name: "Angaben speichern und weiter →",
       exact: true,
     });
     await expect(prepare).toBeDisabled();
@@ -326,22 +385,28 @@ for (const width of [390, 768, 1440]) {
           response.url().endsWith("/api/mail-schedule") &&
           response.request().method() === "GET",
       ),
-      page
-        .getByRole("button", { name: "Versandverlauf", exact: true })
-        .click(),
+      page.getByRole("button", { name: "Versandverlauf", exact: true }).click(),
     ]);
     expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
     await expect(
       page.getByRole("heading", { name: "Täglicher Mailversand" }),
     ).toBeVisible();
-    const schedule = page.getByRole("region", { name: "Täglicher Mailversand", exact: true });
+    const schedule = page.getByRole("region", {
+      name: "Täglicher Mailversand",
+      exact: true,
+    });
     await schedule.getByText("Zeitplan bearbeiten", { exact: true }).click();
-    await expect(schedule.getByLabel("Mails pro Tag", { exact: true })).toHaveValue(
-      "25",
-    );
-    await page.getByRole("button", { name: "Zeitplan starten", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Freigegebene Mails nach Zeitplan senden", exact: true }),
+      schedule.getByLabel("Mails pro Tag", { exact: true }),
+    ).toHaveValue("25");
+    await page
+      .getByRole("button", { name: "Zeitplan starten", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", {
+        name: "Freigegebene Mails nach Zeitplan senden",
+        exact: true,
+      }),
     ).toBeDisabled();
     expect(
       await page.evaluate(
@@ -415,10 +480,36 @@ for (const [name, width, height] of [
       path: `.local/dashboard-${width}.png`,
       fullPage: true,
     });
-    for (const section of ["Kontakte", "Mails", "Versandverlauf", "Einstellungen"]) {
-      if (section !== "Einstellungen") await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /^Akquise$/ }).click();
-      await page.getByRole("navigation", { name: section === "Einstellungen" ? "Hauptnavigation" : "Akquise-Navigation" }).getByRole("button", { name: section, exact: true }).click();
-      await expect(page.getByRole("heading", { name: section === "Einstellungen" ? "Einstellungen" : "Kontakte & Akquise", level: 1, exact: true })).toBeVisible();
+    for (const section of [
+      "Kontakte",
+      "Mails",
+      "Versandverlauf",
+      "Einstellungen",
+    ]) {
+      if (section !== "Einstellungen")
+        await page
+          .getByRole("navigation", { name: "Hauptnavigation" })
+          .getByRole("button", { name: /^Akquise$/ })
+          .click();
+      await page
+        .getByRole("navigation", {
+          name:
+            section === "Einstellungen"
+              ? "Hauptnavigation"
+              : "Akquise-Navigation",
+        })
+        .getByRole("button", { name: section, exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name:
+            section === "Einstellungen"
+              ? "Einstellungen"
+              : "Kontakte & Akquise",
+          level: 1,
+          exact: true,
+        }),
+      ).toBeVisible();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -450,7 +541,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   expect(created.ok()).toBe(true);
   // Refresh the app snapshot after the synthetic fixture is created via the API.
   await page.reload();
-  await page.getByRole("heading", { name: "We create visibility.", exact: true }).waitFor();
+  await page
+    .getByRole("heading", { name: "We create visibility.", exact: true })
+    .waitFor();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /^Akquise$/ })
@@ -514,7 +607,9 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .first()
     .click();
   await editor.getByRole("button", { name: "Lokal simulieren" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Keine E-Mail wurde versandt" })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Keine E-Mail wurde versandt" }),
+  ).toBeVisible();
   await editor
     .getByLabel("Betreff", { exact: true })
     .fill("Überarbeitete synthetische Nachricht");
@@ -679,4 +774,3 @@ test("Dashboard opens the selected campaign, content conversation and website wi
   );
   expect(writes).toEqual([]);
 });
-
