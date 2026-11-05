@@ -113,10 +113,9 @@ export default function Dashboard({
         aria-labelledby="dashboard-welcome-title"
       >
         <div>
-          <p className="eyebrow">WILLKOMMEN BEI STUDIOONE</p>
-          <h2 id="dashboard-welcome-title">
+          <h1 id="dashboard-welcome-title">
             We create visibility.
-          </h2>
+          </h1>
           <p>Deine zentrale Plattform für Akquise, Newsletter, Social Media, Website und Content – KI-gestützt, einfach und effizient.</p>
         </div>
         <button

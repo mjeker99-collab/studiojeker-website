@@ -20,7 +20,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Übersicht", exact: true }),
+    page.getByRole("heading", { name: "We create visibility.", exact: true }),
   ).toBeVisible();
 }
 for (const width of [390, 768, 1440]) {
@@ -55,7 +55,7 @@ for (const width of [390, 768, 1440]) {
       ids.push((await draft.json()).id);
     }
     await page.reload();
-    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /^Akquise$/ }).click();
     await page.getByRole("button", { name: "Entwürfe auswählen", exact: true }).click();
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
     await page.getByRole("button", { name: "2 Entwürfe öffnen →", exact: true }).click();
@@ -142,9 +142,9 @@ for (const width of [390, 768, 1440]) {
     expect(incomplete.ok()).toBe(true);
     await page.reload();
     await page
-      .getByRole("heading", { name: "Übersicht", exact: true })
+      .getByRole("heading", { name: "We create visibility.", exact: true })
       .waitFor();
-    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /^Akquise$/ }).click();
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
@@ -209,9 +209,9 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page
-      .getByRole("heading", { name: "Übersicht", exact: true })
+      .getByRole("heading", { name: "We create visibility.", exact: true })
       .waitFor();
-    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /^Akquise$/ }).click();
     await page.getByLabel("Kontakte suchen").fill(suffix);
     await page
       .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
@@ -319,7 +319,7 @@ for (const width of [390, 768, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 1000 });
     await signIn(page);
-    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /^Akquise$/ }).click();
     const [scheduleResponse] = await Promise.all([
       page.waitForResponse(
         (response) =>
@@ -416,7 +416,7 @@ for (const [name, width, height] of [
       fullPage: true,
     });
     for (const section of ["Kontakte", "Mails", "Versandverlauf", "Einstellungen"]) {
-      if (section !== "Einstellungen") await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /Kontakte/ }).click();
+      if (section !== "Einstellungen") await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /^Akquise$/ }).click();
       await page.getByRole("navigation", { name: section === "Einstellungen" ? "Hauptnavigation" : "Akquise-Navigation" }).getByRole("button", { name: section, exact: true }).click();
       await expect(page.getByRole("heading", { name: section === "Einstellungen" ? "Einstellungen" : "Kontakte & Akquise", level: 1, exact: true })).toBeVisible();
       expect(
@@ -450,10 +450,10 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   expect(created.ok()).toBe(true);
   // Refresh the app snapshot after the synthetic fixture is created via the API.
   await page.reload();
-  await page.getByRole("heading", { name: "Übersicht", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "We create visibility.", exact: true }).waitFor();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kontakte/ })
+    .getByRole("button", { name: /^Akquise$/ })
     .click();
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
@@ -484,7 +484,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await expect(editor).not.toBeVisible();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kontakte/ })
+    .getByRole("button", { name: /^Akquise$/ })
     .click();
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();

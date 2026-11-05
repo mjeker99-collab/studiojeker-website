@@ -66,8 +66,8 @@ const nav = [
   "Kunden",
   "Strategie & Konzepte",
   "Kampagnen",
-  "Social Media",
   "Content-Studio",
+  "Social Media",
   "Bibliothek",
   "Newsletter",
   "Website",
@@ -514,7 +514,7 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar" inert={showContact || !!draft}>
         <AppLogo />
-        <p className="eyebrow">STUDIOONE / WORKSPACE</p>
+        <p className="eyebrow">Workspace</p>
         <nav aria-label="Hauptnavigation">
           {nav.map((n, i) => (
             <button
@@ -537,7 +537,7 @@ export default function App() {
               <span className="nav-index" aria-hidden="true">
                 0{i + 1}
               </span>
-              {n}
+              {n === "Kontakte/Akquise" ? "Akquise" : n === "Content-Studio" ? "Content Studio" : n}
               {n === "Freigaben" && (
                 <small>
                   {data.drafts.filter((d) => latest(d) === "PENDING").length}
@@ -581,10 +581,14 @@ export default function App() {
         <main className="content">
           <div className="page-heading">
             <div>
-              <p className="eyebrow">ÜBERSICHT & KONTROLLE</p>
-              <h1>
-                {acquisitionTabs.includes(tab) ? "Kontakte & Akquise" : tab}
-              </h1>
+              {tab !== "Übersicht" && (
+                <>
+                  <p className="eyebrow">ÜBERSICHT & KONTROLLE</p>
+                  <h1>
+                    {acquisitionTabs.includes(tab) ? "Kontakte & Akquise" : tab}
+                  </h1>
+                </>
+              )}
             </div>
             <div className="heading-actions">
               <span className="muted">

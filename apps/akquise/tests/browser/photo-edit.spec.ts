@@ -153,7 +153,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
@@ -271,7 +271,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
     await chat
