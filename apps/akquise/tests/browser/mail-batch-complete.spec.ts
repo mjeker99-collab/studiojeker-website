@@ -155,7 +155,7 @@ test("50 selected contacts stay together through shared completion and review", 
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page
     .getByRole("button", { name: "50 Kontakte auswählen", exact: true })
     .click();
@@ -309,7 +309,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await page.getByRole("button", { name: "2 Mails erstellen →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();
@@ -383,7 +383,7 @@ test("mixed contact group advances only verified unchanged records without sendi
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await page.getByRole("button", { name: "4 Mails erstellen →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();
@@ -426,7 +426,7 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await expect(page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/)).toBeVisible();
   await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
   await expect(page.getByRole("heading", { name: "2 Kontakte ausgewählt" })).toBeVisible();
@@ -480,7 +480,7 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
     return route.fulfill({ status: 503, json: { error: "Not used in selection test" } });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await expect(page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })).toBeVisible();
   await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }).click();
   await expect(page.getByRole("heading", { name: "Mails prüfen und versenden" })).toBeVisible();

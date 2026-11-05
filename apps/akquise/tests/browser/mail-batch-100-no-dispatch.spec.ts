@@ -133,7 +133,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
 
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Kontakte/Akquise", exact: false }).click();
+  await page.getByRole("button", { name: "Akquise", exact: false }).click();
   await page.getByRole("button", { name: "100 Kontakte auswählen", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "100 Kontakte ausgewählt", exact: true }),

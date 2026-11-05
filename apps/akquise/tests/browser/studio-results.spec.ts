@@ -26,7 +26,7 @@ test("Results show images and readable text, and library thumbnails appear befor
     return route.fulfill({ status: 400, json: { error: "Test route unavailable" } });
   });
   await page.goto("/");
-  await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /Content-Studio/ }).click();
+  await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /Content Studio/ }).click();
   await page.getByText("Bild hinzufügen oder auswählen", { exact: true }).click();
   const gallery = page.locator(".studio-image-grid");
   await expect(gallery.getByRole("img", { name: "Nora mit Tafel.png" })).toBeVisible();

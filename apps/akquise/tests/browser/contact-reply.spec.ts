@@ -24,7 +24,7 @@ for (const width of [390, 1024]) {
       return route.fulfill({ status: 503, json: { error: "Not used" } });
     });
     await page.goto("/");
-    await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+    await page.getByRole("button", { name: /^Akquise$/ }).click();
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByRole("button", { name: "Beispielfirma", exact: true }).click();
     const panel = page.getByRole("region", { name: "Antwort erfassen" });

@@ -174,6 +174,6 @@ export async function setup(
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   return { sent, previews, settingsCalls };
 }

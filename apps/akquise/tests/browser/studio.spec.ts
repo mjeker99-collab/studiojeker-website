@@ -25,7 +25,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
@@ -144,7 +144,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })

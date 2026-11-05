@@ -136,7 +136,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
