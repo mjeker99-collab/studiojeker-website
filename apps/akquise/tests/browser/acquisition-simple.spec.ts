@@ -251,3 +251,24 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
   expect(prepared).toEqual([["c0", "c2"], ["c1"]]);
   expect(state.sent).toEqual([]);
 });
+
+test("one selected contact can be deleted only after explicit confirmation", async ({ page }) => {
+  await setup(page);
+  let deletes = 0;
+  await page.route("**/api/contacts/*/delete", async route => {
+    expect(new URL(route.request().url()).pathname).toBe("/api/contacts/c0/delete");
+    expect(route.request().postDataJSON().confirmed).toBe(true);
+    deletes++;
+    await route.fulfill({ json: { ok: true } });
+  });
+  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+  await page.getByLabel("Atelier 0 auswählen", { exact: true }).check();
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.getByRole("button", { name: "Kontakt löschen", exact: true }).click();
+  expect(deletes).toBe(0);
+  await expect(page.getByLabel("Atelier 0 auswählen", { exact: true })).toBeChecked();
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button", { name: "Kontakt löschen", exact: true }).click();
+  await expect.poll(() => deletes).toBe(1);
+  await expect(page.getByLabel("Atelier 0 auswählen", { exact: true })).not.toBeChecked();
+});

@@ -341,6 +341,23 @@ export default function App() {
       setBusy(false);
     }
   }
+  function removeContact(c: C) {
+    if (
+      !window.confirm(
+        `Kontakt ${c.firstName} ${c.lastName} bei ${c.organisation} löschen? Ungesendete Entwürfe werden ebenfalls gelöscht und geplante Mails abgebrochen. Kontakte mit Versandverlauf oder Versandsperre bleiben geschützt.`,
+      )
+    )
+      return;
+    void action(async () => {
+      await post(`contacts/${c.id}/delete`, {
+        revision: c.revision,
+        confirmed: true,
+      });
+      setShowContact(false);
+      setSelected((ids) => ids.filter((id) => id !== c.id));
+      setMailContactIds((ids) => ids.filter((id) => id !== c.id));
+    }, "Kontakt und ungesendete Entwürfe gelöscht.");
+  }
   function openContact(c: C | null) {
     setContact(c);
     setForm(
@@ -919,6 +936,21 @@ export default function App() {
               {selected.length > 0 && (
                 <div className="mail-selection-bar">
                   <strong>{selected.length} Kontakte ausgewählt</strong>
+                  {selected.length === 1 && (
+                    <button
+                      className="danger"
+                      disabled={busy}
+                      onClick={() => {
+                        const c = data.contacts.find(
+                          (item) => item.id === selected[0],
+                        );
+                        if (c) removeContact(c);
+                      }}
+                    >
+                      Kontakt löschen
+                    </button>
+                  )}
+
                   <button
                     disabled={busy || selected.length > 200}
                     onClick={() => {
@@ -1248,24 +1280,7 @@ export default function App() {
                   <button
                     className="danger"
                     disabled={busy}
-                    onClick={() => {
-                      if (
-                        !window.confirm(
-                          `Kontakt ${contact.firstName} ${contact.lastName} bei ${contact.organisation} löschen? Kontakte mit Mailverlauf bleiben geschützt.`,
-                        )
-                      )
-                        return;
-                      void action(async () => {
-                        await post(`contacts/${contact.id}/delete`, {
-                          revision: contact.revision,
-                          confirmed: true,
-                        });
-                        setShowContact(false);
-                        setSelected((ids) =>
-                          ids.filter((id) => id !== contact.id),
-                        );
-                      }, "Kontakt gelöscht.");
-                    }}
+                    onClick={() => removeContact(contact)}
                   >
                     Kontakt löschen
                   </button>
