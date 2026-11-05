@@ -116,6 +116,8 @@ export default function MailStudio({
   const [batchProposals, setBatchProposals] = useState<ContactPreparation[]>(
     [],
   );
+  const [deferredIds, setDeferredIds] = useState<string[]>([]);
+  const [recipientSearch, setRecipientSearch] = useState("");
   const [skipped, setSkipped] = useState<string[]>([]);
   const [preparing, setPreparing] = useState(true);
   const [batchSize, setBatchSize] = useState(25);
@@ -320,6 +322,8 @@ export default function MailStudio({
   }
   const [selectionNotice, setSelectionNotice] = useState("");
   function resetSelection() {
+    setDeferredIds([]);
+    setRecipientSearch("");
     setDiscardOpen(false);
     setDiscardConfirmed(false);
     setBatchProposals([]);
@@ -406,6 +410,7 @@ export default function MailStudio({
     // unconfirmed suggestions stay out of the dispatch approval entirely.
     const eligible = proposals.filter((p) => p.ready && !p.changed);
     const deferred = proposals.filter((p) => !p.ready || p.changed);
+    setDeferredIds(deferred.map((p) => p.id));
     if (!eligible.length) {
       setBatchProposals(proposals);
       setRows([]);
@@ -428,6 +433,10 @@ export default function MailStudio({
     const successful = prepared.results.filter(
       (r: Result & { draftId?: string }) => r.ok && r.draftId,
     );
+    setDeferredIds([
+      ...deferred.map((p) => p.id),
+      ...prepared.results.filter((r: Result) => !r.ok).map((r: Result) => r.id),
+    ]);
     setSkipped([
       ...excluded,
       ...deferred.map(
@@ -463,6 +472,84 @@ export default function MailStudio({
     setResults([]);
     setStep(2);
     focusApproval();
+  }
+  async function editOpenContacts() {
+    const issueIds = rows
+      .filter((r) => r.issues.length)
+      .flatMap((r) => {
+        const draft = drafts.find((d) => d.id === r.id);
+        return draft ? [draft.contactId] : [];
+      });
+    const ids = [...new Set([...deferredIds, ...issueIds])];
+    if (!ids.length) return;
+    const data = await preparation("preview", { ids });
+    setBatchProposals(data.contacts);
+    setRead(false);
+    setDispatch(false);
+    setLegal(false);
+    requestAnimationFrame(() =>
+      preparationRef.current?.scrollIntoView({ block: "start" }),
+    );
+  }
+  async function completeOpenContacts(ids = batchProposals.map((p) => p.id)) {
+    // Keep existing drafts and exclusions while adding newly completed contacts.
+    const previousRows = rows;
+    const previousIncluded = included;
+    const data = await preparation("preview", { ids });
+    const proposals: ContactPreparation[] = data.contacts;
+    const eligible = proposals.filter((p) => p.ready && !p.changed);
+    const remaining = proposals.filter((p) => !p.ready || p.changed);
+    const prepared = eligible.length
+      ? await preparation("prepare", {
+          confirmed: true,
+          contacts: eligible.map((p) => ({ id: p.id, revision: p.revision })),
+        })
+      : { results: [] };
+    const successful = prepared.results.filter(
+      (r: Result & { draftId?: string }) => r.ok && r.draftId,
+    );
+    const failedIds = prepared.results
+      .filter((r: Result) => !r.ok)
+      .map((r: Result) => r.id);
+    setDeferredIds([...remaining.map((p) => p.id), ...failedIds]);
+    setSkipped([
+      ...remaining.map(
+        (p) =>
+          `${p.organisation}: ${p.issues.join(" · ") || "Ergänzungen bestätigen"}`,
+      ),
+      ...prepared.results
+        .filter((r: Result) => !r.ok)
+        .map((r: Result) => r.message),
+    ]);
+    const allIds = [
+      ...new Set([
+        ...previousRows.map((r) => r.id),
+        ...successful.map((r: Result & { draftId: string }) => r.draftId),
+      ]),
+    ];
+    if (allIds.length) {
+      const review = await api("preview", { ids: allIds });
+      setRows(review.rows);
+      setSelected(allIds);
+      setIncluded(
+        review.rows
+          .filter(
+            (r: Row) =>
+              !r.issues.length &&
+              (previousIncluded.includes(r.id) ||
+                !previousRows.some(
+                  (old) => old.id === r.id && !old.issues.length,
+                )) &&
+              !results.some((result) => result.id === r.id && result.ok),
+          )
+          .map((r: Row) => r.id),
+      );
+    }
+    setBatchProposals([]);
+    setRead(false);
+    setDispatch(false);
+    setLegal(false);
+    await refresh();
   }
   async function preview(ids = selected) {
     setBatchProposals([]);
@@ -895,6 +982,29 @@ export default function MailStudio({
           </section>
         )}
       </div>
+      {step === 2 && batchProposals.length === 0 && (
+        <>
+          {(deferredIds.length > 0 || rows.some((r) => r.issues.length)) && (
+            <div className="mail-open-notice">
+              <p>
+                {deferredIds.length +
+                  rows.filter((r) => r.issues.length).length}{" "}
+                Kontakte mit offenen Angaben.
+                {chosen.length
+                  ? " Bereite Mails können separat versendet werden."
+                  : "Ergänze die Angaben, um Mails freizugeben."}
+              </p>
+              <button
+                className={chosen.length ? "secondary" : undefined}
+                disabled={busy || editingDirty}
+                onClick={() => void run(editOpenContacts)}
+              >
+                Angaben gemeinsam ergänzen
+              </button>
+            </div>
+          )}
+        </>
+      )}
       {step === 2 && batchProposals.length > 0 && (
         <div
           className="panel"
@@ -907,34 +1017,34 @@ export default function MailStudio({
               {batchProposals.length} Kontakte bleiben ausgewählt.
             </strong>{" "}
           </p>
+          {rows.length > 0 && (
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() => setBatchProposals([])}
+            >
+              Zurück zur Mailvorschau
+            </button>
+          )}
           <ContactPreparationEditor
             key={batchProposals.map((p) => `${p.id}:${p.revision}`).join("|")}
             initialProposals={batchProposals}
             refresh={refresh}
             requireComplete
-            onDone={() => void run(() => prepareBatch())}
-            onExclude={(ids) =>
-              void run(async () => {
-                const remaining = contactIds.filter((id) => !ids.includes(id));
-                setContactIds(remaining);
-                await prepareBatch(
-                  remaining,
-                  ids.map((id) => {
-                    const contact = contacts.find((c) => c.id === id);
-                    return `${contact?.organisation || id}: Angaben offen, bewusst zurückgestellt.`;
-                  }),
-                );
-              })
-            }
+            onDone={() => void run(completeOpenContacts)}
+            onExclude={(ids) => {
+              setContactIds((old) => old.filter((id) => !ids.includes(id)));
+              const remaining = batchProposals
+                .filter((p) => !ids.includes(p.id))
+                .map((p) => p.id);
+              void run(() => completeOpenContacts(remaining));
+            }}
           />
         </div>
       )}
       {skipped.length > 0 && (
         <details className="panel">
-          <summary>
-            {skipped.length} Kontakte zurückgestellt – übrige Mails können
-            weitergehen
-          </summary>
+          <summary>{skipped.length} Kontakte mit offenen Angaben</summary>
           <ul>
             {skipped.map((reason, i) => (
               <li key={i}>{reason}</li>
@@ -942,33 +1052,12 @@ export default function MailStudio({
           </ul>
         </details>
       )}
-      {step === 2 && batchProposals.length === 0 && !rows.length && busy && (
+      {step === 2 && !rows.length && busy && (
         <p role="status">Persönliche Mails werden vorbereitet …</p>
       )}
       {step === 2 && batchProposals.length === 0 && rows.length > 0 && (
         <section className="panel" aria-label="Globale Mailprüfung">
-          <h3>{rows.length} persönliche Mails</h3>
-          <p>
-            Empfänger, Betreff und vollständige Nachricht einschliesslich
-            Signatur prüfen. Nachrichten können aus der gemeinsamen Freigabe
-            ausgeschlossen werden.
-          </p>
-          <button
-            className="secondary"
-            disabled={busy || editingDirty}
-            onClick={() => void run(() => preview())}
-          >
-            Prüfvorschau neu laden
-          </button>
-          {rows.some((r) => r.issues.length) && (
-            <div className="panel-note">
-              <p>
-                {rows.filter((r) => r.issues.length).length} Kontakte benötigen
-                Ergänzungen und werden zurückgestellt. Die übrigen Mails sind
-                ausgewählt.
-              </p>
-            </div>
-          )}
+          <h3>Mails prüfen und versenden</h3>
           <p>
             <strong>
               {chosen.length} Mails bereit ·{" "}
@@ -978,47 +1067,100 @@ export default function MailStudio({
           </p>
           <div className="mail-workbench" id="mail-workbench">
             <nav className="mail-recipient-list" aria-label="Mail-Empfänger">
-              {rows.map((r) => (
-                <div key={r.id} className="mail-recipient">
+              <div className="mail-selection-toolbar">
+                <label>
+                  Empfänger suchen
                   <input
-                    type="checkbox"
-                    aria-label={`${r.recipient} für Versand auswählen`}
-                    disabled={
-                      busy ||
-                      editingDirty ||
-                      !!r.issues.length ||
-                      results.some((x) => x.id === r.id && x.ok)
-                    }
-                    checked={included.includes(r.id)}
-                    onChange={(e) => {
-                      setIncluded((old) =>
-                        e.target.checked
-                          ? [...old, r.id]
-                          : old.filter((id) => id !== r.id),
+                    value={recipientSearch}
+                    onChange={(e) => setRecipientSearch(e.target.value)}
+                  />
+                </label>
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy || editingDirty}
+                    onClick={() => {
+                      setIncluded(
+                        rows
+                          .filter(
+                            (r) =>
+                              !r.issues.length &&
+                              !results.some((x) => x.id === r.id && x.ok),
+                          )
+                          .map((r) => r.id),
                       );
                       setRead(false);
                       setDispatch(false);
                       setLegal(false);
                     }}
-                  />
+                  >
+                    Alle auswählen
+                  </button>
                   <button
                     className="quiet"
-                    aria-current={activeRow?.id === r.id ? "true" : undefined}
                     disabled={busy || editingDirty}
-                    onClick={() => setActiveId(r.id)}
+                    onClick={() => {
+                      setIncluded([]);
+                      setRead(false);
+                      setDispatch(false);
+                      setLegal(false);
+                    }}
                   >
-                    <strong>{r.organisation}</strong>
-                    <span>{r.recipient}</span>
-                    <small>
-                      {r.issues.length
-                        ? "Angaben ergänzen"
-                        : results.some((x) => x.id === r.id && x.ok)
-                          ? "Erledigt"
-                          : "Entwurf"}
-                    </small>
+                    Auswahl aufheben
                   </button>
                 </div>
-              ))}
+                <small>
+                  {chosen.length} von {rows.length} ausgewählt · Auswahl gilt
+                  für die ganze Liste
+                </small>
+              </div>
+              {rows
+                .filter((r) =>
+                  `${r.organisation} ${r.recipient}`
+                    .toLowerCase()
+                    .includes(recipientSearch.toLowerCase()),
+                )
+                .map((r) => (
+                  <div key={r.id} className="mail-recipient">
+                    <input
+                      type="checkbox"
+                      aria-label={`${r.recipient} für Versand auswählen`}
+                      disabled={
+                        busy ||
+                        editingDirty ||
+                        !!r.issues.length ||
+                        results.some((x) => x.id === r.id && x.ok)
+                      }
+                      checked={included.includes(r.id)}
+                      onChange={(e) => {
+                        setIncluded((old) =>
+                          e.target.checked
+                            ? [...old, r.id]
+                            : old.filter((id) => id !== r.id),
+                        );
+                        setRead(false);
+                        setDispatch(false);
+                        setLegal(false);
+                      }}
+                    />
+                    <button
+                      className="quiet"
+                      aria-current={activeRow?.id === r.id ? "true" : undefined}
+                      disabled={busy || editingDirty}
+                      onClick={() => setActiveId(r.id)}
+                    >
+                      <strong>{r.organisation}</strong>
+                      <span>{r.recipient}</span>
+                      <small>
+                        {r.issues.length
+                          ? "Angaben ergänzen"
+                          : results.some((x) => x.id === r.id && x.ok)
+                            ? "Erledigt"
+                            : "Entwurf"}
+                      </small>
+                    </button>
+                  </div>
+                ))}
             </nav>
             {activeRow && (
               <div className="mail-preview-pane">
@@ -1085,22 +1227,25 @@ export default function MailStudio({
               </div>
             )}
           </div>
-          <MailAssistant
-            onBusyChange={setBusy}
-            mode="WRITE"
-            expanded
-            disabled={busy || editingDirty}
-            items={chosen.map((r) => ({ id: r.id, version: r.version }))}
-            refresh={async () => {
-              const keep = [...included];
-              setRead(false);
-              setDispatch(false);
-              setLegal(false);
-              await preview(rows.map((r) => r.id));
-              setIncluded(keep);
-              await refresh();
-            }}
-          />
+          <details>
+            <summary>Texte mit KI überarbeiten</summary>
+            <MailAssistant
+              onBusyChange={setBusy}
+              mode="WRITE"
+              expanded
+              disabled={busy || editingDirty}
+              items={chosen.map((r) => ({ id: r.id, version: r.version }))}
+              refresh={async () => {
+                const keep = [...included];
+                setRead(false);
+                setDispatch(false);
+                setLegal(false);
+                await preview(rows.map((r) => r.id));
+                setIncluded(keep);
+                await refresh();
+              }}
+            />
+          </details>
           <details>
             <summary>Bilder oder Links für alle Mails ergänzen</summary>
             <MailContentEditor
@@ -1202,45 +1347,49 @@ export default function MailStudio({
                 )}
               </fieldset>
             )}
-            <label className="check">
-              <input
-                type="checkbox"
-                disabled={busy || editingDirty || !chosen.length}
-                checked={read && dispatch && (!missingLegal.length || legal)}
-                onChange={(e) => {
-                  setRead(e.target.checked);
-                  setDispatch(e.target.checked);
-                  setLegal(e.target.checked);
-                }}
-              />
-              Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
-              Empfänger, Betreff und Signatur zum Versand frei.
-              {missingLegal.length > 0 &&
-                " Ich bestätige die Zulässigkeit und die oben angegebene Grundlage für diese Kontakte."}
-            </label>
-            <p id="mail-approval-hint" role="status">
-              {approvalHint}
-            </p>
-            <p>Bitte diese Seite während des Sofortversands geöffnet lassen.</p>
-            <div className="actions">
-              <button
-                disabled={!canApprove}
-                aria-describedby="mail-approval-hint"
-                onClick={() => void run(() => submitMails("now"))}
-              >
-                {busy && sendMode === "now"
-                  ? "Versand läuft …"
-                  : chosen.length > 1
-                    ? `${chosen.length} Mails jetzt senden`
-                    : "1 Mail jetzt senden"}
-              </button>
-              <button
-                className="secondary"
-                disabled={!canApprove}
-                onClick={() => void run(() => submitMails("schedule"))}
-              >
-                Versand planen
-              </button>
+            <div className="mail-approval-bar">
+              <label className="check">
+                <input
+                  type="checkbox"
+                  disabled={busy || editingDirty || !chosen.length}
+                  checked={read && dispatch && (!missingLegal.length || legal)}
+                  onChange={(e) => {
+                    setRead(e.target.checked);
+                    setDispatch(e.target.checked);
+                    setLegal(e.target.checked);
+                  }}
+                />
+                Ich gebe die {chosen.length} ausgewählten persönlichen Mails mit
+                Empfänger, Betreff und Signatur zum Versand frei.
+                {missingLegal.length > 0 &&
+                  " Ich bestätige die Zulässigkeit und die oben angegebene Grundlage für diese Kontakte."}
+              </label>
+              <p id="mail-approval-hint" role="status">
+                {approvalHint}
+              </p>
+              <p>
+                Bitte diese Seite während des Sofortversands geöffnet lassen.
+              </p>
+              <div className="actions">
+                <button
+                  disabled={!canApprove}
+                  aria-describedby="mail-approval-hint"
+                  onClick={() => void run(() => submitMails("now"))}
+                >
+                  {busy && sendMode === "now"
+                    ? "Versand läuft …"
+                    : chosen.length === 1
+                      ? "1 Mail jetzt senden"
+                      : `${chosen.length} Mails jetzt senden`}
+                </button>
+                <button
+                  className="secondary"
+                  disabled={!canApprove}
+                  onClick={() => void run(() => submitMails("schedule"))}
+                >
+                  Versand planen
+                </button>
+              </div>
             </div>
           </section>
           {sendProgress && <p role="status">{sendProgress}</p>}

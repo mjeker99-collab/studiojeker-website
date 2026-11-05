@@ -1,19 +1,18 @@
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 for (const width of [390, 1024]) {
-  test(`three tasks, persistent selection and visible preview at ${width}px`, async ({
+  test(`two workspaces, persistent selection and visible preview at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 960 });
     const state = await setup(page);
     const nav = page.getByRole("navigation", { name: "Akquise-Navigation" });
     await expect(nav.getByRole("button")).toHaveText([
-      "1 · Kontakte finden",
-      "2 · Kontakte verwalten",
-      "3 · Mails erstellen & versenden",
+      "Kontakte",
+      "Mails",
       "Versandverlauf",
     ]);
-    await nav.getByRole("button", { name: "2 · Kontakte verwalten" }).click();
+    await nav.getByRole("button", { name: "Kontakte" }).click();
     await page.getByLabel("Atelier 1 auswählen", { exact: true }).check();
     await page
       .getByRole("button", { name: "1 Mails erstellen →", exact: true })
@@ -21,14 +20,15 @@ for (const width of [390, 1024]) {
     await expect(
       page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
     ).toBeVisible();
-    await nav.getByRole("button", { name: "1 · Kontakte finden" }).click();
+    await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Kontakte recherchieren", exact: true })
+      .click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Industrieunternehmen für Businessfotografie finden");
     await page.getByLabel("Region", { exact: true }).fill("Solothurn");
-    await nav
-      .getByRole("button", { name: "3 · Mails erstellen & versenden" })
-      .click();
+    await nav.getByRole("button", { name: "Mails" }).click();
     await expect(
       page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
     ).toBeVisible();
@@ -52,6 +52,22 @@ for (const width of [390, 1024]) {
         .locator(".mail-preview-pane")
         .getByRole("heading", { name: "Anfrage 1" }),
     ).toBeVisible();
+    const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
+    await recipients
+      .getByRole("button", { name: "Auswahl aufheben", exact: true })
+      .click();
+    await expect(
+      recipients.getByRole("checkbox", { checked: true }),
+    ).toHaveCount(0);
+    await recipients
+      .getByRole("button", { name: "Alle auswählen", exact: true })
+      .click();
+    await expect(
+      recipients.getByRole("checkbox", { checked: true }),
+    ).toHaveCount(3);
+    await expect(
+      page.getByRole("button", { name: "3 Mails jetzt senden", exact: true }),
+    ).toBeDisabled();
     expect(state.sent).toEqual([]);
     expect(
       await page.evaluate(
@@ -62,7 +78,10 @@ for (const width of [390, 1024]) {
       path: `.local/acquisition-${width}.png`,
       fullPage: true,
     });
-    await nav.getByRole("button", { name: "1 · Kontakte finden" }).click();
+    await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Kontakte recherchieren", exact: true })
+      .click();
     await expect(page.getByLabel("Region", { exact: true })).toHaveValue(
       "Solothurn",
     );
@@ -140,5 +159,95 @@ test("inline edits autosave the exact version and invalidate dispatch approval",
       .locator(".mail-preview-pane")
       .getByRole("heading", { name: "Persönliche Einladung" }),
   ).toBeVisible();
+  expect(state.sent).toEqual([]);
+});
+
+test("completing open contacts preserves prepared drafts and deliberate exclusions", async ({
+  page,
+}) => {
+  const state = await setup(page);
+  let saved = false;
+  const prepared: string[][] = [];
+  await page.route("**/api/contacts/preparation/*", async (route) => {
+    const action = new URL(route.request().url()).pathname.split("/").pop();
+    const body = route.request().postDataJSON();
+    if (action === "preview")
+      return route.fulfill({
+        json: {
+          contacts: body.ids.map((id: string) => ({
+            id,
+            revision: saved ? 2 : 1,
+            organisation: `Atelier ${id.slice(1)}`,
+            name: "Anna Test",
+            email: `anna${id.slice(1)}@example.test`,
+            ready: id !== "c1" || saved,
+            changed: false,
+            patch: {},
+            origins: [],
+            issues:
+              id === "c1" && !saved
+                ? ["Persönliche Adresse noch nicht bestätigt."]
+                : [],
+            values: {
+              confidence: id === "c1" && !saved ? "UNCONFIRMED" : "VERIFIED",
+              sourceUrl: "https://example.test/team",
+              verifiedAt: "2026-11-01T00:00:00.000Z",
+              hook: "Dokumentierter Anknüpfungspunkt",
+            },
+          })),
+        },
+      });
+    if (action === "save") {
+      expect(body.contacts.map((c: { id: string }) => c.id)).toEqual(["c1"]);
+      saved = true;
+      return route.fulfill({
+        json: { results: [{ id: "c1", ok: true, message: "Gespeichert" }] },
+      });
+    }
+    if (action === "prepare") {
+      const ids = body.contacts.map((c: { id: string }) => c.id);
+      prepared.push(ids);
+      return route.fulfill({
+        json: {
+          results: ids.map((id: string) => ({
+            id,
+            ok: true,
+            draftId: `d${id.slice(1)}`,
+            message: "Bereit",
+          })),
+        },
+      });
+    }
+    throw new Error(`Unexpected action: ${action}`);
+  });
+  await page
+    .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "3 Mails erstellen →", exact: true })
+    .click();
+  await page
+    .getByLabel("anna2@example.test für Versand auswählen", { exact: true })
+    .uncheck();
+  await page
+    .getByRole("button", { name: "Angaben gemeinsam ergänzen", exact: true })
+    .click();
+  await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
+  await page
+    .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+    .click();
+  const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
+  await expect(recipients.getByRole("checkbox", { checked: true })).toHaveCount(
+    2,
+  );
+  await expect(
+    page.getByLabel("anna2@example.test für Versand auswählen", {
+      exact: true,
+    }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "2 Mails jetzt senden", exact: true }),
+  ).toBeDisabled();
+  expect(prepared).toEqual([["c0", "c2"], ["c1"]]);
   expect(state.sent).toEqual([]);
 });

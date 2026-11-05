@@ -145,7 +145,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "Übersicht", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-    await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
       .getByLabel(`${organisation} Lücke auswählen`, { exact: true })
@@ -415,7 +415,7 @@ for (const [name, width, height] of [
       path: `.local/dashboard-${width}.png`,
       fullPage: true,
     });
-    for (const section of ["1 · Kontakte finden", "2 · Kontakte verwalten", "3 · Mails erstellen & versenden", "Versandverlauf", "Einstellungen"]) {
+    for (const section of ["Kontakte", "Mails", "Versandverlauf", "Einstellungen"]) {
       if (section !== "Einstellungen") await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: /Kontakte/ }).click();
       await page.getByRole("navigation", { name: section === "Einstellungen" ? "Hauptnavigation" : "Akquise-Navigation" }).getByRole("button", { name: section, exact: true }).click();
       await expect(page.getByRole("heading", { name: section === "Einstellungen" ? "Einstellungen" : "Kontakte & Akquise", level: 1, exact: true })).toBeVisible();
@@ -455,7 +455,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
-  await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
+  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeFocused();
@@ -486,7 +486,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Kontakte/ })
     .click();
-  await page.getByRole("button", { name: "2 · Kontakte verwalten", exact: true }).click();
+  await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   await dialog.getByText("Weitere Versandangaben", { exact: true }).click();
   await dialog
@@ -498,7 +498,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Zulässigkeit dokumentieren" })
     .click();
   await expect(dialog).not.toBeVisible();
-  await page.getByRole("button", { name: "3 · Mails erstellen & versenden", exact: true }).click();
+  await page.getByRole("button", { name: "Mails", exact: true }).click();
   await page.getByText("Alle gespeicherten Entwürfe", { exact: true }).click();
   await page
     .locator(".draft-row")
@@ -679,3 +679,4 @@ test("Dashboard opens the selected campaign, content conversation and website wi
   );
   expect(writes).toEqual([]);
 });
+

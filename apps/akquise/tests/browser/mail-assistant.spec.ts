@@ -55,7 +55,8 @@ for (const width of [390, 1024])
               },
       });
     });
-    await page.getByRole("button", { name: "1 · Kontakte finden", exact: true }).click();
+    await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Architekturbüros für Visualisierungen finden");
@@ -70,7 +71,7 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "1 ausgewählte Kontakte übernehmen" })
       .click();
     await expect(page.getByText(/1 neue Kontakte übernommen/)).toBeVisible();
-    await page.getByRole("button", { name: "3 · Mails erstellen & versenden", exact: true }).click();
+    await page.getByRole("button", { name: "Mails", exact: true }).click();
     await page.getByText("Nach Unternehmen oder Branche filtern", { exact: true }).click();
     await page
       .getByRole("combobox", { name: "Kunde / Unternehmen", exact: true })
@@ -83,6 +84,7 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
 
+    await page.getByText("Texte mit KI überarbeiten", { exact: true }).click();
     await page
       .getByLabel("Was möchtest du diesen Kontakten anbieten?")
       .fill("Businessfotografie für ihre nächste Kampagne anbieten.");
@@ -148,7 +150,8 @@ test("failed AI research remains in history without retry or sending", async ({
     applied++;
     return route.fulfill({ status: 500, json: { error: "Unexpected apply." } });
   });
-  await page.getByRole("button", { name: "1 · Kontakte finden", exact: true }).click();
+  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
   await page
     .getByLabel("Wen möchtest du erreichen und was anbieten?")
     .fill("Architekturbüros in Bern");
@@ -172,3 +175,4 @@ test("failed AI research remains in history without retry or sending", async ({
   expect(generated).toBe(1);
   expect(applied).toBe(0);
 });
+

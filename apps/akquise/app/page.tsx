@@ -176,7 +176,12 @@ export default function App() {
   const [projectRevision, setProjectRevision] = useState(0);
   const [dashboardTask, setDashboardTask] = useState<{
     prompt: string;
-    section: "Kampagnen" | "Social Media" | "Website" | "Newsletter" | "Content-Studio";
+    section:
+      | "Kampagnen"
+      | "Social Media"
+      | "Website"
+      | "Newsletter"
+      | "Content-Studio";
     request: number;
   } | null>(null);
   function startDashboardTask(prompt: string, section: string) {
@@ -223,8 +228,8 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
   const acquisitionLabels: Record<string, string> = {
-    "Mail-Studio": "Mails erstellen & versenden",
-    Kontakte: "Kontakte verwalten",
+    "Mail-Studio": "Mails",
+    Kontakte: "Kontakte",
   };
   const mailLabel = data?.externalSending
     ? data.mailMode === "test"
@@ -642,23 +647,25 @@ export default function App() {
           )}
           {acquisitionTabs.includes(tab) && (
             <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {["Kontakte finden", "Kontakte", "Mail-Studio"].map(
-                (n, index) => (
-                  <button
-                    className="secondary"
-                    aria-current={tab === n ? "page" : undefined}
-                    key={n}
-                    disabled={busy}
-                    onClick={() => {
-                      setTab(n);
-                      setError("");
-                      setNotice("");
-                    }}
-                  >
-                    {index + 1} · {acquisitionLabels[n] || n}
-                  </button>
-                ),
-              )}
+              {["Kontakte", "Mail-Studio"].map((n) => (
+                <button
+                  className="secondary"
+                  aria-current={
+                    tab === n || (n === "Kontakte" && tab === "Kontakte finden")
+                      ? "page"
+                      : undefined
+                  }
+                  key={n}
+                  disabled={busy}
+                  onClick={() => {
+                    setTab(n);
+                    setError("");
+                    setNotice("");
+                  }}
+                >
+                  {acquisitionLabels[n] || n}
+                </button>
+              ))}
               <button
                 className="quiet"
                 onClick={() => setTab("Versandhistorie")}
@@ -771,6 +778,12 @@ export default function App() {
                 hidden={tab !== "Kontakte finden"}
                 className="acquisition-research"
               >
+                <button
+                  className="secondary"
+                  onClick={() => setTab("Kontakte")}
+                >
+                  Zur Kontaktliste
+                </button>
                 <section className="studioone-area-intro">
                   <p className="studioone-area-kicker">STUDIOONE · AKQUISE</p>
                   <h2>Wen möchtest du erreichen?</h2>
@@ -815,6 +828,13 @@ export default function App() {
           )}
           {tab === "Kontakte" && (
             <section className="panel">
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => setTab("Kontakte finden")}
+              >
+                Kontakte recherchieren
+              </button>
               <div className="toolbar">
                 <label className="search">
                   Suche
