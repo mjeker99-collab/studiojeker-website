@@ -101,6 +101,7 @@ model Contact {
   replyOutcome       String             @default("")
   replyNote          String             @default("")
   repliedAt          DateTime?
+  archivedAt         DateTime?
   followUpOn         String             @default("")
   revision           Int                @default(1)
   createdAt          DateTime           @default(now())

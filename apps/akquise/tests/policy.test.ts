@@ -721,3 +721,9 @@ test("One XLSX master with more than 500 contacts remains importable without app
     rows.every((r) => r.confidence === "UNCONFIRMED" && !r.newsletterConsent),
   );
 });
+
+for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
+  const { acquisitionAddressIssue } = await import("../lib/mail-address");
+  assert.equal(acquisitionAddressIssue(email), "");
+  assert.notEqual(acquisitionAddressIssue("info@example.test"), "");
+}

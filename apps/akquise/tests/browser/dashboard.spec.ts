@@ -157,7 +157,7 @@ for (const width of [390, 768, 1440]) {
     await panel.getByRole("button", { name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/ }).click();
     const ready = page.getByRole("region", { name: "Angaben für 1 Mails bestätigen" });
     await ready.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
-    await ready.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true }).click();
+    await ready.getByRole("button", { name: "Angaben speichern und weiter →", exact: true }).click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await expect(page.locator(".mail-preview-pane").getByRole("heading", { name: "Persönliche Projektbilder" })).toBeVisible();
@@ -233,7 +233,7 @@ for (const width of [390, 768, 1440]) {
     await common.getByLabel("Quellen-URL").fill("keine adresse");
     await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+      .getByRole("button", { name: "Angaben speichern und weiter →", exact: true })
       .click();
     await expect(panel.getByRole("alert")).toContainText(
       "Bitte die markierte Quellenadresse korrigieren",
@@ -243,7 +243,7 @@ for (const width of [390, 768, 1440]) {
     // Saving useful partial data must not require a source or create a draft.
     await panel.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
     await panel
-      .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+      .getByRole("button", { name: "Angaben speichern und weiter →", exact: true })
       .click();
     await expect(
       panel.getByText("Noch zu korrigieren für 2 Kontakte:"),
@@ -259,7 +259,7 @@ for (const width of [390, 768, 1440]) {
     }
     await common.getByLabel("Quellen-URL").fill("example.test/gepruefte-liste");
     const prepare = panel.getByRole("button", {
-      name: "Weiter zum Sofortversand →",
+      name: "Angaben speichern und weiter →",
       exact: true,
     });
     await expect(prepare).toBeDisabled();

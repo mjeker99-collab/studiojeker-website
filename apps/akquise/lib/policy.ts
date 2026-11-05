@@ -1,3 +1,4 @@
+import { acquisitionAddressIssue } from "./mail-address";
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
 import { signedMessage, signatureAssets } from "./mail-signature";
@@ -36,26 +37,22 @@ export function verificationIssues(
     hook: string;
     status: string;
     replyOutcome?: string;
+    archivedAt?: Date | string | null;
   },
   now = new Date(),
 ) {
   const issues: string[] = [];
+  if (c.archivedAt) issues.push("Kontakt ist archiviert.");
   if (c.replyOutcome)
     issues.push("Antwort erfasst. Keine weitere automatische Akquise.");
   if (c.status === "DO_NOT_CONTACT") issues.push("Kontakt ist gesperrt.");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
-    issues.push("Gültige E-Mail-Adresse fehlt.");
+  const addressIssue = acquisitionAddressIssue(c.email);
+  if (addressIssue) issues.push(addressIssue);
   if (c.confidence !== "VERIFIED")
-    issues.push("Persönliche Adresse noch nicht als verifiziert bestätigt.");
+    issues.push("E-Mail-Adresse noch nicht als verifiziert bestätigt.");
   if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
   if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
   if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");
-  if (
-    /^(info|kontakt|contact|office|admin|hello|mail|sales|support|marketing|sekretariat|zentrale|service|team|post|buchhaltung|noreply|no-reply)([.+_-].*)?@/i.test(
-      c.email,
-    )
-  )
-    issues.push("Allgemeine E-Mail-Adressen sind nicht freigabefähig.");
   if (
     c.verifiedAt &&
     (Number.isNaN(c.verifiedAt.getTime()) || c.verifiedAt > now)

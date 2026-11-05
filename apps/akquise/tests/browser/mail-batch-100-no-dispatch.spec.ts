@@ -140,7 +140,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
   ).toBeVisible();
   await page.getByRole("button", { name: "100 Mails erstellen →", exact: true }).click();
   await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen der 100 ausgewählten Kontakte/).check();
-  await page.getByRole("button", { name: "Weiter zum Sofortversand →", exact: true }).click();
+  await page.getByRole("button", { name: "Angaben speichern und weiter →", exact: true }).click();
   await expect(
     page.getByText("Gemeinsame Versandprüfung für 100 ausgewählte Kontakte", {
       exact: true,
@@ -149,7 +149,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
   expect(preparedIds).toHaveLength(100);
   expect(new Set(preparedIds).size).toBe(100);
   await expect(
-    page.getByRole("button", { name: "100 Mails jetzt senden", exact: true }),
+    page.getByRole("button", { name: "Versand starten · 100 Mails", exact: true }),
   ).toBeDisabled();
   expect(approvalCalls).toBe(0);
 });

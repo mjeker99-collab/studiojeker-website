@@ -60,13 +60,13 @@ for (const width of [390, 1024]) {
       recipients.getByRole("checkbox", { checked: true }),
     ).toHaveCount(0);
     await recipients
-      .getByRole("button", { name: "Alle auswählen", exact: true })
+      .getByRole("button", { name: "Alle versandbereiten auswählen", exact: true })
       .click();
     await expect(
       recipients.getByRole("checkbox", { checked: true }),
     ).toHaveCount(3);
     await expect(
-      page.getByRole("button", { name: "3 Mails jetzt senden", exact: true }),
+      page.getByRole("button", { name: "Versand starten · 3 Mails", exact: true }),
     ).toBeDisabled();
     expect(state.sent).toEqual([]);
     expect(
@@ -142,7 +142,7 @@ test("inline edits autosave the exact version and invalidate dispatch approval",
     .getByLabel("Betreff", { exact: true })
     .fill("Persönliche Einladung");
   await expect(
-    page.getByRole("button", { name: "1 Mail jetzt senden", exact: true }),
+    page.getByRole("button", { name: "Versand starten · 1 Mail", exact: true }),
   ).toBeDisabled();
   await expect.poll(() => writes).toBe(1);
   await expect(page.getByLabel("Betreff", { exact: true })).toHaveValue(
@@ -230,11 +230,11 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
     .getByLabel("anna2@example.test für Versand auswählen", { exact: true })
     .uncheck();
   await page
-    .getByRole("button", { name: "Angaben gemeinsam ergänzen", exact: true })
+    .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
     .click();
   await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
   await page
-    .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+    .getByRole("button", { name: "Angaben speichern und weiter →", exact: true })
     .click();
   const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
   await expect(recipients.getByRole("checkbox", { checked: true })).toHaveCount(
@@ -246,7 +246,7 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
     }),
   ).not.toBeChecked();
   await expect(
-    page.getByRole("button", { name: "2 Mails jetzt senden", exact: true }),
+    page.getByRole("button", { name: "Versand starten · 2 Mails", exact: true }),
   ).toBeDisabled();
   expect(prepared).toEqual([["c0", "c2"], ["c1"]]);
   expect(state.sent).toEqual([]);
