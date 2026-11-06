@@ -2,12 +2,12 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function setup(
   page: Page,
-  options: { queued?: boolean; failure?: "review" | "unknown" } = {},
+  options: { queued?: boolean; failure?: "review" | "unknown"; draftCount?: number } = {},
 ) {
   const sent: string[] = [];
   const previews: string[][] = [];
   const settingsCalls: Record<string, unknown>[] = [];
-  const contacts = Array.from({ length: 3 }, (_, i) => ({
+  const contacts = Array.from({ length: options.draftCount ?? 3 }, (_, i) => ({
     id: `c${i}`,
     revision: 1,
     organisation: `Atelier ${i}`,
@@ -156,12 +156,13 @@ for (const width of [390, 768, 1024]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    const state = await setup(page);
+    const draftCount = width === 768 ? 183 : 3;
+    const state = await setup(page, { draftCount });
     await page.getByText("Weitere Optionen", { exact: true }).click();
     await page
       .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
       .click();
-    await page.getByText("Bereits freigegebene Mails einplanen (3)", {
+    await page.getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
       exact: true,
     }).click();
 
@@ -171,7 +172,7 @@ for (const width of [390, 768, 1024]) {
     });
     await expect(action).toBeDisabled();
     await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
-    await expect(panel.getByText("3 von 3 Mails ausgewählt.", { exact: true })).toBeVisible();
+    await expect(panel.getByText(`${draftCount} von ${draftCount} Mails ausgewählt.`, { exact: true })).toBeVisible();
     const buttonBox = await action.boundingBox();
     const listBox = await panel.locator(".draft-list").boundingBox();
     expect(buttonBox).not.toBeNull();
@@ -183,7 +184,7 @@ for (const width of [390, 768, 1024]) {
     await confirmation.check();
     await expect(action).toBeEnabled();
     await panel.getByLabel(/anna0@example.test/).uncheck();
-    await expect(panel.getByText("2 von 3 Mails ausgewählt.", { exact: true })).toBeVisible();
+    await expect(panel.getByText(`${draftCount - 1} von ${draftCount} Mails ausgewählt.`, { exact: true })).toBeVisible();
     await expect(confirmation).not.toBeChecked();
     await expect(action).toBeDisabled();
     expect(state.sent).toEqual([]);
