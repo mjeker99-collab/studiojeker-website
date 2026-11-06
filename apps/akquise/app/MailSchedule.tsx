@@ -610,54 +610,33 @@ export default function MailSchedule({
                 und vor jedem Versand erneut geprüft.
               </p>
               <button
+                className="secondary"
                 disabled={busy || !candidates.length}
-                onClick={() =>
-                  setSelection(candidates.slice(0, 200).map((d) => d.id))
-                }
+                onClick={() => {
+                  setSelection(candidates.slice(0, 200).map((d) => d.id));
+                  setConfirmQueue(false);
+                }}
               >
                 {candidates.length <= 200 ? "Alle auswählen" : "Erste 200 auswählen"}
               </button>{" "}
               <button
+                className="secondary"
                 disabled={busy || !selection.length}
-                onClick={() => setSelection([])}
+                onClick={() => {
+                  setSelection([]);
+                  setConfirmQueue(false);
+                }}
               >
                 Auswahl leeren
               </button>
-              <div className="draft-list">
-                {candidates.map((d) => (
-                  <div key={d.id} className="panel-note">
-                    <label className="check">
-                      <input
-                        type="checkbox"
-                        checked={selection.includes(d.id)}
-                        onChange={(e) =>
-                          setSelection((old) =>
-                            e.target.checked
-                              ? [...old, d.id]
-                              : old.filter((id) => id !== d.id),
-                          )
-                        }
-                      />
-                      {d.versions[0].recipient} · {d.versions[0].subject} · V
-                      {d.version}
-                    </label>
-                    <button onClick={() => openDraft(d.id)}>
-                      Nachricht prüfen
-                    </button>
-                  </div>
-                ))}
-                {!candidates.length && (
-                  <p>
-                    {count("QUEUED")
-                      ? "Alle verfügbaren freigegebenen Nachrichten sind bereits eingeplant. Keine erneute Auswahl nötig."
-                      : "Keine weiteren freigegebenen Nachrichten verfügbar."}
-                  </p>
-                )}
-              </div>
+              <p role="status">
+                <strong>{selection.length} von {candidates.length} Mails ausgewählt.</strong>
+              </p>
               <label className="check">
                 <input
                   type="checkbox"
                   checked={confirmQueue}
+                  disabled={busy || !selection.length}
                   onChange={(e) => setConfirmQueue(e.target.checked)}
                 />
                 Diese {selection.length} Nachrichten für den automatischen
@@ -680,8 +659,40 @@ export default function MailSchedule({
                   })
                 }
               >
-                Auswahl einplanen
+                {selection.length} ausgewählte Mails einplanen
               </button>
+              <div className="draft-list">
+                {candidates.map((d) => (
+                  <div key={d.id} className="panel-note">
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={selection.includes(d.id)}
+                        onChange={(e) => {
+                          setConfirmQueue(false);
+                          setSelection((old) =>
+                            e.target.checked
+                              ? [...old, d.id]
+                              : old.filter((id) => id !== d.id),
+                          );
+                        }}
+                      />
+                      {d.versions[0].recipient} · {d.versions[0].subject} · V
+                      {d.version}
+                    </label>
+                    <button className="secondary" onClick={() => openDraft(d.id)}>
+                      Nachricht prüfen
+                    </button>
+                  </div>
+                ))}
+                {!candidates.length && (
+                  <p>
+                    {count("QUEUED")
+                      ? "Alle verfügbaren freigegebenen Nachrichten sind bereits eingeplant. Keine erneute Auswahl nötig."
+                      : "Keine weiteren freigegebenen Nachrichten verfügbar."}
+                  </p>
+                )}
+              </div>
               {results.length > 0 && (
                 <ul aria-label="Ergebnis der Auswahl">
                   {results.map((r, index) => (
