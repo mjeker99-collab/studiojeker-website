@@ -151,6 +151,46 @@ async function setup(
   return { sent, previews, settingsCalls };
 }
 
+for (const width of [390, 768, 1024]) {
+  test(`queue action appears before the recipient list and selection changes require new confirmation at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await setup(page);
+    await page.getByText("Weitere Optionen", { exact: true }).click();
+    await page
+      .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
+      .click();
+    await page.getByText("Bereits freigegebene Mails einplanen (3)", {
+      exact: true,
+    }).click();
+
+    const panel = page.locator(".mail-schedule");
+    const action = panel.getByRole("button", {
+      name: "3 ausgewählte Mails einplanen",
+      exact: true,
+    });
+    await expect(action).toBeDisabled();
+    await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
+    await expect(panel.getByText("3 von 3 Mails ausgewählt.", { exact: true })).toBeVisible();
+    const buttonBox = await action.boundingBox();
+    const listBox = await panel.locator(".draft-list").boundingBox();
+    expect(buttonBox).not.toBeNull();
+    expect(listBox).not.toBeNull();
+    expect(buttonBox!.y).toBeLessThan(listBox!.y);
+
+    const confirmation = panel.getByLabel(/Diese 3 Nachrichten für den automatischen Versand einplanen/);
+    await expect(confirmation).not.toBeChecked();
+    await confirmation.check();
+    await expect(action).toBeEnabled();
+    await panel.getByLabel(/anna0@example.test/).uncheck();
+    await expect(panel.getByText("2 von 3 Mails ausgewählt.", { exact: true })).toBeVisible();
+    await expect(confirmation).not.toBeChecked();
+    await expect(action).toBeDisabled();
+    expect(state.sent).toEqual([]);
+  });
+}
+
 for (const width of [390, 1024]) {
   test(`all queued mails can be reviewed and sent now with one approval at ${width}px`, async ({
     page,
