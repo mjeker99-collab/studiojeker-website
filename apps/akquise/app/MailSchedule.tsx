@@ -610,6 +610,7 @@ export default function MailSchedule({
                 und vor jedem Versand erneut geprüft.
               </p>
               <button
+                className="secondary"
                 disabled={busy || !candidates.length}
                 onClick={() => {
                   setSelection(candidates.slice(0, 200).map((d) => d.id));
@@ -619,8 +620,12 @@ export default function MailSchedule({
                 {candidates.length <= 200 ? "Alle auswählen" : "Erste 200 auswählen"}
               </button>{" "}
               <button
+                className="secondary"
                 disabled={busy || !selection.length}
-                onClick={() => { setSelection([]); setConfirmQueue(false); }}
+                onClick={() => {
+                  setSelection([]);
+                  setConfirmQueue(false);
+                }}
               >
                 Auswahl leeren
               </button>
@@ -631,6 +636,7 @@ export default function MailSchedule({
                 <input
                   type="checkbox"
                   checked={confirmQueue}
+                  disabled={busy || !selection.length}
                   onChange={(e) => setConfirmQueue(e.target.checked)}
                 />
                 Diese {selection.length} Nachrichten für den automatischen
