@@ -179,7 +179,7 @@ for (const width of [390, 768, 1024]) {
     expect(listBox).not.toBeNull();
     expect(buttonBox!.y).toBeLessThan(listBox!.y);
 
-    const confirmation = panel.getByLabel(/Diese 3 Nachrichten für den automatischen Versand einplanen/);
+    const confirmation = panel.getByRole("checkbox", { name: /Nachrichten für den automatischen Versand einplanen/ });
     await expect(confirmation).not.toBeChecked();
     await confirmation.check();
     await expect(action).toBeEnabled();
