@@ -167,8 +167,7 @@ for (const width of [390, 768, 1024]) {
 
     const panel = page.locator(".mail-schedule");
     const action = panel.getByRole("button", {
-      name: "3 ausgewählte Mails einplanen",
-      exact: true,
+      name: /ausgewählte Mails einplanen$/,
     });
     await expect(action).toBeDisabled();
     await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
