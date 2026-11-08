@@ -4,9 +4,10 @@ import { test, expect } from "@playwright/test";
  * Safety regression on synthetic contacts only: 100 drafts reach one shared
  * review. The approval endpoint is observed, never called or dispatched.
  */
-test("100 verified contacts reach group review without any dispatch", async ({ page }) => {
+for (const contactCount of [25, 100]) {
+  test(`${contactCount} verified contacts reach group review without any dispatch`, async ({ page }) => {
   test.setTimeout(60000);
-  const contacts = Array.from({ length: 100 }, (_, i) => ({
+  const contacts = Array.from({ length: contactCount }, (_, i) => ({
     id: `bulk-${i}`,
     revision: 1,
     organisation: `Betrieb ${i}`,
@@ -77,7 +78,7 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
       });
     }
     if (path.endsWith("/preparation/save")) {
-      expect(body.contacts).toHaveLength(100);
+      expect(body.contacts).toHaveLength(contactCount);
       expect(body.confirmed).toBe(true);
       saved = true;
       return route.fulfill({
@@ -134,23 +135,24 @@ test("100 verified contacts reach group review without any dispatch", async ({ p
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/");
   await page.getByRole("button", { name: "Akquise", exact: false }).click();
-  await page.getByRole("button", { name: "100 Kontakte auswählen", exact: true }).click();
+  await page.getByRole("button", { name: `${contactCount} Kontakte auswählen`, exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "100 Kontakte ausgewählt", exact: true }),
+    page.getByRole("heading", { name: `${contactCount} Kontakte ausgewählt`, exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "100 Mails erstellen →", exact: true }).click();
+  await page.getByRole("button", { name: `${contactCount} Mails erstellen →`, exact: true }).click();
   await page.getByRole("button", { name: "Offene Angaben bearbeiten", exact: true }).click();
-  await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen der 100 ausgewählten Kontakte/).check();
+  await page.getByLabel(new RegExp(`Ich habe die persönlichen E-Mail-Adressen der ${contactCount} ausgewählten Kontakte`)).check();
   await page.getByRole("button", { name: "Angaben speichern und weiter →", exact: true }).click();
   await expect(
-    page.getByText("Gemeinsame Versandprüfung für 100 ausgewählte Kontakte", {
+    page.getByText(`Gemeinsame Versandprüfung für ${contactCount} ausgewählte Kontakte`, {
       exact: true,
     }),
   ).toBeVisible();
-  expect(preparedIds).toHaveLength(100);
-  expect(new Set(preparedIds).size).toBe(100);
+  expect(preparedIds).toHaveLength(contactCount);
+  expect(new Set(preparedIds).size).toBe(contactCount);
   await expect(
-    page.getByRole("button", { name: "Versand starten · 100 Mails", exact: true }),
+    page.getByRole("button", { name: `Versand starten · ${contactCount} Mails`, exact: true }),
   ).toBeDisabled();
   expect(approvalCalls).toBe(0);
-});
+  });
+}
