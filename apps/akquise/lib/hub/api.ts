@@ -4,6 +4,7 @@ import {
   duplicateInput,
 } from "./newsletter-library";
 import { conceptInput } from "../concepts/input";
+import { manageNewsletter } from "./newsletter-manage";
 import { transferNewsletter } from "./mailchimp";
 import { z } from "zod";
 import { db } from "../db";
@@ -126,6 +127,8 @@ export async function hubMutation(
   }
   if (path[1] === "newsletter-duplicate" && path.length === 3)
     return duplicateNewsletter(actor, id, duplicateInput.parse(body).version);
+  if (path[1] === "newsletter-manage" && path.length === 3)
+    return manageNewsletter(actor, id, body);
   if (path[1] === "mailchimp-transfer" && path.length === 3) {
     const d = z
       .object({ version, audienceId: z.string().min(1).max(64) })

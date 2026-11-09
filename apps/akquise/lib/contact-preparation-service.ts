@@ -97,27 +97,30 @@ export async function prepareContacts(
         })
       ).map((s) => s.email),
     );
-    return {
-      contacts: [...new Set(ids)].map((id) => {
-        const c = contacts.find((item) => item.id === id);
-        if (!c) throw new PolicyError("Kontakt fehlt. Auswahl neu laden.", 409);
-        const edit = edits.find((e) => e.id === id);
-        if (edit && edit.revision !== c.revision)
-          throw new PolicyError(
-            "Kontakt wurde geändert. Vorschau ohne Einzelkorrekturen neu laden.",
-            409,
-          );
-        const p = contactPreparation(c, new Date(), {
-          shared,
-          values: edit?.values,
-        });
-        if (suppressed.has(c.email)) {
-          p.issues.push("Adresse auf Sperrliste.");
-          p.ready = false;
-        }
-        return p;
-      }),
-    };
+    const unavailable: { id: string; message: string }[] = [];
+    const proposals = [...new Set(ids)].flatMap((id) => {
+      const c = contacts.find((item) => item.id === id);
+      if (!c) {
+        unavailable.push({ id, message: "Kontakt wurde entfernt." });
+        return [];
+      }
+      const edit = edits.find((e) => e.id === id);
+      const stale = edit && edit.revision !== c.revision;
+      const p = contactPreparation(c, new Date(), {
+        shared,
+        values: stale ? undefined : edit?.values,
+      });
+      if (suppressed.has(c.email)) {
+        p.issues.push("Adresse auf Sperrliste.");
+        p.ready = false;
+      }
+      if (stale) {
+        p.issues.push("Kontakt wurde geändert. Angaben erneut prüfen.");
+        p.ready = false;
+      }
+      return [p];
+    });
+    return { contacts: proposals, unavailable };
   }
   if (action === "apply" || action === "prepare" || action === "save") {
     const data = parsePreparation(applyInput, raw);

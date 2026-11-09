@@ -21,6 +21,21 @@ export async function importNewsletters(actor: string) {
         where: { action: "NEWSLETTER_SOURCE_IMPORTED", entityId: template.id },
       });
       if (previous) continue;
+      // Reuse a source draft already imported through the connected editor.
+      const existing = await tx.marketingContent.findFirst({
+        where: {
+          kind: "NEWSLETTER",
+          title: template.name,
+          versions: { some: { payload: { path: ["newsletter", "templateId"], equals: template.id } } },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        await audit(tx, actor, "NEWSLETTER_SOURCE_IMPORTED", template.id, {
+          contentId: existing.id, source: template.source, sha256: template.sha256,
+        });
+        continue;
+      }
       const newsletter = newsletterDefaults(template.id);
       const payload = contentInput.parse({
         kind: "NEWSLETTER",

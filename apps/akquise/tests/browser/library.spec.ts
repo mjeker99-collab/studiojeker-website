@@ -127,7 +127,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
     return { ok: r.ok, body: await r.json() };
   });
   expect(result.ok).toBe(true);
-  await nav.getByRole("button", { name: /Content-Studio/ }).click();
+  await nav.getByRole("button", { name: /Content Studio/ }).click();
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();

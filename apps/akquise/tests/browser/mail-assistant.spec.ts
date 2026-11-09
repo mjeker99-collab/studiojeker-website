@@ -55,21 +55,24 @@ for (const width of [390, 1024])
               },
       });
     });
-    await page.getByText("Neue Leads recherchieren", { exact: true }).click();
+    await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Architekturbüros für Visualisierungen finden");
     await page.getByLabel("Region", { exact: true }).fill("Bern");
     await page
-      .getByRole("button", { name: "Leads recherchieren", exact: true })
+      .getByRole("button", { name: "Kontakte recherchieren", exact: true })
       .click();
     await expect(
       page.getByRole("link", { name: "Quelle öffnen" }),
     ).toHaveAttribute("href", lead.sourceUrl);
     await page
-      .getByRole("button", { name: "1 Leads in Masterliste übernehmen" })
+      .getByRole("button", { name: "1 ausgewählte Kontakte übernehmen" })
       .click();
     await expect(page.getByText(/1 neue Kontakte übernommen/)).toBeVisible();
+    await page.getByRole("button", { name: "Mails", exact: true }).click();
+    await page.getByText("Nach Unternehmen oder Branche filtern", { exact: true }).click();
     await page
       .getByRole("combobox", { name: "Kunde / Unternehmen", exact: true })
       .selectOption({ index: 1 });
@@ -78,11 +81,10 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "Filter zurücksetzen", exact: true })
       .click();
     await page
-      .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
-    await page
-      .getByText("Personalisierte Mailtexte mit GPT (3)", { exact: true })
-      .click();
+
+    await page.getByText("Texte mit KI überarbeiten", { exact: true }).click();
     await page
       .getByLabel("Was möchtest du diesen Kontakten anbieten?")
       .fill("Businessfotografie für ihre nächste Kampagne anbieten.");
@@ -107,3 +109,70 @@ for (const width of [390, 1024])
       fullPage: true,
     });
   });
+
+test("failed AI research remains in history without retry or sending", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await setup(page, { queued: false });
+  let generated = 0;
+  let applied = 0;
+  let historyAfterFailure = 0;
+  await page.route("**/api/mail-assistant/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("history")) {
+      if (generated > 0) historyAfterFailure++;
+      return route.fulfill({
+        json:
+          generated > 0
+            ? [
+                {
+                  id: "failed-research-job",
+                  status: "FAILED",
+                  input: { mode: "RESEARCH", briefing: "Architekturbüros in Bern" },
+                  result: null,
+                  error: "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+                  createdAt: "2026-11-05T06:00:00.000Z",
+                },
+              ]
+            : [],
+      });
+    }
+    if (path.endsWith("generate")) {
+      generated++;
+      return route.fulfill({
+        status: 502,
+        json: {
+          error: "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+        },
+      });
+    }
+    applied++;
+    return route.fulfill({ status: 500, json: { error: "Unexpected apply." } });
+  });
+  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
+  await page
+    .getByLabel("Wen möchtest du erreichen und was anbieten?")
+    .fill("Architekturbüros in Bern");
+  await page
+    .getByRole("button", { name: "Kontakte recherchieren", exact: true })
+    .click();
+  await expect(
+    page.locator(".mail-assistant").getByRole("alert"),
+  ).toContainText("Keine automatische Wiederholung.");
+  await page
+    .locator(".mail-assistant")
+    .getByText("Gespeicherte Recherchen", { exact: true })
+    .click();
+  await expect(
+    page.locator(".mail-assistant").getByText(
+      "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+      { exact: true },
+    ).last(),
+  ).toBeVisible();
+  expect(historyAfterFailure).toBeGreaterThan(0);
+  expect(generated).toBe(1);
+  expect(applied).toBe(0);
+});
+

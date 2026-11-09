@@ -153,7 +153,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   const chat = page.locator(".studio-chat");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
@@ -192,10 +192,12 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   });
   await expect(submit).toBeDisabled();
   // A library image and a Drive image can each be selected without uploading.
+  await expect(chat.locator(".studio-image-choice").getByAltText("bibliothek.png")).toBeVisible();
+  await expect(chat.getByRole("checkbox", { name: "bibliothek.png", exact: true })).not.toBeChecked();
   await chat
     .getByRole("checkbox", { name: "bibliothek.png", exact: true })
     .check();
-  await expect(chat.getByAltText("Ausgewählt: bibliothek.png")).toBeVisible();
+  await expect(chat.locator(".studio-image-choice").getByAltText("bibliothek.png")).toBeVisible();
   await chat.getByRole("checkbox", { name: /bibliothek.png/ }).uncheck();
   await chat
     .getByRole("button", { name: "Bilder aus Google Drive wählen" })
@@ -215,12 +217,12 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await chat
     .getByLabel("Bild hochladen (JPEG, PNG oder WebP, maximal 8 MB)")
     .setInputFiles({ name: "geraet.png", mimeType: "image/png", buffer: png });
-  await expect(chat.getByAltText("Ausgewählt: geraet.png")).toBeVisible();
+  await expect(chat.locator(".studio-image-choice").getByAltText("geraet.png")).toBeVisible();
   await expect(submit).toBeDisabled();
   await chat
     .getByRole("button", { name: "Vorschlag am Bild ausführen", exact: true })
     .click();
-  await expect(chat.getByAltText("Ausgewählt: bibliothek.png")).toBeVisible();
+  await expect(chat.locator(".studio-image-choice").getByAltText("bibliothek.png")).toBeVisible();
   await expect(chat.getByLabel("Deine Nachricht", { exact: true })).toHaveValue(
     "Bitte so ausführen.",
   );
@@ -269,7 +271,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
     await chat
@@ -286,7 +288,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     .getByRole("button", { name: "Dieses Ergebnis weiter bearbeiten" })
     .click();
   await expect(chat.getByLabel("Auftrag", { exact: true })).toHaveValue("EDIT");
-  await expect(chat.getByAltText("Ausgewählt: ergebnis.png")).toBeVisible();
+  await expect(chat.locator(".studio-image-choice").getByAltText("ergebnis.png")).toBeVisible();
   await expect(
     chat.getByRole("button", { name: "Bild jetzt bearbeiten", exact: true }),
   ).toBeDisabled();

@@ -1,4 +1,6 @@
 "use client";
+import NewsletterWorkspace from "../newsletter/NewsletterWorkspace";
+import "../newsletter/newsletter-workspace.css";
 import {
   NewsletterFields,
   NewsletterPreview,
@@ -7,6 +9,7 @@ import {
   newsletterLibrary,
   newsletterDefaults,
   newsletterText,
+  correctedV4Newsletter,
 } from "@/lib/hub/newsletter-template";
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
@@ -15,7 +18,7 @@ import SocialConnections from "./SocialConnections";
 import SocialMediaField from "./SocialMediaField";
 import ChatGptIntegration from "./ChatGptIntegration";
 import DialogManager from "../dialogs/DialogManager";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { hubState } from "@/lib/hub/api";
 import { channels, type ContentInput } from "@/lib/hub/input";
 import { displayTime, zurichInput, zurichInstant } from "@/lib/hub/time";
@@ -152,6 +155,11 @@ export default function Hub({
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
+  const editorRef = useRef<HTMLElement | null>(null);
+  const [editorNavigation, setEditorNavigation] = useState(0);
+  const [showNewsletterTrash, setShowNewsletterTrash] = useState(false);
+  const [manualNewsletter, setManualNewsletter] = useState(false);
+  const [newsletterSessionKey, setNewsletterSessionKey] = useState(0);
   const [data, setData] = useState<HubState | null>(null);
   const [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -267,9 +275,17 @@ export default function Hub({
       setBusy(false);
     }
   }
-  function edit(c: Content) {
+  function edit(c: Content, resetDialog = true) {
+    if (resetDialog) setNewsletterSessionKey((key) => key + 1);
+    const selected = c.versions[0].payload as unknown as ContentInput;
+    // Keep the template preview tied to the actual selected newsletter.
+    if (selected.newsletter) {
+      setTemplateId(selected.newsletter.templateId);
+      setShowOriginal(false);
+    }
     setEditing(c);
-    setForm(c.versions[0].payload as unknown as ContentInput);
+    setForm(selected);
+    if (resetDialog) setEditorNavigation((n) => n + 1);
     setRead(false);
     setPublication({
       channel:
@@ -280,6 +296,11 @@ export default function Hub({
       confirmed: false,
     });
   }
+  useEffect(() => {
+    if (!editorNavigation || !form || !editorRef.current) return;
+    editorRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+    editorRef.current.focus({ preventScroll: true });
+  }, [editorNavigation, editing?.id, form?.kind]);
   const dirty =
     !!form &&
     (!editing ||
@@ -287,6 +308,37 @@ export default function Hub({
   function update(patch: Partial<ContentInput>) {
     setForm((f) => f && { ...f, ...patch });
     setRead(false);
+  }
+  async function reloadNewsletter(id: string) {
+    const response = await fetch("/api/hub/state", { cache: "no-store" });
+    const updated: HubState = await response.json();
+    if (!response.ok) throw new Error("Gespeicherter Newsletter konnte nicht geladen werden.");
+    const current = updated.contents.find((item) => item.id === id);
+    if (!current) throw new Error("Newsletter nicht gefunden.");
+    setData(updated);
+    edit(current, false);
+    return current;
+  }
+  async function manageNewsletter(id: string, version: number, title: string, action: "trash" | "restore" | "delete") {
+    const prompt = action === "trash"
+      ? `«${title}» in den Papierkorb verschieben? Du kannst den Newsletter später wiederherstellen.`
+      : action === "restore"
+        ? `«${title}» wiederherstellen?`
+        : `«${title}» endgültig löschen? Alle Entwurfsversionen gehen verloren. Diese Aktion kann nicht rückgängig gemacht werden.`;
+    if (!window.confirm(prompt)) return;
+    await act(async () => {
+      await post("newsletter-manage/" + id, {
+        version, action, ...(action === "delete" ? { confirmedTitle: title } : {}),
+      });
+      if (editing?.id === id) { setEditing(null); setForm(null); }
+    }, action === "trash" ? "Newsletter in den Papierkorb verschoben." :
+       action === "restore" ? "Newsletter wiederhergestellt." : "Newsletter endgültig gelöscht.");
+  }
+  async function saveNewsletter(next: ContentInput) {
+    if (editing && JSON.stringify(next) === JSON.stringify(editing.versions[0].payload)) return editing;
+    const saved = await post(editing ? "contents/" + editing.id : "contents",
+      editing ? { version: editing.version, data: next } : next);
+    return reloadNewsletter(saved.id);
   }
   if (!data)
     return (
@@ -334,7 +386,8 @@ export default function Hub({
         return !c.publications.some((p) => p.version === c.version);
       return true;
     }
-    if (section === "Newsletter") return c.kind === "NEWSLETTER";
+    if (section === "Newsletter")
+      return c.kind === "NEWSLETTER" && (showNewsletterTrash ? !!c.archivedAt : !c.archivedAt);
     return true;
   });
   const managedDialogs = data.contents.filter(
@@ -497,8 +550,10 @@ export default function Hub({
                     ? "Exportiert · nicht übertragen · nicht versandt"
                     : "Nicht exportiert · nicht übertragen · nicht versandt"}
               </p>
-              <button onClick={() => edit(c)}>Inhalt öffnen ↗</button>
-              {c.kind === "NEWSLETTER" && (
+              {(!c.archivedAt || c.kind !== "NEWSLETTER") && (
+                <button disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
+              )}
+              {c.kind === "NEWSLETTER" && !c.archivedAt && (
                 <button
                   className="secondary"
                   disabled={busy}
@@ -519,6 +574,27 @@ export default function Hub({
                 >
                   Duplizieren
                 </button>
+              )}
+              {c.kind === "NEWSLETTER" && (
+                <div className="actions">
+                  {c.archivedAt ? (
+                    <>
+                      <button type="button" className="secondary" disabled={busy}
+                        onClick={() => void manageNewsletter(c.id, c.version, c.title, "restore")}>
+                        Wiederherstellen
+                      </button>
+                      <button type="button" className="secondary" disabled={busy}
+                        onClick={() => void manageNewsletter(c.id, c.version, c.title, "delete")}>
+                        Endgültig löschen
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="secondary" disabled={busy}
+                      onClick={() => void manageNewsletter(c.id, c.version, c.title, "trash")}>
+                      In Papierkorb
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </article>
@@ -787,7 +863,7 @@ export default function Hub({
                   {data.contents
                     .filter(
                       (x) =>
-                        x.campaignId === c.id &&
+                        x.campaignId === c.id && !x.archivedAt &&
                         (x.kind === "NEWSLETTER" || isSocialPublishingPost(x)),
                     )
                     .map((x) => (
@@ -940,6 +1016,17 @@ export default function Hub({
         </section>
       )}
       {section === "Newsletter" && <MailchimpTemplates />}
+      {section === "Newsletter" && (
+        <div className="actions" role="group" aria-label="Newsletter verwalten">
+          <button type="button" className={showNewsletterTrash ? "secondary" : undefined}
+            disabled={busy} onClick={() => setShowNewsletterTrash(false)}>Aktive Newsletter</button>
+          <button type="button" className={!showNewsletterTrash ? "secondary" : undefined}
+            disabled={busy} onClick={() => { setShowNewsletterTrash(true); setForm(null); setEditing(null); }}>
+            Papierkorb ({data.contents.filter((item) => item.kind === "NEWSLETTER" && !!item.archivedAt).length})
+          </button>
+          <p className="muted">Eigene Entwürfe und importierte Kopien lassen sich entfernen. GitHub-Grundvorlagen und Mailchimp-Vorlagen bleiben erhalten.</p>
+        </div>
+      )}
       {["Social Media", "Newsletter"].includes(section) && (
         <>
           {section === "Newsletter" && (
@@ -947,9 +1034,10 @@ export default function Hub({
               <h2>Newsletter bearbeiten</h2>
               <p>Wähle entweder die Grundvorlage oder die neueste Ausgabe. Ältere Versionen bleiben in der Newsletter-Übersicht erhalten.</p>
               <div className="actions" role="group" aria-label="Newsletter-Bearbeitung starten">
-                <button type="button" className="secondary" onClick={() => {
+                <button type="button" className="secondary" disabled={busy} onClick={() => {
                   setTemplateId("master-v7");
                   setShowOriginal(false);
+                  setNewsletterSessionKey((key) => key + 1);
                   setEditing(null);
                   const fresh = newContent("NEWSLETTER", userId);
                   const template = newsletterLibrary.find((item) => item.id === "master-v7")!;
@@ -959,30 +1047,54 @@ export default function Hub({
                   fresh.preheader = template.preheader;
                   fresh.body = newsletterText(fresh.newsletter);
                   setForm(fresh);
+                  setEditorNavigation((n) => n + 1);
                 }}>Grundvorlage bearbeiten</button>
-                <button type="button" disabled={!data?.contents.some((item) => item.kind === "NEWSLETTER")} onClick={() => {
+                <button type="button" disabled={busy || !data?.contents.some((item) => item.kind === "NEWSLETTER" && !item.archivedAt)} onClick={() => {
                   const latest = data?.contents
-                    .filter((item) => item.kind === "NEWSLETTER")
+                    .filter((item) => item.kind === "NEWSLETTER" && !item.archivedAt)
                     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
                   if (latest) edit(latest);
-                  setShowOriginal(false);
                 }}>Letzte gespeicherte Version bearbeiten</button>
               </div>
               <p className="muted">Die neueste gespeicherte Newsletter-Version wird geöffnet. Ältere Versionen bleiben in der Übersicht erhalten.</p>
               <div className="actions">
-                <button type="button" className="secondary" onClick={() => setShowOriginal(!showOriginal)}>
-                  {showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
+                <button type="button" className="secondary" disabled={busy}
+                  onClick={() => act(async () => {
+                    await post("newsletter/import", {});
+                  }, "GitHub-Vorlagen importiert. Bereits vorhandene Ausgaben bleiben erhalten.")}>
+                  Aus GitHub importieren
+                </button>
+                <button type="button" className="secondary" onClick={() => {
+                  if (form?.kind === "NEWSLETTER" && form.newsletter) {
+                    setShowOriginal(false);
+                    setEditorNavigation((n) => n + 1);
+                  } else {
+                    setShowOriginal(!showOriginal);
+                  }
+                }}>
+                  {form?.kind === "NEWSLETTER" && form.newsletter
+                    ? "Gewählten Newsletter anzeigen"
+                    : showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
-              {showOriginal && (
+              {form?.kind === "NEWSLETTER" && form.newsletter && (
+                <p role="status" className="muted">
+                  Ausgewählt: <strong>{form.title}</strong>
+                  {editing ? ` · Version ${editing.version}` : " · neuer Entwurf"}.
+                  Die Vorschau und Bearbeitung erscheinen beim Öffnen direkt im Editor.
+                </p>
+              )}
+              {showOriginal && !form && (
                 <NewsletterPreview html={newsletterLibrary.find((template) => template.id === templateId)!.html} />
               )}
             </section>
           )}
           <div className="actions">
             <button
+              disabled={busy}
               onClick={() => {
-                setEditing(null);
+                setNewsletterSessionKey((key) => key + 1);
+                  setEditing(null);
                 const fresh = newContent(
                   section === "Newsletter" ? "NEWSLETTER" : "SOCIAL",
                   userId,
@@ -999,6 +1111,8 @@ export default function Hub({
                 }
                 setForm(fresh);
                 setRead(false);
+                setShowOriginal(false);
+                setEditorNavigation((n) => n + 1);
               }}
             >
               {" "}
@@ -1020,17 +1134,46 @@ export default function Hub({
         </>
       )}
       {form && (
-        <section className="panel padded hub-editor" aria-label="Inhaltseditor">
+        <section ref={editorRef} tabIndex={-1} style={{ scrollMarginTop: 28 }} className="panel padded hub-editor" aria-label="Inhaltseditor">
           <div className="section-head">
             <h2>
               {editing
                 ? `Inhalt bearbeiten · V${editing.version}`
                 : "Neuer Inhalt"}
             </h2>
-            <button className="secondary" onClick={() => setForm(null)}>
+            <button className="secondary" disabled={busy} onClick={() => setForm(null)}>
               Editor schliessen
             </button>
           </div>
+          {form.kind === "NEWSLETTER" && form.newsletter && (
+            <>
+              {editing && ["newsletter-04-github-364bba2", "newsletter-04-video-promo-20261102"].includes(form.newsletter.templateId) && (
+                <div className="panel padded" style={{ marginBottom: 14 }}>
+                  <p>Die korrigierte V4-Video-Vorlage entfernt die schwarzen Hero-Ränder und zeigt Nora mit Tafel statt des alten Regenschirms.</p>
+                  <button type="button" disabled={busy || dirty} onClick={() => act(async () => {
+                    const newsletter = correctedV4Newsletter(form.newsletter!);
+                    const next = { ...form, newsletter, body: newsletterText(newsletter) };
+                    const result = await post("contents/" + editing.id, {
+                      version: editing.version,
+                      data: next,
+                    });
+                    await reloadNewsletter(result.id);
+                  }, "Korrigierte Video-Vorlage als neue V4-Version gespeichert. Bitte beide Videoziele prüfen.")}>
+                    Korrigierte Video-Vorlage übernehmen
+                  </button>
+                  <p className="muted">Texte und selbst gewählte Bilder bleiben erhalten. Nur das alte Regenschirm-Standardbild wird durch Nora ersetzt. Keine Freigabe oder Versendung.</p>
+                </div>
+              )}
+              <NewsletterWorkspace key={newsletterSessionKey}
+                value={form} saved={editing} save={saveNewsletter}
+                reload={async (id) => { await reloadNewsletter(id); }} onBusy={setBusy} />
+              <button type="button" className="secondary" disabled={busy}
+                aria-expanded={manualNewsletter} onClick={() => setManualNewsletter(!manualNewsletter)}>
+                {manualNewsletter ? "Manuelle Bearbeitung schliessen" : "Texte und Bilder manuell bearbeiten"}
+              </button>
+            </>
+          )}
+          <div hidden={form.kind === "NEWSLETTER" && !!form.newsletter && !manualNewsletter}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -1043,10 +1186,11 @@ export default function Hub({
                 const updated: HubState = await r.json();
                 const c = updated.contents.find((x) => x.id === saved.id)!;
                 setData(updated);
-                edit(c);
+                edit(c, false);
               }, "Version gespeichert. Eine bisherige Freigabe ist ungültig.");
             }}
           >
+            <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <label>
               Interner Titel
               <input
@@ -1226,7 +1370,9 @@ export default function Hub({
             >
               Version speichern
             </button>
+            </fieldset>
           </form>
+          </div>
           {form.studio && editing && (
             <StudioLayoutPreview
               snapshot={form.studio}
@@ -1273,13 +1419,7 @@ export default function Hub({
                   </p>
                 </article>
               ))
-            ) : form.newsletter ? (
-              <NewsletterPreview
-                subject={form.subject}
-                preheader={form.preheader}
-                newsletter={form.newsletter}
-              />
-            ) : (
+            ) : form.newsletter ? null : (
               <article>
                 <strong>studiojeker®</strong>
                 <p className="muted">{form.preheader}</p>
@@ -1841,3 +1981,4 @@ function DraftPlanning({
     </section>
   );
 }
+

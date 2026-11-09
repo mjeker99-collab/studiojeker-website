@@ -1,12 +1,12 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
 import {
   isTeamMailbox,
-  qualifyResearchLead,
-  researchPriorities,
-  researchRegions,
-} from "../lib/mail-assistant/qualify";
+  normalizeEmail,
+  personKey,
+} from "../lib/contact-identity";
+import { qualifyResearchLead } from "../lib/mail-assistant/qualify";
 type Job = {
   id: string;
   status: string;
@@ -31,12 +31,6 @@ async function request(path: string, body?: unknown) {
     throw new Error(data.error || "Auftrag konnte nicht abgeschlossen werden.");
   return data;
 }
-const emptyKnown = { emails: new Set<string>(), keys: new Set<string>() };
-function acceptedLeadIndices(leads: AssistantResult["leads"]) {
-  return leads.flatMap((lead, index) =>
-    qualifyResearchLead(lead, emptyKnown).ok ? [index] : [],
-  );
-}
 export default function MailAssistant({
   mode,
   items = [],
@@ -44,7 +38,20 @@ export default function MailAssistant({
   disabled = false,
   refresh,
   onBusyChange,
+  expanded = false,
+  persistenceKey,
+  contacts = [],
+  onOpenContacts,
 }: {
+  expanded?: boolean;
+  persistenceKey?: string;
+  contacts?: {
+    organisation: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }[];
+  onOpenContacts?: () => void;
   mode: "RESEARCH" | "WRITE";
   items?: { id: string; version: number }[];
   industry?: string;
@@ -55,6 +62,8 @@ export default function MailAssistant({
   const [briefing, setBriefing] = useState("");
   const [region, setRegion] = useState("");
   const [count, setCount] = useState(10);
+  const [selectedIndustry, setSelectedIndustry] = useState(industry);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -65,6 +74,73 @@ export default function MailAssistant({
   const [chosen, setChosen] = useState<number[]>([]);
   const [history, setHistory] = useState<Job[]>([]);
   const lock = useRef(false);
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      try {
+        const value = persistenceKey
+          ? JSON.parse(localStorage.getItem(persistenceKey) || "null")
+          : null;
+        if (value) {
+          if (typeof value.briefing === "string") setBriefing(value.briefing);
+          if (typeof value.region === "string") setRegion(value.region);
+          if (typeof value.industry === "string")
+            setSelectedIndustry(value.industry);
+          if ([5, 10, 20].includes(value.count)) setCount(value.count);
+        }
+      } catch {
+        /* Storage may be unavailable; the form remains usable. */
+      }
+      setPreferencesLoaded(true);
+    });
+  }, [persistenceKey]);
+  useEffect(() => {
+    if (!persistenceKey || !preferencesLoaded) return;
+    try {
+      localStorage.setItem(
+        persistenceKey,
+        JSON.stringify({ briefing, region, industry: selectedIndustry, count }),
+      );
+    } catch {
+      /* Optional preferences only. */
+    }
+  }, [
+    briefing,
+    region,
+    selectedIndustry,
+    count,
+    persistenceKey,
+    preferencesLoaded,
+  ]);
+  // The client mirrors the backend's qualification for an understandable preview.
+  // The server revalidates on import; UI selection is not a security boundary.
+  const knownLeads = {
+    emails: new Set(contacts.map((item) => normalizeEmail(item.email))),
+    keys: new Set(
+      contacts.map((item) =>
+        personKey(item.firstName, item.lastName, item.organisation),
+      ),
+    ),
+  };
+  const qualifications =
+    job?.result.leads.map((lead) => {
+      const result = qualifyResearchLead(lead, knownLeads);
+      if (result.ok) {
+        knownLeads.emails.add(result.email);
+        knownLeads.keys.add(
+          personKey(lead.firstName, lead.lastName, lead.organisation),
+        );
+      }
+      return result;
+    }) || [];
+  const available = qualifications.flatMap((result, index) =>
+    result.ok ? [index] : [],
+  );
+  const excludedReasons = qualifications.map((result) =>
+    result.ok ? "" : result.reason,
+  );
+  const selectedLeads = chosen.filter((index) => available.includes(index));
+  const Container = expanded ? "section" : "details";
+
   async function loadHistory() {
     try {
       setHistory(await request("history"));
@@ -88,21 +164,29 @@ export default function MailAssistant({
       lock.current = false;
     }
   }
+  useEffect(() => {
+    if (expanded) void Promise.resolve().then(loadHistory);
+  }, [expanded]);
   const research = mode === "RESEARCH";
   async function generate() {
     setNotice("");
     if (research) {
-      const value = await request("generate", {
-        requestKey: crypto.randomUUID(),
-        mode,
-        briefing,
-        region,
-        industry,
-        count,
-      });
-      setJob(value);
-      setChosen(acceptedLeadIndices(value.result.leads));
-      await loadHistory();
+      try {
+        const value = await request("generate", {
+          requestKey: crypto.randomUUID(),
+          mode,
+          briefing,
+          region,
+          industry: selectedIndustry,
+          count,
+        });
+        setJob(value);
+        setChosen(value.result.leads.map((_: unknown, i: number) => i));
+      } finally {
+        // A failed provider call can still create a saved job. Show its
+        // recorded status before the user considers another paid request.
+        await loadHistory();
+      }
       return;
     }
     const selection = [...items];
@@ -141,22 +225,26 @@ export default function MailAssistant({
     if (failures.length) setError(failures.join(" "));
   }
   return (
-    <details
-      className="panel"
+    <Container
+      className="panel mail-assistant"
       onToggle={(e) => {
         if (e.currentTarget.open) void loadHistory();
       }}
     >
-      <summary>
-        <strong>
-          {research
-            ? "Neue Leads recherchieren"
-            : `Personalisierte Mailtexte mit GPT (${items.length})`}
-        </strong>
-      </summary>
+      {expanded ? (
+        <h2>{research ? "Kontakte finden" : "Persönliche Texte erstellen"}</h2>
+      ) : (
+        <summary>
+          <strong>
+            {research
+              ? "Kontakte finden"
+              : `Texte mit KI anpassen (${items.length})`}
+          </strong>
+        </summary>
+      )}
       <p>
         {research
-          ? "Zielgruppe und Angebot beschreiben. GPT sucht passende Unternehmen und berufliche Ansprechpartner mit belegter E-Mail-Adresse und Quelle."
+          ? "Zielgruppe und Angebot beschreiben. GPT sucht passende Unternehmen und berufliche Ansprechpartner mit Quellen."
           : "Ein Briefing für die ganze Auswahl. GPT formuliert jeden Entwurf anhand des jeweiligen Kontakts neu und speichert ihn für die gemeinsame Vorschau."}
       </p>
       <label>
@@ -185,12 +273,17 @@ export default function MailAssistant({
               placeholder="Zum Beispiel Solothurn und Bern"
             />
           </label>
-          <p className="muted">
-            Zielregionen: {researchRegions.join(", ")}. Vorrang:{" "}
-            {researchPriorities.join(", ")}.
-          </p>
           <label>
-            Leads pro Recherche
+            Branche
+            <input
+              value={selectedIndustry}
+              disabled={disabled || working}
+              onChange={(e) => setSelectedIndustry(e.target.value)}
+              placeholder="Zum Beispiel Industrie"
+            />
+          </label>
+          <label>
+            Anzahl Kontakte
             <select
               disabled={disabled || working}
               value={count}
@@ -207,6 +300,7 @@ export default function MailAssistant({
       )}
       <button
         type="button"
+        className={research && job ? "secondary" : undefined}
         disabled={
           disabled ||
           working ||
@@ -218,46 +312,38 @@ export default function MailAssistant({
         {working
           ? "GPT arbeitet …"
           : research
-            ? "Leads recherchieren"
+            ? "Kontakte recherchieren"
             : `${items.length} Mailtexte persönlich formulieren`}
       </button>
       <p className="muted">
         {research
-          ? "Nur Leads mit belegter E-Mail-Adresse werden übernommen. info@-Adressen entfallen. marketing@ und kommunikation@ bleiben als Team-Postfach gekennzeichnet. Es wird keine Mail versendet."
-          : "Vorhandene Texte werden als neue Version gespeichert. Die frühere Freigabe gilt danach nicht mehr. Der Versand braucht eine neue Bestätigung."}
+          ? "Nur belegte Kontakte werden vorgeschlagen. Fehlende E-Mail-Adressen werden gekennzeichnet. Übernehmen versendet keine Mail."
+          : "Vorhandene Texte werden als neue Version gespeichert. Der Versand braucht danach deine Freigabe."}
       </p>
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       {research && job && (
-        <section aria-label="Gefundene Leads">
-          <h3>{job.result.leads.length} Leads gefunden</h3>
+        <section aria-label="Gefundene Kontakte">
+          <h3>{job.result.leads.length} Kontakte gefunden</h3>
           <p>{job.result.note}</p>
           <label className="check">
             <input
               type="checkbox"
               disabled={disabled || working}
               checked={
-                acceptedLeadIndices(job.result.leads).length > 0 &&
-                chosen.length === acceptedLeadIndices(job.result.leads).length
+                !!available.length && selectedLeads.length === available.length
               }
-              onChange={(e) =>
-                setChosen(
-                  e.target.checked ? acceptedLeadIndices(job.result.leads) : [],
-                )
-              }
+              onChange={(e) => setChosen(e.target.checked ? available : [])}
             />
-            Alle geeigneten Leads auswählen
+            Alle geeigneten Kontakte auswählen
           </label>
-          {job.result.leads.map((lead, i) => {
-            const decision = qualifyResearchLead(lead, emptyKnown);
-            return (
+          {job.result.leads.map((lead, i) => (
             <div key={i}>
-              {decision.ok ? (
               <label className="check">
                 <input
                   type="checkbox"
-                  disabled={disabled || working}
-                  checked={chosen.includes(i)}
+                  disabled={disabled || working || !qualifications[i]?.ok}
+                  checked={selectedLeads.includes(i)}
                   onChange={(e) =>
                     setChosen((old) =>
                       e.target.checked
@@ -267,15 +353,13 @@ export default function MailAssistant({
                   }
                 />
                 {lead.organisation} · {lead.firstName} {lead.lastName} ·{" "}
-                {lead.email}
-                {isTeamMailbox(lead.email) ? " · Team-Postfach" : ""}
+                {lead.email || "E-Mail nicht gefunden"}
+                {excludedReasons[i]
+                  ? ` · ${excludedReasons[i]}`
+                  : isTeamMailbox(lead.email)
+                    ? " · Team-Postfach"
+                    : ""}
               </label>
-              ) : (
-                <p>
-                  {lead.organisation} · {lead.firstName} {lead.lastName}:{" "}
-                  {decision.reason}
-                </p>
-              )}
               <p>
                 {lead.hook}{" "}
                 <a href={lead.sourceUrl} target="_blank" rel="noreferrer">
@@ -283,16 +367,15 @@ export default function MailAssistant({
                 </a>
               </p>
             </div>
-            );
-          })}
+          ))}
           <button
             type="button"
-            disabled={disabled || working || !chosen.length}
+            disabled={disabled || working || !selectedLeads.length}
             onClick={() =>
               void run(async () => {
                 const r = await request("apply", {
                   id: job.id,
-                  indices: chosen,
+                  indices: selectedLeads,
                 });
                 await refresh();
                 const excluded = Array.isArray(r.excluded) ? r.excluded : [];
@@ -306,13 +389,23 @@ export default function MailAssistant({
                           )
                           .join(" ")}`
                       : ""
-                  } Du kannst sie jetzt in der Masterliste auswählen.`,
+                  } Du findest sie unter «Kontakte verwalten».`,
                 );
               })
             }
           >
-            {chosen.length} Leads in Masterliste übernehmen
+            {selectedLeads.length} ausgewählte Kontakte übernehmen
           </button>
+          {onOpenContacts && (
+            <button
+              type="button"
+              className="secondary"
+              disabled={working}
+              onClick={onOpenContacts}
+            >
+              Kontakte verwalten →
+            </button>
+          )}
         </section>
       )}
       {!!history.filter((j) => j.input.mode === mode).length && (
@@ -336,7 +429,7 @@ export default function MailAssistant({
                     onClick={() => {
                       if (research) {
                         setJob({ id: j.id, result: j.result! });
-                        setChosen(acceptedLeadIndices(j.result!.leads));
+                        setChosen(j.result!.leads.map((_, i) => i));
                       } else
                         void run(async () => {
                           const r = await request("apply", { id: j.id });
@@ -367,6 +460,6 @@ export default function MailAssistant({
             ))}
         </details>
       )}
-    </details>
+    </Container>
   );
 }

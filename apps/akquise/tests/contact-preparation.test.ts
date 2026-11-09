@@ -174,51 +174,6 @@ test("Gemeinsame Angaben füllen Lücken, Notizen und Bestandswerte behalten Vor
     false,
   );
 });
-test("Bewusst bestätigtes Team-Postfach wird Unternehmensadresse, info@ bleibt ausgeschlossen", () => {
-  const shared = {
-    confidence: "VERIFIED" as const,
-    sourceUrl: "https://example.test/team",
-    verifiedAt: "2026-01-02T00:00:00.000Z",
-    hook: "Öffentlich genanntes Abteilungspostfach",
-  };
-  for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
-    const confirmed = contactPreparation(
-      {
-        ...contact,
-        notes: "Postfachart: Team-Postfach.",
-        email,
-        sourceUrl: "",
-        confidence: "GENERAL",
-        firstName: "Team",
-        lastName: "Postfach",
-      },
-      now,
-      { shared },
-    );
-    assert.equal(confirmed.ready, true);
-    assert.equal(confirmed.values.confidence, "VERIFIED");
-    assert.match(confirmed.origins.join(" "), /Unternehmensadresse/);
-    const pending = contactPreparation(
-      {
-        ...contact,
-        notes: "",
-        email,
-        sourceUrl: "",
-        confidence: "GENERAL",
-      },
-      now,
-    );
-    assert.equal(pending.ready, false);
-    assert.match(pending.issues.join(" "), /Unternehmensadresse/);
-  }
-  const info = contactPreparation(
-    { ...contact, notes: "", email: "info@example.test", sourceUrl: "" },
-    now,
-    { shared },
-  );
-  assert.equal(info.ready, false);
-  assert.match(info.issues.join(" "), /Allgemeine/);
-});
 test("Einzelkorrekturen in der Sammelansicht ersetzen nur ausdrücklich bearbeitete Felder", () => {
   const p = contactPreparation(contact, now, {
     shared: { hook: "Gemeinsame Angabe" },
@@ -281,4 +236,23 @@ test("Explizite gemeinsame Bestätigung repariert ein zukünftiges Prüfdatum un
   assert.equal(repaired.values.sourceUrl, contact.sourceUrl);
   assert.equal(future.confidence, "UNCONFIRMED");
   assert.equal(contactPreparation({ ...future, verifiedAt: new Date("2026-10-01") }, now, { shared }).values.verifiedAt, "2026-10-01T00:00:00.000Z");
+});
+
+test("Geprüfte Team-Postfächer aus GENERAL werden nur nach ausdrücklicher Bestätigung freigegeben", () => {
+  const shared = { confidence: "VERIFIED" as const };
+  for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
+    const c = { ...contact, email, confidence: "GENERAL" as const, notes: "", hook: "Dokumentierter Unternehmensbezug", verifiedAt: new Date("2026-10-17") };
+    const unconfirmed = contactPreparation(c, now);
+    assert.equal(unconfirmed.ready, false);
+    const confirmed = contactPreparation(c, now, { shared });
+    assert.equal(confirmed.ready, true);
+    assert.equal(confirmed.patch.confidence, "VERIFIED");
+    assert.match(confirmed.origins.join(" "), /Team-Postfach/);
+  }
+  for (const email of ["info@example.test", "office@example.test"]) {
+    const c = { ...contact, email, confidence: "GENERAL" as const, notes: "", hook: "Dokumentierter Bezug", verifiedAt: new Date("2026-10-17") };
+    assert.equal(contactPreparation(c, now, { shared }).ready, false);
+    assert.equal(contactPreparation(c, now, { shared }).patch.confidence, undefined);
+  }
+  assert.equal(contactPreparation({ ...contact, email: "marketing@example.test", confidence: "GENERAL", status: "DO_NOT_CONTACT", archivedAt: new Date("2026-10-01"), notes: "" }, now, { shared }).ready, false);
 });

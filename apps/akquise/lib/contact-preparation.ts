@@ -1,8 +1,8 @@
 import type { Contact } from "@prisma/client";
-import { isTeamMailbox } from "./contact-identity";
 import { importedDraft } from "./generation";
 import { normalizeSourceUrl, sourceUrlIssue } from "./contact-source-url";
 import { verificationIssues } from "./policy";
+import { isTeamMailbox } from "./contact-identity";
 
 export type PreparationFields = Partial<{
   email: string;
@@ -171,9 +171,8 @@ export function contactPreparation(
     values.confidence = input.shared.confidence;
     origins.push("Prüfstatus aus gemeinsamer Angabe");
   }
-  // Research stores marketing@ and kommunikation@ as a general team mailbox.
-  // An explicit shared confirmation may accept that mailbox as a company
-  // address. It never turns the address into a named personal mailbox.
+  // Only an explicit review can upgrade a previously GENERAL marketing@ or
+  // kommunikation@ address. Other general inboxes retain their classification.
   if (
     values.confidence === "GENERAL" &&
     input.shared?.confidence === "VERIFIED" &&

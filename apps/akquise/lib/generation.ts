@@ -1,6 +1,6 @@
 import type { Contact } from "@prisma/client";
-import { hasPersonName, isTeamMailbox } from "./contact-identity";
 import { PolicyError, verifiedContact } from "./policy";
+import { hasPersonName, isTeamMailbox } from "./contact-identity";
 
 // Both supported master-list imports preserve these labelled fields in notes.
 // Read only the mail block; never copy research/status metadata into a message.
@@ -61,15 +61,10 @@ export async function generateDraft(
     rules: generationRules,
     facts: {
       organisation: c.organisation,
-      firstName: named ? c.firstName : "",
-      lastName: named ? c.lastName : "",
-      greeting:
-        team && !named
-          ? "Guten Tag"
-          : `Guten Tag ${c.firstName} ${c.lastName}`,
-      mailbox: team
-        ? "Team-Postfach, Unternehmensadresse, keine persönliche Einzeladresse"
-        : "",
+      firstName: !team && named ? c.firstName : "",
+      lastName: !team && named ? c.lastName : "",
+      greeting: !team && named ? `Guten Tag ${c.firstName} ${c.lastName}` : "Guten Tag",
+      mailbox: team ? "Geprüftes Unternehmens-/Team-Postfach, keine persönliche Einzeladresse" : "",
       industry: c.industry,
       hook: c.hook,
       service:

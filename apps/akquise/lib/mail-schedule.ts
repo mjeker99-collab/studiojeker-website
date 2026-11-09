@@ -77,6 +77,36 @@ export async function mailScheduleMutation(
       const schedule = await tx.mailSchedule.findUniqueOrThrow({
         where: { id: "studiojeker" },
       });
+      if (action === "start" || action === "check-start") {
+        z.object({ confirmDispatch: z.literal(true) })
+          .strict()
+          .parse(body);
+        const config = readMailConfig();
+        if (!config.smtpAllowed || config.mode !== "production")
+          throw new PolicyError("Produktionsversand ist nicht eingerichtet.");
+        if (
+          await tx.mailQueueItem.count({
+            where: { status: { in: ["SENDING", "UNKNOWN"] } },
+          })
+        )
+          throw new PolicyError(
+            "Ein Versand läuft oder ist unklar. Versandverlauf prüfen; keine erneute Freigabe nötig.",
+            409,
+          );
+        if (action === "start") {
+          await tx.mailSchedule.update({
+            where: { id: schedule.id },
+            data: {
+              enabled: true,
+              activatedBy: userId,
+              pauseReason: null,
+              revision: { increment: 1 },
+            },
+          });
+          await audit(tx, userId, "MAIL_QUEUE_STARTED", schedule.id, {});
+        }
+        return { ok: true };
+      }
       if (action === "pause") {
         await tx.mailSchedule.update({
           where: { id: schedule.id },
@@ -149,8 +179,12 @@ export async function mailScheduleMutation(
           .parse(body);
         const results: { draftId: string; ok: boolean; reason?: string }[] = [];
         for (const item of items) {
-          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"contact:" + (await tx.draft.findUniqueOrThrow({ where: { id: item.draftId } })).contactId}))`;
           try {
+            const draft = await tx.draft.findUnique({
+              where: { id: item.draftId },
+            });
+            if (!draft) throw new PolicyError("Entwurf wurde entfernt.", 409);
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"contact:" + draft.contactId}))`;
             const { v } = await checked(tx, userId, item.draftId, item.version);
             if (
               await tx.delivery.findUnique({
@@ -161,6 +195,10 @@ export async function mailScheduleMutation(
             const existing = await tx.mailQueueItem.findUnique({
               where: { draftId_version: item },
             });
+            if (existing?.status === "QUEUED" && existing.hash === v.hash) {
+              results.push({ draftId: item.draftId, ok: true });
+              continue;
+            }
             if (existing && !["CANCELLED", "BLOCKED"].includes(existing.status))
               throw new PolicyError("Bereits eingeplant oder verarbeitet.");
             if (existing?.deliveryId)

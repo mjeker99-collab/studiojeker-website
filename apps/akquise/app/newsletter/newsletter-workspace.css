@@ -1,0 +1,9 @@
+.newsletter-dialog-workspace { display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(300px, 1fr); gap:24px; margin:20px 0; align-items:start; }
+.newsletter-dialog-workspace > div { min-width:0; }
+.newsletter-dialog-panel { position:sticky; top:16px; }
+.newsletter-dialog-history { max-height:420px; overflow:auto; overflow-wrap:anywhere; }
+.newsletter-dialog-history article { border-bottom:1px solid #d4d4d4; padding:8px 0 16px; }
+.newsletter-dialog-panel textarea { width:100%; box-sizing:border-box; }
+.newsletter-manual-editor { margin:20px 0; }
+.newsletter-manual-editor > summary { cursor:pointer; padding:12px 0; font-weight:700; }
+@media (max-width:1000px) { .newsletter-dialog-workspace { grid-template-columns:minmax(0,1fr); } .newsletter-dialog-panel { position:static; } }

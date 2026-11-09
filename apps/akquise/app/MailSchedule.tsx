@@ -78,6 +78,7 @@ export default function MailSchedule({
   const [settings, setSettings] = useState<Schedule | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
   const [confirmQueue, setConfirmQueue] = useState(false);
+  const [confirmedSelectionVersion, setConfirmedSelectionVersion] = useState("");
   const [confirmStart, setConfirmStart] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -138,6 +139,7 @@ export default function MailSchedule({
         setResults(json.results);
         setSelection([]);
         setConfirmQueue(false);
+        setConfirmedSelectionVersion("");
       }
       setConfirmStart(false);
       setShowStart(false);
@@ -168,6 +170,16 @@ export default function MailSchedule({
           !["CANCELLED", "BLOCKED"].includes(i.status),
       ),
   );
+  // Bind a group approval to the exact approved draft versions, not only IDs.
+  // A refreshed or revoked approval must never silently enqueue a changed draft.
+  const selectedCandidates = candidates.filter((draft) => selection.includes(draft.id));
+  const selectedVersions = selectedCandidates
+    .map((draft) => `${draft.id}:${draft.version}`)
+    .sort()
+    .join("|");
+  const selectionCurrent = selection.length > 0 && selectedCandidates.length === selection.length;
+  const queueConfirmationValid =
+    selectionCurrent && confirmQueue && confirmedSelectionVersion === selectedVersions;
   useEffect(() => {
     if (data) {
       onSendableQueueChange?.(
@@ -610,18 +622,65 @@ export default function MailSchedule({
                 und vor jedem Versand erneut geprüft.
               </p>
               <button
+                className="secondary"
                 disabled={busy || !candidates.length}
-                onClick={() =>
-                  setSelection(candidates.slice(0, 200).map((d) => d.id))
-                }
+                onClick={() => {
+                  setSelection(candidates.slice(0, 200).map((d) => d.id));
+                  setConfirmQueue(false);
+                  setConfirmedSelectionVersion("");
+                }}
               >
-                Bis zu 200 angezeigte Mails auswählen
+                {candidates.length <= 200 ? "Alle auswählen" : "Erste 200 auswählen"}
               </button>{" "}
               <button
+                className="secondary"
                 disabled={busy || !selection.length}
-                onClick={() => setSelection([])}
+                onClick={() => {
+                  setSelection([]);
+                  setConfirmQueue(false);
+                  setConfirmedSelectionVersion("");
+                }}
               >
                 Auswahl leeren
+              </button>
+              <p role="status">
+                <strong>{selection.length} von {candidates.length} Mails ausgewählt.</strong>
+              </p>
+              {!selectionCurrent && selection.length > 0 && (
+                <p role="alert">Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut auswählen.</p>
+              )}
+              {selectionCurrent && confirmQueue && !queueConfirmationValid && (
+                <p role="alert">Eine freigegebene Nachricht hat sich geändert. Bitte den Versand erneut bestätigen.</p>
+              )}
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={queueConfirmationValid}
+                  disabled={busy || !selectionCurrent}
+                  onChange={(e) => {
+                    setConfirmQueue(e.target.checked);
+                    setConfirmedSelectionVersion(e.target.checked ? selectedVersions : "");
+                  }}
+                />
+                Diese {selection.length} Nachrichten für den automatischen
+                Versand einplanen. Bei aktiver Automatik beginnt der Versand im
+                eingestellten Zeitfenster.
+              </label>
+              <button
+                disabled={
+                  busy ||
+                  !queueConfirmationValid ||
+                  !selectionCurrent ||
+                  selection.length > 200
+                }
+                onClick={() =>
+                  void mutate("enqueue", {
+                    confirmDispatch: true,
+                    items: selectedCandidates.map((d) => ({ draftId: d.id, version: d.version })),
+                  })
+                }
+              >
+                {selection.length} ausgewählte Mails einplanen
               </button>
               <div className="draft-list">
                 {candidates.map((d) => (
@@ -630,18 +689,20 @@ export default function MailSchedule({
                       <input
                         type="checkbox"
                         checked={selection.includes(d.id)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setConfirmQueue(false);
+                          setConfirmedSelectionVersion("");
                           setSelection((old) =>
                             e.target.checked
                               ? [...old, d.id]
                               : old.filter((id) => id !== d.id),
-                          )
-                        }
+                          );
+                        }}
                       />
                       {d.versions[0].recipient} · {d.versions[0].subject} · V
                       {d.version}
                     </label>
-                    <button onClick={() => openDraft(d.id)}>
+                    <button className="secondary" onClick={() => openDraft(d.id)}>
                       Nachricht prüfen
                     </button>
                   </div>
@@ -654,34 +715,6 @@ export default function MailSchedule({
                   </p>
                 )}
               </div>
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={confirmQueue}
-                  onChange={(e) => setConfirmQueue(e.target.checked)}
-                />
-                Diese {selection.length} Nachrichten für den automatischen
-                Versand einplanen. Bei aktiver Automatik beginnt der Versand im
-                eingestellten Zeitfenster.
-              </label>
-              <button
-                disabled={
-                  busy ||
-                  !confirmQueue ||
-                  !selection.length ||
-                  selection.length > 200
-                }
-                onClick={() =>
-                  void mutate("enqueue", {
-                    confirmDispatch: true,
-                    items: candidates
-                      .filter((d) => selection.includes(d.id))
-                      .map((d) => ({ draftId: d.id, version: d.version })),
-                  })
-                }
-              >
-                Auswahl einplanen
-              </button>
               {results.length > 0 && (
                 <ul aria-label="Ergebnis der Auswahl">
                   {results.map((r, index) => (

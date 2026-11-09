@@ -3,6 +3,8 @@ import StudioChat, {
   type StudioChatHandle,
   type StudioChatRequest,
 } from "./StudioChat";
+import StudioResult, { StudioImage } from "./StudioResult";
+import { studioError } from "@/lib/studio/presentation";
 import ProjectSave from "../projects/ProjectSave";
 import GraphicsEditor from "./GraphicsEditor";
 /* eslint-disable @next/next/no-img-element -- Authenticated private image routes do not use a public image loader. */
@@ -117,9 +119,11 @@ const statusLabel: Record<string, string> = {
 export default function ContentStudio({
   userId,
   initialSeriesId,
+  initialTask,
 }: {
   userId: string;
   initialSeriesId?: string;
+  initialTask?: { prompt: string; request: number };
 }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [state, setState] = useState<State | null>(null),
@@ -425,7 +429,7 @@ export default function ContentStudio({
           </button>
           <button
             type="button"
-            className="ai-button"
+            className="secondary"
             aria-pressed={!editorOpen}
             onClick={() =>
               openGPT(
@@ -448,60 +452,67 @@ export default function ContentStudio({
           state={state}
           refresh={() => refresh(undefined, undefined, true)}
           initialRequest={
-            initialSeriesId &&
-            state.series.some((series) => series.id === initialSeriesId)
-              ? { seriesId: initialSeriesId, message: "" }
-              : undefined
+            initialTask
+              ? { seriesId: "", message: initialTask.prompt }
+              : initialSeriesId &&
+                  state.series.some((series) => series.id === initialSeriesId)
+                ? { seriesId: initialSeriesId, message: "" }
+                : undefined
           }
           hasUnsavedContent={dirty}
         />
       </div>
       <div id="studio-editor-start" tabIndex={-1} hidden={!editorOpen}>
-        <ProjectSave
-          area="Content-Editor"
-          identity={editing?.id || ""}
-          suggestedTitle={form?.title || brief.title || "Content-Projekt"}
-          busy={busy}
-          value={{
-            nativeId: editing?.id || "",
-            nativeVersion: editing?.version || 0,
-            brief,
-            creating,
-            seriesId,
-            form,
-            refs,
-            libraryRefs,
-            format,
-            encoding,
-          }}
-          restore={async (draft) => {
-            const latest: State = await api("studio/state");
-            const content = latest.series
-              .flatMap((s) => s.contents)
-              .find((c) => c.id === draft.nativeId);
-            if (draft.nativeId && !content)
-              throw new Error(
-                "Beitrag nicht mehr in der Projektliste. Bitte bestehende Serie öffnen.",
+        <details className="studio-project-options">
+          <summary>
+            Gesicherte Projekte öffnen oder Arbeitsstand sichern
+          </summary>
+          <ProjectSave
+            area="Content-Editor"
+            identity={editing?.id || ""}
+            suggestedTitle={form?.title || brief.title || "Content-Projekt"}
+            busy={busy}
+            value={{
+              nativeId: editing?.id || "",
+              nativeVersion: editing?.version || 0,
+              brief,
+              creating,
+              seriesId,
+              form,
+              refs,
+              libraryRefs,
+              format,
+              encoding,
+            }}
+            restore={async (draft) => {
+              const latest: State = await api("studio/state");
+              const content = latest.series
+                .flatMap((s) => s.contents)
+                .find((c) => c.id === draft.nativeId);
+              if (draft.nativeId && !content)
+                throw new Error(
+                  "Beitrag nicht mehr in der Projektliste. Bitte bestehende Serie öffnen.",
+                );
+              setState(latest);
+              setEditing(
+                content ? { ...content, version: draft.nativeVersion } : null,
               );
-            setState(latest);
-            setEditing(
-              content ? { ...content, version: draft.nativeVersion } : null,
-            );
-            setBrief(draft.brief);
-            setCreating(draft.creating);
-            setSeriesId(draft.seriesId);
-            setForm(draft.form);
-            setRefs(draft.refs);
-            setLibraryRefs(draft.libraryRefs);
-            setFormat(draft.format);
-            setEncoding(draft.encoding);
-            setRead(false);
-            setRights(false);
-            setTransfer(false);
-            setCosts(false);
-            setPreview("");
-          }}
-        />
+              setBrief(draft.brief);
+              setCreating(draft.creating);
+              setSeriesId(draft.seriesId);
+              setForm(draft.form);
+              setRefs(draft.refs);
+              setLibraryRefs(draft.libraryRefs);
+              setFormat(draft.format);
+              setEncoding(draft.encoding);
+              setRead(false);
+              setRights(false);
+              setTransfer(false);
+              setCosts(false);
+              setPreview("");
+            }}
+          />
+        </details>
 
         {picking && (
           <LibraryPicker
@@ -561,8 +572,8 @@ export default function ContentStudio({
           <div>
             <p className="eyebrow">STUDIOONE / CONTENT-STUDIO</p>
             <p>
-              Briefing → Ideen → Bild & Text → Layout → Prüfung → Export &
-              Planung
+              Auftrag beschreiben → Vorschau bearbeiten → Speichern &
+              herunterladen
             </p>
           </div>
           <button
@@ -580,35 +591,18 @@ export default function ContentStudio({
               setBrief(blank);
             }}
           >
-            Neues Briefing
+            Neuen Beitrag erstellen
           </button>
         </div>
-        <div className="studio-connections">
-          <span>
-            Text & Bild:{" "}
-            <strong>
-              {state.config.connected
-                ? "OpenAI konfiguriert"
-                : "Nicht verbunden"}
-            </strong>
-          </span>
-          <span>
-            Privater Speicher:{" "}
-            <strong>
-              {state.config.storage === "LOCAL"
-                ? "Lokal · nur Entwicklung"
-                : state.config.storage === "S3"
-                  ? "S3 konfiguriert"
-                  : "Nicht verbunden"}
-            </strong>
-          </span>
-          <span>
-            Veröffentlichung: <strong>Nicht verbunden</strong>
-          </span>
-        </div>
+        {!state.config.connected && (
+          <p role="status">
+            Die KI ist noch nicht verbunden. Bitte wende dich an die
+            Administration.
+          </p>
+        )}
         {error && (
           <p role="alert" className="error">
-            {error}
+            {studioError(error)}
           </p>
         )}
         {notice && (
@@ -864,7 +858,8 @@ export default function ContentStudio({
                       })
                     }
                   />
-                  {a.name}
+                  <StudioImage id={a.id} name={a.name} thumbnail />
+                  <span>{a.name}</span>
                 </label>
               ))}
             </fieldset>
@@ -918,12 +913,36 @@ export default function ContentStudio({
                 <summary>Gespeichertes Briefing</summary>
                 <dl>
                   {Object.entries(briefingSchema.parse(series.briefing))
-                    .filter(
-                      ([k]) => !["referenceAssetIds", "campaignId"].includes(k),
+                    .filter(([k]) =>
+                      [
+                        "title",
+                        "topic",
+                        "offer",
+                        "goal",
+                        "audience",
+                        "tone",
+                        "channels",
+                        "count",
+                        "formats",
+                      ].includes(k),
                     )
                     .map(([k, v]) => (
                       <div key={k}>
-                        <dt>{k}</dt>
+                        <dt>
+                          {
+                            {
+                              title: "Titel",
+                              topic: "Thema",
+                              offer: "Angebot",
+                              goal: "Ziel",
+                              audience: "Zielgruppe",
+                              tone: "Tonalität",
+                              channels: "Kanäle",
+                              count: "Anzahl Beiträge",
+                              formats: "Formate",
+                            }[k]
+                          }
+                        </dt>
                         <dd>{Array.isArray(v) ? v.join(", ") : String(v)}</dd>
                       </div>
                     ))}
@@ -944,24 +963,22 @@ export default function ContentStudio({
                     Keine PDF- oder Linkanalyse, keine gesamte Bibliothek.
                     Bildauftrag: Bildidee und unten ausgewählte Bildreferenzen.
                   </p>
-                  <pre style={{ whiteSpace: "pre-wrap" }}>
-                    {JSON.stringify(
-                      {
-                        briefing: series.briefing,
-                        markenregeln: Object.fromEntries(
-                          (
-                            briefingSchema.parse(series.briefing).brandRules ||
-                            []
-                          ).map((k) => [
-                            k,
-                            snapshot.brandProfile?.[k] || "Offen",
-                          ]),
-                        ),
-                      },
-                      null,
-                      2,
-                    )}
-                  </pre>
+                  <p>{briefingSchema.parse(series.briefing).topic}</p>
+                  <p>
+                    Ausgewählte Markenangaben:{" "}
+                    {(briefingSchema.parse(series.briefing).brandRules || [])
+                      .map(
+                        (key) =>
+                          ({
+                            tone: "Tonalität",
+                            services: "Leistungen",
+                            audiences: "Zielgruppen",
+                            examples: "Beispieltexte",
+                            address: "Ansprache",
+                          })[key],
+                      )
+                      .join(", ") || "Keine"}
+                  </p>
                   <button
                     type="button"
                     onClick={() =>
@@ -1038,11 +1055,7 @@ export default function ContentStudio({
                     Ein Bildmotiv erstellen
                   </button>
                 </div>
-                <p className="muted">
-                  Modell: {state.config.textModel} / {state.config.imageModel}.
-                  Ohne API-Zugang bleiben eigene Inhalte, Layouts und Planung
-                  nutzbar.
-                </p>
+
                 <fieldset>
                   <legend>
                     Bewusst ausgewählte Bildreferenzen für diesen Bildauftrag
@@ -1065,7 +1078,10 @@ export default function ContentStudio({
                               setTransfer(false);
                             }}
                           />
-                          {a?.name || id}
+                          {a && (
+                            <StudioImage id={a.id} name={a.name} thumbnail />
+                          )}
+                          {a?.name || "Bild nicht mehr verfügbar"}
                         </label>
                       );
                     })}
@@ -1203,7 +1219,7 @@ export default function ContentStudio({
                     </label>
                     <div className="studio-fields">
                       <label>
-                        CTA
+                        Handlungsaufforderung
                         <input
                           value={v.cta}
                           onChange={(e) =>
@@ -1216,7 +1232,7 @@ export default function ContentStudio({
                         />
                       </label>
                       <label>
-                        Link · HTTPS
+                        Link zur Website
                         <input
                           type="url"
                           value={v.link}
@@ -1299,6 +1315,13 @@ export default function ContentStudio({
                       </select>
                     </label>
                   </div>
+                  {snapshot.motifAssetId && (
+                    <StudioImage
+                      key={snapshot.motifAssetId}
+                      id={snapshot.motifAssetId}
+                      name="Ausgewähltes Motiv"
+                    />
+                  )}
                   <div className="studio-fields">
                     {(
                       [
@@ -1719,31 +1742,30 @@ export default function ContentStudio({
         </div>
         <section className="studio-jobs">
           <div className="hub-toolbar">
-            <h2>Aufträge und Nutzung</h2>
+            <h2>Deine Ergebnisse</h2>
             <button
               className="secondary"
               disabled={busy}
               onClick={() => void act(() => refresh())}
             >
-              Auftragsstatus neu laden
+              Status aktualisieren
             </button>
           </div>
           <p>
-            Aufträge und Ergebnisse bleiben nach Browser-Neuladen gespeichert.
-            Es erfolgt kein automatischer Neustart. Bei unklarem Ergebnis zuerst
-            den Anbieter-Verbrauch prüfen.
+            Hier findest du deine Bilder und Texte. Wähle ein Ergebnis aus, um
+            damit weiterzuarbeiten.
           </p>
           {state.jobs.map((j) => (
             <article key={j.id}>
               <strong>
-                {j.kind} · {statusLabel[j.status] || j.status}
+                {{ IMAGE: "Bild", TEXT: "Textvorschläge", CHAT: "Gespräch" }[
+                  j.kind
+                ] || "Auftrag"}{" "}
+                · {statusLabel[j.status] || j.status}
               </strong>
-              <span>
-                {" "}
-                {j.model} · reserviert USD {j.reserveUsd.toFixed(2)} ·{" "}
-                {displayTime(j.createdAt.toString())}
-              </span>
-              {j.error && <p role="status">{j.error}</p>}
+              <span> {displayTime(j.createdAt.toString())}</span>
+              {j.error && <p role="status">{studioError(j.error)}</p>}
+              {j.result && <StudioResult result={j.result} />}
               <div className="actions">
                 {j.status === "QUEUED" && (
                   <button
@@ -1766,14 +1788,24 @@ export default function ContentStudio({
                     onClick={() =>
                       void act(async () => {
                         await api(`studio/apply/${j.id}`, {});
-                        await refresh(editing?.id);
+                        const input = j.input as {
+                          editTargetId?: string;
+                          request?: { contentId?: string };
+                          versions?: { id: string }[];
+                        };
+                        await refresh(
+                          input.editTargetId ||
+                            input.request?.contentId ||
+                            input.versions?.[0]?.id,
+                        );
+                        focusArea("studio-editor-start");
                         setNotice(
                           "Ergebnis als neue Entwurfsversion übernommen. Bitte prüfen.",
                         );
                       })
                     }
                   >
-                    Ergebnis als Entwurf übernehmen
+                    Mit diesem Ergebnis weiterarbeiten
                   </button>
                 )}
                 {["QUEUED", "RUNNING"].includes(j.status) && (
@@ -1791,12 +1823,6 @@ export default function ContentStudio({
                   </button>
                 )}
               </div>
-              {j.result && (
-                <details>
-                  <summary>Gespeichertes Ergebnis</summary>
-                  <pre>{JSON.stringify(j.result, null, 2)}</pre>
-                </details>
-              )}
             </article>
           ))}
         </section>

@@ -7,6 +7,8 @@ import {
   useState,
   type Ref,
 } from "react";
+import { StudioImage } from "./StudioResult";
+import { readableReply, studioError } from "@/lib/studio/presentation";
 import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
@@ -225,8 +227,12 @@ export default function StudioChat({
   const replyToJob = projectState.jobs.find((job) => job.id === replyToJobId);
   const replyToText = (replyToJob?.result as { reply?: string } | undefined)
     ?.reply;
-  const images = state.assets.filter((a) =>
-    ["image/jpeg", "image/png", "image/webp"].includes(a.mime),
+  const [imageQuery, setImageQuery] = useState("");
+  const images = state.assets.filter(
+    (a) =>
+      ["image/jpeg", "image/png", "image/webp"].includes(a.mime) &&
+      (referenceIds.includes(a.id) ||
+        a.name.toLocaleLowerCase().includes(imageQuery.toLocaleLowerCase())),
   );
   const suggestedMessage = useRef(initialRequest?.message || "");
   const storageReady = state.config.storage !== "DISCONNECTED";
@@ -481,6 +487,7 @@ export default function StudioChat({
       );
     }
   }
+  const SaveContainer = projectArea === "Content-Studio" ? "details" : "div";
   const submission = (
     <>
       <div hidden={!message.trim()}>
@@ -541,44 +548,51 @@ export default function StudioChat({
     <section className="studio-chat" aria-labelledby="studio-chat-heading">
       <h2 id="studio-chat-heading">Was möchtest du machen?</h2>
       <p>Beschreibe dein Vorhaben. GPT hilft dir Schritt für Schritt.</p>
-      <ProjectSave
-        area={projectArea}
-        identity={seriesId}
-        suggestedTitle={
-          activeSeries?.title ||
-          message.trim().slice(0, 80) ||
-          `${projectArea} Projekt`
-        }
-        busy={busy}
-        value={{
-          nativeId: seriesId,
-          campaignId,
-          customerId,
-          message,
-          mediaIntent,
-          contentId,
-          referenceIds,
-          driveImages,
-          replyToJobId,
-          useProjectMemory,
-        }}
-        restore={async (draft) => {
-          await refresh();
-          setSeriesId(draft.nativeId);
-          setCampaignId(draft.campaignId);
-          setCustomerId(draft.customerId);
-          setMessage(draft.message);
-          setMediaIntent(draft.mediaIntent);
-          setContentId(draft.contentId);
-          setReferenceIds(draft.referenceIds);
-          setDriveImages(draft.driveImages);
-          setReplyToJobId(draft.replyToJobId);
-          setUseProjectMemory(draft.useProjectMemory);
-          setConfirmed(false);
-          setUploadRights(false);
-          setError("");
-        }}
-      />
+      <SaveContainer className="studio-project-options">
+        {projectArea === "Content-Studio" && (
+          <summary>
+            Gesicherte Projekte öffnen oder Arbeitsstand sichern
+          </summary>
+        )}
+        <ProjectSave
+          area={projectArea}
+          identity={seriesId}
+          suggestedTitle={
+            activeSeries?.title ||
+            message.trim().slice(0, 80) ||
+            `${projectArea} Projekt`
+          }
+          busy={busy}
+          value={{
+            nativeId: seriesId,
+            campaignId,
+            customerId,
+            message,
+            mediaIntent,
+            contentId,
+            referenceIds,
+            driveImages,
+            replyToJobId,
+            useProjectMemory,
+          }}
+          restore={async (draft) => {
+            await refresh();
+            setSeriesId(draft.nativeId);
+            setCampaignId(draft.campaignId);
+            setCustomerId(draft.customerId);
+            setMessage(draft.message);
+            setMediaIntent(draft.mediaIntent);
+            setContentId(draft.contentId);
+            setReferenceIds(draft.referenceIds);
+            setDriveImages(draft.driveImages);
+            setReplyToJobId(draft.replyToJobId);
+            setUseProjectMemory(draft.useProjectMemory);
+            setConfirmed(false);
+            setUploadRights(false);
+            setError("");
+          }}
+        />
+      </SaveContainer>
 
       {!!dialogContents.length && (
         <DialogManager
@@ -774,20 +788,28 @@ export default function StudioChat({
               {input.replyTo && (
                 <details>
                   <summary>Bezug: ausgewählter GPT-Vorschlag</summary>
-                  <p className="studio-chat-message">{input.replyTo.reply}</p>
+                  <p className="studio-chat-message">
+                    {readableReply(input.replyTo.reply)}
+                  </p>
                 </details>
               )}
               {!!input.request?.referenceIds?.length && (
-                <p className="muted">
-                  Bildreferenzen:{" "}
-                  {input.request.referenceIds
-                    .map(
-                      (id) =>
+                <div
+                  className="studio-image-grid"
+                  aria-label="Verwendete Bilder"
+                >
+                  {input.request.referenceIds.map((id) => (
+                    <StudioImage
+                      key={id}
+                      id={id}
+                      name={
                         state.assets.find((a) => a.id === id)?.name ||
-                        "Nicht mehr verfügbar",
-                    )
-                    .join(", ")}
-                </p>
+                        "Bildreferenz"
+                      }
+                      thumbnail
+                    />
+                  ))}
+                </div>
               )}
               {!!input.driveSelection?.files.length && (
                 <p className="muted">
@@ -803,8 +825,8 @@ export default function StudioChat({
               <p className="studio-chat-message">
                 {result?.assetId
                   ? "Bearbeitetes Bild bereit. Vergleiche es mit dem Ausgangsbild."
-                  : result?.reply ||
-                    j.error ||
+                  : (result?.reply ? readableReply(result.reply) : "") ||
+                    (j.error ? studioError(j.error) : "") ||
                     (j.status === "QUEUED"
                       ? "Auftrag wartet auf Start. Siehe KI-Aufträge unten."
                       : j.status === "RUNNING"
@@ -936,7 +958,7 @@ export default function StudioChat({
           in der Serverkonfiguration eingerichtet werden.
         </p>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{studioError(error)}</p>}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -956,7 +978,7 @@ export default function StudioChat({
                   : "Deine Antwort bezieht sich auf diesen Vorschlag"}
               </strong>
             </p>
-            <p className="studio-chat-message">{replyToText}</p>
+            <p className="studio-chat-message">{readableReply(replyToText)}</p>
             <button
               type="button"
               className="secondary"
@@ -1121,35 +1143,44 @@ export default function StudioChat({
               </p>
             )}
             {images.length === 0 && <p>Noch keine Bilder in der Bibliothek.</p>}
-            {images.map((a) => (
-              <label className="check" key={a.id}>
-                <input
-                  type="checkbox"
-                  checked={referenceIds.includes(a.id)}
-                  aria-label={a.name}
-                  disabled={
-                    !referenceIds.includes(a.id) &&
-                    referenceCount >= referenceLimit
-                  }
-                  onChange={(e) => {
-                    setReferenceIds(
-                      e.target.checked
-                        ? [...referenceIds, a.id]
-                        : referenceIds.filter((id) => id !== a.id),
-                    );
-                    setConfirmed(false);
-                  }}
-                />
-                {a.name}
-                {referenceIds.includes(a.id) && (
-                  <img
-                    className="studio-reference-thumb"
-                    alt={`Ausgewählt: ${a.name}`}
-                    src={`/api/studio/assets/${a.id}`}
+            <label>
+              Bilder suchen
+              <input
+                type="search"
+                value={imageQuery}
+                onChange={(e) => setImageQuery(e.target.value)}
+                placeholder="Name eingeben …"
+              />
+            </label>
+            <div className="studio-image-grid">
+              {images.map((a) => (
+                <label
+                  className="studio-image-choice"
+                  key={a.id}
+                  data-selected={referenceIds.includes(a.id)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={referenceIds.includes(a.id)}
+                    aria-label={a.name}
+                    disabled={
+                      !referenceIds.includes(a.id) &&
+                      referenceCount >= referenceLimit
+                    }
+                    onChange={(e) => {
+                      setReferenceIds(
+                        e.target.checked
+                          ? [...referenceIds, a.id]
+                          : referenceIds.filter((id) => id !== a.id),
+                      );
+                      setConfirmed(false);
+                    }}
                   />
-                )}
-              </label>
-            ))}
+                  <StudioImage id={a.id} name={a.name} thumbnail />
+                  <span>{a.name}</span>
+                </label>
+              ))}
+            </div>
           </fieldset>
           <DriveImagePicker
             selected={driveImages}

@@ -53,6 +53,7 @@ export async function listSharedProjects() {
       },
       customer: { select: { id: true, name: true } },
       contents: {
+        where: { archivedAt: null },
         select: { id: true, title: true, kind: true, status: true, version: true },
       },
     },
@@ -96,6 +97,7 @@ export async function getSharedProject(id: string) {
       },
       customer: { select: { id: true, name: true } },
       contents: {
+        where: { archivedAt: null },
         orderBy: { updatedAt: "desc" },
         include: {
           versions: { orderBy: { version: "desc" }, take: 1 },
@@ -155,6 +157,7 @@ export async function listSharedCampaigns() {
     include: {
       customer: { select: { id: true, name: true } },
       contents: {
+        where: { archivedAt: null },
         select: {
           id: true,
           title: true,
@@ -164,7 +167,7 @@ export async function listSharedCampaigns() {
           updatedAt: true,
         },
       },
-      _count: { select: { contents: true } },
+      _count: { select: { contents: { where: { archivedAt: null } } } },
     },
   });
   return {
@@ -205,6 +208,7 @@ export async function getSharedCampaign(id: string) {
     include: {
       customer: { select: { id: true, name: true } },
       contents: {
+        where: { archivedAt: null },
         orderBy: { updatedAt: "desc" },
         include: {
           versions: { orderBy: { version: "desc" }, take: 1 },
@@ -302,6 +306,7 @@ export async function searchSharedContent(q: string) {
       where: { id: { in: [...campaignShares] }, organizationId: "studiojeker" },
       include: {
         contents: {
+          where: { archivedAt: null },
           include: { versions: { orderBy: { version: "desc" }, take: 1 } },
         },
       },
@@ -345,6 +350,7 @@ export async function searchSharedContent(q: string) {
       where: {
         id: { in: [...contentShares] },
         organizationId: "studiojeker",
+        archivedAt: null,
         // Skip ones already covered via shared campaigns to reduce noise.
         ...(campaignShares.size
           ? { OR: [{ campaignId: null }, { campaignId: { notIn: [...campaignShares] } }] }

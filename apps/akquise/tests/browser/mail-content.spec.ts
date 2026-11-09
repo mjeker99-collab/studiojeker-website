@@ -173,7 +173,7 @@ async function setup(
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   return { sent, previews, settingsCalls };
 }
 
@@ -184,8 +184,9 @@ for (const width of [390, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const state = await setup(page, { queued: true });
     await page
-      .getByRole("button", { name: "Alle jetzt senden (3) →", exact: true })
+      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();
+    await page.getByText("Bilder oder Links für alle Mails ergänzen", { exact: true }).click();
     await page.getByText("Bilder & Links hinzufügen", { exact: true }).click();
     await page
       .getByLabel(/Bild hochladen/)
@@ -210,15 +211,8 @@ for (const width of [390, 1024]) {
         "Bilder und Links übernommen. Bitte die aktualisierte Mailvorschau ansehen.",
       ),
     ).toBeVisible();
-    await page
-      .locator(".mail-preview-list")
-      .evaluate((el: HTMLDetailsElement) => (el.open = true));
-    await page
-      .locator(".mail-preview-list details")
-      .first()
-      .evaluate((el: HTMLDetailsElement) => (el.open = true));
     const link = page
-      .locator(".mail-preview-list a")
+      .locator(".mail-preview-pane a")
       .filter({ hasText: "Unser Projekt ansehen" })
       .first();
     await expect(link).toHaveAttribute("href", "https://studiojeker.ch/work");
@@ -234,3 +228,4 @@ for (const width of [390, 1024]) {
     });
   });
 }
+

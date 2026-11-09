@@ -101,6 +101,7 @@ model Contact {
   replyOutcome       String             @default("")
   replyNote          String             @default("")
   repliedAt          DateTime?
+  archivedAt         DateTime?
   followUpOn         String             @default("")
   revision           Int                @default(1)
   createdAt          DateTime           @default(now())
@@ -402,6 +403,7 @@ model StudioOrganization {
   brand         Json
   createdAt     DateTime           @default(now())
   library       LibraryItem[]
+  libraryFolders LibraryFolder[]
   brandRevision Int                @default(1)
   series        StudioSeries[]
   assets        StudioAsset[]
@@ -561,10 +563,31 @@ model SocialConnection {
   @@index([ownerId, provider])
 }
 
+model LibraryFolder {
+  id String @id @default(cuid())
+  organizationId String @default("studiojeker")
+  organization StudioOrganization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  name String
+  parentId String?
+  parent LibraryFolder? @relation("LibraryFolderTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children LibraryFolder[] @relation("LibraryFolderTree")
+  customerId String?
+  projectId String?
+  revision Int @default(1)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items LibraryItem[]
+  @@index([organizationId, parentId])
+}
+
 model LibraryItem {
   id               String             @id @default(cuid())
   organizationId   String             @default("studiojeker")
   organization     StudioOrganization @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  folderId         String?
+  folder           LibraryFolder? @relation(fields: [folderId], references: [id], onDelete: Restrict)
+  deletedAt        DateTime?
   assetId          String?            @unique
   asset            StudioAsset?       @relation(fields: [assetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   kind             String
@@ -584,6 +607,7 @@ model LibraryItem {
   updatedAt        DateTime           @updatedAt
 
   @@index([organizationId, createdAt])
+  @@index([folderId])
 }
 
 // Versioned website drafts; public hosting is separate from internal editing.

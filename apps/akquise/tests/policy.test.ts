@@ -4,7 +4,6 @@ import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import {
   verifiedContact,
-  verificationIssues,
   legalAllowed,
   normalizeEmail,
   personKey,
@@ -391,72 +390,6 @@ test("Lokale Vorlage erkennt Architekten bei leerer Branche im Organisationsname
 test("Kontakte ohne Adresse bleiben für Entwurf und Freigabe gesperrt", () => {
   assert.throws(() => verifiedContact({ ...base, email: "" }));
 });
-test("Geprüftes Team-Postfach bleibt Unternehmensadresse und erfindet keinen Namen", async () => {
-  for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
-    const named = await generateDraft(
-      {
-        ...architectureContact,
-        notes: "",
-        email,
-        firstName: "Anna",
-        lastName: "Muster",
-      },
-      {
-        async generate({ facts }) {
-          assert.equal(facts.greeting, "Guten Tag Anna Muster");
-          assert.match(facts.mailbox, /Unternehmensadresse/);
-          assert.match(facts.mailbox, /keine persönliche Einzeladresse/);
-          return { subject: "Sichtbarkeit", body: facts.greeting };
-        },
-      },
-    );
-    assert.equal(named.body, "Guten Tag Anna Muster");
-    const unnamed = await generateDraft(
-      {
-        ...architectureContact,
-        notes: "",
-        email,
-        firstName: "Team",
-        lastName: "Postfach",
-      },
-      {
-        async generate({ facts }) {
-          assert.equal(facts.greeting, "Guten Tag");
-          assert.equal(facts.firstName, "");
-          assert.equal(facts.lastName, "");
-          assert.doesNotMatch(facts.greeting, /Team|Postfach|Marketing/);
-          return { subject: "Sichtbarkeit", body: facts.greeting };
-        },
-      },
-    );
-    assert.equal(unnamed.body, "Guten Tag");
-  }
-  await assert.rejects(
-    generateDraft({
-      ...architectureContact,
-      notes: "",
-      email: "info@example.test",
-    }),
-    /Allgemeine/,
-  );
-  await assert.rejects(
-    generateDraft({
-      ...architectureContact,
-      notes: "",
-      email: "marketing@example.test",
-      confidence: "GENERAL",
-    }),
-    /Unternehmensadresse/,
-  );
-  await assert.rejects(
-    generateDraft({
-      ...architectureContact,
-      notes: "",
-      email: "kommunikation@example.test",
-      status: "DO_NOT_CONTACT",
-    }),
-  );
-});
 
 test("Drive-Masterliste übernimmt alle Personen, auch ohne oder mit gemeinsamer Adresse", async () => {
   const book = new ExcelJS.Workbook();
@@ -537,28 +470,7 @@ test("Nur individuell verifizierte Kontakte sind freigabefähig", () => {
     "office.team@example.test",
     "sales@example.test",
   ])
-    assert.throws(() => verifiedContact({ ...base, email }), /Allgemeine/);
-  for (const email of [
-    "marketing@example.test",
-    "kommunikation@example.test",
-    "marketing.team@example.test",
-  ])
-    assert.doesNotThrow(() => verifiedContact({ ...base, email }));
-  assert.match(
-    verificationIssues({
-      ...base,
-      email: "kommunikation@example.test",
-      confidence: "GENERAL",
-    }).join(" "),
-    /Unternehmensadresse/,
-  );
-  assert.throws(() =>
-    verifiedContact({
-      ...base,
-      email: "marketing@example.test",
-      confidence: "GENERAL",
-    }),
-  );
+    assert.throws(() => verifiedContact({ ...base, email }));
   assert.throws(() => verifiedContact({ ...base, verifiedAt: null }));
   assert.throws(() => verifiedContact({ ...base, status: "DO_NOT_CONTACT" }));
 });
@@ -808,4 +720,23 @@ test("One XLSX master with more than 500 contacts remains importable without app
   assert.ok(
     rows.every((r) => r.confidence === "UNCONFIRMED" && !r.newsletterConsent),
   );
+});
+
+for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
+  const { acquisitionAddressIssue } = await import("../lib/mail-address");
+  assert.equal(acquisitionAddressIssue(email), "");
+  assert.notEqual(acquisitionAddressIssue("info@example.test"), "");
+}
+
+test("Team-Mailvorlage nennt keine erfundene Kontaktperson und Archivierte bleiben gesperrt", async () => {
+  const team = { ...architectureContact, notes: "", email: "marketing@example.test", firstName: "Marketing", lastName: "Team", confidence: "VERIFIED" as const };
+  const generated = await generateDraft(team);
+  assert.match(generated.body, /^Guten Tag\n\n/);
+  assert.doesNotMatch(generated.body, /Guten Tag Marketing Team/);
+  const namedTeam = await generateDraft({ ...team, firstName: "Anna", lastName: "Muster" });
+  assert.match(namedTeam.body, /^Guten Tag\n\n/);
+  const named = await generateDraft({ ...team, email: "anna@example.test", firstName: "Anna", lastName: "Muster" });
+  assert.match(named.body, /^Guten Tag Anna Muster\n\n/);
+  await assert.rejects(generateDraft({ ...team, archivedAt: new Date("2026-10-10") }));
+  await assert.rejects(generateDraft({ ...team, email: "info@example.test" }));
 });

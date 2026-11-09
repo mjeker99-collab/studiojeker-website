@@ -403,7 +403,7 @@ export async function updateDraft(
     );
 
   const marketing = await db.marketingContent.findFirst({
-    where: { id, organizationId: "studiojeker" },
+    where: { id, organizationId: "studiojeker", archivedAt: null },
     include: { versions: { orderBy: { version: "desc" }, take: 1 } },
   });
   if (marketing) {
@@ -497,7 +497,7 @@ export async function getDraft(
 ) {
   if (hint !== "WEBSITE_REVIEW") {
     const content = await db.marketingContent.findFirst({
-      where: { id, organizationId: "studiojeker" },
+      where: { id, organizationId: "studiojeker", archivedAt: null },
       include: {
         versions: { orderBy: { version: "desc" }, take: 1 },
         approvals: {

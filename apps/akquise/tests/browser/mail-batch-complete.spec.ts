@@ -96,7 +96,7 @@ test("50 selected contacts stay together through shared completion and review", 
       saved = body.shared.confidence === "VERIFIED";
       return route.fulfill({
         json: {
-          results: contacts.map((c) => ({
+          results: body.contacts.map((c: { id: string }) => ({
             id: c.id,
             ok: true,
             message: "Gespeichert",
@@ -120,7 +120,7 @@ test("50 selected contacts stay together through shared completion and review", 
         },
       });
     }
-    if (path === "/api/mail-review/approve-and-send") {
+    if (path === "/api/mail-review/approve-and-start") {
       expect(body.confirmDispatch).toBe(true);
       expect(body.legal.confirmed).toBe(true);
       sent.push(...body.items.map((item: { id: string }) => item.id));
@@ -155,15 +155,18 @@ test("50 selected contacts stay together through shared completion and review", 
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page
     .getByRole("button", { name: "50 Kontakte auswählen", exact: true })
     .click();
   await page
     .getByRole("button", {
-      name: "Sofort senden (50) →",
+      name: "50 Mails erstellen →",
       exact: true,
     })
+    .click();
+  await page
+    .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
     .click();
   await expect(
     page.getByText("50 Kontakte bleiben ausgewählt.", { exact: true }),
@@ -171,7 +174,7 @@ test("50 selected contacts stay together through shared completion and review", 
   expect(prepared).toBe(0);
   await expect(
     page.getByRole("button", {
-      name: "Weiter zum Sofortversand →",
+      name: "Angaben speichern und weiter →",
       exact: true,
     }),
   ).toBeDisabled();
@@ -191,11 +194,14 @@ test("50 selected contacts stay together through shared completion and review", 
   await shared.getByLabel("Prüfdatum").fill("2026-11-28");
   await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
   await page
-    .getByRole("button", { name: "Weiter zum Sofortversand →", exact: true })
+    .getByRole("button", {
+      name: "Angaben speichern und weiter →",
+      exact: true,
+    })
     .click();
-  await expect(page.locator(".contact-preparation").getByRole("alert")).toContainText(
-    "Prüfdatum liegt in der Zukunft",
-  );
+  await expect(
+    page.locator(".contact-preparation").getByRole("alert"),
+  ).toContainText("Prüfdatum liegt in der Zukunft");
   expect(saved).toBe(false);
   await expect(shared.getByLabel("Quellen-URL")).toHaveValue(
     "https://Search.ch",
@@ -203,7 +209,7 @@ test("50 selected contacts stay together through shared completion and review", 
   await shared.getByLabel("Prüfdatum").fill("2026-10-28");
   await expect(
     page.getByRole("button", {
-      name: "Weiter zum Sofortversand →",
+      name: "Angaben speichern und weiter →",
       exact: true,
     }),
   ).toBeDisabled();
@@ -214,7 +220,7 @@ test("50 selected contacts stay together through shared completion and review", 
   await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
   await page
     .getByRole("button", {
-      name: "Weiter zum Sofortversand →",
+      name: "Angaben speichern und weiter →",
       exact: true,
     })
     .click();
@@ -230,14 +236,17 @@ test("50 selected contacts stay together through shared completion and review", 
     releasePreparation();
   }
   await expect(
-    page.getByText("Gemeinsame Versandprüfung für 50 ausgewählte Kontakte", {
+    page.getByText("Noch eine Angabe für 50 ausgewählte Kontakte", {
       exact: true,
     }),
   ).toBeVisible();
   expect(prepared).toBe(50);
   await expect(
-    page.getByRole("button", { name: "Alle 50 jetzt senden", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("button", {
+      name: "Fehlende Versandangabe ergänzen",
+      exact: true,
+    }),
+  ).toBeEnabled();
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill("Dokumentierte Einwilligung für alle synthetischen Testkontakte.");
@@ -245,13 +254,17 @@ test("50 selected contacts stay together through shared completion and review", 
     .getByLabel(/Ich gebe die 50 ausgewählten persönlichen Mails/)
     .check();
   await page
-    .getByRole("button", { name: "Alle 50 jetzt senden", exact: true })
+    .getByRole("button", { name: "Versand starten · 50 Mails", exact: true })
     .click();
   await expect(
-    page.getByText("50 von 50 Mails bearbeitet.", { exact: true }),
+    page.getByText(
+      "50 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+      { exact: true },
+    ),
   ).toBeVisible();
   expect(new Set(sent).size).toBe(50);
   expect(sent).toHaveLength(50);
+  await page.getByText("Weitere Optionen", { exact: true }).click();
   await page
     .getByRole("button", { name: "Auswahl zurücksetzen", exact: true })
     .click();
@@ -260,120 +273,257 @@ test("50 selected contacts stay together through shared completion and review", 
   ).toBeVisible();
 });
 
-test("partly prepared group reviews successful drafts without retrying or sending failed contacts", async ({ page }) => {
+test("partly prepared group reviews successful drafts without retrying or sending failed contacts", async ({
+  page,
+}) => {
   const contacts = [
-    { id: "p1", revision: 1, organisation: "Atelier Eins", firstName: "Anna", lastName: "Test", email: "anna@example.test", status: "NEW" },
-    { id: "p2", revision: 1, organisation: "Atelier Zwei", firstName: "Ben", lastName: "Test", email: "ben@example.test", status: "NEW" },
+    {
+      id: "p1",
+      revision: 1,
+      organisation: "Atelier Eins",
+      firstName: "Anna",
+      lastName: "Test",
+      email: "anna@example.test",
+      status: "NEW",
+    },
+    {
+      id: "p2",
+      revision: 1,
+      organisation: "Atelier Zwei",
+      firstName: "Ben",
+      lastName: "Test",
+      email: "ben@example.test",
+      status: "NEW",
+    },
   ];
   let preparationCalls = 0;
   let dispatchCalls = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state") return route.fulfill({ json: {
-      user: { id: "test", name: "Test" }, users: [], contacts, drafts: [],
-      deliveries: [], suppressions: [], audits: [],
-      generator: "disabled", externalSending: false, mailMode: "disabled",
-    } });
-    if (path === "/api/hub/state") return route.fulfill({ json: {
-      campaigns: [], contents: [], users: [], drafts: [], customers: [],
-      integrations: {}, events: [],
-    } });
-    if (path === "/api/studio/state") return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path === "/api/mail-schedule") return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path.endsWith("/preparation/preview")) return route.fulfill({ json: {
-      contacts: body.ids.map((id: string) => ({
-        ...contacts.find((c) => c.id === id), name: "Testkontakt", ready: true,
-        changed: false, patch: {}, values: {}, origins: [], issues: [],
-      })),
-    } });
+    const body =
+      route.request().method() === "POST" ? route.request().postDataJSON() : {};
+    if (path === "/api/state")
+      return route.fulfill({
+        json: {
+          user: { id: "test", name: "Test" },
+          users: [],
+          contacts,
+          drafts: [],
+          deliveries: [],
+          suppressions: [],
+          audits: [],
+          generator: "disabled",
+          externalSending: false,
+          mailMode: "disabled",
+        },
+      });
+    if (path === "/api/hub/state")
+      return route.fulfill({
+        json: {
+          campaigns: [],
+          contents: [],
+          users: [],
+          drafts: [],
+          customers: [],
+          integrations: {},
+          events: [],
+        },
+      });
+    if (path === "/api/studio/state")
+      return route.fulfill({ status: 503, json: { error: "Not used" } });
+    if (path === "/api/mail-schedule")
+      return route.fulfill({ status: 503, json: { error: "Not used" } });
+    if (path.endsWith("/preparation/preview"))
+      return route.fulfill({
+        json: {
+          contacts: body.ids.map((id: string) => ({
+            ...contacts.find((c) => c.id === id),
+            name: "Testkontakt",
+            ready: true,
+            changed: false,
+            patch: {},
+            values: {},
+            origins: [],
+            issues: [],
+          })),
+        },
+      });
     if (path.endsWith("/preparation/prepare")) {
       preparationCalls++;
       expect(body.contacts).toHaveLength(2);
-      return route.fulfill({ json: { results: [
-        { id: "p1", ok: true, draftId: "d1", message: "Entwurf bereit" },
-        { id: "p2", ok: false, message: "Atelier Zwei: Adresse erneut prüfen" },
-      ] } });
+      return route.fulfill({
+        json: {
+          results: [
+            { id: "p1", ok: true, draftId: "d1", message: "Entwurf bereit" },
+            {
+              id: "p2",
+              ok: false,
+              message: "Atelier Zwei: Adresse erneut prüfen",
+            },
+          ],
+        },
+      });
     }
     if (path === "/api/mail-review/preview") {
       expect(body.ids).toEqual(["d1"]);
-      return route.fulfill({ json: { rows: [{
-        id: "d1", version: 1, hash: "a".repeat(64), contactRevision: 1,
-        recipient: "anna@example.test", subject: "Persönlicher Entwurf",
-        body: "Guten Tag", organisation: "Atelier Eins",
-        publicAuthority: false, needsLegal: true, issues: [],
-      }] } });
+      return route.fulfill({
+        json: {
+          rows: [
+            {
+              id: "d1",
+              version: 1,
+              hash: "a".repeat(64),
+              contactRevision: 1,
+              recipient: "anna@example.test",
+              subject: "Persönlicher Entwurf",
+              body: "Guten Tag",
+              organisation: "Atelier Eins",
+              publicAuthority: false,
+              needsLegal: true,
+              issues: [],
+            },
+          ],
+        },
+      });
     }
     if (path.startsWith("/api/mail-review/approve")) dispatchCalls++;
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
-  await expect(page.getByText(/1 Mails bereit/)).toBeVisible();
-  await expect(page.getByText(/1 Kontakte zurückgestellt/)).toBeVisible();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await page
+    .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "2 Mails erstellen →", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
+  ).toBeVisible();
+  await expect(page.getByText(/1 Mails vorbereitet/)).toBeVisible();
+  await expect(
+    page
+      .locator(".mail-open-notice")
+      .getByText(/1 Kontakte mit offenen Angaben/),
+  ).toBeVisible();
   expect(preparationCalls).toBe(1);
   expect(dispatchCalls).toBe(0);
 });
 
-
-test("mixed contact group advances only verified unchanged records without sending", async ({ page }) => {
+test("mixed contact group advances only verified unchanged records without sending", async ({
+  page,
+}) => {
   const contacts = Array.from({ length: 4 }, (_, i) => ({
-    id: `m${i}`, revision: 1, organisation: `Atelier ${i}`,
-    firstName: "Anna", lastName: `Muster${i}`,
-    email: `anna${i}@example.test`, status: "NEW",
+    id: `m${i}`,
+    revision: 1,
+    organisation: `Atelier ${i}`,
+    firstName: "Anna",
+    lastName: `Muster${i}`,
+    email: `anna${i}@example.test`,
+    status: "NEW",
   }));
   let preparedIds: string[] = [];
   let dispatchCalls = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state") return route.fulfill({ json: {
-      user: { id: "test", name: "Test" }, users: [], contacts,
-      drafts: [], deliveries: [], suppressions: [], audits: [],
-      generator: "disabled", externalSending: false, mailMode: "disabled",
-    } });
-    if (path === "/api/hub/state") return route.fulfill({ json: {
-      campaigns: [], contents: [], users: [], drafts: [],
-      customers: [], integrations: {}, events: [],
-    } });
-    if (path === "/api/studio/state") return route.fulfill({
-      status: 503, json: { error: "Not used" },
-    });
-    if (path === "/api/mail-schedule") return route.fulfill({
-      status: 503, json: { error: "Not used" },
-    });
-    if (path.endsWith("/preparation/preview")) return route.fulfill({ json: {
-      contacts: body.ids.map((id: string) => {
-        const unchanged = id === "m0";
-        const proposed = id === "m3";
-        return {
-          ...contacts.find((c) => c.id === id),
-          name: "Anna Muster", ready: unchanged || proposed,
-          changed: proposed, patch: proposed ? { hook: "Unbestätigter Hinweis" } : {},
-          values: {}, origins: [],
-          issues: unchanged || proposed ? [] : ["Quelle und Verifikation fehlen."],
-        };
-      }),
-    } });
+    const body =
+      route.request().method() === "POST" ? route.request().postDataJSON() : {};
+    if (path === "/api/state")
+      return route.fulfill({
+        json: {
+          user: { id: "test", name: "Test" },
+          users: [],
+          contacts,
+          drafts: [],
+          deliveries: [],
+          suppressions: [],
+          audits: [],
+          generator: "disabled",
+          externalSending: false,
+          mailMode: "disabled",
+        },
+      });
+    if (path === "/api/hub/state")
+      return route.fulfill({
+        json: {
+          campaigns: [],
+          contents: [],
+          users: [],
+          drafts: [],
+          customers: [],
+          integrations: {},
+          events: [],
+        },
+      });
+    if (path === "/api/studio/state")
+      return route.fulfill({
+        status: 503,
+        json: { error: "Not used" },
+      });
+    if (path === "/api/mail-schedule")
+      return route.fulfill({
+        status: 503,
+        json: { error: "Not used" },
+      });
+    if (path.endsWith("/preparation/preview"))
+      return route.fulfill({
+        json: {
+          contacts: body.ids.map((id: string) => {
+            const unchanged = id === "m0";
+            const proposed = id === "m3";
+            return {
+              ...contacts.find((c) => c.id === id),
+              name: "Anna Muster",
+              ready: unchanged || proposed,
+              changed: proposed,
+              patch: proposed ? { hook: "Unbestätigter Hinweis" } : {},
+              values: {},
+              origins: [],
+              issues:
+                unchanged || proposed
+                  ? []
+                  : ["Quelle und Verifikation fehlen."],
+            };
+          }),
+        },
+      });
     if (path.endsWith("/preparation/prepare")) {
       preparedIds = body.contacts.map((c: { id: string }) => c.id);
       expect(preparedIds).toEqual(["m0"]);
-      return route.fulfill({ json: { results: [
-        { id: "m0", ok: true, draftId: "draft-m0", message: "Entwurf bereit" },
-      ] } });
+      return route.fulfill({
+        json: {
+          results: [
+            {
+              id: "m0",
+              ok: true,
+              draftId: "draft-m0",
+              message: "Entwurf bereit",
+            },
+          ],
+        },
+      });
     }
     if (path === "/api/mail-review/preview") {
       expect(body.ids).toEqual(["draft-m0"]);
-      return route.fulfill({ json: { rows: [{
-        id: "draft-m0", version: 1, hash: "a".repeat(64),
-        contactRevision: 1, recipient: "anna0@example.test",
-        subject: "Persönlicher Entwurf", body: "Guten Tag",
-        organisation: "Atelier 0", publicAuthority: false,
-        needsLegal: true, issues: [],
-      }] } });
+      return route.fulfill({
+        json: {
+          rows: [
+            {
+              id: "draft-m0",
+              version: 1,
+              hash: "a".repeat(64),
+              contactRevision: 1,
+              recipient: "anna0@example.test",
+              subject: "Persönlicher Entwurf",
+              body: "Guten Tag",
+              organisation: "Atelier 0",
+              publicAuthority: false,
+              needsLegal: true,
+              issues: [],
+            },
+          ],
+        },
+      });
     }
     if (path.startsWith("/api/mail-review/approve")) {
       dispatchCalls += 1;
@@ -382,59 +532,196 @@ test("mixed contact group advances only verified unchanged records without sendi
     return route.fulfill({ json: [] });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (4) →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
-  await expect(page.getByText(/3 Kontakte zurückgestellt/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Jetzt senden", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await page
+    .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "4 Mails erstellen →", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".mail-open-notice")
+      .getByText(/3 Kontakte mit offenen Angaben/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Fehlende Versandangabe ergänzen", exact: true }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
+    .click();
+  await expect(
+    page.getByText("3 Kontakte bleiben ausgewählt.", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: /Bewusst nur mit 1 vollständigen Kontakten fortfahren/,
+    })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Angaben für 1 Mails bestätigen" }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("button", {
+      name: "Angaben speichern und weiter →",
+      exact: true,
+    }),
+  ).toBeDisabled();
+
+  await page
+    .getByRole("button", { name: "Zurück zur Mailvorschau", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Mail-Empfänger" })
+      .getByRole("checkbox", { checked: true }),
+  ).toHaveCount(1);
   expect(preparedIds).toEqual(["m0"]);
   expect(dispatchCalls).toBe(0);
 });
 
-test("bulk selection skips info@ addresses while retaining other valid contacts", async ({ page }) => {
+test("bulk selection skips info@ addresses while retaining other valid contacts", async ({
+  page,
+}) => {
   const contacts = [
-    { id: "p", revision: 1, organisation: "Atelier", firstName: "Anna", lastName: "Test", email: "anna@example.test", status: "NEW" },
-    { id: "m", revision: 1, organisation: "Marketing", firstName: "Mia", lastName: "Test", email: "marketing@example.test", status: "NEW" },
-    { id: "i", revision: 1, organisation: "Info", firstName: "Ivo", lastName: "Test", email: "info@example.test", status: "NEW" },
-    { id: "i2", revision: 1, organisation: "Info Team", firstName: "Ina", lastName: "Test", email: "INFO+team@example.test", status: "NEW" },
+    {
+      id: "p",
+      revision: 1,
+      organisation: "Atelier",
+      firstName: "Anna",
+      lastName: "Test",
+      email: "anna@example.test",
+      status: "NEW",
+    },
+    {
+      id: "m",
+      revision: 1,
+      organisation: "Marketing",
+      firstName: "Mia",
+      lastName: "Test",
+      email: "marketing@example.test",
+      status: "NEW",
+    },
+    {
+      id: "i",
+      revision: 1,
+      organisation: "Info",
+      firstName: "Ivo",
+      lastName: "Test",
+      email: "info@example.test",
+      status: "NEW",
+    },
+    {
+      id: "i2",
+      revision: 1,
+      organisation: "Info Team",
+      firstName: "Ina",
+      lastName: "Test",
+      email: "INFO+team@example.test",
+      status: "NEW",
+    },
   ];
   let mailCalls = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/api/state") return route.fulfill({ json: {
-      user: { id: "test", name: "Test" }, users: [], contacts,
-      drafts: [], deliveries: [], suppressions: [], audits: [],
-      generator: "disabled", externalSending: false, mailMode: "disabled",
-    } });
-    if (path === "/api/hub/state") return route.fulfill({ json: {
-      campaigns: [], contents: [], users: [], drafts: [],
-      customers: [], integrations: {}, events: [],
-    } });
-    if (path.includes("mail-review") || path.includes("/preparation/")) mailCalls += 1;
+    if (path === "/api/state")
+      return route.fulfill({
+        json: {
+          user: { id: "test", name: "Test" },
+          users: [],
+          contacts,
+          drafts: [],
+          deliveries: [],
+          suppressions: [],
+          audits: [],
+          generator: "disabled",
+          externalSending: false,
+          mailMode: "disabled",
+        },
+      });
+    if (path === "/api/hub/state")
+      return route.fulfill({
+        json: {
+          campaigns: [],
+          contents: [],
+          users: [],
+          drafts: [],
+          customers: [],
+          integrations: {},
+          events: [],
+        },
+      });
+    if (path.includes("mail-review") || path.includes("/preparation/"))
+      mailCalls += 1;
     return route.fulfill({ status: 503, json: { error: "Not used" } });
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await expect(page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/)).toBeVisible();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "2 Kontakte ausgewählt" })).toBeVisible();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await expect(
+    page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "2 Kontakte ausgewählt" }),
+  ).toBeVisible();
   await page.getByText(/Auswahl einzeln anpassen/).click();
-  await expect(page.getByText(/2 info@-Adressen von der Auswahl ausgeschlossen/)).toBeVisible();
+  await expect(
+    page.getByText(/2 info@-Adressen von der Auswahl ausgeschlossen/),
+  ).toBeVisible();
   expect(mailCalls).toBe(0);
 });
 
-
 test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
   const contacts = [
-    { id: "good", revision: 1, organisation: "Marketing", firstName: "Mia", lastName: "Test", email: "marketing@example.test", status: "NEW" },
-    { id: "info", revision: 1, organisation: "Info", firstName: "Ina", lastName: "Test", email: "info@example.test", status: "NEW" },
-    { id: "stale", revision: 1, organisation: "Changed", firstName: "Ada", lastName: "Test", email: "kommunikation@example.test", status: "NEW" },
+    {
+      id: "good",
+      revision: 1,
+      organisation: "Marketing",
+      firstName: "Mia",
+      lastName: "Test",
+      email: "marketing@example.test",
+      status: "NEW",
+    },
+    {
+      id: "info",
+      revision: 1,
+      organisation: "Info",
+      firstName: "Ina",
+      lastName: "Test",
+      email: "info@example.test",
+      status: "NEW",
+    },
+    {
+      id: "stale",
+      revision: 1,
+      organisation: "Changed",
+      firstName: "Ada",
+      lastName: "Test",
+      email: "kommunikation@example.test",
+      status: "NEW",
+    },
   ];
   const makeDraft = (id: string, contactId: string, recipient: string) => ({
-    id, contactId, version: 1,
-    versions: [{ version: 1, recipient, subject: "Persönliches Angebot", signatureCurrent: true }],
+    id,
+    contactId,
+    version: 1,
+    versions: [
+      {
+        version: 1,
+        recipient,
+        subject: "Persönliches Angebot",
+        signatureCurrent: true,
+      },
+    ],
     approvals: [],
   });
   const drafts = [
@@ -447,61 +734,15 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
   let dispatchCalls = 0;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state") return route.fulfill({ json: {
-      user: { id: "test", name: "Test" }, users: [], contacts, drafts,
-      deliveries: [], suppressions: [], audits: [],
-      generator: "disabled", externalSending: false, mailMode: "disabled",
-    } });
-    if (path === "/api/hub/state") return route.fulfill({ json: {
-      campaigns: [], contents: [], users: [], drafts: [], customers: [],
-      integrations: {}, events: [],
-    } });
-    if (path === "/api/mail-review/preview") {
-      previewIds = body.ids;
-      return route.fulfill({ json: { rows: body.ids.map((id: string) => ({
-        id, version: 1, hash: "a".repeat(64), contactRevision: 1,
-        recipient: "marketing@example.test", subject: "Persönliches Angebot",
-        body: "Guten Tag", organisation: "Marketing", publicAuthority: false,
-        needsLegal: true, issues: [],
-      })) } });
-    }
-    if (path.startsWith("/api/mail-review/approve")) dispatchCalls += 1;
-    return route.fulfill({ status: 503, json: { error: "Not used in selection test" } });
-  });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await expect(page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })).toBeVisible();
-  await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }).click();
-  await expect(page.getByRole("heading", { name: "1 persönliche Mails vorhanden" })).toBeVisible();
-  await page.getByRole("button", { name: "1 Mails gemeinsam freigeben →" }).click();
-  await expect(page.getByRole("heading", { name: "1 Nachrichten in der Prüfvorschau" })).toBeVisible();
-  expect(previewIds).toEqual(["d-good"]);
-  expect(dispatchCalls).toBe(0);
-});
-
-test("45 ready contacts continue and 5 blocked contacts show the exact reason", async ({ page }) => {
-  const contacts = Array.from({ length: 50 }, (_, i) => ({
-    id: `b${i}`,
-    revision: 1,
-    organisation: `Betrieb ${i}`,
-    firstName: "Sara",
-    lastName: `Test${i}`,
-    email: i < 45 ? `sara${i}@example.test` : `gesperrt${i}@example.test`,
-    status: "NEW",
-  }));
-  let prepared: string[] = [];
-  let dispatchCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
+    const body =
+      route.request().method() === "POST" ? route.request().postDataJSON() : {};
     if (path === "/api/state")
       return route.fulfill({
         json: {
           user: { id: "test", name: "Test" },
           users: [],
           contacts,
-          drafts: [],
+          drafts,
           deliveries: [],
           suppressions: [],
           audits: [],
@@ -522,38 +763,8 @@ test("45 ready contacts continue and 5 blocked contacts show the exact reason", 
           events: [],
         },
       });
-    if (path === "/api/studio/state" || path === "/api/mail-schedule")
-      return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path.endsWith("/preparation/preview"))
-      return route.fulfill({
-        json: {
-          contacts: body.ids.map((id: string) => {
-            const blocked = Number(id.slice(1)) >= 45;
-            return {
-              id,
-              revision: 1,
-              organisation: `Betrieb ${id.slice(1)}`,
-              name: "Sara Test",
-              email: blocked ? `gesperrt${id.slice(1)}@example.test` : `sara${id.slice(1)}@example.test`,
-              ready: !blocked,
-              changed: false,
-              patch: {},
-              values: {},
-              origins: [],
-              issues: blocked ? ["Adresse auf Sperrliste."] : [],
-            };
-          }),
-        },
-      });
-    if (path.endsWith("/preparation/prepare")) {
-      prepared = body.contacts.map((c: { id: string }) => c.id);
-      return route.fulfill({
-        json: {
-          results: prepared.map((id) => ({ id, ok: true, draftId: `d${id}` })),
-        },
-      });
-    }
-    if (path === "/api/mail-review/preview")
+    if (path === "/api/mail-review/preview") {
+      previewIds = body.ids;
       return route.fulfill({
         json: {
           rows: body.ids.map((id: string) => ({
@@ -561,450 +772,34 @@ test("45 ready contacts continue and 5 blocked contacts show the exact reason", 
             version: 1,
             hash: "a".repeat(64),
             contactRevision: 1,
-            recipient: "sara@example.test",
-            subject: "Persönlicher Entwurf",
+            recipient: "marketing@example.test",
+            subject: "Persönliches Angebot",
             body: "Guten Tag",
-            organisation: "Betrieb",
+            organisation: "Marketing",
             publicAuthority: false,
             needsLegal: true,
             issues: [],
           })),
         },
       });
+    }
     if (path.startsWith("/api/mail-review/approve")) dispatchCalls += 1;
-    return route.fulfill({ json: [] });
+    return route.fulfill({
+      status: 503,
+      json: { error: "Not used in selection test" },
+    });
   });
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "50 Kontakte auswählen", exact: true }).click();
-  const send = page.getByRole("button", { name: "Sofort senden (50) →", exact: true });
-  const box = await send.boundingBox();
-  expect(box !== null && box.y >= 0 && box.y < 844).toBe(true);
-  await page.screenshot({ path: ".local/mailstudio-50-mobile.png" });
-  await send.click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   await expect(
-    page.getByText(
-      "5 Kontakte: Adresse auf Sperrliste.",
-      { exact: true },
-    ),
+    page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })
+    .click();
   await expect(
-    page.getByRole("heading", { name: "45 Nachrichten in der Prüfvorschau" }),
+    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
   ).toBeVisible();
-  expect(prepared).toHaveLength(45);
-  expect(prepared.every((id) => Number(id.slice(1)) < 45)).toBe(true);
+  expect(previewIds).toEqual(["d-good"]);
   expect(dispatchCalls).toBe(0);
-  await page.screenshot({ path: ".local/mailstudio-45-ready-mobile.png" });
-});
-
-test("a fully blocked selection explains the reason and returns without sending", async ({ page }) => {
-  const contacts = [0, 1].map((i) => ({
-    id: `t${i}`,
-    revision: 1,
-    organisation: `Team ${i}`,
-    firstName: "Tina",
-    lastName: "Test",
-    email: `office${i}@example.test`,
-    status: "NEW",
-  }));
-  let dispatchCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state")
-      return route.fulfill({
-        json: {
-          user: { id: "test", name: "Test" },
-          users: [],
-          contacts,
-          drafts: [],
-          deliveries: [],
-          suppressions: [],
-          audits: [],
-          generator: "disabled",
-          externalSending: false,
-          mailMode: "disabled",
-        },
-      });
-    if (path === "/api/hub/state")
-      return route.fulfill({
-        json: {
-          campaigns: [],
-          contents: [],
-          users: [],
-          drafts: [],
-          customers: [],
-          integrations: {},
-          events: [],
-        },
-      });
-    if (path.endsWith("/preparation/preview"))
-      return route.fulfill({
-        json: {
-          contacts: body.ids.map((id: string) => ({
-            id,
-            revision: 1,
-            organisation: "Team",
-            name: "Tina Test",
-            email: "office@example.test",
-            ready: false,
-            changed: false,
-            patch: {},
-            values: {},
-            origins: [],
-            issues: ["Allgemeine E-Mail-Adressen sind nicht freigabefähig."],
-          })),
-        },
-      });
-    if (path.startsWith("/api/mail-review/approve") || path.endsWith("/preparation/prepare"))
-      dispatchCalls += 1;
-    return route.fulfill({ status: 503, json: { error: "Not used" } });
-  });
-  await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
-  await expect(page.getByText("Noch nicht bereit: 2 von 2")).toBeVisible();
-  await page.screenshot({ path: ".local/mailstudio-blocked-ipad.png" });
-  await expect(
-    page.getByText(
-      "2 Kontakte: Allgemeine E-Mail-Adressen sind nicht freigabefähig.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Zurück zur Auswahl", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "0 Kontakte ausgewählt", exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText(/Keine versandfähige Teilmenge/)).toBeVisible();
-  expect(dispatchCalls).toBe(0);
-});
-
-test("changing the master filter clears the hidden mail selection", async ({ page }) => {
-  const contacts = [
-    { id: "a", revision: 1, organisation: "Alpha", firstName: "Ana", lastName: "A", email: "ana@example.test", industry: "Bau", status: "NEW" },
-    { id: "b", revision: 1, organisation: "Beta", firstName: "Ben", lastName: "B", email: "ben@example.test", industry: "Holz", status: "NEW" },
-  ];
-  let preparationCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/state")
-      return route.fulfill({
-        json: {
-          user: { id: "test", name: "Test" },
-          users: [],
-          contacts,
-          drafts: [],
-          deliveries: [],
-          suppressions: [],
-          audits: [],
-          generator: "disabled",
-          externalSending: false,
-          mailMode: "disabled",
-        },
-      });
-    if (path === "/api/hub/state")
-      return route.fulfill({
-        json: {
-          campaigns: [],
-          contents: [],
-          users: [],
-          drafts: [],
-          customers: [],
-          integrations: {},
-          events: [],
-        },
-      });
-    if (path.includes("/preparation/")) preparationCalls += 1;
-    return route.fulfill({ status: 503, json: { error: "Not used" } });
-  });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "2 Kontakte ausgewählt" })).toBeVisible();
-  await page.getByRole("combobox", { name: "Branche", exact: true }).selectOption("Holz");
-  await expect(page.getByRole("heading", { name: "0 Kontakte ausgewählt" })).toBeVisible();
-  await expect(page.getByText(/1 Kontakte mit E-Mail-Adresse/)).toBeVisible();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "1 Kontakte ausgewählt" })).toBeVisible();
-  expect(preparationCalls).toBe(0);
-});
-
-test("team mailboxes stay selectable and wait for an explicit company-address review", async ({ page }) => {
-  const contacts = [
-    { id: "m", revision: 1, organisation: "Atelier", firstName: "Mia", lastName: "Muster", email: "marketing@example.test", status: "NEW" },
-    { id: "k", revision: 1, organisation: "Kommunikation", firstName: "Team", lastName: "Postfach", email: "kommunikation@example.test", status: "NEW" },
-    { id: "i", revision: 1, organisation: "Info", firstName: "Ina", lastName: "Test", email: "info@example.test", status: "NEW" },
-  ];
-  let prepareCalls = 0;
-  let approveCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state")
-      return route.fulfill({
-        json: {
-          user: { id: "test", name: "Test" },
-          users: [],
-          contacts,
-          drafts: [],
-          deliveries: [],
-          suppressions: [],
-          audits: [],
-          generator: "disabled",
-          externalSending: false,
-          mailMode: "disabled",
-        },
-      });
-    if (path === "/api/hub/state")
-      return route.fulfill({
-        json: {
-          campaigns: [],
-          contents: [],
-          users: [],
-          drafts: [],
-          customers: [],
-          integrations: {},
-          events: [],
-        },
-      });
-    if (path === "/api/studio/state" || path === "/api/mail-schedule")
-      return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path.endsWith("/preparation/preview"))
-      return route.fulfill({
-        json: {
-          contacts: body.ids.map((id: string) => {
-            const contact = contacts.find((item) => item.id === id);
-            return {
-              id,
-              revision: 1,
-              organisation: contact?.organisation,
-              name: `${contact?.firstName} ${contact?.lastName}`,
-              email: contact?.email,
-              ready: false,
-              changed: false,
-              patch: {},
-              values: { sourceUrl: "", hook: "", confidence: "GENERAL" },
-              origins: ["Postfachart: Team-Postfach"],
-              issues: ["Team-Postfach noch nicht als Unternehmensadresse bestätigt."],
-            };
-          }),
-        },
-      });
-    if (path.endsWith("/preparation/prepare") || path.endsWith("/preparation/save"))
-      prepareCalls += 1;
-    if (path.startsWith("/api/mail-review/approve")) approveCalls += 1;
-    return route.fulfill({ status: 503, json: { error: "Not used" } });
-  });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await expect(page.getByText(/2 Kontakte mit E-Mail-Adresse/)).toBeVisible();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByText(/Auswahl einzeln anpassen/).click();
-  await expect(page.getByText("Atelier · Mia Muster · marketing@example.test · Team-Postfach")).toBeVisible();
-  await expect(page.getByText("Kommunikation · Team Postfach · kommunikation@example.test · Team-Postfach")).toBeVisible();
-  await expect(page.getByText(/1 info@-Adressen von der Auswahl ausgeschlossen/)).toBeVisible();
-  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
-  await expect(page.getByText("Noch nicht bereit: 2 von 2")).toBeVisible();
-  await expect(
-    page.getByText(
-      "2 Kontakte: Team-Postfach noch nicht als Unternehmensadresse bestätigt.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await expect(
-    page.getByLabel(/Unternehmens- und Abteilungsadressen/),
-  ).toBeVisible();
-  expect(prepareCalls).toBe(0);
-  expect(approveCalls).toBe(0);
-});
-
-test("reviewed team mailboxes reach approval as company addresses and are not sent", async ({ page }) => {
-  const contacts = [
-    { id: "m", revision: 1, organisation: "Atelier", firstName: "Mia", lastName: "Muster", email: "marketing@example.test", status: "NEW" },
-    { id: "k", revision: 1, organisation: "Büro", firstName: "Kim", lastName: "Keller", email: "kommunikation@example.test", status: "NEW" },
-  ];
-  let approveCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/state")
-      return route.fulfill({
-        json: {
-          user: { id: "test", name: "Test" },
-          users: [],
-          contacts,
-          drafts: [],
-          deliveries: [],
-          suppressions: [],
-          audits: [],
-          generator: "disabled",
-          externalSending: false,
-          mailMode: "disabled",
-        },
-      });
-    if (path === "/api/hub/state")
-      return route.fulfill({
-        json: {
-          campaigns: [],
-          contents: [],
-          users: [],
-          drafts: [],
-          customers: [],
-          integrations: {},
-          events: [],
-        },
-      });
-    if (path === "/api/studio/state" || path === "/api/mail-schedule")
-      return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path.endsWith("/preparation/preview"))
-      return route.fulfill({
-        json: {
-          contacts: body.ids.map((id: string) => ({
-            ...contacts.find((item) => item.id === id),
-            name: "Geprüfte Adresse",
-            ready: true,
-            changed: false,
-            patch: {},
-            values: {},
-            origins: [],
-            issues: [],
-          })),
-        },
-      });
-    if (path.endsWith("/preparation/prepare"))
-      return route.fulfill({
-        json: {
-          results: body.contacts.map((item: { id: string }) => ({
-            id: item.id,
-            ok: true,
-            draftId: `d-${item.id}`,
-          })),
-        },
-      });
-    if (path === "/api/mail-review/preview")
-      return route.fulfill({
-        json: {
-          rows: [
-            {
-              id: "d-m",
-              version: 1,
-              hash: "a".repeat(64),
-              contactRevision: 1,
-              recipient: "marketing@example.test",
-              subject: "Sichtbarkeit",
-              body: "Guten Tag Mia Muster",
-              organisation: "Atelier",
-              publicAuthority: false,
-              needsLegal: true,
-              issues: [],
-            },
-            {
-              id: "d-k",
-              version: 1,
-              hash: "b".repeat(64),
-              contactRevision: 1,
-              recipient: "kommunikation@example.test",
-              subject: "Sichtbarkeit",
-              body: "Guten Tag Kim Keller",
-              organisation: "Büro",
-              publicAuthority: false,
-              needsLegal: true,
-              issues: [],
-            },
-          ],
-        },
-      });
-    if (path.startsWith("/api/mail-review/approve")) approveCalls += 1;
-    return route.fulfill({ json: [] });
-  });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", { name: "25 Kontakte auswählen", exact: true }).click();
-  await page.getByRole("button", { name: "Sofort senden (2) →", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "2 Nachrichten in der Prüfvorschau" })).toBeVisible();
-  const approval = page.getByLabel(/Ich gebe die 2 ausgewählten Unternehmensadressen/);
-  await expect(approval).toBeVisible();
-  await expect(page.getByRole("button", { name: "Alle 2 jetzt senden", exact: true })).toBeDisabled();
-  expect(approveCalls).toBe(0);
-});
-
-test("100 contacts are prepared as one synthetic batch without any dispatch", async ({ page }) => {
-  test.setTimeout(60000);
-  const contacts = Array.from({ length: 100 }, (_, i) => ({
-    id: "bulk-" + i, revision: 1, organisation: "Betrieb " + i,
-    firstName: "Nina", lastName: "Test" + i,
-    email: "nina" + i + "@example.test", status: "NEW",
-  }));
-  let preparedIds: string[] = [];
-  let approveCalls = 0;
-  await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST"
-      ? route.request().postDataJSON() : {};
-    if (path === "/api/state") return route.fulfill({ json: {
-      user: { id: "test", name: "Test" },
-      users: [], contacts, drafts: [], deliveries: [], suppressions: [],
-      audits: [], generator: "disabled", externalSending: false,
-      mailMode: "disabled",
-    } });
-    if (path === "/api/hub/state") return route.fulfill({ json: {
-      campaigns: [], contents: [], users: [], drafts: [],
-      customers: [], integrations: {}, events: [],
-    } });
-    if (path === "/api/studio/state" || path === "/api/mail-schedule")
-      return route.fulfill({ status: 503, json: { error: "Not used" } });
-    if (path.endsWith("/preparation/preview")) return route.fulfill({ json: {
-      contacts: body.ids.map((id: string) => ({
-        ...contacts.find((contact) => contact.id === id),
-        name: "Nina Test", ready: true, changed: false, patch: {},
-        values: {}, origins: [], issues: [],
-      })),
-    } });
-    if (path.endsWith("/preparation/prepare")) {
-      preparedIds = body.contacts.map((contact: { id: string }) => contact.id);
-      return route.fulfill({ json: {
-        results: preparedIds.map((id) => ({
-          id, ok: true, draftId: "draft-" + id,
-        })),
-      } });
-    }
-    if (path === "/api/mail-review/preview") return route.fulfill({ json: {
-      rows: body.ids.map((id: string, i: number) => ({
-        id, version: 1, hash: "a".repeat(64), contactRevision: 1,
-        recipient: "nina" + i + "@example.test",
-        subject: "Individueller Entwurf", body: "Guten Tag",
-        organisation: "Betrieb " + i,
-        publicAuthority: false, needsLegal: true, issues: [],
-      })),
-    } });
-    if (path.startsWith("/api/mail-review/approve")) {
-      approveCalls += 1;
-      return route.fulfill({ status: 403, json: { error: "SMTP disabled in test" } });
-    }
-    return route.fulfill({ json: [] });
-  });
-  await page.setViewportSize({ width: 1024, height: 768 });
-  await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
-  await page.getByRole("button", {
-    name: "100 Kontakte auswählen", exact: true,
-  }).click();
-  await expect(page.getByRole("heading", {
-    name: "100 Kontakte ausgewählt", exact: true,
-  })).toBeVisible();
-  await page.getByRole("button", {
-    name: "Sofort senden (100) →", exact: true,
-  }).click();
-  await expect(page.getByRole("heading", {
-    name: "100 Nachrichten in der Prüfvorschau", exact: true,
-  })).toBeVisible();
-  expect(preparedIds).toHaveLength(100);
-  expect(new Set(preparedIds).size).toBe(100);
-  await expect(page.getByRole("button", {
-    name: "Alle 100 jetzt senden", exact: true,
-  })).toBeDisabled();
-  expect(approveCalls).toBe(0);
 });

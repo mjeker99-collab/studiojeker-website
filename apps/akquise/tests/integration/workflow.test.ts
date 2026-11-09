@@ -13,6 +13,7 @@ const { db } = await import("../../lib/db");
 const { hashPassword, login } = await import("../../lib/auth");
 const {
   saveContact,
+  deleteUnusedContact,
   newDraft,
   editDraft,
   reviewDraft,
@@ -493,13 +494,14 @@ test("25 Kontakte gemeinsam vervollständigen und Entwürfe erstellen ohne Einze
   });
   assert.ok(stale.results);
   assert.equal(stale.results.filter((r) => r.ok).length, 0);
-  await assert.rejects(
-    prepareContacts(martin, "preview", {
-      ids: [contacts[0].id],
-      edits: [selection[0]],
-    }),
-    /geändert/,
-  );
+  const stalePreview = await prepareContacts(martin, "preview", {
+    ids: [contacts[0].id, contacts[1].id], edits: [selection[0]],
+  });
+  assert.ok(stalePreview.contacts);
+  assert.equal(stalePreview.contacts.length, 2);
+  assert.equal(stalePreview.contacts[0].ready, false);
+  assert.match(stalePreview.contacts[0].issues.join(" "), /geändert/);
+  assert.equal(stalePreview.contacts[1].ready, true);
   await suppress(
     martin,
     contacts[0].email,
@@ -2299,7 +2301,7 @@ test("Chat follow-up: exact proposal snapshot, same-series access and explicit i
   }
 });
 
-test("Photo edit: selected source, separate result, explicit version adoption and stale version protection", async () => {
+for (const legacy of [false, true]) test(`Photo edit: ${legacy ? "legacy dialog without layout" : "current layout"}, separate result, explicit adoption and stale protection`, async () => {
   const names = [
     "OPENAI_API_KEY",
     "CONTENT_AI_ENABLED",
@@ -2320,6 +2322,12 @@ test("Photo edit: selected source, separate result, explicit version adoption an
     const source = await testMotif();
     const original = await studioAssets.readAsset(martin, source.id, testStore);
     const s = await studio.createSeries(martin, studioBrief());
+    if (legacy) {
+      const before = await studioContent(s.id);
+      const { studio: _layout, ...payload } = studioContentInput.parse(before.versions[0].payload);
+      void _layout;
+      await db.marketingVersion.update({ where: { id: before.versions[0].id }, data: { payload } });
+    }
     const request = {
       seriesId: s.id,
       kind: "IMAGE",
@@ -2488,11 +2496,20 @@ test("Studio: Textlayout verwendet nur explizite Testschrift, alle Formate und e
 test("Newsletter import is idempotent; copies and edits cannot reuse approval", async () => {
   const { importNewsletters, duplicateNewsletter } =
     await import("../../lib/hub/newsletter-library");
-  const first = await importNewsletters(martin);
-  const { newsletterLibrary } =
+  const { newsletterLibrary, newsletterDefaults, newsletterText } =
     await import("../../lib/hub/newsletter-template");
-  assert.equal(first.imported, newsletterLibrary.length);
-  assert.equal(first.ids.length, newsletterLibrary.length);
+  const v4 = newsletterLibrary.find((item) => item.id === "newsletter-04-github-364bba2")!;
+  const newsletter = newsletterDefaults(v4.id);
+  const connectedDraft = await hub.saveContent(martin, {
+    ...social(martin), kind: "NEWSLETTER", variants: [], title: v4.name,
+    subject: v4.subject, preheader: v4.preheader, newsletter,
+    body: newsletterText(newsletter), audience: "Synthetische Zielgruppe",
+  });
+  const first = await importNewsletters(martin);
+  assert.equal(first.imported, newsletterLibrary.length - 1);
+  assert.equal(first.ids.length, newsletterLibrary.length - 1);
+  assert.equal(await db.marketingContent.count({ where: { title: v4.name } }), 1);
+  assert.equal((await db.marketingContent.findUniqueOrThrow({ where: { id: connectedDraft.id } })).version, 1);
   assert.equal((await importNewsletters(nora)).imported, 0);
   const original = await db.marketingContent.findUniqueOrThrow({
     where: { id: first.ids[1] },
@@ -2533,3 +2550,33 @@ test("Newsletter import is idempotent; copies and edits cannot reuse approval", 
     studioContentInput.parse(saved.payload).body.includes("Geänderte Headline"),
   );
 });
+
+
+
+test("unused contact deletion respects revision, actor, mail history and suppression", async () => {
+  const unused = await saveContact(martin, input("delete-unused"));
+  await assert.rejects(deleteUnusedContact("missing-actor", unused.id, unused.revision));
+  await assert.rejects(deleteUnusedContact(martin, unused.id, unused.revision + 1));
+  assert.ok(await db.contact.findUnique({ where: { id: unused.id } }));
+  await deleteUnusedContact(martin, unused.id, unused.revision);
+  assert.equal(await db.contact.findUnique({ where: { id: unused.id } }), null);
+  const drafted = await saveContact(martin, input("delete-drafted"));
+  const draft = await newDraft(martin, drafted.id);
+  await db.mailQueueItem.create({ data: { draftId: draft.id, version: 1, hash: "a".repeat(64), userId: martin, recipient: drafted.email, subject: "Synthetischer Entwurf", status: "QUEUED" } });
+  await deleteUnusedContact(martin, drafted.id, drafted.revision);
+  assert.equal(await db.contact.findUnique({ where: { id: drafted.id } }), null);
+  assert.equal(await db.draft.findUnique({ where: { id: draft.id } }), null);
+  assert.equal(await db.draftVersion.count({ where: { draftId: draft.id } }), 0);
+  assert.equal((await db.mailQueueItem.findFirstOrThrow({ where: { draftId: draft.id } })).status, "CANCELLED");
+  const attempted = await saveContact(martin, input("delete-attempted"));
+  const attemptedDraft = await newDraft(martin, attempted.id);
+  await db.delivery.create({ data: { draftId: attemptedDraft.id, version: 1, hash: "b".repeat(64), recipient: attempted.email, status: "FAILED", messageId: "delete-attempted-test", idempotencyKey: "delete-attempted-test" } });
+  await assert.rejects(deleteUnusedContact(martin, attempted.id, attempted.revision), /Versandprotokoll vorhanden \(FAILED\)/);
+  assert.ok(await db.contact.findUnique({ where: { id: attempted.id } }));
+  assert.ok(await db.draft.findUnique({ where: { id: attemptedDraft.id } }));
+  const blocked = await saveContact(martin, input("delete-blocked"));
+  await suppress(martin, blocked.email, "Synthetischer Widerspruch");
+  await assert.rejects(deleteUnusedContact(martin, blocked.id, blocked.revision), /Versandsperrliste/);
+  assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
+});
+

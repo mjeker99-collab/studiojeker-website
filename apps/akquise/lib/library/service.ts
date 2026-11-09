@@ -7,9 +7,19 @@ import { ORG } from "../studio/input";
 import { publicConfig } from "../studio/config";
 import { itemInput, brandInput, brandDefaults } from "./input";
 import { z } from "zod";
+import { accessibleFolder, lockLibrary } from "./folders";
 export async function libraryState(actor: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
-  const [items, organization, campaigns, contents, series] = await Promise.all([
+  const [
+    items,
+    organization,
+    campaigns,
+    contents,
+    series,
+    folders,
+    customers,
+    projects,
+  ] = await Promise.all([
     db.libraryItem.findMany({
       where: { organizationId: ORG },
       include: {
@@ -45,6 +55,20 @@ export async function libraryState(actor: string) {
         briefing: true,
         contents: { select: { id: true, title: true, version: true } },
       },
+    }),
+    db.libraryFolder.findMany({
+      where: { organizationId: ORG },
+      orderBy: { name: "asc" },
+    }),
+    db.customer.findMany({
+      where: { organizationId: ORG },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    db.studioSeries.findMany({
+      where: { organizationId: ORG },
+      select: { id: true, title: true, customerId: true },
+      orderBy: { title: "asc" },
     }),
   ]);
   // Only return usage identifiers, never another workspace's data or object-store keys.
@@ -99,6 +123,9 @@ export async function libraryState(actor: string) {
     brand: brandDefaults(organization.brand),
     brandRevision: organization.brandRevision,
     campaigns,
+    folders,
+    customers,
+    projects,
     config: publicConfig(),
   };
 }
@@ -106,6 +133,8 @@ export async function saveLibraryItem(actor: string, raw: unknown) {
   const d = itemInput.parse(raw);
   return db.$transaction(async (tx) => {
     await hubActor(tx, actor);
+    await lockLibrary(tx);
+    if (d.folderId !== undefined) await accessibleFolder(tx, d.folderId);
     if (
       d.campaignId &&
       !(await tx.campaign.findFirst({
@@ -126,10 +155,18 @@ export async function saveLibraryItem(actor: string, raw: unknown) {
     )
       throw new PolicyError("Vorschaubild nicht zugänglich.", 403);
     if (d.id) {
+      if (!d.revision)
+        throw new PolicyError("Inhaltstand fehlt. Neu laden.", 409);
       const old = await tx.libraryItem.findFirst({
         where: { id: d.id, organizationId: ORG },
       });
       if (!old) throw new PolicyError("Inhalt nicht zugänglich.", 403);
+      if (old.deletedAt)
+        throw new PolicyError(
+          "Inhalt zuerst aus dem Papierkorb wiederherstellen.",
+          409,
+        );
+      await accessibleFolder(tx, old.folderId);
       if (old.kind !== d.kind)
         throw new PolicyError("Inhaltstyp kann nicht geändert werden.");
       const r = await tx.libraryItem.updateMany({

@@ -16,6 +16,9 @@ SOURCES = [
  ('master-v7', 'Master-Template · Relaunch', 'mailchimp/reference/studiojeker-newsletter-v7.html', '', ''),
  ('newsletter-02', 'Newsletter 02 · Visibility', 'mailchimp/studiojeker-newsletter-02-visibility.html', 'Gute Inhalte verdienen Sichtbarkeit.', ''),
  ('newsletter-03', 'Newsletter 03 · Sichtbarkeit im Abo', 'mailchimp/studiojeker-newsletter-03-content-abo.html', 'Sichtbarkeit im Abo. Damit Ihr Unternehmen präsent bleibt.', 'Angebotsbedingungen und Gültigkeit vor Versand prüfen und freigeben.'),
+ ('newsletter-04-github-364bba2', 'Newsletter 04 · Sichtbarkeit', 'mailchimp/studiojeker-newsletter-04-visibility.html', '', 'GitHub-Fassung vom 2. November 2026. Inhalte und Videolinks vor Versand prüfen.'),
+ ('newsletter-04-video-promo-20261102', 'Newsletter 04 · Video & Promo', 'mailchimp/studiojeker-newsletter-04-video-promo.html', '', 'Bildfüllende Video-/Promo-Bausteine. Videolinks vor Versand prüfen.'),
+ ('newsletter-04-video-promo-20261103', 'Newsletter 04 · Video & Promo – Nora', 'mailchimp/studiojeker-newsletter-04-video-promo-corrected.html', '', 'Korrigierte V4-Vorlage. Nora mit Tafel, Hero randlos, beide Videolinks vor Versand prüfen.'),
 ]
 VOID = {'img','br','hr','meta','link','input','source','wbr','area','base','embed','param','col','track'}
 LABELS = {'meta_left':'Ausgabe','hero':'Hero','intro':'Einleitung','ai':'Hauptartikel','services':'Kompetenzen','service_digital':'Digital Marketing','service_business':'Business Communication','service_product':'Product Communication','service_architecture':'Architecture','contact':'Kontakt'}
@@ -83,8 +86,11 @@ class Compiler(HTMLParser):
    for k in ['start','end']:s[k]=len(self.source[:s[k]].encode('utf-16-le'))//2
   return self.slots
 
-result=[]
+# Existing template IDs are immutable. Keep separately imported editions too.
+result=json.loads(OUT.read_text()) if OUT.exists() else []
+existing_ids={item['id'] for item in result}
 for ident,name,path,subject,note in SOURCES:
+ if ident in existing_ids: continue
  source=(ROOT/path).read_text(); slots=Compiler(source).compile()
  result.append(dict(id=ident,name=name,source=path,sha256=hashlib.sha256(source.encode()).hexdigest(),html=source,slots=slots,subject=subject or next(s['value'] for s in slots if s['special']=='subject'),preheader=next(s['value'] for s in slots if s['special']=='preheader'),note=note))
 OUT.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')

@@ -120,6 +120,7 @@ export async function assistMail(
     const known =
       input.mode === "RESEARCH"
         ? await db.contact.findMany({
+            where: { organizationId: ORG },
             orderBy: { updatedAt: "desc" },
             take: 500,
             select: {
@@ -263,6 +264,7 @@ export async function applyMailAssistant(
     const candidates = indices.map((i) => result.leads[i]);
     const existing = await db.contact.findMany({
       where: {
+        organizationId: ORG,
         OR: [
           {
             personKey: {
@@ -329,6 +331,7 @@ export async function applyMailAssistant(
     if (freshTeamKeys.length)
       await db.contact.updateMany({
         where: {
+          organizationId: ORG,
           personKey: { in: freshTeamKeys },
           confidence: "UNCONFIRMED",
         },

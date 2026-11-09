@@ -5,10 +5,36 @@ import { contentInput, safeUrl } from "../lib/hub/input";
 import { newsletterHtml } from "../lib/hub/newsletter";
 import { contentHash } from "../lib/hub/workflow";
 import { createHash } from "node:crypto";
+import { applyNewsletterEdit } from "../lib/hub/newsletter-edit";
 import {
   newsletterDefaults,
   newsletterText,
 } from "../lib/hub/newsletter-template";
+
+test("GPT edits only named newsletter fields and rejects unsafe links or invented fields", async () => {
+  const { getNewsletterTemplate } = await import("../lib/hub/newsletter-template");
+  const newsletter = newsletterDefaults("newsletter-02");
+  const source = contentInput.parse({ kind: "NEWSLETTER", title: "Test", ownerId: "user", campaignId: null,
+    scheduledAt: null, subject: "Betreff", preheader: "Vorschau", body: newsletterText(newsletter),
+    audience: "Test", variants: [], newsletter });
+  const slots = getNewsletterTemplate(newsletter.templateId).slots;
+  const textSlot = slots.find((s) => !s.special && s.kind === "text")!;
+  const reply = { reply: "Gekürzt", subject: null, preheader: null,
+    changes: [{ key: textSlot.key, value: "Neue Headline" }] };
+  const next = applyNewsletterEdit(source, reply);
+  assert.equal(next.newsletter!.fields[textSlot.key], "Neue Headline");
+  assert.equal(next.subject, source.subject);
+  assert.equal(next.ownerId, source.ownerId);
+  for (const [key, value] of Object.entries(newsletter.fields))
+    if (key !== textSlot.key) assert.equal(next.newsletter!.fields[key], value);
+  assert.equal(source.newsletter!.fields[textSlot.key], newsletter.fields[textSlot.key]);
+  assert.throws(() => applyNewsletterEdit(source, { ...reply, changes: [{ key: "footer", value: "" }] }));
+  assert.throws(() => applyNewsletterEdit(source, { ...reply, changes: [...reply.changes, ...reply.changes] }));
+  const link = slots.find((s) => s.kind === "link")!;
+  assert.throws(() => applyNewsletterEdit(source, { ...reply, changes: [{ key: link.key, value: "javascript:alert(1)" }] }));
+  assert.throws(() => applyNewsletterEdit(source, { ...reply, status: "APPROVED" }));
+  assert.deepEqual(applyNewsletterEdit(source, { ...reply, changes: [] }), source);
+});
 
 test("Newsletter-Prüfsumme bleibt bei JSONB-Feldreihenfolge stabil, Inhaltsänderungen bleiben erkennbar", () => {
   const newsletter = newsletterDefaults("newsletter-02");
@@ -93,18 +119,22 @@ test("Newsletter benötigt eine explizite Zielgruppe; keine versteckten Eingabef
 });
 
 test("Original-Newsletter bleiben ohne Änderungen bytegleich, inklusive Outlook und Footer", async () => {
-  const { newsletterLibrary, newsletterDefaults, renderNewsletter } =
+  const { newsletterLibrary, newsletterDefaults, renderNewsletter, v4ContactHeadlineFirst } =
     await import("../lib/hub/newsletter-template");
   for (const template of newsletterLibrary) {
     const subject = template.slots.find((s) => s.special === "subject")!.value;
-    assert.equal(
-      renderNewsletter({
-        subject,
-        preheader: template.preheader,
-        newsletter: newsletterDefaults(template.id),
-      }),
-      template.html,
-    );
+    const rendered = renderNewsletter({
+      subject,
+      preheader: template.preheader,
+      newsletter: newsletterDefaults(template.id),
+    });
+    const videoEdition = [
+      "newsletter-04-video-promo-20261102",
+      "newsletter-04-video-promo-20261103",
+    ].includes(template.id);
+    assert.equal(rendered, videoEdition
+      ? v4ContactHeadlineFirst(template.html)
+      : template.html);
   }
 });
 test("Newsletter-Slots begrenzen Änderungen auf Inhalt und schützen Links/HTML", async () => {
@@ -162,3 +192,4 @@ test("Newsletter-Slots begrenzen Änderungen auf Inhalt und schützen Links/HTML
     );
   }
 });
+
