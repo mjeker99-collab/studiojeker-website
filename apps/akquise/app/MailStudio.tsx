@@ -214,6 +214,18 @@ export default function MailStudio({
   const pendingIds = deferredIds.filter(
     (id) => !rows.some((r) => contactIdFor(r) === id),
   );
+  // Explain the actual review failures instead of presenting 99 mails as
+  // selectable when the server has marked all of them as blocked.
+  const issueCounts = Array.from(
+    rows.reduce((counts, row) => {
+      for (const issue of new Set(row.issues))
+        counts.set(issue, (counts.get(issue) ?? 0) + 1);
+      return counts;
+    }, new Map<string, number>()).entries(),
+  ).sort((a, b) => b[1] - a[1]);
+  const renewalContactIds = [
+    ...new Set([...rows.map(contactIdFor), ...deferredIds]),
+  ].filter((id) => id && contacts.some((c) => c.id === id && !c.archivedAt));
   function removeFromBatch(ids: string[]) {
     selectionEpoch.current++;
     const removedDrafts = rows
@@ -1151,6 +1163,23 @@ export default function MailStudio({
                   ? " Bereite Mails können separat versendet werden."
                   : "Ergänze die Angaben, um Mails freizugeben."}
               </p>
+              {!readyRows.length && rows.length > 0 && (
+                <div role="status">
+                  <strong>Warum die Auswahl gesperrt ist:</strong>
+                  <ul>
+                    {issueCounts.slice(0, 6).map(([reason, count]) => (
+                      <li key={reason}>
+                        {count} {count === 1 ? "Mail" : "Mails"}: {reason}
+                      </li>
+                    ))}
+                  </ul>
+                  <p>
+                    Entwürfe werden nur aus aktuell geprüften Kontakten
+                    erneuert. Fehlende Nachweise, Sperrlisten und bereits
+                    versandte Mails bleiben ausgeschlossen.
+                  </p>
+                </div>
+              )}
               <button
                 className={chosen.length ? "secondary" : undefined}
                 disabled={busy || editingDirty}
@@ -1158,6 +1187,18 @@ export default function MailStudio({
               >
                 Offene Angaben bearbeiten
               </button>
+              {!readyRows.length && renewalContactIds.length > 0 && (
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={busy || editingDirty}
+                  onClick={() =>
+                    void run(() => prepareBatch(renewalContactIds))
+                  }
+                >
+                  Aktuelle Entwürfe neu vorbereiten (ohne Versand)
+                </button>
+              )}
             </div>
           )}
         </>
