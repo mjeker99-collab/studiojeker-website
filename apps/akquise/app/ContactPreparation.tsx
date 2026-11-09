@@ -6,6 +6,7 @@ import type {
 } from "../lib/contact-preparation";
 
 import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
+import { isTeamMailbox } from "../lib/contact-identity";
 
 type Result = { id: string; ok: boolean; message: string; revision?: number };
 type Edit = { id: string; revision: number; values: PreparationFields };
@@ -226,6 +227,7 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
+  const teamMailboxCount = proposals.filter((p) => isTeamMailbox(p.email)).length;
   // Show the real reasons for an incomplete selection. A verified email address
   // alone does not satisfy source, date, hook and human review requirements.
   const issueCounts = Array.from(
@@ -258,8 +260,7 @@ export default function ContactPreparation({
       {!requireComplete && unconfirmed > 0 && !shared.confidence && (
         <p role="status">
           Bei {unconfirmed} Kontakten fehlt die Bestätigung der Adressprüfung.
-          Wenn du diese persönlichen Adressen geprüft hast, wähle unten
-          «Persönliche Adresse verifiziert». «Aus vorhandenen Angaben
+          Bestätige nur tatsächlich geprüfte Adressen. «Aus vorhandenen Angaben
           übernehmen» lässt unbestätigte Adressen unverändert.
         </p>
       )}
@@ -293,7 +294,9 @@ export default function ContactPreparation({
           onChange={(e) => setConfirmed(e.target.checked)}
         />
         {requireComplete
-          ? `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
+          ? teamMailboxCount > 0
+            ? `Ich habe die E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft (${teamMailboxCount} Team-Postfächer) und bestätige ihre dokumentierten Quellen, Prüfdaten und Anknüpfungspunkte.`
+            : `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
           : "Ich bestätige die eingetragenen Angaben und die unten angezeigten Ergänzungen aus den Notizen."}
       </label>
       <div className="actions">

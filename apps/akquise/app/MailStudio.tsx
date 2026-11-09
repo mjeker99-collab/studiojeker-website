@@ -217,9 +217,14 @@ export default function MailStudio({
   // Explain the actual review failures instead of presenting 99 mails as
   // selectable when the server has marked all of them as blocked.
   const issueCounts = Array.from(
-    rows.reduce((counts, row) => {
-      for (const issue of new Set(row.issues))
-        counts.set(issue, (counts.get(issue) ?? 0) + 1);
+    [...rows.flatMap((row) => [...new Set(row.issues)]),
+      ...pendingIds.flatMap((id) => {
+        const issues = pendingDetails[id]?.issues ?? [];
+        return issues.length
+          ? [...new Set(issues)]
+          : ["Rechercheangaben müssen bestätigt werden."];
+      })].reduce((counts, issue) => {
+      counts.set(issue, (counts.get(issue) ?? 0) + 1);
       return counts;
     }, new Map<string, number>()).entries(),
   ).sort((a, b) => b[1] - a[1]);
@@ -1163,9 +1168,11 @@ export default function MailStudio({
                   ? " Bereite Mails können separat versendet werden."
                   : "Ergänze die Angaben, um Mails freizugeben."}
               </p>
-              {!readyRows.length && rows.length > 0 && (
+              {issueCounts.length > 0 && (
                 <div role="status">
-                  <strong>Warum die Auswahl gesperrt ist:</strong>
+                  <strong>{readyRows.length
+                    ? "Warum einige Kontakte zurückgestellt sind:"
+                    : "Warum die Auswahl gesperrt ist:"}</strong>
                   <ul>
                     {issueCounts.slice(0, 6).map(([reason, count]) => (
                       <li key={reason}>

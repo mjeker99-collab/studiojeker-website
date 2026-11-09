@@ -2,6 +2,7 @@ import type { Contact } from "@prisma/client";
 import { importedDraft } from "./generation";
 import { normalizeSourceUrl, sourceUrlIssue } from "./contact-source-url";
 import { verificationIssues } from "./policy";
+import { isTeamMailbox } from "./contact-identity";
 
 export type PreparationFields = Partial<{
   email: string;
@@ -169,6 +170,16 @@ export function contactPreparation(
   if (values.confidence === "UNCONFIRMED" && input.shared?.confidence) {
     values.confidence = input.shared.confidence;
     origins.push("Prüfstatus aus gemeinsamer Angabe");
+  }
+  // Only an explicit review can upgrade a previously GENERAL marketing@ or
+  // kommunikation@ address. Other general inboxes retain their classification.
+  if (
+    values.confidence === "GENERAL" &&
+    input.shared?.confidence === "VERIFIED" &&
+    isTeamMailbox(patch.email ?? c.email)
+  ) {
+    values.confidence = "VERIFIED";
+    origins.push("Team-Postfach als Unternehmensadresse bestätigt");
   }
   if (input.values?.confidence !== undefined) {
     values.confidence = input.values.confidence;

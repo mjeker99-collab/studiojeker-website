@@ -1,4 +1,5 @@
 import { acquisitionAddressIssue } from "./mail-address";
+import { isTeamMailbox } from "./contact-identity";
 import { createHash } from "node:crypto";
 import { readMailConfig } from "./config.mjs";
 import { signedMessage, signatureAssets } from "./mail-signature";
@@ -49,7 +50,9 @@ export function verificationIssues(
   const addressIssue = acquisitionAddressIssue(c.email);
   if (addressIssue) issues.push(addressIssue);
   if (c.confidence !== "VERIFIED")
-    issues.push("E-Mail-Adresse noch nicht als verifiziert bestätigt.");
+    issues.push(isTeamMailbox(c.email)
+      ? "Team-Postfach noch nicht als Unternehmensadresse bestätigt."
+      : "E-Mail-Adresse noch nicht als verifiziert bestätigt.");
   if (!c.verifiedAt) issues.push("Verifikationsdatum fehlt.");
   if (!c.sourceUrl) issues.push("Quellen-URL fehlt.");
   if (!c.hook.trim()) issues.push("Dokumentierter Anknüpfungspunkt fehlt.");

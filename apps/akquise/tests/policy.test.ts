@@ -727,3 +727,16 @@ for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
   assert.equal(acquisitionAddressIssue(email), "");
   assert.notEqual(acquisitionAddressIssue("info@example.test"), "");
 }
+
+test("Team-Mailvorlage nennt keine erfundene Kontaktperson und Archivierte bleiben gesperrt", async () => {
+  const team = { ...architectureContact, notes: "", email: "marketing@example.test", firstName: "Marketing", lastName: "Team", confidence: "VERIFIED" as const };
+  const generated = await generateDraft(team);
+  assert.match(generated.body, /^Guten Tag\n\n/);
+  assert.doesNotMatch(generated.body, /Guten Tag Marketing Team/);
+  const namedTeam = await generateDraft({ ...team, firstName: "Anna", lastName: "Muster" });
+  assert.match(namedTeam.body, /^Guten Tag\n\n/);
+  const named = await generateDraft({ ...team, email: "anna@example.test", firstName: "Anna", lastName: "Muster" });
+  assert.match(named.body, /^Guten Tag Anna Muster\n\n/);
+  await assert.rejects(generateDraft({ ...team, archivedAt: new Date("2026-10-10") }));
+  await assert.rejects(generateDraft({ ...team, email: "info@example.test" }));
+});
