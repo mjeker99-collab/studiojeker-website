@@ -51,7 +51,7 @@ for (const allBlocked of [false, true]) {
       ).toBeVisible();
     } else {
       await expect(
-        page.getByText("2 Mails bereit · 1 Angaben offen · 2 ausgewählt", {
+        page.getByText("2 Mails vorbereitet · 1 Angaben offen · 2 ausgewählt", {
           exact: true,
         }),
       ).toBeVisible();
@@ -59,7 +59,7 @@ for (const allBlocked of [false, true]) {
         .getByRole("button", { name: "Auswahl aufheben", exact: true })
         .click();
       await expect(
-        page.getByText("2 Mails bereit · 1 Angaben offen · 0 ausgewählt", {
+        page.getByText("2 Mails vorbereitet · 1 Angaben offen · 0 ausgewählt", {
           exact: true,
         }),
       ).toBeVisible();
@@ -72,19 +72,19 @@ for (const allBlocked of [false, true]) {
         .click();
       await list
         .getByRole("button", {
-          name: "Alle versandbereiten auswählen",
+          name: "Alle vorbereiteten Mails auswählen",
           exact: true,
         })
         .click();
       await expect(
-        page.getByText("2 Mails bereit · 0 Angaben offen · 2 ausgewählt", {
+        page.getByText("2 Mails vorbereitet · 0 Angaben offen · 2 ausgewählt", {
           exact: true,
         }),
       ).toBeVisible();
       await page.reload();
       await page.getByRole("button", { name: /^Akquise$/ }).click();
       await expect(
-        page.getByText("2 Mails bereit · 0 Angaben offen · 2 ausgewählt", {
+        page.getByText("2 Mails vorbereitet · 0 Angaben offen · 2 ausgewählt", {
           exact: true,
         }),
       ).toBeVisible();
@@ -184,7 +184,7 @@ test("99 ready mails proceed with one incomplete contact, without releasing the 
     })
     .click();
   await expect(
-    page.getByText("99 Mails bereit · 1 Angaben offen · 99 ausgewählt", {
+    page.getByText("99 Mails vorbereitet · 1 Angaben offen · 99 ausgewählt", {
       exact: true,
     }),
   ).toBeVisible();

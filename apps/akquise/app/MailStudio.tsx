@@ -258,7 +258,7 @@ export default function MailStudio({
   const approvalHint = !chosen.length
     ? "Wähle mindestens eine versandbereite Mail aus."
     : missingLegal.length && rationale.trim().length < 15
-      ? "Ergänze die gemeinsame Rechtsgrundlage mit mindestens 15 Zeichen."
+      ? "Noch ein Schritt: Beschreibe oben kurz, worauf die Kontaktaufnahme beruht und wo dies dokumentiert ist."
       : missingLegal.length && publicLegal && !procurement
         ? "Bestätige die Prüfung für öffentliche Auftraggeber."
         : !read || !dispatch || (missingLegal.length && !legal)
@@ -1257,7 +1257,7 @@ export default function MailStudio({
             <h3>Mails prüfen und versenden</h3>
             <p>
               <strong>
-                {readyRows.length} Mails bereit · {openIds.length} Angaben offen
+                {readyRows.length} Mails vorbereitet · {openIds.length} Angaben offen
                 · {chosen.length} ausgewählt
               </strong>
             </p>
@@ -1273,7 +1273,7 @@ export default function MailStudio({
                       <option value="all">
                         Alle ({rows.length + pendingIds.length})
                       </option>
-                      <option value="ready">Bereit ({readyRows.length})</option>
+                      <option value="ready">Vorbereitet ({readyRows.length})</option>
                       <option value="open">
                         Angaben offen ({openIds.length})
                       </option>
@@ -1305,7 +1305,7 @@ export default function MailStudio({
                         setLegal(false);
                       }}
                     >
-                      Alle versandbereiten auswählen
+                      Alle vorbereiteten Mails auswählen
                     </button>
                     <button
                       className="quiet"
@@ -1321,7 +1321,7 @@ export default function MailStudio({
                     </button>
                   </div>
                   <small>
-                    {chosen.length} von {readyRows.length} versandbereiten Mails
+                    {chosen.length} von {readyRows.length} vorbereiteten Mails
                     ausgewählt · Auswahl gilt für die ganze Liste
                   </small>
                 </div>
@@ -1416,7 +1416,7 @@ export default function MailStudio({
                             ? "Angaben ergänzen"
                             : results.some((x) => x.id === r.id && x.ok)
                               ? "Erledigt"
-                              : "Bereit"}
+                              : r.needsLegal ? "Versandangabe fehlt" : "Bereit zur Freigabe"}
                         </small>
                       </button>
                       <button
@@ -1516,18 +1516,22 @@ export default function MailStudio({
                 {missingLegal.length > 0 && (
                   <fieldset>
                     <legend>
-                      Gemeinsame Versandprüfung für {missingLegal.length}{" "}
+                      Noch eine Angabe für {missingLegal.length}{" "}
                       ausgewählte Kontakte
                     </legend>
                     <p>
-                      Eine gemeinsame Begründung verwenden, wenn sie für alle
-                      ausgewählten Kontakte mit offener Versandprüfung zutrifft.
-                      Abweichende Kontakte aus der Auswahl nehmen.
+                      Warum dürfen diese Kontakte angeschrieben werden? Beschreibe
+                      die tatsächlich vorhandene Grundlage und wo sie dokumentiert
+                      ist. Deine Angabe wird für diese Kontakte gespeichert.
+                      Bereits gültig geprüfte Kontakte brauchen keine neue Angabe.
                     </p>
                     <label>
-                      Rechtsgrundlage und Nachweis
+                      Grundlage der Kontaktaufnahme und Nachweis
                       <textarea
+                        id="mail-dispatch-basis"
                         aria-label="Rechtsgrundlage und Nachweis"
+                        placeholder="Beschreibe die tatsächliche Grundlage, mit Datum oder Verweis auf den vorhandenen Nachweis."
+                        aria-describedby="mail-basis-help"
                         rows={3}
                         maxLength={4000}
                         value={rationale}
@@ -1539,6 +1543,25 @@ export default function MailStudio({
                         }}
                       />
                     </label>
+                    <p id="mail-basis-help">
+                      Einmal für diese Auswahl ausfüllen. Mindestens 15 Zeichen.
+                      Nur Angaben verwenden, die auf alle betroffenen Kontakte zutreffen.
+                    </p>
+                    {chosen.some((r) => !r.needsLegal) && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || editingDirty}
+                        onClick={() => {
+                          setIncluded(chosen.filter((r) => !r.needsLegal).map((r) => r.id));
+                          setRead(false);
+                          setDispatch(false);
+                          setLegal(false);
+                        }}
+                      >
+                        Nur mit {chosen.filter((r) => !r.needsLegal).length} bereits geprüften Mails weiter
+                      </button>
+                    )}
                     {publicLegal && (
                       <label className="check">
                         <input
@@ -1585,13 +1608,24 @@ export default function MailStudio({
                   </p>
                   <div className="actions">
                     <button
-                      disabled={!canApprove}
+                      disabled={busy || editingDirty || (!canApprove && !(missingLegal.length && rationale.trim().length < 15))}
                       aria-describedby="mail-approval-hint"
-                      onClick={() => void run(() => submitMails("now"))}
+                      onClick={() => {
+                        if (canApprove) {
+                          void run(() => submitMails("now"));
+                        } else if (missingLegal.length && rationale.trim().length < 15) {
+                          document.getElementById("mail-dispatch-basis")?.focus();
+                          document.getElementById("mail-dispatch-basis")?.scrollIntoView({ block: "center", behavior: "smooth" });
+                        } else {
+                          approvalRef.current?.querySelector<HTMLInputElement>('input[type="checkbox"]:not(:checked)')?.focus();
+                        }
+                      }}
                     >
                       {busy && sendMode === "now"
                         ? "Versand läuft …"
-                        : chosen.length === 1
+                        : missingLegal.length && rationale.trim().length < 15
+                          ? "Fehlende Versandangabe ergänzen"
+                          : chosen.length === 1
                           ? "Versand starten · 1 Mail"
                           : `Versand starten · ${chosen.length} Mails`}
                     </button>
