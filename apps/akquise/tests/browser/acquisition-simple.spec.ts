@@ -60,7 +60,7 @@ for (const width of [390, 1024]) {
       recipients.getByRole("checkbox", { checked: true }),
     ).toHaveCount(0);
     await recipients
-      .getByRole("button", { name: "Alle versandbereiten auswählen", exact: true })
+      .getByRole("button", { name: "Alle vorbereiteten Mails auswählen", exact: true })
       .click();
     await expect(
       recipients.getByRole("checkbox", { checked: true }),

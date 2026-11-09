@@ -144,15 +144,17 @@ for (const contactCount of [25, 100]) {
   await page.getByLabel(new RegExp(`Ich habe die persönlichen E-Mail-Adressen der ${contactCount} ausgewählten Kontakte`)).check();
   await page.getByRole("button", { name: "Angaben speichern und weiter →", exact: true }).click();
   await expect(
-    page.getByText(`Gemeinsame Versandprüfung für ${contactCount} ausgewählte Kontakte`, {
+    page.getByText(`Noch eine Angabe für ${contactCount} ausgewählte Kontakte`, {
       exact: true,
     }),
   ).toBeVisible();
   expect(preparedIds).toHaveLength(contactCount);
   expect(new Set(preparedIds).size).toBe(contactCount);
   await expect(
-    page.getByRole("button", { name: `Versand starten · ${contactCount} Mails`, exact: true }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: "Fehlende Versandangabe ergänzen", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Fehlende Versandangabe ergänzen", exact: true }).click();
+  await expect(page.getByLabel("Rechtsgrundlage und Nachweis")).toBeFocused();
   expect(approvalCalls).toBe(0);
   });
 }

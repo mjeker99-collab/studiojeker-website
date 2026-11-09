@@ -236,17 +236,17 @@ test("50 selected contacts stay together through shared completion and review", 
     releasePreparation();
   }
   await expect(
-    page.getByText("Gemeinsame Versandprüfung für 50 ausgewählte Kontakte", {
+    page.getByText("Noch eine Angabe für 50 ausgewählte Kontakte", {
       exact: true,
     }),
   ).toBeVisible();
   expect(prepared).toBe(50);
   await expect(
     page.getByRole("button", {
-      name: "Versand starten · 50 Mails",
+      name: "Fehlende Versandangabe ergänzen",
       exact: true,
     }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill("Dokumentierte Einwilligung für alle synthetischen Testkontakte.");
@@ -400,7 +400,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   await expect(
     page.getByRole("heading", { name: "Mails prüfen und versenden" }),
   ).toBeVisible();
-  await expect(page.getByText(/1 Mails bereit/)).toBeVisible();
+  await expect(page.getByText(/1 Mails vorbereitet/)).toBeVisible();
   await expect(
     page
       .locator(".mail-open-notice")
@@ -548,8 +548,8 @@ test("mixed contact group advances only verified unchanged records without sendi
       .getByText(/3 Kontakte mit offenen Angaben/),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Versand starten · 1 Mail", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: "Fehlende Versandangabe ergänzen", exact: true }),
+  ).toBeEnabled();
   await page
     .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
     .click();
