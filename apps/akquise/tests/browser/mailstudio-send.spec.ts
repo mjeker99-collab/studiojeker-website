@@ -7,6 +7,7 @@ async function setup(
   const sent: string[] = [];
   const previews: string[][] = [];
   const settingsCalls: Record<string, unknown>[] = [];
+  let externallyQueued = false;
   const contacts = Array.from({ length: options.draftCount ?? 3 }, (_, i) => ({
     id: `c${i}`,
     revision: 1,
@@ -81,7 +82,7 @@ async function setup(
           serverLimit: 100,
           todayCount: sent.length,
           todaySent: sent.length,
-          counts: options.queued ? [{ status: "QUEUED", _count: 3 }] : [],
+          counts: options.queued ? [{ status: "QUEUED", _count: 3 }] : externallyQueued ? [{ status: "QUEUED", _count: 1 }] : [],
           items: options.queued
             ? drafts.map((d, i) => ({
                 id: `q${i}`,
@@ -92,7 +93,17 @@ async function setup(
                 status: "QUEUED",
                 error: null,
               }))
-            : [],
+            : externallyQueued
+              ? [{
+                  id: "q-external",
+                  draftId: "d0",
+                  version: 1,
+                  recipient: contacts[0].email,
+                  subject: "Anfrage 0",
+                  status: "QUEUED",
+                  error: null,
+                }]
+              : [],
         },
       });
     if (path === "/api/mail-review/preview") {
@@ -148,7 +159,7 @@ async function setup(
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
-  return { sent, previews, settingsCalls };
+  return { sent, previews, settingsCalls, markExternallyQueued: () => { externallyQueued = true; } };
 }
 
 for (const width of [390, 768, 1024]) {
@@ -190,6 +201,30 @@ for (const width of [390, 768, 1024]) {
     expect(state.sent).toEqual([]);
   });
 }
+
+test("mail selection confirmation expires if a selected mail is queued elsewhere", async ({ page }) => {
+  await page.clock.install();
+  const state = await setup(page);
+  await page.getByText("Weitere Optionen", { exact: true }).click();
+  await page.getByRole("button", { name: "Zeitplan & Versandstatus", exact: true }).click();
+  await page.getByText("Bereits freigegebene Mails einplanen (3)", { exact: true }).click();
+  const panel = page.locator(".mail-schedule");
+  await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
+  const confirmation = panel.getByRole("checkbox", {
+    name: /Nachrichten für den automatischen Versand einplanen/,
+  });
+  const action = panel.getByRole("button", { name: /ausgewählte Mails einplanen$/ });
+  await confirmation.check();
+  await expect(action).toBeEnabled();
+
+  // Polling returns a recently queued item, making one selected draft unavailable.
+  state.markExternallyQueued();
+  await page.clock.fastForward(31_000);
+  await expect(panel.getByText("Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut auswählen.")).toBeVisible();
+  await expect(confirmation).not.toBeChecked();
+  await expect(action).toBeDisabled();
+  expect(state.sent).toEqual([]);
+});
 
 for (const width of [390, 1024]) {
   test(`all queued mails can be reviewed and sent now with one approval at ${width}px`, async ({
