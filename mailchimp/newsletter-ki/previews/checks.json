@@ -1,0 +1,87 @@
+{
+  "overflow": {
+    "ki-desktop-700.png": false,
+    "ki-mobile-390.png": false,
+    "ki-mobile-320.png": false
+  },
+  "widths": {
+    "ki-desktop-700.png": {
+      "total": 8,
+      "complete": 8,
+      "broken": [],
+      "scrollWidth": 700,
+      "clientWidth": 700,
+      "scrollHeight": 2093,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    },
+    "ki-mobile-390.png": {
+      "total": 8,
+      "complete": 8,
+      "broken": [],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 2997,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    },
+    "ki-mobile-320.png": {
+      "total": 8,
+      "complete": 8,
+      "broken": [],
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "scrollHeight": 3213,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    }
+  }
+}
