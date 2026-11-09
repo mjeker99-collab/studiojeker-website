@@ -294,7 +294,9 @@ export default function ContactPreparation({
           onChange={(e) => setConfirmed(e.target.checked)}
         />
         {requireComplete
-          ? `Ich habe die E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft (${teamMailboxCount} Team-Postfächer) und bestätige ihre dokumentierten Quellen, Prüfdaten und Anknüpfungspunkte.`
+          ? teamMailboxCount > 0
+            ? `Ich habe die E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft (${teamMailboxCount} Team-Postfächer) und bestätige ihre dokumentierten Quellen, Prüfdaten und Anknüpfungspunkte.`
+            : `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
           : "Ich bestätige die eingetragenen Angaben und die unten angezeigten Ergänzungen aus den Notizen."}
       </label>
       <div className="actions">
