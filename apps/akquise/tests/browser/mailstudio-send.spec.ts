@@ -430,3 +430,35 @@ test("discard requires confirmation and leaves the selection intact on cancel", 
   ).toBeVisible();
   expect(discarded).toEqual(["d0", "d1", "d2"]);
 });
+
+
+test("97 prepared mails can be selected as one group on iPad without dispatch", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  const state = await setup(page, { draftCount: 97 });
+  await page.getByRole("button", {
+    name: "Gespeicherte Entwürfe öffnen (97)",
+    exact: true,
+  }).click();
+  const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
+  await expect(
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", { exact: true }),
+  ).toBeVisible();
+  await recipients.getByRole("button", { name: "Auswahl aufheben", exact: true }).click();
+  await expect(
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 0 ausgewählt", { exact: true }),
+  ).toBeVisible();
+  await recipients.getByRole("button", {
+    name: "Alle vorbereiteten Mails auswählen",
+    exact: true,
+  }).click();
+  await expect(
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel(/Ich gebe die 97 ausgewählten persönlichen Mails/),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Versand starten · 97 Mails", exact: true }),
+  ).toBeDisabled();
+  expect(state.sent).toEqual([]);
+});
