@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Safety regression on synthetic contacts only: 100 drafts reach one shared
+ * Safety regression on synthetic contacts only: 25, 97 and 100 drafts reach a shared
  * review. The approval endpoint is observed, never called or dispatched.
  */
-for (const contactCount of [25, 100]) {
+for (const contactCount of [25, 97, 100]) {
   test(`${contactCount} verified contacts reach group review without any dispatch`, async ({ page }) => {
   test.setTimeout(60000);
   const contacts = Array.from({ length: contactCount }, (_, i) => ({
