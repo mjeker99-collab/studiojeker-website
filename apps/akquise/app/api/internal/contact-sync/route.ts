@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
+import { allowedAccount } from "@/lib/config.mjs";
 import { readSheetContacts } from "@/lib/sheets";
 import { importContacts } from "@/lib/workflow";
 
@@ -16,10 +17,27 @@ export async function POST(req: Request) {
     return new Response(null, { status: 401 });
   }
   try {
-    const email = process.env.MARTIN_EMAIL;
-    if (!email) return Response.json({ error: "Actor not configured" }, { status: 503 });
-    const actor = await db.user.findUnique({ where: { email }, select: { id: true, active: true } });
-    if (!actor?.active) return Response.json({ error: "Actor unavailable" }, { status: 503 });
+    // Use only existing, active StudioONE accounts authorised by the same
+    // production allowlist as the interactive Akquise workflow. If Martin
+    // has not yet been provisioned, the already-authorised Nora account can
+    // perform the additive import. Never create a user or bypass access rules.
+    const allowedEmails = [process.env.MARTIN_EMAIL, process.env.NORA_EMAIL]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.trim().toLowerCase());
+    if (!allowedEmails.length)
+      return Response.json({ error: "Actor not configured" }, { status: 503 });
+    const candidates = await db.user.findMany({
+      where: { email: { in: allowedEmails }, active: true },
+      select: { id: true, name: true, email: true, active: true },
+    });
+    const actor = allowedEmails
+      .map((email) => candidates.find((candidate) =>
+        candidate.email === email && allowedAccount(candidate)))
+      .find((candidate) => Boolean(candidate));
+    if (!actor) {
+      console.error("Google master contact sync: no active authorised StudioONE account.");
+      return Response.json({ error: "No authorised active StudioONE account" }, { status: 503 });
+    }
     const contacts = await readSheetContacts(actor.id);
     const result = await importContacts(actor.id, contacts, { dedupeEmails: true });
     return Response.json({ ok: true, ...result }, {
