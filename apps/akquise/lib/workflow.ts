@@ -292,13 +292,37 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
-      // Keep large master imports atomic without exceeding database bind limits.
-      // Each chunk preserves unique-person deduplication and never grants approval.
+      // A personKey is unique, but email is not: preserve existing contacts,
+      // their manually edited drafts and approvals, and global suppressions.
+      // Keep imports additive, idempotent and free of duplicate email recipients.
+      const seenEmails = new Set<string>();
       let imported = 0;
       for (let offset = 0; offset < rows.length; offset += 250) {
         const batch = rows.slice(offset, offset + 250);
+        const emailAddresses = [...new Set(batch.map((c) => normalizeEmail(c.email)).filter(Boolean))];
+        const [present, blocked] = await Promise.all([
+          tx.contact.findMany({
+            where: { email: { in: emailAddresses } },
+            select: { email: true },
+          }),
+          tx.suppression.findMany({
+            where: { email: { in: emailAddresses } },
+            select: { email: true },
+          }),
+        ]);
+        const existingEmails = new Set(present.map((c) => normalizeEmail(c.email)));
+        const suppressedEmails = new Set(blocked.map((s) => normalizeEmail(s.email)));
+        const eligible = batch.filter((c) => {
+          const email = normalizeEmail(c.email);
+          if (!email) return true; // Historical research-only contacts have no address.
+          if (seenEmails.has(email) || existingEmails.has(email) || suppressedEmails.has(email))
+            return false;
+          seenEmails.add(email);
+          return true;
+        });
+        if (!eligible.length) continue;
         const created = await tx.contact.createMany({
-          data: batch.map((c) => ({
+          data: eligible.map((c) => ({
             ...c,
             publicAuthority:
               c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
