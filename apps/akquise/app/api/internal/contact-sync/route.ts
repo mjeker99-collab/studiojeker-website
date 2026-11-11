@@ -49,9 +49,11 @@ export async function POST(req: Request) {
     // class names, never OAuth tokens, remote response bodies or contact data.
     const cause = error instanceof PolicyError
       ? `PolicyError: ${error.message.slice(0, 240)}`
-      : error instanceof Error
-        ? error.name
-        : "unknown";
+      : error instanceof Error && /^Masterliste(?: Zeile \\d+)?: /.test(error.message)
+        ? error.message.slice(0, 240)
+        : error instanceof Error
+          ? error.name
+          : "unknown";
     console.error(`Google master contact sync failed: ${cause}; no email was sent.`);
     return Response.json({ error: "Contact sync failed" }, { status: 500 });
   }
