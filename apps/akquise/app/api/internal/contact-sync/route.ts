@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     // class names, never OAuth tokens, remote response bodies or contact data.
     const cause = error instanceof PolicyError
       ? `PolicyError: ${error.message.slice(0, 240)}`
-      : error instanceof Error && /^Masterliste(?: Zeile \\d+)?: /.test(error.message)
+      : error instanceof Error && /^Masterliste(?: Zeile \d+)?: /.test(error.message)
         ? error.message.slice(0, 240)
         : error instanceof Error
           ? error.name
