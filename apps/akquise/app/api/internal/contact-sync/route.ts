@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const actor = await db.user.findUnique({ where: { email }, select: { id: true, active: true } });
     if (!actor?.active) return Response.json({ error: "Actor unavailable" }, { status: 503 });
     const contacts = await readSheetContacts(actor.id);
-    const result = await importContacts(actor.id, contacts);
+    const result = await importContacts(actor.id, contacts, { dedupeEmails: true });
     return Response.json({ ok: true, ...result }, {
       headers: { "Cache-Control": "no-store" },
     });
