@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Safety regression on synthetic contacts only: 100 drafts reach one shared
+ * Safety regression on synthetic contacts only: 25, 97 and 100 drafts reach a shared
  * review. The approval endpoint is observed, never called or dispatched.
  */
-for (const contactCount of [25, 100]) {
+for (const contactCount of [25, 97, 100]) {
   test(`${contactCount} verified contacts reach group review without any dispatch`, async ({ page }) => {
   test.setTimeout(60000);
   const contacts = Array.from({ length: contactCount }, (_, i) => ({
@@ -135,7 +135,9 @@ for (const contactCount of [25, 100]) {
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto("/");
   await page.getByRole("button", { name: "Akquise", exact: false }).click();
-  await page.getByRole("button", { name: `${contactCount} Kontakte auswählen`, exact: true }).click();
+  // The UI offers 25/50/100; requesting 100 safely selects all 97 available contacts.
+  const requestedCount = contactCount === 97 ? 100 : contactCount;
+  await page.getByRole("button", { name: `${requestedCount} Kontakte auswählen`, exact: true }).click();
   await expect(
     page.getByRole("heading", { name: `${contactCount} Kontakte ausgewählt`, exact: true }),
   ).toBeVisible();
