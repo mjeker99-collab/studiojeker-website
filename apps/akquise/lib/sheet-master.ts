@@ -27,7 +27,7 @@ export function mapMasterSheet(values: string[][]) {
     if (/^info(?:[.+_-][^@]*)?@/i.test(cells[4])) continue;
     // The source column can contain several URLs separated by " | ".
     // Keep the original string in notes but validate one canonical URL for import.
-    const sourceCandidate = cells[8].match(/https?:\\/\\/[^\\s|;]+/i)?.[0] ?? "";
+    const sourceCandidate = cells[8].match(/https?:\/\/[^\s|;]+/i)?.[0] ?? "";
     const sourceUrl = sourceCandidate && URL.canParse(sourceCandidate)
       ? sourceCandidate : "";
     const notes = [
