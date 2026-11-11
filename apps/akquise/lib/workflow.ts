@@ -288,7 +288,7 @@ export async function saveContact(
     return contact;
   });
 }
-export async function importContacts(userId: string, rows: ContactInput[]) {
+export async function importContacts(userId: string, rows: ContactInput[], options: { dedupeEmails?: boolean } = {}) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
@@ -312,14 +312,14 @@ export async function importContacts(userId: string, rows: ContactInput[]) {
         ]);
         const existingEmails = new Set(present.map((c) => normalizeEmail(c.email)));
         const suppressedEmails = new Set(blocked.map((s) => normalizeEmail(s.email)));
-        const eligible = batch.filter((c) => {
+        const eligible = options.dedupeEmails ? batch.filter((c) => {
           const email = normalizeEmail(c.email);
           if (!email) return true; // Historical research-only contacts have no address.
           if (seenEmails.has(email) || existingEmails.has(email) || suppressedEmails.has(email))
             return false;
           seenEmails.add(email);
           return true;
-        });
+        }) : batch;
         if (!eligible.length) continue;
         const created = await tx.contact.createMany({
           data: eligible.map((c) => ({
