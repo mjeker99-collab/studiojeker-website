@@ -22,18 +22,18 @@ export const signatureAssets = [
 
 const signatureText =
   "Nora Jeker\nStudiojeker GmbH\nHauptstrasse 73\nCH-4528 Zuchwil\n+41 78 601 78 85\nnjeker@studiojeker.ch\nstudiojeker.ch\nWE CREATE VISIBILITY.";
-// Only replace a known Nora closing, preserving all following custom/opt-out text.
+// Normalize known Studiojeker closings; preserve following custom/opt-out text.
 export function signatureParts(body: string) {
   const normalized = body.replace(/\r\n?/g, "\n").trim();
   const match =
-    /(?:^|\n)(Freundliche Grüsse|Freundliche Grüße|Mit freundlichen Grüssen|Mit freundlichen Grüßen)\s*\n+Nora Jeker[ \t]*(?:\n|$)/i.exec(
+    /(?:^|\n)(Beste Grüsse|Beste Grüße|Freundliche Grüsse|Freundliche Grüße|Mit freundlichen Grüssen|Mit freundlichen Grüßen)\s*\n+(?:Nora|Martin) Jeker[ \t]*(?:\n|$)/i.exec(
       normalized,
     );
   if (!match) return { before: normalized, after: "" };
-  const before = normalized.slice(0, match.index).trimEnd() + "\n\n" + match[1];
+  const before = normalized.slice(0, match.index).trimEnd() + "\n\n" + "Beste Grüsse";
   const tail = normalized.slice(match.index + match[0].length).split("\n");
   const known =
-    /^(?:Studiojeker(?: GmbH|\s*[–—-]\s*We create visibility\.?)?|(?:https?:\/\/)?(?:www\.)?studiojeker\.ch\/?|njeker@studiojeker\.ch|WE CREATE VISIBILITY\.?|Hauptstrasse 73|CH-4528 Zuchwil|\+41 78 601 78 85)$/i;
+    /^(?:Studiojeker(?: GmbH)?(?:\s*[|–—-]\s*(?:We create visibility\.?|Visibility Partner|Creating Visibility))?|(?:https?:\/\/)?(?:www\.)?studiojeker\.ch\/?|njeker@studiojeker\.ch|WE CREATE VISIBILITY\.?|Hauptstrasse 73|CH-4528 Zuchwil|\+41 78 601 78 85)$/i;
   while (tail.length && (!tail[0].trim() || known.test(tail[0].trim())))
     tail.shift();
   return { before: before.trim(), after: tail.join("\n").trim() };
