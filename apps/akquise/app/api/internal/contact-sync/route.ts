@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
+import { PolicyError } from "@/lib/policy";
 import { allowedAccount } from "@/lib/config.mjs";
 import { readSheetContacts } from "@/lib/sheets";
 import { importContacts } from "@/lib/workflow";
@@ -43,8 +44,17 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, ...result }, {
       headers: { "Cache-Control": "no-store" },
     });
-  } catch {
-    console.error("Google master contact sync failed; no email was sent.");
+  } catch (error) {
+    // Restricted diagnostics: expose only our own policy messages or error
+    // class names, never OAuth tokens, remote response bodies or contact data.
+    const cause = error instanceof PolicyError
+      ? `PolicyError: ${error.message.slice(0, 240)}`
+      : error instanceof Error && /^Masterliste(?: Zeile \d+)?: /.test(error.message)
+        ? error.message.slice(0, 240)
+        : error instanceof Error
+          ? error.name
+          : "unknown";
+    console.error(`Google master contact sync failed: ${cause}; no email was sent.`);
     return Response.json({ error: "Contact sync failed" }, { status: 500 });
   }
 }
