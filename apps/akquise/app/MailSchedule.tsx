@@ -114,6 +114,7 @@ export default function MailSchedule({
         if (!response.ok) throw new Error(json.error);
         if (active) {
           setData(json);
+          setError("");
           setSettings((old) => old || json.schedule);
         }
       } catch (e) {
@@ -250,11 +251,17 @@ export default function MailSchedule({
         )
       : null;
   useEffect(() => {
+    if (error) {
+      onSummaryChange?.(
+        "Zeitplan derzeit nicht abrufbar. Unter Versand den aktuellen Status prüfen.",
+      );
+      return;
+    }
     if (!data) return;
     onSummaryChange?.(
       `${data.schedule.weekdaysOnly ? "Montag bis Freitag" : "Jeden Tag"}, ${String(data.schedule.startHour).padStart(2, "0")}:00–${String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · maximal ${Math.min(data.schedule.dailyLimit, data.serverLimit)} Mails pro Tag. ${!data.productionReady ? "Versand derzeit deaktiviert." : !data.workerHealthy ? "Versanddienst derzeit nicht erreichbar." : data.schedule.enabled ? "Beginn im nächsten verfügbaren Zeitfenster." : "Der Versand ist pausiert. Die eingeplanten Mails warten, bis du ihn unter Versand fortsetzt."}`,
     );
-  }, [data, onSummaryChange]);
+  }, [data, error, onSummaryChange]);
   const staleWorker = !data?.workerHealthy;
   const capacity = settings
     ? Math.ceil(

@@ -1701,9 +1701,10 @@ export default function MailStudio({
                     {approvalHint}
                   </p>
                   <p>
-                    Die ausgewählten Mails werden eingeplant. Bei aktiver Automatik
-                    beginnt der Versand im nächsten verfügbaren Zeitfenster und läuft im
-                    Hintergrund. Du kannst die Seite danach schliessen.
+                    Die ausgewählten Mails werden eingeplant. Bei aktiver
+                    Automatik beginnt der Versand im nächsten verfügbaren
+                    Zeitfenster und läuft im Hintergrund. Du kannst die Seite
+                    danach schliessen.
                   </p>
                   <div className="actions">
                     <button

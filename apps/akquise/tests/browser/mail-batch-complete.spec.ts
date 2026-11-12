@@ -684,12 +684,12 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
 
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
-  await expect(
-    page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/),
-  ).toBeVisible();
   await page
     .getByRole("button", { name: "Neue Mails erstellen", exact: true })
     .click();
+  await expect(
+    page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/),
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
     .click();

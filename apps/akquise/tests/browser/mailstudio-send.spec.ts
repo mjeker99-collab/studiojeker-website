@@ -187,10 +187,7 @@ for (const width of [390, 768, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const draftCount = width === 768 ? 183 : 3;
     const state = await setup(page, { draftCount });
-    await page.getByText("Weitere Optionen", { exact: true }).click();
-    await page
-      .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Versand", exact: true }).click();
     await page
       .getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
         exact: true,
@@ -239,10 +236,7 @@ test("mail selection confirmation expires if a selected mail is queued elsewhere
 }) => {
   await page.clock.install();
   const state = await setup(page);
-  await page.getByText("Weitere Optionen", { exact: true }).click();
-  await page
-    .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
   await page
     .getByText("Bereits freigegebene Mails einplanen (3)", { exact: true })
     .click();

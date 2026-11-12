@@ -220,7 +220,10 @@ for (const width of [390, 768, 1440]) {
       ),
     ).toBe(true);
     if (width <= 1200) {
-      await page.locator(".mail-recipient-list .mail-recipient button").first().click();
+      await page
+        .locator(".mail-recipient-list .mail-recipient button")
+        .first()
+        .click();
     }
     await expect(
       page
