@@ -164,7 +164,7 @@ test("99 ready mails proceed with one incomplete contact, without releasing the 
     });
   });
   let released: string[] = [];
-  await page.route("**/api/mail-review/approve-and-start", (route) => {
+  await page.route("**/api/mail-review/approve-and-enqueue", (route) => {
     const body = route.request().postDataJSON();
     expect(body.read).toBe(true);
     expect(body.confirmDispatch).toBe(true);

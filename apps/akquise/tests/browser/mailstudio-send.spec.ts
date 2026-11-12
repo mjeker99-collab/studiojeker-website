@@ -137,7 +137,7 @@ async function setup(
         },
       });
     }
-    if (path === "/api/mail-review/approve-and-start") {
+    if (path === "/api/mail-review/approve-and-enqueue") {
       expect(body.confirmDispatch).toBe(true);
       expect(body.read).toBe(true);
       if (options.failure === "unknown")
@@ -308,7 +308,7 @@ for (const width of [390, 1024]) {
     await send.click();
     await expect(
       page.getByText(
-        "3 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+        "3 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
         { exact: true },
       ),
     ).toBeVisible();
@@ -347,7 +347,7 @@ test("single mail action changes the approval scope and sends only that recipien
     .click();
   await expect(
     page.getByText(
-      "1 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+      "1 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -376,7 +376,7 @@ for (const failure of ["review", "unknown"] as const) {
     if (failure === "review") {
       await expect(
         page.getByText(
-          "2 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+          "2 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
           { exact: true },
         ),
       ).toBeVisible();

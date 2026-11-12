@@ -57,7 +57,7 @@ for (const width of [390, 1024, 1440]) {
     await expect(plan).toBeDisabled();
     let calls = 0;
     await checkout(page);
-    await page.route("**/api/mail-review/approve-and-start", (route) => {
+    await page.route("**/api/mail-review/approve-and-enqueue", (route) => {
       calls++;
       const body = route.request().postDataJSON();
       expect(body.items.map((i: { id: string }) => i.id)).toEqual(["d1", "d2"]);

@@ -22,7 +22,6 @@ type Item = {
   status: string;
   error: string | null;
   createdAt?: string;
-  completedAt?: string | null;
   updatedAt?: string;
 };
 type Data = {
@@ -253,7 +252,7 @@ export default function MailSchedule({
   useEffect(() => {
     if (!data) return;
     onSummaryChange?.(
-      `${data.schedule.weekdaysOnly ? "Montag bis Freitag" : "Jeden Tag"}, ${String(data.schedule.startHour).padStart(2, "0")}:00–${String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · maximal ${Math.min(data.schedule.dailyLimit, data.serverLimit)} Mails pro Tag. ${!data.productionReady ? "Versand derzeit deaktiviert." : !data.workerHealthy ? "Versanddienst derzeit nicht erreichbar." : data.schedule.enabled ? "Beginn im nächsten verfügbaren Zeitfenster." : "Mit der Freigabe wird der Versand nach diesem Zeitplan aktiviert."}`,
+      `${data.schedule.weekdaysOnly ? "Montag bis Freitag" : "Jeden Tag"}, ${String(data.schedule.startHour).padStart(2, "0")}:00–${String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · maximal ${Math.min(data.schedule.dailyLimit, data.serverLimit)} Mails pro Tag. ${!data.productionReady ? "Versand derzeit deaktiviert." : !data.workerHealthy ? "Versanddienst derzeit nicht erreichbar." : data.schedule.enabled ? "Beginn im nächsten verfügbaren Zeitfenster." : "Der Versand ist pausiert. Die eingeplanten Mails warten, bis du ihn unter Versand fortsetzt."}`,
     );
   }, [data, onSummaryChange]);
   const staleWorker = !data?.workerHealthy;
@@ -838,11 +837,14 @@ export default function MailSchedule({
                       <p>
                         {item.subject} · {labels[item.status] || item.status}
                       </p>
-                      {(item.completedAt || item.createdAt) && (
+                      {(item.updatedAt || item.createdAt) && (
                         <small>
-                          {item.completedAt ? "Abgeschlossen" : "Eingeplant"}:{" "}
+                          {item.status === "QUEUED"
+                            ? "Eingeplant"
+                            : "Status aktualisiert"}
+                          :{" "}
                           {new Date(
-                            item.completedAt || item.createdAt!,
+                            item.updatedAt || item.createdAt!,
                           ).toLocaleString("de-CH", {
                             timeZone: "Europe/Zurich",
                           })}

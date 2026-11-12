@@ -91,10 +91,9 @@ for (const width of [390, 768, 1440]) {
     ).toBeVisible();
     await checkout(page);
     const approve = panel.getByRole("button", {
-      name: "2 Mails einplanen",
-      exact: true,
+      name: /2 Mails einplanen|Fehlende Versandangabe ergänzen/,
     });
-    await expect(approve).toBeDisabled();
+    await expect(approve).toBeEnabled();
     await checkout(page);
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
@@ -134,9 +133,12 @@ for (const width of [390, 768, 1440]) {
         ids.includes(d.draftId),
       ),
     ).toHaveLength(0);
-    // Scheduling opens the status automatically; no extra navigation required.
+    // Open the separate shipping view; scheduling preserves the paused state.
+    await page
+      .getByRole("button", { name: "Versand verfolgen", exact: true })
+      .click();
     await expect(
-      page.getByRole("heading", { name: "Täglicher Mailversand", exact: true }),
+      page.getByRole("heading", { name: "Versand", exact: true }),
     ).toBeVisible();
     await expect(page.getByText("Pausiert", { exact: true })).toBeVisible();
   });
@@ -402,11 +404,9 @@ for (const width of [390, 768, 1440]) {
       page.getByRole("button", { name: "Versand", exact: true }).click(),
     ]);
     expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
-    await expect(
-      page.getByRole("heading", { name: "Täglicher Mailversand" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Versand" })).toBeVisible();
     const schedule = page.getByRole("region", {
-      name: "Täglicher Mailversand",
+      name: "Versand",
       exact: true,
     });
     await schedule.getByText("Versandeinstellungen", { exact: true }).click();
@@ -594,7 +594,6 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   await dialog.getByText("Weitere Versandangaben", { exact: true }).click();
-  await checkout(page);
   await dialog
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill(

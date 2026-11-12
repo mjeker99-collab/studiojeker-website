@@ -79,6 +79,7 @@ jobs:
         with:
           name: graphics-previews
           path: |
+            apps/akquise/.local/acquisition-checkout-*.png
             apps/akquise/.local/graphics-previews/
             apps/akquise/.local/hub-screenshots/studio*.png
           if-no-files-found: ignore

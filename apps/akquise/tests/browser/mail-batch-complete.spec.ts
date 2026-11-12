@@ -121,7 +121,7 @@ test("50 selected contacts stay together through shared completion and review", 
         },
       });
     }
-    if (path === "/api/mail-review/approve-and-start") {
+    if (path === "/api/mail-review/approve-and-enqueue") {
       expect(body.confirmDispatch).toBe(true);
       expect(body.legal.confirmed).toBe(true);
       sent.push(...body.items.map((item: { id: string }) => item.id));
@@ -267,7 +267,7 @@ test("50 selected contacts stay together through shared completion and review", 
     .click();
   await expect(
     page.getByText(
-      "50 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+      "50 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -410,7 +410,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
     .getByRole("button", { name: "2 Mails erstellen →", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
+    page.getByRole("heading", { name: "Persönliche Nachrichten" }),
   ).toBeVisible();
   await expect(page.getByText(/1 Mails vorbereitet/)).toBeVisible();
   await expect(
@@ -555,7 +555,7 @@ test("mixed contact group advances only verified unchanged records without sendi
     .getByRole("button", { name: "4 Mails erstellen →", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
+    page.getByRole("heading", { name: "Persönliche Nachrichten" }),
   ).toBeVisible();
   await expect(
     page
@@ -569,6 +569,7 @@ test("mixed contact group advances only verified unchanged records without sendi
       exact: true,
     }),
   ).toBeEnabled();
+  await page.getByRole("button", { name: "Zurück zu den Mails" }).click();
   await page
     .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
     .click();
@@ -820,7 +821,7 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
     .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Mails prüfen und versenden" }),
+    page.getByRole("heading", { name: "Persönliche Nachrichten" }),
   ).toBeVisible();
   expect(previewIds).toEqual(["d-good"]);
   expect(dispatchCalls).toBe(0);

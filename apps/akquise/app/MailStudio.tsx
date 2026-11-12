@@ -122,7 +122,6 @@ export default function MailStudio({
   const [procurement, setProcurement] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [sendMode, setSendMode] = useState<"now" | "schedule">("schedule");
   const [sendProgress, setSendProgress] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
@@ -278,7 +277,7 @@ export default function MailStudio({
         ? "Bestätige die Prüfung für öffentliche Auftraggeber."
         : !read || !dispatch || (missingLegal.length && !legal)
           ? "Bestätige die Versandfreigabe für die ausgewählten Mails."
-          : "Die Warteschlange wird gestartet. Versandzeiten und Tageslimit bleiben gültig.";
+          : "Die Mails werden eingeplant. Versandzeiten, Pausen und Tageslimit bleiben gültig.";
   const activeRow = rows.find((r) => r.id === activeId) || rows[0];
   useEffect(() => {
     onBusyChange?.(busy || editingDirty);
@@ -311,8 +310,7 @@ export default function MailStudio({
     }
     focusApproval();
   }
-  async function submitMails(mode: "now" | "schedule") {
-    setSendMode(mode);
+  async function submitMails() {
     setResults([]);
     setSendProgress("");
     const items = chosen.map(({ id, version, hash, contactRevision }) => ({
@@ -337,10 +335,7 @@ export default function MailStudio({
     const completed: Result[] = [];
     try {
       setSendProgress("Mails werden sicher in die Warteschlange übernommen …");
-      const data = await api(
-        mode === "now" ? "approve-and-start" : "approve-and-enqueue",
-        { ...common, items },
-      );
+      const data = await api("approve-and-enqueue", { ...common, items });
       completed.push(...data.results);
       setResults(completed);
       if (data.notice) setError(data.notice);
@@ -350,9 +345,7 @@ export default function MailStudio({
       );
     } finally {
       setSendProgress(
-        mode === "now"
-          ? `${completed.filter((r) => r.ok).length} Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.`
-          : "",
+        `${completed.filter((r) => r.ok).length} Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.`,
       );
       setDispatch(false);
       setRead(false);
@@ -1059,22 +1052,9 @@ export default function MailStudio({
                 placeholder="Organisation, Empfänger oder Betreff"
               />
             </label>
-            <div className="actions">
-              {[25, 50, 100].map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  className="secondary"
-                  aria-pressed={batchSize === amount}
-                  disabled={busy}
-                  onClick={() => setBatchSize(amount)}
-                >
-                  {amount} Mails
-                </button>
-              ))}
-            </div>
+
             <button
-              disabled={busy || !visible.length}
+              disabled={busy || !visible.length || selected.length > 200}
               onClick={() =>
                 void run(() =>
                   preview(
@@ -1099,6 +1079,11 @@ export default function MailStudio({
             >
               Neue Mails erstellen
             </button>
+            {selected.length > 200 && (
+              <p role="status">
+                Bitte höchstens 200 Mails pro Versand auswählen.
+              </p>
+            )}
             <div className="mail-draft-list" aria-label="Ungesendete Mails">
               <button
                 className="secondary"
@@ -1733,7 +1718,7 @@ export default function MailStudio({
                       aria-describedby="mail-approval-hint"
                       onClick={() => {
                         if (canApprove) {
-                          void run(() => submitMails("now"));
+                          void run(() => submitMails());
                         } else if (
                           missingLegal.length &&
                           rationale.trim().length < 15
@@ -1756,7 +1741,7 @@ export default function MailStudio({
                         }
                       }}
                     >
-                      {busy && sendMode === "now"
+                      {busy
                         ? "Mails werden eingeplant …"
                         : missingLegal.length && rationale.trim().length < 15
                           ? "Fehlende Versandangabe ergänzen"
@@ -1827,10 +1812,8 @@ export default function MailStudio({
             {results.length > 0 && (
               <div role="status">
                 <p>
-                  {results.filter((r) => r.ok).length}{" "}
-                  {sendMode === "now"
-                    ? "in die Versandwarteschlange übernommen"
-                    : "freigegeben und eingeplant"}
+                  {results.filter((r) => r.ok).length} freigegeben und
+                  eingeplant
                   {" · "}
                   {included.length} noch offen.
                 </p>
