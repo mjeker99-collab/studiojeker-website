@@ -76,7 +76,6 @@ for (const width of [390, 1024, 1440]) {
     await page.getByLabel(/Ich gebe die 2 ausgewählten/).check();
     await expect(plan).toBeEnabled();
     await page.getByRole("button", { name: "Zurück zu den Mails" }).click();
-    await checkout(page);
     await page.getByRole("button", { name: "Weiter zum Versand →" }).click();
     await expect(
       page.getByLabel(/Ich gebe die 2 ausgewählten/),

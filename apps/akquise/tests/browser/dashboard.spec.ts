@@ -219,6 +219,9 @@ for (const width of [390, 768, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    if (width <= 1200) {
+      await page.locator(".mail-recipient-list .mail-recipient button").first().click();
+    }
     await expect(
       page
         .locator(".mail-preview-pane")
