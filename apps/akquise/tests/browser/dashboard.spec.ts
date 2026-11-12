@@ -1,3 +1,4 @@
+import { checkout } from "./mail-checkout-helper";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
@@ -56,12 +57,13 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await page
-      .getByRole("button", { name: "Entwürfe auswählen", exact: true })
-      .click();
+
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
     await page
-      .getByRole("button", { name: "2 Entwürfe öffnen →", exact: true })
+      .getByRole("button", {
+        name: "Gespeicherte Entwürfe öffnen (2)",
+        exact: true,
+      })
       .click();
     const panel = page.getByRole("region", {
       name: "Globale Mailprüfung",
@@ -75,6 +77,10 @@ for (const width of [390, 768, 1440]) {
     await expect(
       panel.getByText("Persönlicher Architekturtext 0.", { exact: false }),
     ).toBeVisible();
+    if (width <= 1200)
+      await page
+        .getByRole("button", { name: "Zurück zur Liste", exact: true })
+        .click();
     await panel
       .getByRole("navigation", { name: "Mail-Empfänger" })
       .getByRole("button")
@@ -83,22 +89,27 @@ for (const width of [390, 768, 1440]) {
     await expect(
       panel.getByText("Persönlicher Architekturtext 1.", { exact: false }),
     ).toBeVisible();
+    await checkout(page);
     const approve = panel.getByRole("button", {
-      name: "Versand planen",
+      name: "2 Mails einplanen",
       exact: true,
     });
     await expect(approve).toBeDisabled();
+    await checkout(page);
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Expliziter synthetischer Nachweis für beide Testkontakte.");
+    await checkout(page);
     await panel
       .getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/)
       .check();
     await expect(approve).toBeEnabled();
+    await checkout(page);
     await panel
       .getByLabel("Rechtsgrundlage und Nachweis", { exact: true })
       .fill("Aktualisierter synthetischer Nachweis für beide Testkontakte.");
     await expect(approve).toBeDisabled();
+    await checkout(page);
     await panel
       .getByLabel(/Ich gebe die 2 ausgewählten persönlichen Mails/)
       .check();
@@ -262,6 +273,9 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "We create visibility.", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await page
+      .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+      .click();
     await page.getByLabel("Kontakte suchen").fill(suffix);
     await page
       .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
@@ -385,7 +399,7 @@ for (const width of [390, 768, 1440]) {
           response.url().endsWith("/api/mail-schedule") &&
           response.request().method() === "GET",
       ),
-      page.getByRole("button", { name: "Versandverlauf", exact: true }).click(),
+      page.getByRole("button", { name: "Versand", exact: true }).click(),
     ]);
     expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
     await expect(
@@ -395,7 +409,7 @@ for (const width of [390, 768, 1440]) {
       name: "Täglicher Mailversand",
       exact: true,
     });
-    await schedule.getByText("Zeitplan bearbeiten", { exact: true }).click();
+    await schedule.getByText("Versandeinstellungen", { exact: true }).click();
     await expect(
       schedule.getByLabel("Mails pro Tag", { exact: true }),
     ).toHaveValue("25");
@@ -480,12 +494,7 @@ for (const [name, width, height] of [
       path: `.local/dashboard-${width}.png`,
       fullPage: true,
     });
-    for (const section of [
-      "Kontakte",
-      "Mails",
-      "Versandverlauf",
-      "Einstellungen",
-    ]) {
+    for (const section of ["Kontakte", "Mails", "Versand", "Einstellungen"]) {
       if (section !== "Einstellungen")
         await page
           .getByRole("navigation", { name: "Hauptnavigation" })
@@ -554,7 +563,10 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await expect(dialog).toBeFocused();
   await dialog.getByRole("button", { name: /Entwurf vorbereiten/ }).click();
   await expect(dialog).not.toBeVisible();
-  await page.getByText("Alle gespeicherten Entwürfe", { exact: true }).click();
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page
+    .getByText("Frühere Entwürfe und Versionen", { exact: true })
+    .click();
   await page
     .locator(".draft-row")
     .filter({ hasText: organisation })
@@ -582,6 +594,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   await dialog.getByText("Weitere Versandangaben", { exact: true }).click();
+  await checkout(page);
   await dialog
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill(
@@ -592,7 +605,10 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .click();
   await expect(dialog).not.toBeVisible();
   await page.getByRole("button", { name: "Mails", exact: true }).click();
-  await page.getByText("Alle gespeicherten Entwürfe", { exact: true }).click();
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page
+    .getByText("Frühere Entwürfe und Versionen", { exact: true })
+    .click();
   await page
     .locator(".draft-row")
     .filter({ hasText: organisation })

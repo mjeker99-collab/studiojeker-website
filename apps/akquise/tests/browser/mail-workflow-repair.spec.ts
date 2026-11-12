@@ -1,3 +1,4 @@
+import { checkout } from "./mail-checkout-helper";
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 
@@ -39,7 +40,8 @@ for (const allBlocked of [false, true]) {
         page.getByRole("region", { name: "Versandfreigabe" }),
       ).toHaveCount(0);
       for (let n = 0; n < 3; n++)
-        await list
+        await page
+          .locator(".mail-preview-pane")
           .getByRole("button", {
             name: "Aus diesem Versand entfernen",
             exact: true,
@@ -63,7 +65,8 @@ for (const allBlocked of [false, true]) {
           exact: true,
         }),
       ).toBeVisible();
-      await list
+      await page
+        .locator(".mail-preview-pane")
         .getByRole("button", {
           name: "Aus diesem Versand entfernen",
           exact: true,
@@ -88,6 +91,7 @@ for (const allBlocked of [false, true]) {
           exact: true,
         }),
       ).toBeVisible();
+      await checkout(page);
       await expect(
         page.getByLabel(/Ich gebe die 2 ausgewählten/),
       ).not.toBeChecked();
@@ -183,14 +187,16 @@ test("99 ready mails proceed with one incomplete contact, without releasing the 
       exact: true,
     })
     .click();
+  await checkout(page);
   await expect(
     page.getByText("99 Mails vorbereitet · 1 Angaben offen · 99 ausgewählt", {
       exact: true,
     }),
   ).toBeVisible();
   await page.getByLabel(/Ich gebe die 99 ausgewählten/).check();
+  await checkout(page);
   await page
-    .getByRole("button", { name: "Versand starten · 99 Mails", exact: true })
+    .getByRole("button", { name: "99 Mails einplanen", exact: true })
     .click();
   await expect.poll(() => released.length).toBe(99);
   expect(released).not.toContain("d0");

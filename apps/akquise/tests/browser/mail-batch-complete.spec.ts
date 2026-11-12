@@ -1,3 +1,4 @@
+import { checkout } from "./mail-checkout-helper";
 import { test, expect } from "@playwright/test";
 
 test("50 selected contacts stay together through shared completion and review", async ({
@@ -157,6 +158,9 @@ test("50 selected contacts stay together through shared completion and review", 
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page
+    .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "50 Kontakte auswählen", exact: true })
     .click();
   await page
@@ -235,26 +239,31 @@ test("50 selected contacts stay together through shared completion and review", 
   } finally {
     releasePreparation();
   }
+  await checkout(page);
   await expect(
     page.getByText("Noch eine Angabe für 50 ausgewählte Kontakte", {
       exact: true,
     }),
   ).toBeVisible();
   expect(prepared).toBe(50);
+  await checkout(page);
   await expect(
     page.getByRole("button", {
       name: "Fehlende Versandangabe ergänzen",
       exact: true,
     }),
   ).toBeEnabled();
+  await checkout(page);
   await page
     .getByLabel("Rechtsgrundlage und Nachweis")
     .fill("Dokumentierte Einwilligung für alle synthetischen Testkontakte.");
+  await checkout(page);
   await page
     .getByLabel(/Ich gebe die 50 ausgewählten persönlichen Mails/)
     .check();
+  await checkout(page);
   await page
-    .getByRole("button", { name: "Versand starten · 50 Mails", exact: true })
+    .getByRole("button", { name: "50 Mails einplanen", exact: true })
     .click();
   await expect(
     page.getByText(
@@ -391,6 +400,9 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await page
+    .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
     .click();
@@ -534,6 +546,9 @@ test("mixed contact group advances only verified unchanged records without sendi
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
   await page
+    .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
     .click();
   await page
@@ -547,8 +562,12 @@ test("mixed contact group advances only verified unchanged records without sendi
       .locator(".mail-open-notice")
       .getByText(/3 Kontakte mit offenen Angaben/),
   ).toBeVisible();
+  await checkout(page);
   await expect(
-    page.getByRole("button", { name: "Fehlende Versandangabe ergänzen", exact: true }),
+    page.getByRole("button", {
+      name: "Fehlende Versandangabe ergänzen",
+      exact: true,
+    }),
   ).toBeEnabled();
   await page
     .getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })
@@ -667,6 +686,9 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
   await expect(
     page.getByText(/2 Kontakte mit E-Mail-Adresse für die Auswahl verfügbar/),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
     .click();
