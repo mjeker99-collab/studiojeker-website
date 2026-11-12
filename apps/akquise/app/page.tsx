@@ -230,6 +230,7 @@ export default function App() {
   const acquisitionLabels: Record<string, string> = {
     "Mail-Studio": "Mails",
     Kontakte: "Kontakte",
+    Versandhistorie: "Versand",
   };
   const mailLabel = data?.externalSending
     ? data.mailMode === "test"
@@ -629,7 +630,7 @@ export default function App() {
                   year: "numeric",
                 })}
               </span>
-              {["Übersicht", "Kontakte"].includes(tab) && (
+              {tab === "Übersicht" && (
                 <button className="secondary" onClick={() => openContact(null)}>
                   Kontakt erfassen <span>＋</span>
                 </button>
@@ -699,7 +700,7 @@ export default function App() {
           )}
           {acquisitionTabs.includes(tab) && (
             <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {["Kontakte", "Mail-Studio"].map((n) => (
+              {["Kontakte", "Mail-Studio", "Versandhistorie"].map((n) => (
                 <button
                   className="secondary"
                   aria-current={
@@ -718,12 +719,6 @@ export default function App() {
                   {acquisitionLabels[n] || n}
                 </button>
               ))}
-              <button
-                className="quiet"
-                onClick={() => setTab("Versandhistorie")}
-              >
-                Versandverlauf
-              </button>
             </nav>
           )}
           {(tab === "Kampagnen" ||
@@ -855,6 +850,7 @@ export default function App() {
               </div>
               <div hidden={tab !== "Mail-Studio"}>
                 <MailStudio
+                  onOpenShipping={() => setTab("Versandhistorie")}
                   persistenceKey={`mail-work:${data.user.id}`}
                   filters={contactFilters}
                   onFiltersChange={(value) => {
@@ -881,13 +877,57 @@ export default function App() {
           )}
           {tab === "Kontakte" && (
             <section className="panel">
-              <button
-                className="secondary"
-                disabled={busy}
-                onClick={() => setTab("Kontakte finden")}
-              >
-                Kontakte recherchieren
-              </button>
+              <details className="contact-add-menu">
+                <summary>Kontakte hinzufügen</summary>
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => setTab("Kontakte finden")}
+                  >
+                    Kontakte recherchieren
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() => openContact(null)}
+                  >
+                    Kontakt erfassen
+                  </button>
+                  <label className="file-button">
+                    Kontakte importieren
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx"
+                      disabled={busy}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          const body = new FormData();
+                          body.set("file", f);
+                          action(async () => {
+                            const r = await post("contacts/import", body);
+                            return `${r.imported} importiert, ${r.duplicates} bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
+                          }, "Import abgeschlossen.");
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        const result = await post("contacts/sheets", {});
+                        return `Masterliste übernommen: ${result.imported ?? 0} neue Kontakte, ${result.duplicates ?? 0} bereits vorhanden. Keine Versandfreigabe erteilt.`;
+                      })
+                    }
+                  >
+                    {busy ? "Import läuft …" : "Aus Google Drive importieren"}
+                  </button>
+                </div>
+              </details>
               <div className="toolbar">
                 <label className="search">
                   Suche
@@ -914,39 +954,6 @@ export default function App() {
                     <option value="FOLLOW_UP">Wiedervorlage fällig</option>
                   </select>
                 </label>
-                <label className="file-button">
-                  Kontakte importieren
-                  <input
-                    type="file"
-                    accept=".csv,.xlsx"
-                    disabled={busy}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) {
-                        const body = new FormData();
-                        body.set("file", f);
-                        action(async () => {
-                          const r = await post("contacts/import", body);
-                          return `${r.imported} importiert, ${r.duplicates} bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
-                        }, "Import abgeschlossen.");
-                      }
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    action(async () => {
-                      const result = await post("contacts/sheets", {});
-                      return `Masterliste übernommen: ${result.imported ?? 0} neue Kontakte, ${result.duplicates ?? 0} bereits vorhanden. Keine Versandfreigabe erteilt.`;
-                    })
-                  }
-                >
-                  {busy ? "Import läuft …" : "Aus Google Drive importieren"}
-                </button>
               </div>
               <details>
                 <summary>Nach Unternehmen oder Branche filtern</summary>
@@ -968,42 +975,21 @@ export default function App() {
                 selected={selected}
                 setSelected={setSelected}
                 open={openContact}
+                archive={archive}
+                remove={removeContact}
+                busy={busy}
               />
               {selected.length > 0 && (
                 <div className="mail-selection-bar">
-                  <strong>{selected.length} Kontakte ausgewählt</strong>
-                  {selected.length === 1 && (
-                    <button
-                      className="secondary"
-                      disabled={busy}
-                      onClick={() => {
-                        const c = data.contacts.find(
-                          (c) => c.id === selected[0],
-                        );
-                        if (c) archive(c);
-                      }}
-                    >
-                      {data.contacts.find((c) => c.id === selected[0])
-                        ?.archivedAt
-                        ? "Wiederherstellen"
-                        : "Kontakt archivieren"}
-                    </button>
+                  <strong>
+                    {selected.length}{" "}
+                    {selected.length === 1 ? "Kontakt" : "Kontakte"} ausgewählt
+                  </strong>
+                  {selected.length > 200 && (
+                    <span>
+                      Bitte höchstens 200 Kontakte pro Versand auswählen.
+                    </span>
                   )}
-                  {selected.length === 1 && (
-                    <button
-                      className="danger"
-                      disabled={busy}
-                      onClick={() => {
-                        const c = data.contacts.find(
-                          (item) => item.id === selected[0],
-                        );
-                        if (c) removeContact(c);
-                      }}
-                    >
-                      Kontakt löschen
-                    </button>
-                  )}
-
                   <button
                     disabled={busy || selected.length > 200}
                     onClick={() => {
@@ -1018,9 +1004,11 @@ export default function App() {
               )}
             </section>
           )}
-          {["Mail-Studio", "E-Mail-Entwürfe", "Freigaben"].includes(tab) && (
+          {["Versandhistorie", "E-Mail-Entwürfe", "Freigaben"].includes(
+            tab,
+          ) && (
             <details className="panel">
-              <summary>Alle gespeicherten Entwürfe</summary>
+              <summary>Frühere Entwürfe und Versionen</summary>
               <section>
                 <div className="section-head">
                   <h2>
@@ -1073,7 +1061,8 @@ export default function App() {
             />
           )}
           {tab === "Versandhistorie" && (
-            <section className="panel">
+            <details className="panel">
+              <summary>Vollständiges Versandprotokoll</summary>
               <div className="section-head">
                 <h2>Nachrichtenprotokoll</h2>
                 <span className="test-tag">{mailLabel}</span>
@@ -1113,7 +1102,7 @@ export default function App() {
               {!data.deliveries.length && (
                 <p className="empty">Keine Nachrichten. {mailLabel}.</p>
               )}
-            </section>
+            </details>
           )}
           {tab === "Einstellungen" && (
             <>
@@ -1850,14 +1839,20 @@ function ContactTable({
   selected,
   setSelected,
   open,
+  archive,
+  remove,
+  busy,
 }: {
+  archive: (c: C) => void;
+  remove: (c: C) => void;
+  busy: boolean;
   contacts: C[];
   selected: string[];
   setSelected: (v: string[]) => void;
   open: (c: C) => void;
 }) {
   return (
-    <div className="table-wrap">
+    <div className="table-wrap contact-table">
       <table>
         <thead>
           <tr>
@@ -1870,7 +1865,18 @@ function ContactTable({
                   contacts.every((c) => selected.includes(c.id))
                 }
                 onChange={(e) =>
-                  setSelected(e.target.checked ? contacts.map((c) => c.id) : [])
+                  setSelected(
+                    e.target.checked
+                      ? [
+                          ...new Set([
+                            ...selected,
+                            ...contacts.map((c) => c.id),
+                          ]),
+                        ]
+                      : selected.filter(
+                          (id) => !contacts.some((c) => c.id === id),
+                        ),
+                  )
                 }
               />
             </th>
@@ -1904,7 +1910,7 @@ function ContactTable({
                   {c.organisation}
                 </button>
                 <small>
-                  {c.firstName} {c.lastName} · {c.position || "Funktion offen"}
+                  {c.firstName} {c.lastName}
                 </small>
                 {c.publicAuthority && (
                   <small className="public">Öffentlicher Auftraggeber</small>
@@ -1925,13 +1931,32 @@ function ContactTable({
                 )}
               </td>
               <td>
-                <button
-                  className="quiet"
-                  aria-label={`${c.organisation} bearbeiten`}
-                  onClick={() => open(c)}
-                >
-                  ↗
-                </button>
+                <details className="contact-row-menu">
+                  <summary aria-label={`Aktionen für ${c.organisation}`}>
+                    •••
+                  </summary>
+                  <button
+                    className="quiet"
+                    disabled={busy}
+                    onClick={() => open(c)}
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    className="quiet"
+                    disabled={busy}
+                    onClick={() => archive(c)}
+                  >
+                    {c.archivedAt ? "Wiederherstellen" : "Archivieren"}
+                  </button>
+                  <button
+                    className="quiet"
+                    disabled={busy}
+                    onClick={() => remove(c)}
+                  >
+                    Löschen
+                  </button>
+                </details>
               </td>
             </tr>
           ))}

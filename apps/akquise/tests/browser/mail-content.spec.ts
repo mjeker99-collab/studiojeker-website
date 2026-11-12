@@ -182,7 +182,7 @@ for (const width of [390, 1024]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    const state = await setup(page, { queued: true });
+    const state = await setup(page);
     await page
       .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
       .click();

@@ -55,8 +55,14 @@ for (const width of [390, 1024])
               },
       });
     });
-    await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
-    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
+    await page
+      .getByRole("navigation", { name: "Akquise-Navigation" })
+      .getByRole("button", { name: "Kontakte", exact: true })
+      .click();
+    await page.getByText("Kontakte hinzufügen", { exact: true }).click();
+    await page
+      .getByRole("button", { name: "Kontakte recherchieren", exact: true })
+      .click();
     await page
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Architekturbüros für Visualisierungen finden");
@@ -72,7 +78,12 @@ for (const width of [390, 1024])
       .click();
     await expect(page.getByText(/1 neue Kontakte übernommen/)).toBeVisible();
     await page.getByRole("button", { name: "Mails", exact: true }).click();
-    await page.getByText("Nach Unternehmen oder Branche filtern", { exact: true }).click();
+    await page
+      .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+      .click();
+    await page
+      .getByText("Nach Unternehmen oder Branche filtern", { exact: true })
+      .click();
     await page
       .getByRole("combobox", { name: "Kunde / Unternehmen", exact: true })
       .selectOption({ index: 1 });
@@ -81,7 +92,10 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "Filter zurücksetzen", exact: true })
       .click();
     await page
-      .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true })
+      .getByRole("button", {
+        name: "Gespeicherte Entwürfe öffnen (3)",
+        exact: true,
+      })
       .click();
 
     await page.getByText("Texte mit KI überarbeiten", { exact: true }).click();
@@ -129,9 +143,13 @@ test("failed AI research remains in history without retry or sending", async ({
                 {
                   id: "failed-research-job",
                   status: "FAILED",
-                  input: { mode: "RESEARCH", briefing: "Architekturbüros in Bern" },
+                  input: {
+                    mode: "RESEARCH",
+                    briefing: "Architekturbüros in Bern",
+                  },
                   result: null,
-                  error: "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+                  error:
+                    "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
                   createdAt: "2026-11-05T06:00:00.000Z",
                 },
               ]
@@ -143,15 +161,22 @@ test("failed AI research remains in history without retry or sending", async ({
       return route.fulfill({
         status: 502,
         json: {
-          error: "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+          error:
+            "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
         },
       });
     }
     applied++;
     return route.fulfill({ status: 500, json: { error: "Unexpected apply." } });
   });
-  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
-    await page.getByRole("button", { name: "Kontakte recherchieren", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Akquise-Navigation" })
+    .getByRole("button", { name: "Kontakte", exact: true })
+    .click();
+  await page.getByText("Kontakte hinzufügen", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Kontakte recherchieren", exact: true })
+    .click();
   await page
     .getByLabel("Wen möchtest du erreichen und was anbieten?")
     .fill("Architekturbüros in Bern");
@@ -166,13 +191,15 @@ test("failed AI research remains in history without retry or sending", async ({
     .getByText("Gespeicherte Recherchen", { exact: true })
     .click();
   await expect(
-    page.locator(".mail-assistant").getByText(
-      "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
-      { exact: true },
-    ).last(),
+    page
+      .locator(".mail-assistant")
+      .getByText(
+        "KI-Anbieter vorübergehend nicht erreichbar. Keine automatische Wiederholung.",
+        { exact: true },
+      )
+      .last(),
   ).toBeVisible();
   expect(historyAfterFailure).toBeGreaterThan(0);
   expect(generated).toBe(1);
   expect(applied).toBe(0);
 });
-

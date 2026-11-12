@@ -65,7 +65,9 @@ export default function MailStudio({
   contacts,
   refresh,
   openDraft,
+  onOpenShipping,
 }: {
+  onOpenShipping?: () => void;
   persistenceKey?: string;
   filters?: Filters;
   onFiltersChange?: (value: Filters) => void;
@@ -93,7 +95,11 @@ export default function MailStudio({
   const selectionEpoch = useRef(0);
   const approvalRef = useRef<HTMLElement>(null);
   const preparationRef = useRef<HTMLDivElement>(null);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [checkout, setCheckout] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [scheduleSummary, setScheduleSummary] = useState(
+    "Versandzeiten werden geladen …",
+  );
   const [scheduleRevision, setScheduleRevision] = useState(0);
   const [sendableQueuedIds, setSendableQueuedIds] = useState<string[]>([]);
   const [queuedIds, setQueuedIds] = useState<string[]>([]);
@@ -116,7 +122,6 @@ export default function MailStudio({
   const [procurement, setProcurement] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [sendMode, setSendMode] = useState<"now" | "schedule">("schedule");
   const [sendProgress, setSendProgress] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [search, setSearch] = useState("");
@@ -130,8 +135,8 @@ export default function MailStudio({
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [recipientSearch, setRecipientSearch] = useState("");
   const [, setSkipped] = useState<string[]>([]);
-  const [preparing, setPreparing] = useState(true);
-  const [batchSize, setBatchSize] = useState(25);
+  const [preparing, setPreparing] = useState(false);
+  const [batchSize, setBatchSize] = useState(200);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const matchingContacts = contacts.filter(
     (c) =>
@@ -217,16 +222,20 @@ export default function MailStudio({
   // Explain the actual review failures instead of presenting 99 mails as
   // selectable when the server has marked all of them as blocked.
   const issueCounts = Array.from(
-    [...rows.flatMap((row) => [...new Set(row.issues)]),
+    [
+      ...rows.flatMap((row) => [...new Set(row.issues)]),
       ...pendingIds.flatMap((id) => {
         const issues = pendingDetails[id]?.issues ?? [];
         return issues.length
           ? [...new Set(issues)]
           : ["Rechercheangaben müssen bestätigt werden."];
-      })].reduce((counts, issue) => {
-      counts.set(issue, (counts.get(issue) ?? 0) + 1);
-      return counts;
-    }, new Map<string, number>()).entries(),
+      }),
+    ]
+      .reduce((counts, issue) => {
+        counts.set(issue, (counts.get(issue) ?? 0) + 1);
+        return counts;
+      }, new Map<string, number>())
+      .entries(),
   ).sort((a, b) => b[1] - a[1]);
   const renewalContactIds = [
     ...new Set([...rows.map(contactIdFor), ...deferredIds]),
@@ -268,7 +277,7 @@ export default function MailStudio({
         ? "Bestätige die Prüfung für öffentliche Auftraggeber."
         : !read || !dispatch || (missingLegal.length && !legal)
           ? "Bestätige die Versandfreigabe für die ausgewählten Mails."
-          : "Die Warteschlange wird gestartet. Versandzeiten und Tageslimit bleiben gültig.";
+          : "Die Mails werden eingeplant. Versandzeiten, Pausen und Tageslimit bleiben gültig.";
   const activeRow = rows.find((r) => r.id === activeId) || rows[0];
   useEffect(() => {
     onBusyChange?.(busy || editingDirty);
@@ -301,8 +310,7 @@ export default function MailStudio({
     }
     focusApproval();
   }
-  async function submitMails(mode: "now" | "schedule") {
-    setSendMode(mode);
+  async function submitMails() {
     setResults([]);
     setSendProgress("");
     const items = chosen.map(({ id, version, hash, contactRevision }) => ({
@@ -327,10 +335,7 @@ export default function MailStudio({
     const completed: Result[] = [];
     try {
       setSendProgress("Mails werden sicher in die Warteschlange übernommen …");
-      const data = await api(
-        mode === "now" ? "approve-and-start" : "approve-and-enqueue",
-        { ...common, items },
-      );
+      const data = await api("approve-and-enqueue", { ...common, items });
       completed.push(...data.results);
       setResults(completed);
       if (data.notice) setError(data.notice);
@@ -340,9 +345,7 @@ export default function MailStudio({
       );
     } finally {
       setSendProgress(
-        mode === "now"
-          ? `${completed.filter((r) => r.ok).length} Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.`
-          : "",
+        `${completed.filter((r) => r.ok).length} Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.`,
       );
       setDispatch(false);
       setRead(false);
@@ -351,7 +354,7 @@ export default function MailStudio({
         old.filter((id) => !completed.some((r) => r.id === id && r.ok)),
       );
       setScheduleRevision((v) => v + 1);
-      setScheduleOpen(true);
+      setCheckout(false);
       await refresh();
     }
   }
@@ -371,6 +374,8 @@ export default function MailStudio({
   }
   const [selectionNotice, setSelectionNotice] = useState("");
   function resetSelection() {
+    setCheckout(false);
+    setPreviewOpen(false);
     selectionEpoch.current++;
     setDeferredIds([]);
     setRecipientSearch("");
@@ -606,6 +611,7 @@ export default function MailStudio({
     await refresh();
   }
   async function preview(ids = selected) {
+    setCheckout(false);
     setBatchProposals([]);
     setSelected(ids);
     const data = await api("preview", { ids });
@@ -795,7 +801,13 @@ export default function MailStudio({
     <section className="mail-studio" aria-label="Mail-Studio" aria-busy={busy}>
       <div className="panel mail-studio-workspace">
         <div className="mail-studio-toolbar">
-          <h2>Persönliche Mails erstellen &amp; versenden</h2>
+          <h2>
+            {checkout
+              ? "Versand bestätigen"
+              : step === 2
+                ? "Mails prüfen"
+                : "Mails"}
+          </h2>
           <div className="actions" aria-label="Arbeitsschritte">
             <button
               className="secondary"
@@ -803,26 +815,12 @@ export default function MailStudio({
               aria-pressed={step === 1}
               onClick={() => {
                 setStep(1);
+                setCheckout(false);
                 setRead(false);
                 setDispatch(false);
               }}
             >
-              Empfänger & Entwürfe
-            </button>
-            <button
-              className="secondary"
-              disabled={
-                busy ||
-                editingDirty ||
-                (!rows.length &&
-                  !selected.length &&
-                  !contactIds.length &&
-                  !visible.length)
-              }
-              aria-pressed={step === 2}
-              onClick={() => void run(() => reviewForSending())}
-            >
-              Vorschau & Versand
+              Mailauswahl
             </button>
             <details>
               <summary>Weitere Optionen</summary>
@@ -848,20 +846,6 @@ export default function MailStudio({
                 }}
               >
                 Auswahl und ungesendete Entwürfe verwerfen
-              </button>
-              <button
-                className="secondary"
-                disabled={busy || editingDirty}
-                onClick={() => {
-                  setScheduleOpen(true);
-                  requestAnimationFrame(() =>
-                    document
-                      .getElementById("mail-schedule-title")
-                      ?.scrollIntoView({ block: "start" }),
-                  );
-                }}
-              >
-                Zeitplan & Versandstatus
               </button>
             </details>
           </div>
@@ -1058,11 +1042,8 @@ export default function MailStudio({
         )}
         {step === 1 && !preparing && (
           <section className="panel" aria-label="Mailauswahl">
-            <h3>{visible.length} persönliche Mails vorhanden</h3>
-            <p>
-              Diese Entwürfe sind bereits vorbereitet. Öffne die gewünschte
-              Menge direkt zur gemeinsamen Freigabe.
-            </p>
+            <h3>{visible.length} ungesendete Mails</h3>
+            <p>Wähle die Mails aus, die du prüfen möchtest.</p>
             <label>
               Mails suchen
               <input
@@ -1071,22 +1052,9 @@ export default function MailStudio({
                 placeholder="Organisation, Empfänger oder Betreff"
               />
             </label>
-            <div className="actions">
-              {[25, 50, 100].map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  className="secondary"
-                  aria-pressed={batchSize === amount}
-                  disabled={busy}
-                  onClick={() => setBatchSize(amount)}
-                >
-                  {amount} Mails
-                </button>
-              ))}
-            </div>
+
             <button
-              disabled={busy || !visible.length}
+              disabled={busy || !visible.length || selected.length > 200}
               onClick={() =>
                 void run(() =>
                   preview(
@@ -1099,7 +1067,7 @@ export default function MailStudio({
             >
               {busy
                 ? "Mails werden geladen …"
-                : `${selected.length || Math.min(batchSize, visible.length)} Entwürfe öffnen →`}
+                : `Gespeicherte Entwürfe öffnen (${selected.length || Math.min(batchSize, visible.length)})`}
             </button>
             <button
               className="secondary"
@@ -1109,10 +1077,32 @@ export default function MailStudio({
                 setSearch("");
               }}
             >
-              Weitere Kontakte auswählen
+              Neue Mails erstellen
             </button>
-            <details>
-              <summary>Einzelne Entwürfe auswählen (optional)</summary>
+            {selected.length > 200 && (
+              <p role="status">
+                Bitte höchstens 200 Mails pro Versand auswählen.
+              </p>
+            )}
+            <div className="mail-draft-list" aria-label="Ungesendete Mails">
+              <button
+                className="secondary"
+                disabled={busy || !visible.length}
+                onClick={() =>
+                  setSelected(visible.slice(0, 200).map((d) => d.id))
+                }
+              >
+                {visible.length > 200
+                  ? "Erste 200 auswählen"
+                  : "Alle auswählen"}
+              </button>
+              <button
+                className="quiet"
+                disabled={busy || !selected.length}
+                onClick={() => setSelected([])}
+              >
+                Auswahl aufheben
+              </button>
               {visible.map((d) => (
                 <label className="check mail-selection" key={d.id}>
                   <input
@@ -1148,17 +1138,11 @@ export default function MailStudio({
                   Noch keine passenden Entwürfe. Zuerst Kontakte vorbereiten.
                 </p>
               )}
-              <button
-                disabled={busy || !selected.length || selected.length > 200}
-                onClick={() => void run(() => preview())}
-              >
-                {selected.length} Mails gemeinsam prüfen
-              </button>
-            </details>
+            </div>
           </section>
         )}
       </div>
-      {step === 2 && batchProposals.length === 0 && (
+      {step === 2 && !checkout && batchProposals.length === 0 && (
         <>
           {(deferredIds.length > 0 || rows.some((r) => r.issues.length)) && (
             <div className="mail-open-notice">
@@ -1169,10 +1153,13 @@ export default function MailStudio({
                   : "Ergänze die Angaben, um Mails freizugeben."}
               </p>
               {issueCounts.length > 0 && (
-                <div role="status">
-                  <strong>{readyRows.length
-                    ? "Warum einige Kontakte zurückgestellt sind:"
-                    : "Warum die Auswahl gesperrt ist:"}</strong>
+                <details>
+                  <summary>Gründe anzeigen</summary>
+                  <strong>
+                    {readyRows.length
+                      ? "Warum einige Kontakte zurückgestellt sind:"
+                      : "Warum die Auswahl gesperrt ist:"}
+                  </strong>
                   <ul>
                     {issueCounts.slice(0, 6).map(([reason, count]) => (
                       <li key={reason}>
@@ -1185,7 +1172,7 @@ export default function MailStudio({
                     erneuert. Fehlende Nachweise, Sperrlisten und bereits
                     versandte Mails bleiben ausgeschlossen.
                   </p>
-                </div>
+                </details>
               )}
               <button
                 className={chosen.length ? "secondary" : undefined}
@@ -1261,276 +1248,375 @@ export default function MailStudio({
         batchProposals.length === 0 &&
         (rows.length > 0 || pendingIds.length > 0) && (
           <section className="panel" aria-label="Globale Mailprüfung">
-            <h3>Mails prüfen und versenden</h3>
+            <h3>
+              {checkout ? "Deine Versandübersicht" : "Persönliche Nachrichten"}
+            </h3>
             <p>
               <strong>
-                {readyRows.length} Mails vorbereitet · {openIds.length} Angaben offen
-                · {chosen.length} ausgewählt
+                {readyRows.length} Mails vorbereitet · {openIds.length} Angaben
+                offen · {chosen.length} ausgewählt
               </strong>
             </p>
-            <div className="mail-workbench" id="mail-workbench">
-              <nav className="mail-recipient-list" aria-label="Mail-Empfänger">
-                <div className="mail-selection-toolbar">
-                  <label>
-                    Ansicht
-                    <select
-                      value={recipientFilter}
-                      onChange={(e) => setRecipientFilter(e.target.value)}
-                    >
-                      <option value="all">
-                        Alle ({rows.length + pendingIds.length})
-                      </option>
-                      <option value="ready">Vorbereitet ({readyRows.length})</option>
-                      <option value="open">
-                        Angaben offen ({openIds.length})
-                      </option>
-                    </select>
-                  </label>
-                  <label>
-                    Empfänger suchen
-                    <input
-                      value={recipientSearch}
-                      onChange={(e) => setRecipientSearch(e.target.value)}
-                    />
-                  </label>
-                  <div className="actions">
-                    <button
-                      className="secondary"
-                      disabled={busy || editingDirty}
-                      onClick={() => {
-                        setIncluded(
-                          rows
-                            .filter(
-                              (r) =>
-                                !r.issues.length &&
-                                !results.some((x) => x.id === r.id && x.ok),
-                            )
-                            .map((r) => r.id),
-                        );
-                        setRead(false);
-                        setDispatch(false);
-                        setLegal(false);
-                      }}
-                    >
-                      Alle vorbereiteten Mails auswählen
-                    </button>
-                    <button
-                      className="quiet"
-                      disabled={busy || editingDirty}
-                      onClick={() => {
-                        setIncluded([]);
-                        setRead(false);
-                        setDispatch(false);
-                        setLegal(false);
-                      }}
-                    >
-                      Auswahl aufheben
-                    </button>
-                  </div>
-                  <small>
-                    {chosen.length} von {readyRows.length} vorbereiteten Mails
-                    ausgewählt · Auswahl gilt für die ganze Liste
-                  </small>
-                </div>
-                {pendingIds
-                  .filter(() => recipientFilter !== "ready")
-                  .filter((id) => {
-                    const c = contacts.find((c) => c.id === id);
-                    return `${c?.organisation} ${c?.email}`
-                      .toLowerCase()
-                      .includes(recipientSearch.toLowerCase());
-                  })
-                  .map((id) => {
-                    const c = contacts.find((c) => c.id === id);
-                    const p = pendingDetails[id];
-                    return (
-                      <div className="mail-recipient mail-pending" key={id}>
-                        <strong>
-                          {c?.organisation ||
-                            p?.organisation ||
-                            "Kontakt nicht mehr vorhanden"}
-                        </strong>
-                        <span>{c?.email || p?.email}</span>
-                        <small>
-                          {p?.issues.join(" · ") ||
-                            "Rechercheangaben bestätigen"}
-                        </small>
-                        <button
-                          className="secondary"
-                          disabled={busy || editingDirty}
-                          onClick={() => void run(() => editOpenContacts([id]))}
-                        >
-                          Angaben bearbeiten
-                        </button>
-                        <button
-                          className="quiet"
-                          disabled={busy || editingDirty}
-                          onClick={() => removeFromBatch([id])}
-                        >
-                          Aus diesem Versand entfernen
-                        </button>
-                      </div>
-                    );
-                  })}
-                {rows
-                  .filter(
-                    (r) =>
-                      recipientFilter === "all" ||
-                      (recipientFilter === "open"
-                        ? !!r.issues.length
-                        : !r.issues.length),
-                  )
-                  .filter((r) =>
-                    `${r.organisation} ${r.recipient}`
-                      .toLowerCase()
-                      .includes(recipientSearch.toLowerCase()),
-                  )
-                  .map((r) => (
-                    <div key={r.id} className="mail-recipient">
+            <div
+              hidden={checkout}
+              className={`mail-review-stage ${previewOpen ? "preview-open" : ""}`}
+            >
+              <div className="mail-workbench" id="mail-workbench">
+                <nav
+                  className="mail-recipient-list"
+                  aria-label="Mail-Empfänger"
+                >
+                  <div className="mail-selection-toolbar">
+                    <label>
+                      Ansicht
+                      <select
+                        value={recipientFilter}
+                        onChange={(e) => setRecipientFilter(e.target.value)}
+                      >
+                        <option value="all">
+                          Alle ({rows.length + pendingIds.length})
+                        </option>
+                        <option value="ready">
+                          Vorbereitet ({readyRows.length})
+                        </option>
+                        <option value="open">
+                          Angaben offen ({openIds.length})
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      Empfänger suchen
                       <input
-                        type="checkbox"
-                        aria-label={`${r.recipient} für Versand auswählen`}
-                        disabled={
-                          busy ||
-                          editingDirty ||
-                          !!r.issues.length ||
-                          results.some((x) => x.id === r.id && x.ok)
-                        }
-                        checked={included.includes(r.id)}
-                        onChange={(e) => {
-                          setIncluded((old) =>
-                            e.target.checked
-                              ? [...old, r.id]
-                              : old.filter((id) => id !== r.id),
+                        value={recipientSearch}
+                        onChange={(e) => setRecipientSearch(e.target.value)}
+                      />
+                    </label>
+                    <div className="actions">
+                      <button
+                        className="secondary"
+                        disabled={busy || editingDirty}
+                        onClick={() => {
+                          setIncluded(
+                            rows
+                              .filter(
+                                (r) =>
+                                  !r.issues.length &&
+                                  !results.some((x) => x.id === r.id && x.ok),
+                              )
+                              .map((r) => r.id),
                           );
                           setRead(false);
                           setDispatch(false);
                           setLegal(false);
                         }}
-                      />
+                      >
+                        Alle vorbereiteten Mails auswählen
+                      </button>
                       <button
                         className="quiet"
-                        aria-current={
-                          activeRow?.id === r.id ? "true" : undefined
-                        }
                         disabled={busy || editingDirty}
-                        onClick={() => setActiveId(r.id)}
+                        onClick={() => {
+                          setIncluded([]);
+                          setRead(false);
+                          setDispatch(false);
+                          setLegal(false);
+                        }}
                       >
-                        <strong>{r.organisation}</strong>
-                        <span>{r.recipient}</span>
-                        <small>
-                          {r.issues.length
-                            ? "Angaben ergänzen"
-                            : results.some((x) => x.id === r.id && x.ok)
-                              ? "Erledigt"
-                              : r.needsLegal ? "Versandangabe fehlt" : "Bereit zur Freigabe"}
-                        </small>
+                        Auswahl aufheben
+                      </button>
+                    </div>
+                    <small>
+                      {chosen.length} von {readyRows.length} vorbereiteten Mails
+                      ausgewählt · Auswahl gilt für die ganze Liste
+                    </small>
+                  </div>
+                  {pendingIds
+                    .filter(() => recipientFilter !== "ready")
+                    .filter((id) => {
+                      const c = contacts.find((c) => c.id === id);
+                      return `${c?.organisation} ${c?.email}`
+                        .toLowerCase()
+                        .includes(recipientSearch.toLowerCase());
+                    })
+                    .map((id) => {
+                      const c = contacts.find((c) => c.id === id);
+                      const p = pendingDetails[id];
+                      return (
+                        <div className="mail-recipient mail-pending" key={id}>
+                          <strong>
+                            {c?.organisation ||
+                              p?.organisation ||
+                              "Kontakt nicht mehr vorhanden"}
+                          </strong>
+                          <span>{c?.email || p?.email}</span>
+                          <small>
+                            {p?.issues.join(" · ") ||
+                              "Rechercheangaben bestätigen"}
+                          </small>
+                          <button
+                            className="secondary"
+                            disabled={busy || editingDirty}
+                            onClick={() =>
+                              void run(() => editOpenContacts([id]))
+                            }
+                          >
+                            Angaben bearbeiten
+                          </button>
+                          <button
+                            className="quiet"
+                            disabled={busy || editingDirty}
+                            onClick={() => removeFromBatch([id])}
+                          >
+                            Aus diesem Versand entfernen
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {rows
+                    .filter(
+                      (r) =>
+                        recipientFilter === "all" ||
+                        (recipientFilter === "open"
+                          ? !!r.issues.length
+                          : !r.issues.length),
+                    )
+                    .filter((r) =>
+                      `${r.organisation} ${r.recipient}`
+                        .toLowerCase()
+                        .includes(recipientSearch.toLowerCase()),
+                    )
+                    .map((r) => (
+                      <div key={r.id} className="mail-recipient">
+                        <input
+                          type="checkbox"
+                          aria-label={`${r.recipient} für Versand auswählen`}
+                          disabled={
+                            busy ||
+                            editingDirty ||
+                            !!r.issues.length ||
+                            results.some((x) => x.id === r.id && x.ok)
+                          }
+                          checked={included.includes(r.id)}
+                          onChange={(e) => {
+                            setIncluded((old) =>
+                              e.target.checked
+                                ? [...old, r.id]
+                                : old.filter((id) => id !== r.id),
+                            );
+                            setRead(false);
+                            setDispatch(false);
+                            setLegal(false);
+                          }}
+                        />
+                        <button
+                          className="quiet"
+                          aria-current={
+                            activeRow?.id === r.id ? "true" : undefined
+                          }
+                          disabled={busy || editingDirty}
+                          onClick={() => {
+                            setActiveId(r.id);
+                            setPreviewOpen(true);
+                          }}
+                        >
+                          <strong>{r.organisation}</strong>
+                          <span>{r.recipient}</span>
+                          <small>
+                            {r.issues.length
+                              ? "Angaben ergänzen"
+                              : results.some((x) => x.id === r.id && x.ok)
+                                ? "Erledigt"
+                                : r.needsLegal
+                                  ? "Versandangabe fehlt"
+                                  : "Bereit zur Freigabe"}
+                          </small>
+                        </button>
+                      </div>
+                    ))}
+                </nav>
+                {!activeRow && (
+                  <div className="mail-preview-pane">
+                    <h3>Angaben offen</h3>
+                    <p>
+                      Wähle links einen Kontakt zum Bearbeiten. Du kannst jeden
+                      Kontakt aus diesem Versand entfernen; er bleibt in deiner
+                      Kontaktliste.
+                    </p>
+                  </div>
+                )}
+                {activeRow && (
+                  <div className="mail-preview-pane">
+                    <button
+                      className="secondary mail-preview-back"
+                      disabled={busy || editingDirty}
+                      onClick={() => setPreviewOpen(false)}
+                    >
+                      Zurück zur Liste
+                    </button>
+                    <div className="actions">
+                      <button
+                        className="secondary"
+                        disabled={busy || editingDirty}
+                        onClick={() =>
+                          void run(async () => {
+                            const result = await api("test", {
+                              confirmed: true,
+                              requestId: crypto.randomUUID(),
+                              draft: {
+                                id: activeRow.id,
+                                version: activeRow.version,
+                              },
+                            });
+                            setSendProgress(result.message);
+                          })
+                        }
+                      >
+                        Testmail an mich senden
                       </button>
                       <button
                         className="quiet mail-remove"
                         disabled={busy || editingDirty}
-                        onClick={() => removeFromBatch([contactIdFor(r)])}
+                        onClick={() => {
+                          removeFromBatch([contactIdFor(activeRow)]);
+                          setPreviewOpen(false);
+                        }}
                       >
                         Aus diesem Versand entfernen
                       </button>
                     </div>
-                  ))}
-              </nav>
-              {!activeRow && (
-                <div className="mail-preview-pane">
-                  <h3>Angaben offen</h3>
-                  <p>
-                    Wähle links einen Kontakt zum Bearbeiten. Du kannst jeden
-                    Kontakt aus diesem Versand entfernen; er bleibt in deiner
-                    Kontaktliste.
-                  </p>
-                </div>
-              )}
-              {activeRow && (
-                <div className="mail-preview-pane">
-                  <MailPreview
-                    key={activeRow.id}
-                    message={activeRow}
-                    disabled={
-                      busy || results.some((x) => x.id === activeRow.id && x.ok)
-                    }
-                    onDirty={(dirty) => {
-                      setEditingDirty(dirty);
-                      setRead(false);
-                      setDispatch(false);
-                      setLegal(false);
-                    }}
-                    onSave={async (value) => {
-                      setBusy(true);
-                      try {
-                        const response = await fetch(
-                          `/api/drafts/${activeRow.id}`,
-                          {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              version: activeRow.version,
-                              ...value,
-                            }),
-                          },
-                        );
-                        const result = await response.json();
-                        if (!response.ok)
-                          throw new Error(
-                            result.error || "Speichern fehlgeschlagen.",
-                          );
-                        const keep = [...included];
-                        await preview(rows.map((r) => r.id));
-                        setIncluded(keep);
-                        setEditingDirty(false);
-                        await refresh();
-                      } finally {
-                        setBusy(false);
+                    <MailPreview
+                      key={activeRow.id}
+                      message={activeRow}
+                      disabled={
+                        busy ||
+                        results.some((x) => x.id === activeRow.id && x.ok)
                       }
-                    }}
-                  />
-                  {activeRow.issues.length > 0 && (
-                    <div className="error">
-                      <ul>
-                        {activeRow.issues.map((issue) => (
-                          <li key={issue}>{issue}</li>
-                        ))}
-                      </ul>
-                      <button
-                        className="secondary"
-                        disabled={busy || editingDirty}
-                        onClick={() => {
-                          const draft = drafts.find(
-                            (d) => d.id === activeRow.id,
+                      onDirty={(dirty) => {
+                        setEditingDirty(dirty);
+                        setRead(false);
+                        setDispatch(false);
+                        setLegal(false);
+                      }}
+                      onSave={async (value) => {
+                        setBusy(true);
+                        try {
+                          const response = await fetch(
+                            `/api/drafts/${activeRow.id}`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                version: activeRow.version,
+                                ...value,
+                              }),
+                            },
                           );
-                          if (draft) openContact?.(draft.contactId);
-                        }}
-                      >
-                        Kontakt ergänzen
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                          const result = await response.json();
+                          if (!response.ok)
+                            throw new Error(
+                              result.error || "Speichern fehlgeschlagen.",
+                            );
+                          const keep = [...included];
+                          await preview(rows.map((r) => r.id));
+                          setIncluded(keep);
+                          setEditingDirty(false);
+                          await refresh();
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    />
+                    {activeRow.issues.length > 0 && (
+                      <div className="error">
+                        <ul>
+                          {activeRow.issues.map((issue) => (
+                            <li key={issue}>{issue}</li>
+                          ))}
+                        </ul>
+                        <button
+                          className="secondary"
+                          disabled={busy || editingDirty}
+                          onClick={() => {
+                            const draft = drafts.find(
+                              (d) => d.id === activeRow.id,
+                            );
+                            if (draft) openContact?.(draft.contactId);
+                          }}
+                        >
+                          Kontakt ergänzen
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            {chosen.length > 0 && (
+            {!checkout && chosen.length > 0 && (
+              <div className="mail-selection-bar">
+                <strong>{chosen.length} Mails ausgewählt</strong>
+                <button
+                  disabled={busy || editingDirty}
+                  onClick={() => {
+                    setCheckout(true);
+                    setRead(false);
+                    setDispatch(false);
+                    setLegal(false);
+                    requestAnimationFrame(() =>
+                      document
+                        .getElementById("mailstudio-send-approval")
+                        ?.focus(),
+                    );
+                  }}
+                >
+                  Weiter zum Versand →
+                </button>
+              </div>
+            )}
+            {checkout && chosen.length > 0 && (
               <section
                 id="mailstudio-send-approval"
                 ref={approvalRef}
                 tabIndex={-1}
                 aria-label="Versandfreigabe"
               >
+                <button
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setCheckout(false);
+                    setRead(false);
+                    setDispatch(false);
+                    setLegal(false);
+                  }}
+                >
+                  Zurück zu den Mails
+                </button>
+                <dl className="mail-checkout-summary">
+                  <div>
+                    <dt>Empfänger</dt>
+                    <dd>{chosen.length} ausgewählte Kontakte</dd>
+                  </div>
+                  <div>
+                    <dt>Absender</dt>
+                    <dd>Nora Jeker · njeker@studiojeker.ch</dd>
+                  </div>
+                  <div>
+                    <dt>Versand</dt>
+                    <dd>{scheduleSummary}</dd>
+                  </div>
+                </dl>
                 {missingLegal.length > 0 && (
                   <fieldset>
                     <legend>
-                      Noch eine Angabe für {missingLegal.length}{" "}
-                      ausgewählte Kontakte
+                      Noch eine Angabe für {missingLegal.length} ausgewählte
+                      Kontakte
                     </legend>
                     <p>
-                      Warum dürfen diese Kontakte angeschrieben werden? Beschreibe
-                      die tatsächlich vorhandene Grundlage und wo sie dokumentiert
-                      ist. Deine Angabe wird für diese Kontakte gespeichert.
-                      Bereits gültig geprüfte Kontakte brauchen keine neue Angabe.
+                      Warum dürfen diese Kontakte angeschrieben werden?
+                      Beschreibe die tatsächlich vorhandene Grundlage und wo sie
+                      dokumentiert ist. Deine Angabe wird für diese Kontakte
+                      gespeichert. Bereits gültig geprüfte Kontakte brauchen
+                      keine neue Angabe.
                     </p>
                     <label>
                       Grundlage der Kontaktaufnahme und Nachweis
@@ -1552,7 +1638,8 @@ export default function MailStudio({
                     </label>
                     <p id="mail-basis-help">
                       Einmal für diese Auswahl ausfüllen. Mindestens 15 Zeichen.
-                      Nur Angaben verwenden, die auf alle betroffenen Kontakte zutreffen.
+                      Nur Angaben verwenden, die auf alle betroffenen Kontakte
+                      zutreffen.
                     </p>
                     {chosen.some((r) => !r.needsLegal) && (
                       <button
@@ -1560,13 +1647,18 @@ export default function MailStudio({
                         className="secondary"
                         disabled={busy || editingDirty}
                         onClick={() => {
-                          setIncluded(chosen.filter((r) => !r.needsLegal).map((r) => r.id));
+                          setIncluded(
+                            chosen
+                              .filter((r) => !r.needsLegal)
+                              .map((r) => r.id),
+                          );
                           setRead(false);
                           setDispatch(false);
                           setLegal(false);
                         }}
                       >
-                        Nur mit {chosen.filter((r) => !r.needsLegal).length} bereits geprüften Mails weiter
+                        Nur mit {chosen.filter((r) => !r.needsLegal).length}{" "}
+                        bereits geprüften Mails weiter
                       </button>
                     )}
                     {publicLegal && (
@@ -1609,134 +1701,139 @@ export default function MailStudio({
                     {approvalHint}
                   </p>
                   <p>
-                    Der Versand läuft im Hintergrund. Du kannst die Seite danach
-                    schliessen. «Versand starten» aktiviert die Warteschlange;
-                    Versandzeiten und Tageslimit gelten weiterhin.
+                    Die ausgewählten Mails werden eingeplant. Bei aktiver
+                    Automatik beginnt der Versand im nächsten verfügbaren
+                    Zeitfenster und läuft im Hintergrund. Du kannst die Seite
+                    danach schliessen.
                   </p>
                   <div className="actions">
                     <button
-                      disabled={busy || editingDirty || (!canApprove && !(missingLegal.length && rationale.trim().length < 15))}
+                      disabled={
+                        busy ||
+                        editingDirty ||
+                        (!canApprove &&
+                          !(
+                            missingLegal.length && rationale.trim().length < 15
+                          ))
+                      }
                       aria-describedby="mail-approval-hint"
                       onClick={() => {
                         if (canApprove) {
-                          void run(() => submitMails("now"));
-                        } else if (missingLegal.length && rationale.trim().length < 15) {
-                          document.getElementById("mail-dispatch-basis")?.focus();
-                          document.getElementById("mail-dispatch-basis")?.scrollIntoView({ block: "center", behavior: "smooth" });
+                          void run(() => submitMails());
+                        } else if (
+                          missingLegal.length &&
+                          rationale.trim().length < 15
+                        ) {
+                          document
+                            .getElementById("mail-dispatch-basis")
+                            ?.focus();
+                          document
+                            .getElementById("mail-dispatch-basis")
+                            ?.scrollIntoView({
+                              block: "center",
+                              behavior: "smooth",
+                            });
                         } else {
-                          approvalRef.current?.querySelector<HTMLInputElement>('input[type="checkbox"]:not(:checked)')?.focus();
+                          approvalRef.current
+                            ?.querySelector<HTMLInputElement>(
+                              'input[type="checkbox"]:not(:checked)',
+                            )
+                            ?.focus();
                         }
                       }}
                     >
-                      {busy && sendMode === "now"
-                        ? "Versand läuft …"
+                      {busy
+                        ? "Mails werden eingeplant …"
                         : missingLegal.length && rationale.trim().length < 15
                           ? "Fehlende Versandangabe ergänzen"
                           : chosen.length === 1
-                          ? "Versand starten · 1 Mail"
-                          : `Versand starten · ${chosen.length} Mails`}
-                    </button>
-                    <button
-                      className="secondary"
-                      disabled={!canApprove}
-                      onClick={() => void run(() => submitMails("schedule"))}
-                    >
-                      Versand planen
+                            ? "1 Mail einplanen"
+                            : `${chosen.length} Mails einplanen`}
                     </button>
                   </div>
                 </div>
               </section>
             )}
-            <details>
-              <summary>Texte mit KI überarbeiten</summary>
-              <MailAssistant
-                onBusyChange={setBusy}
-                mode="WRITE"
-                expanded
-                disabled={busy || editingDirty}
-                items={chosen.map((r) => ({ id: r.id, version: r.version }))}
-                refresh={async () => {
-                  const keep = [...included];
-                  setRead(false);
-                  setDispatch(false);
-                  setLegal(false);
-                  await preview(rows.map((r) => r.id));
-                  setIncluded(keep);
-                  await refresh();
-                }}
-              />
-            </details>
-            <details>
-              <summary>Bilder oder Links für alle Mails ergänzen</summary>
-              <MailContentEditor
-                count={chosen.length}
-                disabled={busy || editingDirty}
-                onApply={async (content) => {
-                  setBusy(true);
-                  setRead(false);
-                  setLegal(false);
-                  const previousIncluded = [...included];
-                  try {
-                    const data = await api("content", {
-                      items: chosen.map((r) => ({
-                        id: r.id,
-                        version: r.version,
-                      })),
-                      content,
-                    });
-                    await preview();
-                    setIncluded(previousIncluded);
+            <div hidden={checkout}>
+              <details>
+                <summary>Texte mit KI überarbeiten</summary>
+                <MailAssistant
+                  onBusyChange={setBusy}
+                  mode="WRITE"
+                  expanded
+                  disabled={busy || editingDirty}
+                  items={chosen.map((r) => ({ id: r.id, version: r.version }))}
+                  refresh={async () => {
+                    const keep = [...included];
+                    setRead(false);
+                    setDispatch(false);
+                    setLegal(false);
+                    await preview(rows.map((r) => r.id));
+                    setIncluded(keep);
                     await refresh();
-                    if (data.results.some((r: Result) => !r.ok))
-                      throw new Error(
-                        data.results
-                          .filter((r: Result) => !r.ok)
-                          .map((r: Result) => r.message)
-                          .join(" · "),
-                      );
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              />
-            </details>
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy || editingDirty || !chosen.length}
-              onClick={() =>
-                void run(async () => {
-                  const first = chosen[0];
-                  const result = await api("test", {
-                    confirmed: true,
-                    requestId: crypto.randomUUID(),
-                    draft: { id: first.id, version: first.version },
-                  });
-                  setSendProgress(result.message);
-                })
-              }
-            >
-              Erste Mail als Test an njeker@studiojeker.ch senden
-            </button>
+                  }}
+                />
+              </details>
+              <details>
+                <summary>Bilder oder Links für alle Mails ergänzen</summary>
+                <MailContentEditor
+                  count={chosen.length}
+                  disabled={busy || editingDirty}
+                  onApply={async (content) => {
+                    setBusy(true);
+                    setRead(false);
+                    setLegal(false);
+                    const previousIncluded = [...included];
+                    try {
+                      const data = await api("content", {
+                        items: chosen.map((r) => ({
+                          id: r.id,
+                          version: r.version,
+                        })),
+                        content,
+                      });
+                      await preview();
+                      setIncluded(previousIncluded);
+                      await refresh();
+                      if (data.results.some((r: Result) => !r.ok))
+                        throw new Error(
+                          data.results
+                            .filter((r: Result) => !r.ok)
+                            .map((r: Result) => r.message)
+                            .join(" · "),
+                        );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                />
+              </details>
+            </div>
             {sendProgress && <p role="status">{sendProgress}</p>}
             {results.length > 0 && (
               <div role="status">
                 <p>
-                  {results.filter((r) => r.ok).length}{" "}
-                  {sendMode === "now"
-                    ? "in die Versandwarteschlange übernommen"
-                    : "freigegeben und eingeplant"}
+                  {results.filter((r) => r.ok).length} freigegeben und
+                  eingeplant
                   {" · "}
                   {included.length} noch offen.
                 </p>
-                <ul>
-                  {results.map((r) => (
-                    <li key={r.id}>
-                      {rows.find((row) => row.id === r.id)?.recipient}:{" "}
-                      {r.message}
-                    </li>
-                  ))}
-                </ul>
+                <p>
+                  Erfolgreich eingeplante Mails werden im Hintergrund
+                  verarbeitet. Du kannst die Seite schliessen.
+                </p>
+                <button onClick={onOpenShipping}>Versand verfolgen</button>
+                <details>
+                  <summary>Ergebnisse anzeigen</summary>
+                  <ul>
+                    {results.map((r) => (
+                      <li key={r.id}>
+                        {rows.find((row) => row.id === r.id)?.recipient}:{" "}
+                        {r.message}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
                 <button className="secondary" onClick={resetSelection}>
                   Weitere Mails vorbereiten
                 </button>
@@ -1744,24 +1841,15 @@ export default function MailStudio({
             )}
           </section>
         )}
-      <details
-        className="panel"
-        open={scheduleOpen}
-        onToggle={(e) => setScheduleOpen(e.currentTarget.open)}
-      >
-        <summary>Zeitplan, Warteschlange und Verlauf</summary>
-        <MailSchedule
-          key={scheduleRevision}
-          drafts={drafts}
-          openDraft={openDraft}
-          compact={false}
-          readyCount={candidates.length}
-          onQueueChange={setQueuedIds}
-          onSendableQueueChange={setSendableQueuedIds}
-          reviewBusy={busy}
-          onSendNow={(ids) => void run(() => reviewForSending(ids))}
-        />
-      </details>
+      <MailSchedule
+        key={scheduleRevision}
+        drafts={drafts}
+        openDraft={openDraft}
+        observerOnly
+        onSummaryChange={setScheduleSummary}
+        onQueueChange={setQueuedIds}
+        onSendableQueueChange={setSendableQueuedIds}
+      />
     </section>
   );
 }

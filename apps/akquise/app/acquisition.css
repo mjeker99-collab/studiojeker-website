@@ -265,3 +265,137 @@
 .mail-studio .mail-selection-toolbar label {
   margin-block: 6px;
 }
+
+/* One task per screen: selection, review, then explicit checkout. */
+.mail-review-stage[hidden],
+.mail-studio [hidden] {
+  display: none !important;
+}
+.mail-studio #mailstudio-send-approval {
+  display: block;
+  outline: none;
+}
+.mail-checkout-summary {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+.mail-checkout-summary > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  padding: 12px;
+  background: #f4f7f8;
+  border-radius: 8px;
+}
+.mail-checkout-summary dt {
+  font-weight: 700;
+}
+.mail-checkout-summary dd {
+  margin: 0;
+}
+.mail-preview-back {
+  display: none;
+}
+.mail-draft-list {
+  margin-top: 20px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+.mail-draft-list .mail-selection {
+  padding: 12px;
+  margin: 0;
+  border-bottom: 1px solid #dce5e9;
+}
+.mail-studio .mail-recipient {
+  padding: 8px 12px;
+}
+.mail-studio .mail-recipient-list {
+  max-height: 65vh;
+}
+.mail-studio .mail-workbench {
+  margin: 12px 0;
+}
+.contact-add-menu {
+  padding: 16px 20px;
+}
+.contact-add-menu > summary {
+  width: fit-content;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #bccbd2;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.contact-row-menu {
+  min-width: 44px;
+}
+.contact-row-menu summary {
+  min-height: 44px;
+  padding: 10px;
+  cursor: pointer;
+}
+.contact-row-menu[open] {
+  min-width: 140px;
+}
+.contact-row-menu button {
+  display: block;
+  min-height: 44px;
+}
+.contact-table td,
+.contact-table th {
+  padding: 12px;
+}
+.shipping-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 0;
+}
+.shipping-tabs [aria-pressed="true"] {
+  box-shadow: inset 0 -3px var(--cyan);
+}
+.mail-schedule-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1200px) {
+  .mail-review-stage .mail-workbench {
+    display: block;
+  }
+  .mail-review-stage:not(.preview-open) .mail-preview-pane {
+    display: none;
+  }
+  .mail-review-stage.preview-open .mail-recipient-list {
+    display: none;
+  }
+  .mail-review-stage .mail-recipient-list {
+    max-height: none;
+  }
+  .mail-review-stage .mail-preview-pane {
+    max-height: none;
+  }
+  .mail-preview-back {
+    display: inline-flex;
+    margin-bottom: 12px;
+  }
+  .contact-table table {
+    min-width: 0;
+    width: 100%;
+  }
+  .contact-table td {
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 650px) {
+  .mail-checkout-summary > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .hub-subnav button {
+    flex: 1 1 90px;
+  }
+  .mail-schedule-stats {
+    grid-template-columns: 1fr;
+  }
+}

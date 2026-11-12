@@ -1,3 +1,4 @@
+import { checkout } from "./mail-checkout-helper";
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 for (const width of [390, 1024]) {
@@ -10,7 +11,7 @@ for (const width of [390, 1024]) {
     await expect(nav.getByRole("button")).toHaveText([
       "Kontakte",
       "Mails",
-      "Versandverlauf",
+      "Versand",
     ]);
     await nav.getByRole("button", { name: "Kontakte" }).click();
     await page.getByLabel("Atelier 1 auswählen", { exact: true }).check();
@@ -21,6 +22,7 @@ for (const width of [390, 1024]) {
       page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
     ).toBeVisible();
     await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByText("Kontakte hinzufügen", { exact: true }).click();
     await page
       .getByRole("button", { name: "Kontakte recherchieren", exact: true })
       .click();
@@ -38,11 +40,7 @@ for (const width of [390, 1024]) {
         exact: true,
       })
       .click();
-    await expect(
-      page
-        .locator(".mail-preview-pane")
-        .getByRole("heading", { name: "Anfrage 0" }),
-    ).toBeVisible();
+    await expect(page.locator(".mail-preview-pane")).toBeHidden();
     await page
       .getByRole("navigation", { name: "Mail-Empfänger" })
       .getByRole("button", { name: /Atelier 1/ })
@@ -52,6 +50,9 @@ for (const width of [390, 1024]) {
         .locator(".mail-preview-pane")
         .getByRole("heading", { name: "Anfrage 1" }),
     ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Zurück zur Liste", exact: true })
+      .click();
     const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
     await recipients
       .getByRole("button", { name: "Auswahl aufheben", exact: true })
@@ -60,13 +61,17 @@ for (const width of [390, 1024]) {
       recipients.getByRole("checkbox", { checked: true }),
     ).toHaveCount(0);
     await recipients
-      .getByRole("button", { name: "Alle vorbereiteten Mails auswählen", exact: true })
+      .getByRole("button", {
+        name: "Alle vorbereiteten Mails auswählen",
+        exact: true,
+      })
       .click();
     await expect(
       recipients.getByRole("checkbox", { checked: true }),
     ).toHaveCount(3);
+    await checkout(page);
     await expect(
-      page.getByRole("button", { name: "Versand starten · 3 Mails", exact: true }),
+      page.getByRole("button", { name: "3 Mails einplanen", exact: true }),
     ).toBeDisabled();
     expect(state.sent).toEqual([]);
     expect(
@@ -79,6 +84,7 @@ for (const width of [390, 1024]) {
       fullPage: true,
     });
     await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
+    await page.getByText("Kontakte hinzufügen", { exact: true }).click();
     await page
       .getByRole("button", { name: "Kontakte recherchieren", exact: true })
       .click();
@@ -134,7 +140,9 @@ test("inline edits autosave the exact version and invalidate dispatch approval",
   await page
     .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)" })
     .click();
+  await checkout(page);
   await page.getByLabel(/Ich gebe die 1 ausgewählten/).check();
+  await page.getByRole("button", { name: "Zurück zu den Mails" }).click();
   await page
     .getByRole("button", { name: "Text bearbeiten", exact: true })
     .click();
@@ -142,15 +150,17 @@ test("inline edits autosave the exact version and invalidate dispatch approval",
     .getByLabel("Betreff", { exact: true })
     .fill("Persönliche Einladung");
   await expect(
-    page.getByRole("button", { name: "Versand starten · 1 Mail", exact: true }),
+    page.getByRole("button", { name: "Weiter zum Versand →" }),
   ).toBeDisabled();
   await expect.poll(() => writes).toBe(1);
   await expect(page.getByLabel("Betreff", { exact: true })).toHaveValue(
     "Persönliche Einladung",
   );
+  await checkout(page);
   await expect(
     page.getByLabel(/Ich gebe die 1 ausgewählten/),
   ).not.toBeChecked();
+  await page.getByRole("button", { name: "Zurück zu den Mails" }).click();
   await page
     .getByRole("button", { name: "Vorschau anzeigen", exact: true })
     .click();
@@ -221,6 +231,9 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
     throw new Error(`Unexpected action: ${action}`);
   });
   await page
+    .getByRole("button", { name: "Neue Mails erstellen", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "25 Kontakte auswählen", exact: true })
     .click();
   await page
@@ -234,7 +247,10 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
     .click();
   await page.getByLabel(/Ich habe die persönlichen E-Mail-Adressen/).check();
   await page
-    .getByRole("button", { name: "Angaben speichern und weiter →", exact: true })
+    .getByRole("button", {
+      name: "Angaben speichern und weiter →",
+      exact: true,
+    })
     .click();
   const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
   await expect(recipients.getByRole("checkbox", { checked: true })).toHaveCount(
@@ -245,30 +261,43 @@ test("completing open contacts preserves prepared drafts and deliberate exclusio
       exact: true,
     }),
   ).not.toBeChecked();
+  await checkout(page);
   await expect(
-    page.getByRole("button", { name: "Versand starten · 2 Mails", exact: true }),
+    page.getByRole("button", { name: "2 Mails einplanen", exact: true }),
   ).toBeDisabled();
   expect(prepared).toEqual([["c0", "c2"], ["c1"]]);
   expect(state.sent).toEqual([]);
 });
 
-test("one selected contact can be deleted only after explicit confirmation", async ({ page }) => {
+test("one selected contact can be deleted only after explicit confirmation", async ({
+  page,
+}) => {
   await setup(page);
   let deletes = 0;
-  await page.route("**/api/contacts/*/delete", async route => {
-    expect(new URL(route.request().url()).pathname).toBe("/api/contacts/c0/delete");
+  await page.route("**/api/contacts/*/delete", async (route) => {
+    expect(new URL(route.request().url()).pathname).toBe(
+      "/api/contacts/c0/delete",
+    );
     expect(route.request().postDataJSON().confirmed).toBe(true);
     deletes++;
     await route.fulfill({ json: { ok: true } });
   });
-  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Kontakte", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Akquise-Navigation" })
+    .getByRole("button", { name: "Kontakte", exact: true })
+    .click();
   await page.getByLabel("Atelier 0 auswählen", { exact: true }).check();
-  page.once("dialog", dialog => dialog.dismiss());
-  await page.getByRole("button", { name: "Kontakt löschen", exact: true }).click();
+  await page.getByLabel("Aktionen für Atelier 0").click();
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Löschen", exact: true }).click();
   expect(deletes).toBe(0);
-  await expect(page.getByLabel("Atelier 0 auswählen", { exact: true })).toBeChecked();
-  page.once("dialog", dialog => dialog.accept());
-  await page.getByRole("button", { name: "Kontakt löschen", exact: true }).click();
+  await expect(
+    page.getByLabel("Atelier 0 auswählen", { exact: true }),
+  ).toBeChecked();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Löschen", exact: true }).click();
   await expect.poll(() => deletes).toBe(1);
-  await expect(page.getByLabel("Atelier 0 auswählen", { exact: true })).not.toBeChecked();
+  await expect(
+    page.getByLabel("Atelier 0 auswählen", { exact: true }),
+  ).not.toBeChecked();
 });

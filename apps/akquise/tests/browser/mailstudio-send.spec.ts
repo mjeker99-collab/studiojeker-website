@@ -1,8 +1,13 @@
+import { checkout } from "./mail-checkout-helper";
 import { test, expect, type Page } from "@playwright/test";
 
 async function setup(
   page: Page,
-  options: { queued?: boolean; failure?: "review" | "unknown"; draftCount?: number } = {},
+  options: {
+    queued?: boolean;
+    failure?: "review" | "unknown";
+    draftCount?: number;
+  } = {},
 ) {
   const sent: string[] = [];
   const previews: string[][] = [];
@@ -82,7 +87,11 @@ async function setup(
           serverLimit: 100,
           todayCount: sent.length,
           todaySent: sent.length,
-          counts: options.queued ? [{ status: "QUEUED", _count: 3 }] : externallyQueued ? [{ status: "QUEUED", _count: 1 }] : [],
+          counts: options.queued
+            ? [{ status: "QUEUED", _count: 3 }]
+            : externallyQueued
+              ? [{ status: "QUEUED", _count: 1 }]
+              : [],
           items: options.queued
             ? drafts.map((d, i) => ({
                 id: `q${i}`,
@@ -94,15 +103,17 @@ async function setup(
                 error: null,
               }))
             : externallyQueued
-              ? [{
-                  id: "q-external",
-                  draftId: "d0",
-                  version: 1,
-                  recipient: contacts[0].email,
-                  subject: "Anfrage 0",
-                  status: "QUEUED",
-                  error: null,
-                }]
+              ? [
+                  {
+                    id: "q-external",
+                    draftId: "d0",
+                    version: 1,
+                    recipient: contacts[0].email,
+                    subject: "Anfrage 0",
+                    status: "QUEUED",
+                    error: null,
+                  },
+                ]
               : [],
         },
       });
@@ -126,7 +137,7 @@ async function setup(
         },
       });
     }
-    if (path === "/api/mail-review/approve-and-start") {
+    if (path === "/api/mail-review/approve-and-enqueue") {
       expect(body.confirmDispatch).toBe(true);
       expect(body.read).toBe(true);
       if (options.failure === "unknown")
@@ -159,7 +170,14 @@ async function setup(
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
-  return { sent, previews, settingsCalls, markExternallyQueued: () => { externallyQueued = true; } };
+  return {
+    sent,
+    previews,
+    settingsCalls,
+    markExternallyQueued: () => {
+      externallyQueued = true;
+    },
+  };
 }
 
 for (const width of [390, 768, 1024]) {
@@ -169,69 +187,91 @@ for (const width of [390, 768, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const draftCount = width === 768 ? 183 : 3;
     const state = await setup(page, { draftCount });
-    await page.getByText("Weitere Optionen", { exact: true }).click();
+    await page.getByRole("button", { name: "Versand", exact: true }).click();
     await page
-      .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
+      .getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
+        exact: true,
+      })
       .click();
-    await page.getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
-      exact: true,
-    }).click();
 
     const panel = page.locator(".mail-schedule");
     const action = panel.getByRole("button", {
       name: /ausgewählte Mails einplanen$/,
     });
     await expect(action).toBeDisabled();
-    await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
-    await expect(panel.getByText(`${draftCount} von ${draftCount} Mails ausgewählt.`, { exact: true })).toBeVisible();
+    await panel
+      .getByRole("button", { name: "Alle auswählen", exact: true })
+      .click();
+    await expect(
+      panel.getByText(`${draftCount} von ${draftCount} Mails ausgewählt.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
     const buttonBox = await action.boundingBox();
     const listBox = await panel.locator(".draft-list").boundingBox();
     expect(buttonBox).not.toBeNull();
     expect(listBox).not.toBeNull();
     expect(buttonBox!.y).toBeLessThan(listBox!.y);
 
-    const confirmation = panel.getByRole("checkbox", { name: /Nachrichten für den automatischen Versand einplanen/ });
+    const confirmation = panel.getByRole("checkbox", {
+      name: /Nachrichten für den automatischen Versand einplanen/,
+    });
     await expect(confirmation).not.toBeChecked();
     await confirmation.check();
     await expect(action).toBeEnabled();
     await panel.getByLabel(/anna0@example.test/).uncheck();
-    await expect(panel.getByText(`${draftCount - 1} von ${draftCount} Mails ausgewählt.`, { exact: true })).toBeVisible();
+    await expect(
+      panel.getByText(`${draftCount - 1} von ${draftCount} Mails ausgewählt.`, {
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(confirmation).not.toBeChecked();
     await expect(action).toBeDisabled();
     expect(state.sent).toEqual([]);
   });
 }
 
-test("mail selection confirmation expires if a selected mail is queued elsewhere", async ({ page }) => {
+test("mail selection confirmation expires if a selected mail is queued elsewhere", async ({
+  page,
+}) => {
   await page.clock.install();
   const state = await setup(page);
-  await page.getByText("Weitere Optionen", { exact: true }).click();
-  await page.getByRole("button", { name: "Zeitplan & Versandstatus", exact: true }).click();
-  await page.getByText("Bereits freigegebene Mails einplanen (3)", { exact: true }).click();
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page
+    .getByText("Bereits freigegebene Mails einplanen (3)", { exact: true })
+    .click();
   const panel = page.locator(".mail-schedule");
-  await panel.getByRole("button", { name: "Alle auswählen", exact: true }).click();
+  await panel
+    .getByRole("button", { name: "Alle auswählen", exact: true })
+    .click();
   const confirmation = panel.getByRole("checkbox", {
     name: /Nachrichten für den automatischen Versand einplanen/,
   });
-  const action = panel.getByRole("button", { name: /ausgewählte Mails einplanen$/ });
+  const action = panel.getByRole("button", {
+    name: /ausgewählte Mails einplanen$/,
+  });
   await confirmation.check();
   await expect(action).toBeEnabled();
 
   // Polling returns a recently queued item, making one selected draft unavailable.
   state.markExternallyQueued();
   await page.clock.fastForward(31_000);
-  await expect(panel.getByText("Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut auswählen.")).toBeVisible();
+  await expect(
+    panel.getByText(
+      "Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut auswählen.",
+    ),
+  ).toBeVisible();
   await expect(confirmation).not.toBeChecked();
   await expect(action).toBeDisabled();
   expect(state.sent).toEqual([]);
 });
 
 for (const width of [390, 1024]) {
-  test(`all queued mails can be reviewed and sent now with one approval at ${width}px`, async ({
+  test(`all prepared mails can be planned with one approval at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    const state = await setup(page, { queued: true });
+    const state = await setup(page);
     await page
       .getByRole("button", {
         name: "Gespeicherte Entwürfe öffnen (3)",
@@ -240,8 +280,9 @@ for (const width of [390, 1024]) {
       .click();
     expect(state.previews[0]).toEqual(["d0", "d1", "d2"]);
     expect(state.sent).toEqual([]);
+    await checkout(page);
     const send = page.getByRole("button", {
-      name: "Versand starten · 3 Mails",
+      name: "3 Mails einplanen",
       exact: true,
     });
     await expect(send).toBeDisabled();
@@ -250,6 +291,7 @@ for (const width of [390, 1024]) {
         "Bestätige die Versandfreigabe für die ausgewählten Mails.",
       ),
     ).toBeVisible();
+    await checkout(page);
     await page
       .getByLabel(/Ich gebe die 3 ausgewählten persönlichen Mails/)
       .check();
@@ -260,7 +302,7 @@ for (const width of [390, 1024]) {
     await send.click();
     await expect(
       page.getByText(
-        "3 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+        "3 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
         { exact: true },
       ),
     ).toBeVisible();
@@ -285,18 +327,21 @@ test("single mail action changes the approval scope and sends only that recipien
     .click();
   await page.getByLabel("anna0@example.test für Versand auswählen").uncheck();
   await page.getByLabel("anna2@example.test für Versand auswählen").uncheck();
+  await checkout(page);
   await expect(
-    page.getByRole("button", { name: "Versand starten · 1 Mail", exact: true }),
+    page.getByRole("button", { name: "1 Mail einplanen", exact: true }),
   ).toBeDisabled();
+  await checkout(page);
   await page
     .getByLabel(/Ich gebe die 1 ausgewählten persönlichen Mails/)
     .check();
+  await checkout(page);
   await page
-    .getByRole("button", { name: "Versand starten · 1 Mail", exact: true })
+    .getByRole("button", { name: "1 Mail einplanen", exact: true })
     .click();
   await expect(
     page.getByText(
-      "1 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+      "1 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -314,26 +359,29 @@ for (const failure of ["review", "unknown"] as const) {
         exact: true,
       })
       .click();
+    await checkout(page);
     await page
       .getByLabel(/Ich gebe die 3 ausgewählten persönlichen Mails/)
       .check();
+    await checkout(page);
     await page
-      .getByRole("button", { name: "Versand starten · 3 Mails", exact: true })
+      .getByRole("button", { name: "3 Mails einplanen", exact: true })
       .click();
     if (failure === "review") {
       await expect(
         page.getByText(
-          "2 Mails eingeplant. Der Versand läuft im Hintergrund innerhalb der Versandzeiten und des Tageslimits.",
+          "2 Mails eingeplant. Der Versand folgt dem bestehenden Zeitplan.",
           { exact: true },
         ),
       ).toBeVisible();
       expect(state.sent).toEqual(["d0", "d1", "d2"]);
     } else {
-      await expect(page.getByRole("alert").filter({ hasText: "Versand unterbrochen" })).toContainText(
-        "Versand unterbrochen",
-      );
+      await expect(
+        page.getByRole("alert").filter({ hasText: "Versand unterbrochen" }),
+      ).toContainText("Versand unterbrochen");
       expect(state.sent).toEqual([]);
     }
+    await checkout(page);
     await expect(
       page.getByLabel(/Ich gebe die .* ausgewählten persönlichen Mails/),
     ).not.toBeChecked();
@@ -343,11 +391,8 @@ for (const failure of ["review", "unknown"] as const) {
 test("schedule starts directly from the overview after explicit approval", async ({
   page,
 }) => {
-  const state = await setup(page, { queued: true });
-  await page.getByText("Weitere Optionen", { exact: true }).click();
-  await page
-    .getByRole("button", { name: "Zeitplan & Versandstatus", exact: true })
-    .click();
+  const state = await setup(page);
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
   await page
     .getByRole("button", { name: "Zeitplan starten", exact: true })
     .click();
@@ -415,10 +460,7 @@ test("discard requires confirmation and leaves the selection intact on cancel", 
   await panel.getByRole("button", { name: "Abbrechen", exact: true }).click();
   expect(discarded).toEqual([]);
   await expect(
-    page.getByRole("button", {
-      name: "Versand starten · 3 Mails",
-      exact: true,
-    }),
+    page.getByRole("button", { name: "Weiter zum Versand →" }),
   ).toBeVisible();
   await open.click();
   await panel.getByLabel(/Ich bestätige das Verwerfen/).check();
@@ -431,34 +473,49 @@ test("discard requires confirmation and leaves the selection intact on cancel", 
   expect(discarded).toEqual(["d0", "d1", "d2"]);
 });
 
-
-test("97 prepared mails can be selected as one group on iPad without dispatch", async ({ page }) => {
+test("97 prepared mails can be selected as one group on iPad without dispatch", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 768, height: 900 });
   const state = await setup(page, { draftCount: 97 });
-  await page.getByRole("button", {
-    name: "Gespeicherte Entwürfe öffnen (97)",
-    exact: true,
-  }).click();
+  await page
+    .getByRole("button", {
+      name: "Gespeicherte Entwürfe öffnen (97)",
+      exact: true,
+    })
+    .click();
   const recipients = page.getByRole("navigation", { name: "Mail-Empfänger" });
   await expect(
-    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", { exact: true }),
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", {
+      exact: true,
+    }),
   ).toBeVisible();
-  await recipients.getByRole("button", { name: "Auswahl aufheben", exact: true }).click();
+  await recipients
+    .getByRole("button", { name: "Auswahl aufheben", exact: true })
+    .click();
   await expect(
-    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 0 ausgewählt", { exact: true }),
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 0 ausgewählt", {
+      exact: true,
+    }),
   ).toBeVisible();
-  await recipients.getByRole("button", {
-    name: "Alle vorbereiteten Mails auswählen",
-    exact: true,
-  }).click();
+  await recipients
+    .getByRole("button", {
+      name: "Alle vorbereiteten Mails auswählen",
+      exact: true,
+    })
+    .click();
   await expect(
-    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", { exact: true }),
+    page.getByText("97 Mails vorbereitet · 0 Angaben offen · 97 ausgewählt", {
+      exact: true,
+    }),
   ).toBeVisible();
+  await checkout(page);
   await expect(
     page.getByLabel(/Ich gebe die 97 ausgewählten persönlichen Mails/),
   ).not.toBeChecked();
+  await checkout(page);
   await expect(
-    page.getByRole("button", { name: "Versand starten · 97 Mails", exact: true }),
+    page.getByRole("button", { name: "97 Mails einplanen", exact: true }),
   ).toBeDisabled();
   expect(state.sent).toEqual([]);
 });
