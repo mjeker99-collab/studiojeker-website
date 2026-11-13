@@ -740,3 +740,39 @@ test("Team-Mailvorlage nennt keine erfundene Kontaktperson und Archivierte bleib
   await assert.rejects(generateDraft({ ...team, archivedAt: new Date("2026-10-10") }));
   await assert.rejects(generateDraft({ ...team, email: "info@example.test" }));
 });
+
+
+test("Legacy-Masterliste normalisiert nur die alte Martin-Signatur auf Nora", () => {
+  const legacy = architectureNotes.replace(
+    "\nNora Jeker\n",
+    "\nMartin Jeker\n",
+  );
+  const result = importedDraft(legacy);
+  assert.ok(result);
+  assert.match(result.body, /Freundliche Grüsse\nNora Jeker\n/);
+  assert.doesNotMatch(result.body, /Martin Jeker/);
+  // Neither the caller's notes nor the original saved master text is edited.
+  assert.match(legacy, /Martin Jeker/);
+  const inappropriate = architectureNotes.replace(
+    "Studiojeker unterstützt",
+    "Ich bin Martin Jeker. Studiojeker unterstützt",
+  );
+  assert.throws(
+    () => importedDraft(inappropriate),
+    /anderen Absender im Text/,
+  );
+});
+
+test("Neue lokale Mailvorlage ist persönlich, nennt Nora und bleibt ein Entwurf", async () => {
+  const generated = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    hook: "Dokumentierte Projektvisualisierung für ein neues Wohnhaus.",
+  });
+  assert.ok(generated.body.length >= 650);
+  assert.match(generated.body, /Ich bin Nora Jeker/);
+  assert.match(generated.body, /Beispiel Architekten AG/);
+  assert.match(generated.body, /Projektvisualisierung für ein neues Wohnhaus/);
+  assert.doesNotMatch(generated.body, /Martin Jeker/);
+  assert.match(generated.body, /unverbindlichen Austausch/);
+});
