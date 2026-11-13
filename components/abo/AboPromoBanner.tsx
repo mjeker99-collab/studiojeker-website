@@ -5,7 +5,6 @@ import type { AboPromoContent } from "@/lib/content/abo-page";
 import { isAboPromoActive } from "@/lib/content/abo-promo";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import styles from "./AboLandingPage.module.css";
 
 type AboPromoBannerProps = {
@@ -36,7 +35,8 @@ export function AboPromoBanner({ promo }: AboPromoBannerProps) {
     // `#promo-preview` lets editors verify the block outside the date window.
     // Staging is an editorial preview: show the campaign before its launch date.
     // Production continues to honor the configured Switzerland date window.
-    const isStaging = window.location.hostname === "staging2026.studiojeker.ch";
+    // Use the deploy target so production bundles contain no staging hostname.
+    const isStaging = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://staging2026.") === true;
     if (isStaging || window.location.hash === "#promo-preview") return true;
     return isAboPromoActive(promo);
   }, [promo]);
