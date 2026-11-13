@@ -47,7 +47,8 @@ export const service = defineType({
     { name: "hero", title: "Hero" },
     { name: "solutions", title: "Solutions" },
     { name: "showreel", title: "Showreel" },
-    { name: "projects", title: "Projects" },
+    { name: "media", title: "Media galleries" },
+    { name: "projects", title: "Projects (legacy)" },
     { name: "about", title: "About block" },
     { name: "clients", title: "Clients" },
     { name: "cta", title: "Final CTA" },
@@ -316,6 +317,34 @@ export const service = defineType({
       description:
         "Vimeo video ID (digits) or a Vimeo URL. Autoplay/controls stay in the website.",
       validation: (Rule) => Rule.max(200),
+    }),
+
+    defineField({
+      name: "mediaLabel",
+      title: "Media Block Label",
+      type: "string",
+      group: "media",
+      description:
+        "Optional section label above the media galleries (e.g. Ausgewählte Arbeiten).",
+      validation: (Rule) => Rule.max(80),
+    }),
+    defineField({
+      name: "mediaHeadline",
+      title: "Media Block Headline",
+      type: "string",
+      group: "media",
+      description: "Visually hidden heading for the media galleries block.",
+      validation: (Rule) => Rule.max(160),
+    }),
+    defineField({
+      name: "mediaSections",
+      title: "Media Sections",
+      type: "array",
+      group: "media",
+      description:
+        "Photo / video / visualisation / animation galleries for this service area. Drag to reorder. Sections without items stay hidden on the public site.",
+      of: [{ type: "serviceMediaSection" }],
+      validation: (Rule) => Rule.max(4),
     }),
 
     defineField({

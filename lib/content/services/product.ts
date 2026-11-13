@@ -1,6 +1,7 @@
 import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
+import { getServiceMediaFallback } from "@/lib/content/services/media-sections";
 import { getServicePaths } from "@/lib/content/services/paths";
 import { showreels } from "@/lib/content/showreels";
 
@@ -10,6 +11,10 @@ export function getProductCommunicationContent(
   const paths = getServicePaths(locale);
   const clientsLabel =
     locale === "en" ? "Brands that trust us" : "Brands, die uns vertrauen";
+  const mediaFallback = getServiceMediaFallback(
+    "product-communication",
+    locale,
+  );
 
   if (locale === "en") {
     return {
@@ -88,64 +93,16 @@ export function getProductCommunicationContent(
         },
         videoId: showreels.productCommunication,
       },
+      media: {
+        label: mediaFallback.label,
+        headline: mediaFallback.headline,
+        sections: mediaFallback.sections,
+      },
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
         viewAll: { label: "View all projects", href: paths.work },
-        items: [
-          {
-            id: "prod-1",
-            title: "Product Communication",
-            category: "Product Photography",
-            href: paths.work,
-            image: {
-              src: "/images/product/Produktfotografie-scaled.jpg",
-              alt: "Product photography project",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "prod-2",
-            title: "Product Communication",
-            category: "Product Film",
-            href: paths.work,
-            image: {
-              src: "/images/product/certina1.jpg",
-              alt: "Product film project",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "prod-3",
-            title: "Product Communication",
-            category: "3D Visualization",
-            href: paths.work,
-            image: {
-              src: "/images/product/3D-Animation01.jpg",
-              alt: "3D product visualization",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "prod-4",
-            title: "Product Communication",
-            category: "Product Photography",
-            href: paths.work,
-            image: {
-              src: "/images/product/Uhren_3-c83cc10e.jpg",
-              alt: "Product still life",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-        ],
+        items: [],
       },
       about: {
         label: "About Studiojeker",
@@ -171,6 +128,7 @@ export function getProductCommunicationContent(
         text: "From product launch to international marketing, we create visual communication that helps your products stand out.",
         cta: { label: "Get in touch", href: paths.contact },
       },
+      missingContent: mediaFallback.missingContent,
     };
   }
 
@@ -250,64 +208,16 @@ export function getProductCommunicationContent(
       },
       videoId: showreels.productCommunication,
     },
+    media: {
+      label: mediaFallback.label,
+      headline: mediaFallback.headline,
+      sections: mediaFallback.sections,
+    },
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
       viewAll: { label: "Alle Projekte ansehen", href: paths.work },
-      items: [
-        {
-          id: "prod-1",
-          title: "Product Communication",
-          category: "Produktfotografie",
-          href: paths.work,
-          image: {
-            src: "/images/product/Produktfotografie-scaled.jpg",
-            alt: "Produktfotografie-Projekt",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "prod-2",
-          title: "Product Communication",
-          category: "Produktfilm",
-          href: paths.work,
-          image: {
-            src: "/images/product/certina1.jpg",
-            alt: "Produktfilm-Projekt",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "prod-3",
-          title: "Product Communication",
-          category: "3D-Visualisierung",
-          href: paths.work,
-          image: {
-            src: "/images/product/3D-Animation01.jpg",
-            alt: "3D-Produktvisualisierung",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "prod-4",
-          title: "Product Communication",
-          category: "Produktfotografie",
-          href: paths.work,
-          image: {
-            src: "/images/product/Uhren_3-c83cc10e.jpg",
-            alt: "Produktstillleben",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-      ],
+      items: [],
     },
     about: {
       label: "Über Studiojeker",
@@ -333,5 +243,6 @@ export function getProductCommunicationContent(
       text: "Von der ersten Idee bis zur internationalen Markteinführung begleiten wir Unternehmen mit professioneller Produktkommunikation.",
       cta: { label: "Kontakt aufnehmen", href: paths.contact },
     },
+    missingContent: mediaFallback.missingContent,
   };
 }

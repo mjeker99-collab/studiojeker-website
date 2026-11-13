@@ -1,15 +1,26 @@
 import type { Locale } from "@/types/i18n";
 import type { HomepageMedia, HomepageProject } from "@/types/homepage";
 import type {
+  ServiceMediaSection,
+  ServiceMediaSectionId,
   ServicePageContent,
   ServiceSolutionItem,
 } from "@/types/service-page";
+import type { WorkProjectItem } from "@/types/work";
 import type {
   SanityService,
+  SanityServiceMediaSection,
   SanityServiceProjectItem,
   SanityServiceSolutionItem,
 } from "@/lib/sanity/service";
+import type { SanityLocalizedString, SanityLocalizedText } from "@/lib/sanity/homepage";
+import type { SanityWorkProjectItem } from "@/lib/sanity/work";
 import { mergeClientLogos } from "@/lib/content/merge-client-logos";
+import { resolveWorkMedia } from "@/lib/content/merge-sanity-work";
+import {
+  EXPECTED_MEDIA_SECTIONS,
+  visibleMediaSections,
+} from "@/lib/content/services/media-sections";
 import { getAlternateLocalePath } from "@/lib/i18n/config";
 import {
   HERO_MEDIA_MAX_WIDTH,
@@ -197,6 +208,162 @@ function mergeProjects(
   });
 }
 
+function pickLocalized(
+  value: SanityLocalizedString | SanityLocalizedText | undefined,
+  locale: Locale,
+  fallback?: string,
+): string | undefined {
+  const localized =
+    locale === "en"
+      ? clean(value?.en) ?? clean(value?.de)
+      : clean(value?.de) ?? clean(value?.en);
+  return localized ?? fallback;
+}
+
+const MEDIA_SECTION_IDS = new Set<string>([
+  "photos",
+  "videos",
+  "visualizations",
+  "animations",
+]);
+
+function isMediaSectionId(value: string): value is ServiceMediaSectionId {
+  return MEDIA_SECTION_IDS.has(value);
+}
+
+function mergeMediaItem(
+  sanityItem: SanityWorkProjectItem,
+  baseItem: WorkProjectItem | undefined,
+  locale: Locale,
+): WorkProjectItem | null {
+  if (sanityItem.active === false) {
+    return null;
+  }
+
+  const fallback = baseItem ?? {
+    id: clean(sanityItem.itemId) ?? "media-item",
+    title: "",
+    media: { type: "image" as const, src: "", alt: "" },
+  };
+
+  const media = resolveWorkMedia(sanityItem.media, fallback.media);
+  if (media.type === "image" && !media.src) {
+    return null;
+  }
+  if (media.type === "video" && !(media.src && media.poster)) {
+    return null;
+  }
+  if (media.type === "slideshow" && media.images.length === 0) {
+    return null;
+  }
+
+  return {
+    id: clean(sanityItem.itemId) ?? fallback.id,
+    title:
+      pickLocalized(sanityItem.title, locale, fallback.title) ?? fallback.title,
+    caption: pickLocalized(sanityItem.caption, locale, fallback.caption),
+    media,
+  };
+}
+
+function mergeMediaSection(
+  sanitySection: SanityServiceMediaSection,
+  baseSection: ServiceMediaSection | undefined,
+  locale: Locale,
+): ServiceMediaSection | null {
+  const rawId = clean(sanitySection.sectionId);
+  if (!rawId || !isMediaSectionId(rawId)) {
+    return null;
+  }
+
+  const baseItemsById = new Map(
+    (baseSection?.items ?? []).map((item) => [item.id, item]),
+  );
+
+  const items = (sanitySection.items ?? [])
+    .slice()
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map((item) =>
+      mergeMediaItem(item, baseItemsById.get(clean(item.itemId) ?? ""), locale),
+    )
+    .filter((item): item is WorkProjectItem => item !== null);
+
+  return {
+    id: rawId,
+    title:
+      pickLocalized(sanitySection.title, locale, baseSection?.title) ??
+      baseSection?.title ??
+      rawId,
+    description: pickLocalized(
+      sanitySection.description,
+      locale,
+      baseSection?.description,
+    ),
+    items,
+  };
+}
+
+/**
+ * When Studio provides mediaSections, use that ordered list (empty items stay
+ * in the array for missing-content tracking; rendering filters them out).
+ * When Studio has no mediaSections field yet, keep local fallbacks.
+ */
+function mergeMediaSections(
+  base: ServiceMediaSection[],
+  sections: SanityServiceMediaSection[] | null | undefined,
+  locale: Locale,
+): ServiceMediaSection[] {
+  if (sections == null) {
+    return base;
+  }
+  if (sections.length === 0) {
+    return [];
+  }
+
+  const baseById = new Map<string, ServiceMediaSection>(
+    base.map((section) => [section.id, section]),
+  );
+  return sections
+    .slice()
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map((section) =>
+      mergeMediaSection(
+        section,
+        baseById.get(clean(section.sectionId) ?? ""),
+        locale,
+      ),
+    )
+    .filter((section): section is ServiceMediaSection => section !== null);
+}
+
+function rebuildMissingContent(
+  slug: ServicePageContent["slug"],
+  sections: ServiceMediaSection[],
+  locale: Locale,
+): string[] | undefined {
+  const expected = EXPECTED_MEDIA_SECTIONS[slug];
+  if (!expected || expected.length === 0) {
+    return undefined;
+  }
+  const filled = new Set(
+    visibleMediaSections(sections).map((section) => section.id),
+  );
+  const titles: Record<ServiceMediaSectionId, { de: string; en: string }> = {
+    photos: { de: "Fotos & Bildserien", en: "Photos & series" },
+    videos: { de: "Videos", en: "Videos" },
+    visualizations: { de: "Visualisierungen", en: "Visualizations" },
+    animations: { de: "Animationen", en: "Animations" },
+  };
+  const missing = expected
+    .filter((id) => !filled.has(id))
+    .map((id) =>
+      locale === "en"
+        ? `Media section “${titles[id].en}” — awaiting approved assets from Martin`
+        : `Medienabschnitt «${titles[id].de}» — freigegebene Medien von Martin ausstehend`,
+    );
+  return missing.length > 0 ? missing : undefined;
+}
+
 /**
  * Pure merge of Sanity Service document → frontend Service content.
  *
@@ -234,6 +401,14 @@ export function mergeSanityService(
       cta: { ...base.showreel.cta },
       media: { ...base.showreel.media },
     },
+    media: {
+      label: base.media.label,
+      headline: base.media.headline,
+      sections: base.media.sections.map((section) => ({
+        ...section,
+        items: section.items.map((item) => ({ ...item, media: item.media })),
+      })),
+    },
     projects: {
       ...base.projects,
       viewAll: { ...base.projects.viewAll },
@@ -253,6 +428,7 @@ export function mergeSanityService(
       logos: [...base.clients.logos],
     },
     finalCta: { ...base.finalCta, cta: { ...base.finalCta.cta } },
+    missingContent: base.missingContent ? [...base.missingContent] : undefined,
   };
 
   // Media always — language-agnostic CMS assets.
@@ -348,6 +524,20 @@ export function mergeSanityService(
     );
   }
 
+  // Media galleries — bilingual titles on items; hide empty sections in UI.
+  if (doc.mediaSections != null) {
+    merged.media.sections = mergeMediaSections(
+      base.media.sections,
+      doc.mediaSections,
+      locale,
+    );
+  }
+  merged.missingContent = rebuildMissingContent(
+    base.slug,
+    merged.media.sections,
+    locale,
+  );
+
   // Logos are language-agnostic — same Contact ClientsSection source for DE/EN.
   merged.clients.logos = mergeClientLogos(
     merged.clients.logos,
@@ -413,6 +603,11 @@ export function mergeSanityService(
   if (showreelCtaLabel) merged.showreel.cta.label = showreelCtaLabel;
   const showreelCtaHref = sanitizeHref(clean(doc.showreelCtaHref));
   if (showreelCtaHref) merged.showreel.cta.href = showreelCtaHref;
+
+  const mediaLabel = clean(doc.mediaLabel);
+  if (mediaLabel) merged.media.label = mediaLabel;
+  const mediaHeadline = clean(doc.mediaHeadline);
+  if (mediaHeadline) merged.media.headline = mediaHeadline;
 
   const projectsLabel = clean(doc.projectsLabel);
   if (projectsLabel) merged.projects.label = projectsLabel;

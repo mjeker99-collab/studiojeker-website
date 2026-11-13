@@ -1,6 +1,7 @@
 import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
+import { getServiceMediaFallback } from "@/lib/content/services/media-sections";
 import { getServicePaths } from "@/lib/content/services/paths";
 import { showreels } from "@/lib/content/showreels";
 
@@ -12,6 +13,7 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
   const paths = getServicePaths(locale);
   const clientsLabel =
     locale === "en" ? "Brands that trust us" : "Brands, die uns vertrauen";
+  const mediaFallback = getServiceMediaFallback("digital-marketing", locale);
 
   if (locale === "en") {
     return {
@@ -87,6 +89,11 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
           height: 933,
         },
         videoId: showreels.digitalMarketing,
+      },
+      media: {
+        label: mediaFallback.label,
+        headline: mediaFallback.headline,
+        sections: mediaFallback.sections,
       },
       projects: {
         label: "Selected projects",
@@ -247,6 +254,11 @@ export function getDigitalMarketingContent(locale: Locale): ServicePageContent {
         height: 933,
       },
       videoId: showreels.digitalMarketing,
+    },
+    media: {
+      label: mediaFallback.label,
+      headline: mediaFallback.headline,
+      sections: mediaFallback.sections,
     },
     projects: {
       label: "Ausgewählte Projekte",
