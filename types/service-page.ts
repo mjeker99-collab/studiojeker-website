@@ -1,4 +1,5 @@
 import type { HomepageContent, HomepageMedia, HomepageProject } from "@/types/homepage";
+import type { WorkProjectItem } from "@/types/work";
 
 export const servicePageSlugs = [
   "business-communication",
@@ -8,6 +9,23 @@ export const servicePageSlugs = [
 ] as const;
 
 export type ServicePageSlug = (typeof servicePageSlugs)[number];
+
+/** Media-type galleries on service landing pages (Work tile pattern). */
+export const serviceMediaSectionIds = [
+  "photos",
+  "videos",
+  "visualizations",
+  "animations",
+] as const;
+
+export type ServiceMediaSectionId = (typeof serviceMediaSectionIds)[number];
+
+export type ServiceMediaSection = {
+  id: ServiceMediaSectionId;
+  title: string;
+  description?: string;
+  items: WorkProjectItem[];
+};
 
 /** Legacy kit/solutions URLs → current public service URLs */
 export const legacyServiceRedirects: Record<string, ServicePageSlug> = {
@@ -64,6 +82,19 @@ export type ServicePageContent = {
     items: ServiceSolutionItem[];
   };
   showreel: HomepageContent["showreel"];
+  /**
+   * Media-type galleries (photos / videos / visualizations / animations).
+   * Sections with zero items are omitted from the public page.
+   */
+  media: {
+    label: string;
+    headline: string;
+    sections: ServiceMediaSection[];
+  };
+  /**
+   * Legacy project teaser grid. Shown only when `media.sections` has no
+   * visible items (e.g. Digital Marketing until media galleries are filled).
+   */
   projects: {
     label: string;
     headline: string;
@@ -73,4 +104,9 @@ export type ServicePageContent = {
   about: HomepageContent["about"];
   clients: HomepageContent["clients"];
   finalCta: HomepageContent["finalCta"];
+  /**
+   * Internal preview notes for missing editorial media — never invent copy.
+   * Rendered only in development / preview builds.
+   */
+  missingContent?: string[];
 };
