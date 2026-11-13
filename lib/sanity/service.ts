@@ -4,12 +4,20 @@ import {
   allEnabledClientLogosProjection,
   type SanityClientLogo,
 } from "@/lib/sanity/clients";
+import type {
+  SanityLocalizedString,
+  SanityLocalizedText,
+} from "@/lib/sanity/homepage";
 import {
+  localizedStringProjection,
+  localizedTextProjection,
   sanityImageProjection,
   sanityMediaProjection,
+  sanityWorkMediaProjection,
   type SanityImageProjection,
   type SanityMediaField,
 } from "@/lib/sanity/media";
+import type { SanityWorkProjectItem } from "@/lib/sanity/work";
 import type { ServicePageSlug } from "@/types/service-page";
 
 /** Deterministic Service document IDs (matches migration / Studio). */
@@ -37,6 +45,14 @@ export type SanityServiceProjectItem = {
   isPlaceholder?: boolean | null;
   image?: SanityImageProjection;
   videoUrl?: string | null;
+};
+
+export type SanityServiceMediaSection = {
+  sectionId?: string | null;
+  title?: SanityLocalizedString;
+  description?: SanityLocalizedText;
+  items?: SanityWorkProjectItem[] | null;
+  sortOrder?: number | null;
 };
 
 /**
@@ -72,6 +88,9 @@ export type SanityService = {
   showreelCtaHref?: string | null;
   showreelImage?: SanityImageProjection;
   showreelVideoId?: string | null;
+  mediaLabel?: string | null;
+  mediaHeadline?: string | null;
+  mediaSections?: SanityServiceMediaSection[] | null;
   projectsLabel?: string | null;
   projectsHeadline?: string | null;
   projectsViewAllLabel?: string | null;
@@ -134,6 +153,27 @@ export const serviceBySlugQuery = groq`*[_type == "service" && slug.current == $
   showreelCtaHref,
   showreelImage${sanityImageProjection},
   showreelVideoId,
+  mediaLabel,
+  mediaHeadline,
+  mediaSections[]{
+    sectionId,
+    title${localizedStringProjection},
+    description${localizedTextProjection},
+    sortOrder,
+    items[]{
+      itemId,
+      active,
+      title${localizedStringProjection},
+      caption${localizedStringProjection},
+      subtitle${localizedStringProjection},
+      description${localizedTextProjection},
+      client,
+      year,
+      href,
+      sortOrder,
+      media${sanityWorkMediaProjection}
+    }
+  },
   projectsLabel,
   projectsHeadline,
   projectsViewAllLabel,
