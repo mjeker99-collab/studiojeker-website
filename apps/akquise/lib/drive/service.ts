@@ -172,6 +172,13 @@ export async function completeDrive(
         "Google-Verbindung wurde inzwischen geändert.",
         409,
       );
+    // Re-authorising the same account must not force the KMU user to
+    // copy the folder link again. Switching Google accounts resets it.
+    const previous = await tx.driveConnection.findUnique({
+      where: { userId: pending.userId },
+      select: { email: true, folderId: true, folderName: true },
+    });
+    const retainedFolder = retainedDriveFolder(previous, email);
     await tx.driveConnection.upsert({
       where: { userId: pending.userId },
       create: {
@@ -182,12 +189,24 @@ export async function completeDrive(
       update: {
         email,
         encryptedToken,
-        folderId: null,
-        folderName: null,
+        ...retainedFolder,
       },
     });
   });
 }
+// Account identity is checked after a fresh Google OAuth login. Never carry
+// a folder selection over to a different Google account.
+export function retainedDriveFolder(
+  previous: { email: string; folderId: string | null; folderName: string | null } | null,
+  nextEmail: string,
+) {
+  const sameAccount = previous?.email.trim().toLowerCase() === nextEmail.trim().toLowerCase();
+  return {
+    folderId: sameAccount ? previous?.folderId ?? null : null,
+    folderName: sameAccount ? previous?.folderName ?? null : null,
+  };
+}
+
 async function access(actor: string) {
   await authorize(actor);
   const c = await db.driveConnection.findUnique({ where: { userId: actor } });
