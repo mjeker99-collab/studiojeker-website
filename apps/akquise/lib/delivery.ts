@@ -9,6 +9,7 @@ import {
   messageHash,
 } from "./policy";
 import { smtpSender, type SmtpSender } from "./mail";
+import { assertNoraMailText } from "./generation";
 import { audit } from "./workflow";
 import { insideMailWindow, mailDayStart } from "./mail-clock";
 type Tx = Prisma.TransactionClient;
@@ -39,6 +40,7 @@ export async function checked(
     v.hash !== messageHash(v.recipient, v.subject, v.body)
   )
     throw new PolicyError("Kontakt oder Nachrichtenversion geändert.", 409);
+  assertNoraMailText(v.body);
   verifiedContact(d.contact);
   if (await tx.suppression.findUnique({ where: { email: v.recipient } }))
     throw new PolicyError("Adresse auf Sperrliste.");

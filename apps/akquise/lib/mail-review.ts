@@ -12,6 +12,7 @@ import {
 import { appendMailContent, mailImageIds } from "./mail-content";
 import { mailImageAttachments } from "./mail-images";
 import { editDraft, reviewDraft, discardDrafts } from "./workflow";
+import { assertNoraMailText } from "./generation";
 
 const ids = z
   .array(z.string().min(1).max(100))
@@ -131,6 +132,11 @@ export async function mailReview(
         continue;
       }
       const issues = verificationIssues(d.contact);
+      try {
+        assertNoraMailText(v.body);
+      } catch (error) {
+        issues.push(error instanceof Error ? error.message : "Absendertext prüfen.");
+      }
       if (
         v.contactRevision !== d.contact.revision ||
         v.recipient !== d.contact.email
