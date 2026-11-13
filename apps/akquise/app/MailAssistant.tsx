@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantResult } from "../lib/mail-assistant/input";
+import { defaultMailWriteBriefing } from "../lib/mail-assistant/briefing";
 import {
   isTeamMailbox,
   normalizeEmail,
@@ -59,7 +60,7 @@ export default function MailAssistant({
   refresh: () => Promise<void>;
   onBusyChange?: (value: boolean) => void;
 }) {
-  const [briefing, setBriefing] = useState("");
+  const [briefing, setBriefing] = useState(mode === "WRITE" ? defaultMailWriteBriefing : "");
   const [region, setRegion] = useState("");
   const [count, setCount] = useState(10);
   const [selectedIndustry, setSelectedIndustry] = useState(industry);
@@ -258,7 +259,7 @@ export default function MailAssistant({
           placeholder={
             research
               ? "Architekturbüros, denen wir Architekturvisualisierungen anbieten können"
-              : "Unser Angebot vorstellen, kurz und persönlich, mit einer Einladung zum Gespräch"
+              : "Persönliches Anschreiben von Nora: konkreter Unternehmensbezug, Nutzen und Gesprächsvorschlag"
           }
         />
       </label>
