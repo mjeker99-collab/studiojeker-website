@@ -10,7 +10,7 @@ import {
   messageHash,
   normalizeEmail,
 } from "./policy";
-import { generateDraft, importedDraft } from "./generation";
+import { generateDraft, importedDraft, assertNoraMailText } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { replyInput } from "./contact-reply-input";
 import { randomUUID } from "node:crypto";
@@ -499,6 +499,7 @@ export async function reviewDraft(
         throw new PolicyError("Adresse auf Sperrliste.");
     }
     if (decision === "APPROVED") {
+      assertNoraMailText(v.body);
       if (v.hash !== messageHash(v.recipient, v.subject, v.body))
         throw new PolicyError(
           "Signatur geändert. Nachricht als neue Version speichern und erneut prüfen.",
