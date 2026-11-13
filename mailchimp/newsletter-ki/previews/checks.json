@@ -1,0 +1,99 @@
+{
+  "overflow": {
+    "ki-desktop-700.png": false,
+    "ki-mobile-390.png": false,
+    "ki-mobile-320.png": false
+  },
+  "widths": {
+    "ki-desktop-700.png": {
+      "total": 11,
+      "complete": 11,
+      "broken": [],
+      "scrollWidth": 700,
+      "clientWidth": 700,
+      "scrollHeight": 3378,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    },
+    "ki-mobile-390.png": {
+      "total": 11,
+      "complete": 11,
+      "broken": [],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 3710,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    },
+    "ki-mobile-320.png": {
+      "total": 11,
+      "complete": 11,
+      "broken": [],
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "scrollHeight": 3793,
+      "links": [
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Showreel ansehen",
+          "href": "https://vimeo.com/1228871502"
+        },
+        {
+          "text": "→ KI-Projekt mit Studiojeker besprechen",
+          "href": "https://www.studiojeker.ch/contact/"
+        }
+      ]
+    }
+  }
+}
