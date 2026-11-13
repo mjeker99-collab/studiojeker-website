@@ -1,0 +1,55 @@
+[
+  {
+    "id": "b5bb69d5-b05a-49be-b453-bf9bcd68ecb1",
+    "before": {
+      "heroSection.subheadline.de": "Photo. Video. 3D. Content. Strategy. Distribution.",
+      "heroSection.intro.de": "Wir inszenieren Marken, Produkte und Architektur – visuell stark, strategisch durchdacht und wirkungsvoll umgesetzt.",
+      "seoSection.title.de": "Studiojeker | Foto, Film, 3D & Marketing für Unternehmen",
+      "seoSection.description.de": "Studiojeker entwickelt seit 1992 Foto-, Film-, 3D- und Marketinglösungen für Unternehmen, Produkte und Architektur. We Create Visibility."
+    },
+    "set": {
+      "heroSection.subheadline.de": "Foto, Film, 3D und Content-Marketing aus Zuchwil bei Solothurn.",
+      "heroSection.intro.de": "Wir unterstützen KMU und Industrie mit professionellen Bildern, Videos und 3D-Visualisierungen. Mit Strategie und laufender Content-Betreuung bringen wir Ihre Inhalte auf Website und Social Media.",
+      "seoSection.title.de": "Foto, Film & Content-Marketing Solothurn | Studiojeker",
+      "seoSection.description.de": "Foto, Videoproduktion, 3D und Social Media für KMU und Industrie. Studiojeker in Zuchwil bei Solothurn verbindet Content-Produktion und laufende Betreuung."
+    }
+  },
+  {
+    "id": "service-digital-marketing",
+    "before": {
+      "solutions[2].href": "/work#eventvideos",
+      "solutions[3].href": "https://staging2026.studiojeker.ch/content-abo/"
+    },
+    "set": {
+      "solutions[2].href": "/content-abo/",
+      "solutions[3].href": "/content-abo/"
+    }
+  },
+  {
+    "id": "service-business-communication",
+    "before": {
+      "solutions[3].href": "/work#eventvideos"
+    },
+    "set": {
+      "solutions[3].href": "/content-abo/"
+    }
+  },
+  {
+    "id": "abo",
+    "before": {},
+    "set": {
+      "packagesSection": {
+        "introduction": {
+          "_type": "localizedText",
+          "de": "Start nutzt Ihre vorhandenen Bilder und Videos. Plus ergänzt zwei Stunden Content-Produktion pro Monat. Für einen anderen Umfang stellen wir Ihr Abo individuell zusammen.",
+          "en": "Start uses your existing images and videos. Plus adds two hours of content production per month. For a different scope, we tailor your subscription."
+        },
+        "vatNote": {
+          "_type": "localizedString",
+          "de": "zzgl. MWST",
+          "en": "excl. VAT"
+        }
+      }
+    }
+  }
+]

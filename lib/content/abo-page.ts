@@ -222,8 +222,8 @@ export function getAboPageContent(locale: Locale): AboPageContent {
         label: "Packages",
         headline: "Visibility as a subscription.",
         introduction:
-          "Three clear options — from regular content for smaller businesses to a tailored partnership. Scope and pricing are defined together and can be adjusted in the CMS.",
-        vatNote: "excl. VAT (disclosure under review)",
+          "Three clear options — from regular content for smaller businesses to a tailored partnership.",
+        vatNote: "excl. VAT",
         items: [
           {
             id: "start",
@@ -413,8 +413,8 @@ export function getAboPageContent(locale: Locale): AboPageContent {
       label: "Pakete",
       headline: "Sichtbarkeit im Abo.",
       introduction:
-        "Drei klare Optionen — von regelmässigem Content für kleinere Unternehmen bis zur massgeschneiderten Partnerschaft. Leistungsumfang und Preis sind im CMS editierbar.",
-      vatNote: "zzgl. MWST (Ausweisung zur Prüfung)",
+        "Drei klare Optionen — von regelmässigem Content für kleinere Unternehmen bis zur massgeschneiderten Partnerschaft.",
+      vatNote: "zzgl. MWST",
       items: [
         {
           id: "start",

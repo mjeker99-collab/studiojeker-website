@@ -131,7 +131,9 @@ jobs:
         run: npm ci
 
       - name: Apply reviewed SEO copy once
-        run: node scripts/apply-seo-keywords.mjs --apply
+        run: |
+          node scripts/apply-seo-keywords.mjs --apply
+          node scripts/apply-seo-keywords.mjs --quick-wins --apply
         env:
           SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
 
@@ -476,7 +478,7 @@ jobs:
               print("::error::Live proxy heroSection.image missing after deploy", file=sys.stderr)
               print(json.dumps(hero, indent=2)[:800], file=sys.stderr)
               sys.exit(1)
-          url = (image.get("asset") or {}).get("url") or ""
+          url = image.get("url") or (image.get("asset") or {}).get("url") or ""
           print("Live proxy hero image URL:", url[:120])
           if "cdn.sanity.io" not in url:
               print("::error::Unexpected hero asset URL", file=sys.stderr)

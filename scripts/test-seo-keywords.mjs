@@ -13,3 +13,10 @@ test('refuses changed editorial text and missing documents', () => {
   assert.throws(() => preparePatches(rows, [{ _id: 'abo', _rev: 'rev2', seoSection: { title: { de: 'Edited' } } }]), /Editorial conflict/);
   assert.throws(() => preparePatches(rows, []), /Missing document/);
 });
+
+test('supports indexed link fields and adding absent CMS sections', () => {
+  const docs = [{ _id: 'service', _rev: 'r1', solutions: [{ href: '/work' }] }];
+  const changes = [{ id: 'service', before: { 'solutions[0].href': '/work' }, set: { 'solutions[0].href': '/content-abo/', packagesSection: { vatNote: { de: 'zzgl. MWST' } } } }];
+  assert.equal(preparePatches(changes, docs)[0].set['solutions[0].href'], '/content-abo/');
+  assert.throws(() => preparePatches(changes, [{ ...docs[0], packagesSection: { edited: true } }]), /Editorial conflict/);
+});

@@ -2,8 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createClient } from '@sanity/client';
 
-export const markerId = 'migration-seo-keywords-2026-11-13';
-export const readPath = (doc, path) => path.split('.').reduce((value, key) => value?.[key], doc);
+const rollout = process.argv.includes('--quick-wins') ? 'seo-quick-wins-2026-11-13' : 'seo-keywords-2026-11-13';
+export const markerId = `migration-${rollout}`;
+export const readPath = (doc, path) => path.replace(/\[(\d+)\]/g, '.$1').split('.').reduce((value, key) => value?.[key], doc);
 
 // Field-level expected values prevent overwriting intervening editorial changes.
 // Revision locks additionally protect changes between this read and the commit.
@@ -12,7 +13,7 @@ export function preparePatches(rows, documents) {
     const doc = documents.find(item => item._id === row.id);
     if (!doc?._rev) throw new Error(`Missing document: ${row.id}`);
     for (const path of Object.keys(row.set)) {
-      if (readPath(doc, path) !== row.before[path]) {
+      if (JSON.stringify(readPath(doc, path)) !== JSON.stringify(row.before[path])) {
         throw new Error(`Editorial conflict: ${row.id}.${path}`);
       }
     }
@@ -30,7 +31,7 @@ async function main() {
     console.log('SEO keyword rollout already completed; CMS content left unchanged.');
     return;
   }
-  const rows = JSON.parse(await readFile(new URL('./content/seo-keywords-2026-11-13.json', import.meta.url), 'utf8'));
+  const rows = JSON.parse(await readFile(new URL(`./content/${rollout}.json`, import.meta.url), 'utf8'));
   const documents = await client.fetch('*[_id in $ids]', { ids: rows.map(row => row.id) });
   const patches = preparePatches(rows, documents);
   console.log(`Validated ${patches.length} documents; ${patches.reduce((n, p) => n + Object.keys(p.set).length, 0)} German text fields.`);
