@@ -19,7 +19,7 @@ import {
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
-import { generateDraft, importedDraft } from "../lib/generation";
+import { generateDraft, importedDraft, assertNoraMailText } from "../lib/generation";
 import { sendInternalSmtpTest } from "../lib/smtp-test";
 import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -775,4 +775,19 @@ test("Neue lokale Mailvorlage ist persönlich, nennt Nora und bleibt ein Entwurf
   assert.match(generated.body, /Projektvisualisierung für ein neues Wohnhaus/);
   assert.doesNotMatch(generated.body, /Martin Jeker/);
   assert.match(generated.body, /unverbindlichen Austausch/);
+});
+
+
+test("Versand- und Freigabesperre für alte Martin-Mailtexte", () => {
+  assert.throws(
+    () => assertNoraMailText("Guten Tag\n\nFreundliche Grüsse\nMartin Jeker"),
+    /statt Nora/,
+  );
+  assert.throws(
+    () => assertNoraMailText("Ich bin Martin Jeker, melde mich aus Zuchwil."),
+    /statt Nora/,
+  );
+  assert.doesNotThrow(() =>
+    assertNoraMailText("Guten Tag\n\nBeste Grüsse\nNora Jeker"),
+  );
 });
