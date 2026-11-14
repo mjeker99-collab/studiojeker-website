@@ -301,3 +301,13 @@ test("one selected contact can be deleted only after explicit confirmation", asy
     page.getByLabel("Atelier 0 auswählen", { exact: true }),
   ).not.toBeChecked();
 });
+
+test("saved mail drafts open only 25 by default; no dispatch", async ({ page }) => {
+  const state = await setup(page, { count: 30 });
+  await page
+    .getByRole("button", { name: "Gespeicherte Entwürfe öffnen (25)", exact: true })
+    .click();
+  await expect.poll(() => state.previews.at(-1)?.length).toBe(25);
+  expect(state.previews.at(-1)).toHaveLength(25);
+  expect(state.sent).toEqual([]);
+});
