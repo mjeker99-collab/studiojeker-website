@@ -136,7 +136,8 @@ export default function MailStudio({
   const [recipientSearch, setRecipientSearch] = useState("");
   const [, setSkipped] = useState<string[]>([]);
   const [preparing, setPreparing] = useState(false);
-  const [batchSize, setBatchSize] = useState(200);
+  // Keep the first review manageable for KMU users; larger groups are explicit choices.
+  const [batchSize, setBatchSize] = useState(25);
   const [contactIds, setContactIds] = useState<string[]>([]);
   const matchingContacts = contacts.filter(
     (c) =>
