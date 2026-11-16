@@ -311,3 +311,16 @@ test("saved mail drafts open only 25 by default; no dispatch", async ({ page }) 
   expect(state.previews.at(-1)).toHaveLength(25);
   expect(state.sent).toEqual([]);
 });
+
+
+test("50 and 100 contacts can be selected in one step without dispatch", async ({ page }) => {
+  const state = await setup(page, { count: 105 });
+  await page.getByRole("button", { name: "Neue Mails erstellen", exact: true }).click();
+  for (const amount of [50, 100]) {
+    await page.getByRole("button", { name: `${amount} Kontakte auswählen`, exact: true }).click();
+    await expect(page.getByRole("heading", { name: `${amount} Kontakte ausgewählt` })).toBeVisible();
+    await expect(page.getByRole("button", { name: `${amount} Mails erstellen →`, exact: true })).toBeEnabled();
+  }
+  expect(state.sent).toEqual([]);
+  expect(state.previews).toEqual([]);
+});
