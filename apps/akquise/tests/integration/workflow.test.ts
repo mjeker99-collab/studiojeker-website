@@ -2580,3 +2580,20 @@ test("unused contact deletion respects revision, actor, mail history and suppres
   assert.ok(await db.suppression.findUnique({ where: { email: blocked.email } }));
 });
 
+
+ test("Opening legacy sender drafts creates one corrected immutable version", async () => {
+  const c = await saveContact(martin, input("nora-sender-repair"));
+  const d = await newDraft(martin, c.id);
+  const original = await db.draftVersion.findUniqueOrThrow({ where: { draftId_version: { draftId: d.id, version: 1 } } });
+  const legacy = original.body.replace("Ich bin Nora Jeker", "ich bin Martin Jeker");
+  await editDraft(martin, d.id, 1, { recipient: original.recipient, subject: original.subject, body: legacy });
+  const preview = await mailReview(martin, "preview", { ids: [d.id] });
+  assert.equal(preview.rows?.[0].version, 3);
+  assert.equal(preview.rows?.[0].body, legacy.replace("ich bin Martin Jeker", "ich bin Nora Jeker"));
+  assert.equal(preview.rows?.[0].subject, original.subject);
+  const history = await db.draftVersion.findUniqueOrThrow({ where: { draftId_version: { draftId: d.id, version: 2 } } });
+  assert.equal(history.body, legacy);
+  const again = await mailReview(martin, "preview", { ids: [d.id] });
+  assert.equal(again.rows?.[0].version, 3);
+  assert.equal(await db.delivery.count({ where: { draftId: d.id } }), 0);
+});

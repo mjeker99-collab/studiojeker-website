@@ -10,7 +10,7 @@ import {
   messageHash,
   normalizeEmail,
 } from "./policy";
-import { generateDraft, importedDraft, assertNoraMailText } from "./generation";
+import { generateDraft, importedDraft, assertNoraMailText, noraSenderText } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { replyInput } from "./contact-reply-input";
 import { randomUUID } from "node:crypto";
@@ -401,6 +401,40 @@ export async function newDraft(
     return draft;
   });
 }
+// Upgrade legacy sender introductions on review, retaining immutable history.
+// Serialise with dispatch so an already claimed/sent message is never rewritten.
+export async function correctNoraSender(userId: string, id: string) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    const draft = await tx.draft.findUnique({ where: { id } });
+    if (!draft) return;
+    await lock(tx, "contact:" + draft.contactId);
+    const current = await tx.draft.findUniqueOrThrow({
+      where: { id },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+    });
+    const v = current.versions[0];
+    if (!v) return;
+    const body = noraSenderText(v.body);
+    if (body === v.body) return;
+    if (await tx.delivery.findFirst({ where: { draftId: id } })) return;
+    const version = current.version + 1;
+    await tx.draftVersion.create({ data: {
+      draftId: id, version, recipient: v.recipient, subject: v.subject, body,
+      hash: messageHash(v.recipient, v.subject, body),
+      contactRevision: v.contactRevision, authorId: userId,
+    } });
+    await tx.draft.update({ where: { id }, data: { version } });
+    await invalidate(tx, draft.contactId, userId);
+    await tx.mailQueueItem.updateMany({
+      where: { draftId: id, status: "QUEUED" },
+      data: { status: "CANCELLED", error: "Absender auf Nora korrigiert. Neue Textversion bitte freigeben." },
+    });
+    await audit(tx, userId, "DRAFT_SENDER_CORRECTED", id, { version });
+  });
+}
+
 export async function editDraft(
   userId: string,
   id: string,
