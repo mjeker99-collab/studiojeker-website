@@ -11,8 +11,8 @@ import {
 } from "./policy";
 import { appendMailContent, mailImageIds } from "./mail-content";
 import { mailImageAttachments } from "./mail-images";
-import { editDraft, reviewDraft, discardDrafts } from "./workflow";
-import { assertNoraMailText } from "./generation";
+import { editDraft, reviewDraft, discardDrafts, correctNoraSender } from "./workflow";
+import { assertNoraMailText, noraSenderText } from "./generation";
 
 const ids = z
   .array(z.string().min(1).max(100))
@@ -106,6 +106,14 @@ export async function mailReview(
   }
   if (action === "preview") {
     const input = z.object({ ids }).strict().parse(raw);
+    const candidates = await db.draft.findMany({
+      where: { id: { in: input.ids }, versions: { some: { body: { contains: "Martin", mode: "insensitive" } } } },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+    });
+    for (const d of candidates) {
+      const body = d.versions[0]?.body;
+      if (body && noraSenderText(body) !== body) await correctNoraSender(userId, d.id);
+    }
     const drafts = await db.draft.findMany({
       where: { id: { in: input.ids } },
       include: {

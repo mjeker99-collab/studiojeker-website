@@ -19,7 +19,7 @@ import {
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
-import { generateDraft, importedDraft, assertNoraMailText } from "../lib/generation";
+import { generateDraft, importedDraft, assertNoraMailText, noraSenderText } from "../lib/generation";
 import { sendInternalSmtpTest } from "../lib/smtp-test";
 import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -790,4 +790,13 @@ test("Versand- und Freigabesperre für alte Martin-Mailtexte", () => {
   assert.doesNotThrow(() =>
     assertNoraMailText("Guten Tag\n\nBeste Grüsse\nNora Jeker"),
   );
+});
+
+ test("Nora correction preserves greeting and personalised content", () => {
+  const body = "Guten Tag Marcel Müller\n\nich bin Martin Jeker von Studiojeker GmbH und melde mich mit einer Idee.\nMartin Jeker hat Ihr Projekt fotografiert.";
+  const fixed = noraSenderText(body);
+  assert.equal(fixed, body.replace("ich bin Martin Jeker", "ich bin Nora Jeker"));
+  assert.equal(noraSenderText(fixed), fixed);
+  assert.equal(noraSenderText("Guten Tag Martin Jeker"), "Guten Tag Martin Jeker");
+  assert.equal(noraSenderText("Ich bin Martin Jeker von Studiojeker GmbH."), "Ich bin Nora Jeker von Studiojeker GmbH.");
 });
