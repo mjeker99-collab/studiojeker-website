@@ -800,3 +800,7 @@ test("Versand- und Freigabesperre für alte Martin-Mailtexte", () => {
   assert.equal(noraSenderText("Guten Tag Martin Jeker"), "Guten Tag Martin Jeker");
   assert.equal(noraSenderText("Ich bin Martin Jeker von Studiojeker GmbH."), "Ich bin Nora Jeker von Studiojeker GmbH.");
 });
+
+test("Nora correction also upgrades the known legacy closing", () => {
+  assert.equal(noraSenderText("Beste Grüsse\nMartin Jeker\nStudiojeker GmbH"), "Beste Grüsse\nNora Jeker\nStudiojeker GmbH");
+});
