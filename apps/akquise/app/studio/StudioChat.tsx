@@ -13,6 +13,7 @@ import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
+import { socialBatchPlan } from "@/lib/studio/social-batch-plan";
 import DialogManager, {
   type DialogManagerItem,
 } from "../dialogs/DialogManager";
@@ -211,6 +212,10 @@ export default function StudioChat({
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
+  const batchPlan =
+    projectArea === "Content-Studio" && !seriesId && mediaIntent === "TEXT"
+      ? socialBatchPlan(message)
+      : null;
 
   const [projectNotice, setProjectNotice] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -355,8 +360,59 @@ export default function StudioChat({
     document.getElementById("studio-chat-message")?.focus();
   }
   async function send() {
-    if (busy || !message.trim() || !confirmed || !state.config.connected)
+    if (busy || !message.trim()) return;
+    if (batchPlan) {
+      // One deliberate click creates draft-only series. No GPT job, provider
+      // expense, social publication or email dispatch is triggered.
+      setBusy(true);
+      setError("");
+      setProjectNotice("");
+      const created: string[] = [];
+      try {
+        for (let i = 0; i < batchPlan.areaCount; i++) {
+          const series = await post("series", {
+            title: `${state.campaigns.find((c) => c.id === campaignId)?.title || "Social-Media-Beiträge"} · Bereich ${i + 1}/${batchPlan.areaCount}`.slice(0, 200),
+            topic: message.trim().slice(0, 2000),
+            offer: "",
+            goal: "Social-Media-Beiträge für mehrere Servicebereiche vorbereiten",
+            audience: "Im Gespräch klären",
+            tone: "Persönlich, professionell, Schweizer Hochdeutsch",
+            channels: batchPlan.channels,
+            count: batchPlan.postsPerArea,
+            formats: ["4:5"],
+            campaignId: campaignId || null,
+            customerId: customerId || null,
+            referenceAssetIds: [],
+            brandRules: ["tone", "services", "audiences"],
+            workspace: "CONTENT_DRAFT",
+          });
+          created.push(series.id);
+        }
+        await refresh();
+        setSeriesId(created[0]);
+        setMessage("");
+        setConfirmed(false);
+        setProjectNotice(
+          `${batchPlan.areaCount} Serien mit ${batchPlan.totalPosts} Beitragsentwürfen für ${batchPlan.channels.length} Kanäle gespeichert. Die Bereichsnamen und Texte müssen vor einer Veröffentlichung geprüft und ausgearbeitet werden.`,
+        );
+      } catch (e) {
+        // The existing series API saves each series separately. Never
+        // automatically retry an uncertain request and risk duplicates.
+        setError(
+          (e instanceof Error ? e.message : "Vorbereitung fehlgeschlagen.") +
+            " Bereits gespeicherte Serien bitte in den Projekten prüfen, bevor du die Aufgabe erneut startest. Es wurde nichts veröffentlicht.",
+        );
+        try {
+          await refresh();
+        } catch {
+          // Keep the original user request visible for recovery.
+        }
+      } finally {
+        setBusy(false);
+      }
       return;
+    }
+    if (!confirmed || !state.config.connected) return;
     if (editingImage && (!storageReady || referenceCount !== 1)) {
       setError(
         "Bitte genau ein Bild auswählen. Der private Speicher muss verbunden sein.",
@@ -1033,7 +1089,29 @@ export default function StudioChat({
             ))}
           </div>
         )}
-        {!editingImage && submission}
+        {batchPlan && (
+          <div className="panel-note" role="status">
+            <p><strong>So habe ich deinen Auftrag verstanden:</strong></p>
+            <p>
+              {batchPlan.areaCount} Bereiche mit je {batchPlan.postsPerArea} Beiträgen
+              – insgesamt {batchPlan.totalPosts} Entwürfe für{" "}
+              {batchPlan.channels.join(", ")}.
+            </p>
+            <p>
+              Zuerst werden nur Entwürfe gespeichert. Die Bereiche erhalten
+              vorläufig neutrale Namen; GPT-Texte und Medien entstehen erst im
+              nächsten Arbeitsschritt. Es wird nichts veröffentlicht.
+            </p>
+          </div>
+        )}
+        {!editingImage &&
+          (batchPlan ? (
+            <button type="submit" disabled={busy}>
+              {busy
+                ? "Entwürfe werden gespeichert …"
+                : `${batchPlan.totalPosts} Beitragsentwürfe vorbereiten`}
+            </button>
+          ) : submission)}
         <details open={editingImage}>
           <summary>Weitere Auftragsoptionen</summary>
           <label htmlFor="studio-chat-intent">Auftrag</label>
