@@ -76,3 +76,42 @@ test("Content chat is accessible on iPad and phone and disabled without provider
   const scan = await new AxeBuilder({ page }).include(".studio-chat").analyze();
   expect(scan.violations).toEqual([]);
 });
+
+
+test("24-post brief previews four series and drafts without providers or publication", async ({ page }) => {
+  const c = browserCredentials();
+  const prepared: { count: number; channels: string[]; topic: string; workspace: string }[] = [];
+  const forbidden: string[] = [];
+  await page.route("**/api/studio/series", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const payload = route.request().postDataJSON();
+    prepared.push(payload);
+    await route.fulfill({ json: { id: `synthetic-series-${prepared.length}` } });
+  });
+  for (const pattern of ["**/api/studio/jobs", "**/api/studio/run/**", "**/api/hub/promote-social/**"]) {
+    await page.route(pattern, async (route) => {
+      forbidden.push(route.request().url());
+      await route.fulfill({ status: 409, json: { error: "External action forbidden in synthetic preview test" } });
+    });
+  }
+  await page.goto("/");
+  await page.getByLabel("E-Mail", { exact: true }).fill(c.email);
+  await page.getByLabel("Passwort", { exact: true }).fill(c.password);
+  await page.getByRole("button", { name: /Sicher anmelden/ }).click();
+  await page.getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Content Studio/ }).click();
+  const original = "Ich möchte weitere social media posts erstellen lassen zu den 4 servicebereichen, analog zu den bisherigen posts. Wir benötigen pro servicebereich je 6 posts für fFb/Insta und linkedin";
+  await page.getByLabel("Deine Nachricht", { exact: true }).fill(original);
+  await expect(page.getByText(/4 Bereiche mit je 6 Beiträgen/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "24 Beitragsentwürfe vorbereiten" })).toBeEnabled();
+  await page.getByRole("button", { name: "24 Beitragsentwürfe vorbereiten" }).click();
+  await expect.poll(() => prepared.length).toBe(4);
+  expect(prepared.map((item) => item.count)).toEqual([6, 6, 6, 6]);
+  for (const item of prepared) {
+    expect(item.channels).toEqual(["FACEBOOK", "INSTAGRAM", "LINKEDIN"]);
+    expect(item.workspace).toBe("CONTENT_DRAFT");
+    expect(item.topic).toBe(original);
+  }
+  expect(forbidden).toEqual([]);
+  await expect(page.getByText(/4 Serien mit 24 Beitragsentwürfen/)).toBeVisible();
+});
