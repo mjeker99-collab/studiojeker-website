@@ -1053,6 +1053,11 @@ export default function App() {
           )}
           {tab === "Versandhistorie" && (
             <MailSchedule
+              onReviewApproved={(ids) => {
+                setMailContactIds([]);
+                setMailDraftIds(ids);
+                setTab("Mail-Studio");
+              }}
               drafts={data.drafts}
               openDraft={(id) => {
                 const d = data.drafts.find((d) => d.id === id);

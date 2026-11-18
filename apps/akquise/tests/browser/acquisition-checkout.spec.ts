@@ -108,3 +108,16 @@ for (const width of [390, 1024, 1440]) {
     ).toBeVisible();
   });
 }
+
+test("89 approved mails use the shared iPad review without a second queue selection", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 960 });
+  await setup(page, { count: 89 });
+  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Versand", exact: true }).click();
+  await page.getByRole("button", { name: "89 Mails gemeinsam freigeben →" }).click();
+  await expect(page.getByText("89 Mails vorbereitet", { exact: false }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Weiter zum Versand →" }).click();
+  await expect(page.getByRole("region", { name: "Versandfreigabe" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "89 Mails einplanen", exact: true })).toBeDisabled();
+  await page.getByLabel(/Ich gebe die 89 ausgewählten/).check();
+  await expect(page.getByRole("button", { name: "89 Mails einplanen", exact: true })).toBeEnabled();
+});
