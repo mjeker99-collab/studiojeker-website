@@ -212,6 +212,7 @@ export default function StudioChat({
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
+  const [batchRequestKey, setBatchRequestKey] = useState("");
   const batchPlan =
     projectArea === "Content-Studio" && !seriesId && mediaIntent === "TEXT"
       ? socialBatchPlan(message)
@@ -367,11 +368,13 @@ export default function StudioChat({
       setBusy(true);
       setError("");
       setProjectNotice("");
-      const created: string[] = [];
+      const requestKey = batchRequestKey || crypto.randomUUID();
+      if (!batchRequestKey) setBatchRequestKey(requestKey);
       try {
-        for (let i = 0; i < batchPlan.areaCount; i++) {
-          const series = await post("series", {
-            title: `${state.campaigns.find((c) => c.id === campaignId)?.title || "Social-Media-Beiträge"} · Bereich ${i + 1}/${batchPlan.areaCount}`.slice(0, 200),
+        const result = await post("series/batch", {
+          requestKey,
+          items: Array.from({ length: batchPlan.areaCount }, (_, index) => ({
+            title: `${state.campaigns.find((c) => c.id === campaignId)?.title || "Social-Media-Beiträge"} · Bereich ${index + 1}/${batchPlan.areaCount}`.slice(0, 200),
             topic: message.trim().slice(0, 2000),
             offer: "",
             goal: "Social-Media-Beiträge für mehrere Servicebereiche vorbereiten",
@@ -385,22 +388,22 @@ export default function StudioChat({
             referenceAssetIds: [],
             brandRules: ["tone", "services", "audiences"],
             workspace: "CONTENT_DRAFT",
-          });
-          created.push(series.id);
-        }
+          })),
+        });
         await refresh();
-        setSeriesId(created[0]);
+        setSeriesId(result.series[0].id);
+        setBatchRequestKey("");
         setMessage("");
         setConfirmed(false);
         setProjectNotice(
           `${batchPlan.areaCount} Serien mit ${batchPlan.totalPosts} Beitragsentwürfen für ${batchPlan.channels.length} Kanäle gespeichert. Die Bereichsnamen und Texte müssen vor einer Veröffentlichung geprüft und ausgearbeitet werden.`,
         );
       } catch (e) {
-        // The existing series API saves each series separately. Never
-        // automatically retry an uncertain request and risk duplicates.
+        // The server uses the same request key to return the saved batch if
+        // the response was lost after commit. Never auto-retry a new key.
         setError(
           (e instanceof Error ? e.message : "Vorbereitung fehlgeschlagen.") +
-            " Bereits gespeicherte Serien bitte in den Projekten prüfen, bevor du die Aufgabe erneut startest. Es wurde nichts veröffentlicht.",
+            " Der Auftrag kann mit derselben Kennung sicher erneut geprüft werden. Es wurde nichts veröffentlicht.",
         );
         try {
           await refresh();
