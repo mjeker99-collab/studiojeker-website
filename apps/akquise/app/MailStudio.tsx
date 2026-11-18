@@ -661,6 +661,8 @@ export default function MailStudio({
     Promise.resolve()
       .then(() => {
         if (!active) return null;
+        setCheckout(false);
+        setPreviewOpen(false);
         setSelected(initialDraftIds);
         setBusy(true);
         setError("");
