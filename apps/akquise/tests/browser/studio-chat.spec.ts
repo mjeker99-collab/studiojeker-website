@@ -119,7 +119,10 @@ test("24-post brief previews four series and drafts without providers or publica
   const createButton = page.getByRole("button", { name: "24 Beitragsentwürfe vorbereiten" });
   await createButton.click();
   await expect(page.getByText(/derselben Kennung sicher erneut geprüft/)).toBeVisible();
-  await createButton.click();
+  // A browser reload must restore the original request and reuse its key.
+  await page.reload();
+  await expect(page.getByLabel("Deine Nachricht", { exact: true })).toHaveValue(original);
+  await page.getByRole("button", { name: "24 Beitragsentwürfe vorbereiten" }).click();
   await expect.poll(() => prepared.length).toBe(2);
   expect(prepared[0].requestKey).toMatch(/^[0-9a-f-]{36}$/i);
   expect(prepared[1].requestKey).toBe(prepared[0].requestKey);
