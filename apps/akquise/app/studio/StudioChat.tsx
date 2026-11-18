@@ -213,6 +213,30 @@ export default function StudioChat({
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
   const [batchRequestKey, setBatchRequestKey] = useState("");
+  const [batchRequestSignature, setBatchRequestSignature] = useState("");
+  useEffect(() => {
+    if (projectArea !== "Content-Studio" || initialRequest?.seriesId) return;
+    try {
+      const raw = window.sessionStorage.getItem("studioone:content-batch");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        requestKey?: unknown;
+        message?: unknown;
+        signature?: unknown;
+      };
+      if (
+        typeof saved.requestKey === "string" &&
+        typeof saved.message === "string" &&
+        typeof saved.signature === "string"
+      ) {
+        setBatchRequestKey(saved.requestKey);
+        setBatchRequestSignature(saved.signature);
+        setMessage((current) => current.trim() ? current : saved.message as string);
+      }
+    } catch {
+      window.sessionStorage.removeItem("studioone:content-batch");
+    }
+  }, [projectArea, initialRequest?.seriesId]);
   const batchPlan =
     projectArea === "Content-Studio" && !seriesId && mediaIntent === "TEXT"
       ? socialBatchPlan(message)
@@ -368,8 +392,26 @@ export default function StudioChat({
       setBusy(true);
       setError("");
       setProjectNotice("");
-      const requestKey = batchRequestKey || crypto.randomUUID();
-      if (!batchRequestKey) setBatchRequestKey(requestKey);
+      const messageText = message.trim();
+      const signature = JSON.stringify({
+        message: messageText,
+        campaignId: campaignId || null,
+        customerId: customerId || null,
+      });
+      const requestKey =
+        batchRequestKey && batchRequestSignature === signature
+          ? batchRequestKey
+          : crypto.randomUUID();
+      setBatchRequestKey(requestKey);
+      setBatchRequestSignature(signature);
+      try {
+        window.sessionStorage.setItem(
+          "studioone:content-batch",
+          JSON.stringify({ requestKey, message: messageText, signature }),
+        );
+      } catch {
+        // In-memory retry still works if this browser blocks session storage.
+      }
       try {
         const result = await post("series/batch", {
           requestKey,
@@ -393,6 +435,12 @@ export default function StudioChat({
         await refresh();
         setSeriesId(result.series[0].id);
         setBatchRequestKey("");
+        setBatchRequestSignature("");
+        try {
+          window.sessionStorage.removeItem("studioone:content-batch");
+        } catch {
+          // The saved server-side series remains available in the project list.
+        }
         setMessage("");
         setConfirmed(false);
         setProjectNotice(
