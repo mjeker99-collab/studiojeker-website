@@ -14,7 +14,7 @@ test("Content chat is accessible on iPad and phone and disabled without provider
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Content Studio/ })
     .click();
-  for (const width of [1024, 390]) {
+  for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByLabel("Deine Nachricht", { exact: true }).fill("");
     await expect(
@@ -121,6 +121,12 @@ test("24-post brief previews four series and drafts without providers or publica
   await expect(page.getByText(/derselben Kennung sicher erneut geprüft/)).toBeVisible();
   // A browser reload must restore the original request and reuse its key.
   await page.reload();
+  // The app opens on the overview after reload; re-enter Content Studio to
+  // resume the automatically saved request from the same browser session.
+  await page
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("button", { name: /Content Studio/ })
+    .click();
   await expect(page.getByLabel("Deine Nachricht", { exact: true })).toHaveValue(original);
   await page.getByRole("button", { name: "24 Beitragsentwürfe vorbereiten" }).click();
   await expect.poll(() => prepared.length).toBe(2);
