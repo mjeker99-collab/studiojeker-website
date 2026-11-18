@@ -229,12 +229,19 @@ export default function StudioChat({
         typeof saved.message === "string" &&
         typeof saved.signature === "string"
       ) {
-        setBatchRequestKey(saved.requestKey);
-        setBatchRequestSignature(saved.signature);
-        setMessage((current) => current.trim() ? current : saved.message as string);
+        const frame = window.requestAnimationFrame(() => {
+          setBatchRequestKey(saved.requestKey as string);
+          setBatchRequestSignature(saved.signature as string);
+          setMessage((current) => current.trim() ? current : saved.message as string);
+        });
+        return () => window.cancelAnimationFrame(frame);
       }
     } catch {
-      window.sessionStorage.removeItem("studioone:content-batch");
+      try {
+        window.sessionStorage.removeItem("studioone:content-batch");
+      } catch {
+        // Storage may be unavailable in a restricted browser context.
+      }
     }
   }, [projectArea, initialRequest?.seriesId]);
   const batchPlan =
