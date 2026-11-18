@@ -40,3 +40,6 @@ python scripts/build_preview.py
 - Service und Endreinigung: CHF 150.–
 - Max. zehn Mitgliedschaften, max. fünf Personen
 - CTA + QR zum Beitrittsantrag
+- Seite 1 Text: «Mitglied werden in unserem kleinen und exklusiven Ferienverein.»
+- Seite 1 Bildraster: Castillon-du-Gard, Uzès, Avignon
+- Kontakt: Nora Jeker, njeker@studiojeker.ch
