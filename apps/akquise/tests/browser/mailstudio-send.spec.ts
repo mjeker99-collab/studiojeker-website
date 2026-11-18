@@ -478,6 +478,11 @@ test("97 prepared mails can be selected as one group on iPad without dispatch", 
 }) => {
   await page.setViewportSize({ width: 768, height: 900 });
   const state = await setup(page, { draftCount: 97 });
+  // Larger batches stay available by explicit choice, including on iPad.
+  await page
+    .locator(".mail-draft-list")
+    .getByRole("button", { name: "Alle auswählen", exact: true })
+    .click();
   await page
     .getByRole("button", {
       name: "Gespeicherte Entwürfe öffnen (97)",

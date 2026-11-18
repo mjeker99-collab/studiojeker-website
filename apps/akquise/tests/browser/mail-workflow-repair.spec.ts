@@ -181,6 +181,12 @@ test("99 ready mails proceed with one incomplete contact, without releasing the 
   });
   await page.reload();
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  // The KMU-first default is 25. Explicitly select all 100 for this
+  // existing larger-batch / incomplete-recipient regression.
+  await page
+    .locator(".mail-draft-list")
+    .getByRole("button", { name: "Alle auswählen", exact: true })
+    .click();
   await page
     .getByRole("button", {
       name: "Gespeicherte Entwürfe öffnen (100)",

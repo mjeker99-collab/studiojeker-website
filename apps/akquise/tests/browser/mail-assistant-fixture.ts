@@ -2,13 +2,13 @@ import { expect, type Page } from "@playwright/test";
 
 export async function setup(
   page: Page,
-  options: { queued?: boolean; failure?: "review" | "unknown" } = {},
+  options: { queued?: boolean; failure?: "review" | "unknown"; count?: number } = {},
 ) {
   const sent: string[] = [];
   let addition = "";
   const previews: string[][] = [];
   const settingsCalls: Record<string, unknown>[] = [];
-  const contacts = Array.from({ length: 3 }, (_, i) => ({
+  const contacts = Array.from({ length: options.count ?? 3 }, (_, i) => ({
     id: `c${i}`,
     revision: 1,
     organisation: `Atelier ${i}`,
