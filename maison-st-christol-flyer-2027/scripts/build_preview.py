@@ -83,8 +83,15 @@ def build() -> None:
     body = "Mitglied werden in unserem\nkleinen und exklusiven\nFerienverein."
     body_f = F(SANS, S(13))
     draw.multiline_text(
-        (S(48), S(610)), body, fill=TEXT, font=body_f, spacing=S(6)
+        (S(48), S(590)), body, fill=TEXT, font=body_f, spacing=S(5)
     )
+
+    # Slot "1": Pont du Gard under the new membership sentence
+    # Align with bottom of the right-hand photo grid.
+    pont_box = (S(40), S(710), S(255), S(888))
+    pw, ph = pont_box[2] - pont_box[0], pont_box[3] - pont_box[1]
+    pont = cover_crop(Image.open(ASSETS / "photo_pont_du_gard.jpg"), pw, ph)
+    canvas.paste(pont, (pont_box[0], pont_box[1]))
 
     # ---- Right: membership block ----
     draw.rectangle((rx0 + S(28), S(30), rx0 + S(385), S(605)), fill=CREAM)
