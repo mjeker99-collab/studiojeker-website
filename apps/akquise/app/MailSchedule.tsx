@@ -654,7 +654,7 @@ export default function MailSchedule({
               {candidates.length > 200 && <p>Die ersten 200 Mails werden geöffnet. Weitere Mails bleiben für die nächste Gruppe erhalten.</p>}
             </section>
           )}
-          {!compact && !onReviewApproved && (
+          {!compact && (
             <details>
               <summary>
                 Bereits freigegebene Mails einplanen ({candidates.length})
