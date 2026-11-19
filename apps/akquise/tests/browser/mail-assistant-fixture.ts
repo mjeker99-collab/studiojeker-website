@@ -2,13 +2,13 @@ import { expect, type Page } from "@playwright/test";
 
 export async function setup(
   page: Page,
-  options: { queued?: boolean; failure?: "review" | "unknown" } = {},
+  options: { queued?: boolean; failure?: "review" | "unknown"; count?: number } = {},
 ) {
   const sent: string[] = [];
   let addition = "";
   const previews: string[][] = [];
   const settingsCalls: Record<string, unknown>[] = [];
-  const contacts = Array.from({ length: 3 }, (_, i) => ({
+  const contacts = Array.from({ length: options.count ?? 3 }, (_, i) => ({
     id: `c${i}`,
     revision: 1,
     organisation: `Atelier ${i}`,
@@ -48,6 +48,7 @@ export async function setup(
       route.request().method() === "POST" && path !== "/api/mail-images"
         ? route.request().postDataJSON()
         : {};
+    if (path === "/api/mail-assistant/history") return route.fulfill({ json: [] });
     if (path === "/api/mail-review/content") {
       expect(body.items).toHaveLength(3);
       addition = body.content;
@@ -173,6 +174,6 @@ export async function setup(
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: /Kontakte\/Akquise/ }).click();
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
   return { sent, previews, settingsCalls };
 }

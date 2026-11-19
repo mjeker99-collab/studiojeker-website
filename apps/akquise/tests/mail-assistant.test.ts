@@ -1,3 +1,4 @@
+import { defaultMailWriteBriefing } from "../lib/mail-assistant/briefing";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -152,4 +153,12 @@ test("Provider schema omits unsupported URI format while runtime validates URLs"
     }).success,
     false,
   );
+});
+
+test("Die voreingestellte KI-Überarbeitung nutzt Nora und verlangt persönliche Texte ohne Versand", () => {
+  assert.match(defaultMailWriteBriefing, /Nora Jeker/);
+  assert.match(defaultMailWriteBriefing, /130–180 Wörter/);
+  assert.match(defaultMailWriteBriefing, /belegten Anknüpfungspunkt/);
+  assert.match(defaultMailWriteBriefing, /keine erfundenen Informationen/i);
+  assert.match(defaultMailWriteBriefing, /vor dem Versand/i);
 });

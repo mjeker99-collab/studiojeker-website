@@ -19,7 +19,7 @@ import {
 import { hashPassword, checkPassword } from "../lib/auth";
 import { createMetanetTransport, renderLocalMessage } from "../lib/mail";
 import type { Contact } from "@prisma/client";
-import { generateDraft, importedDraft } from "../lib/generation";
+import { generateDraft, importedDraft, assertNoraMailText, noraSenderText } from "../lib/generation";
 import { sendInternalSmtpTest } from "../lib/smtp-test";
 import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -720,4 +720,87 @@ test("One XLSX master with more than 500 contacts remains importable without app
   assert.ok(
     rows.every((r) => r.confidence === "UNCONFIRMED" && !r.newsletterConsent),
   );
+});
+
+for (const email of ["marketing@example.test", "kommunikation@example.test"]) {
+  const { acquisitionAddressIssue } = await import("../lib/mail-address");
+  assert.equal(acquisitionAddressIssue(email), "");
+  assert.notEqual(acquisitionAddressIssue("info@example.test"), "");
+}
+
+test("Team-Mailvorlage nennt keine erfundene Kontaktperson und Archivierte bleiben gesperrt", async () => {
+  const team = { ...architectureContact, notes: "", email: "marketing@example.test", firstName: "Marketing", lastName: "Team", confidence: "VERIFIED" as const };
+  const generated = await generateDraft(team);
+  assert.match(generated.body, /^Guten Tag\n\n/);
+  assert.doesNotMatch(generated.body, /Guten Tag Marketing Team/);
+  const namedTeam = await generateDraft({ ...team, firstName: "Anna", lastName: "Muster" });
+  assert.match(namedTeam.body, /^Guten Tag\n\n/);
+  const named = await generateDraft({ ...team, email: "anna@example.test", firstName: "Anna", lastName: "Muster" });
+  assert.match(named.body, /^Guten Tag Anna Muster\n\n/);
+  await assert.rejects(generateDraft({ ...team, archivedAt: new Date("2026-10-10") }));
+  await assert.rejects(generateDraft({ ...team, email: "info@example.test" }));
+});
+
+
+test("Legacy-Masterliste normalisiert nur die alte Martin-Signatur auf Nora", () => {
+  const legacy = architectureNotes.replace(
+    "\nNora Jeker\n",
+    "\nMartin Jeker\n",
+  );
+  const result = importedDraft(legacy);
+  assert.ok(result);
+  assert.match(result.body, /Freundliche Grüsse\nNora Jeker\n/);
+  assert.doesNotMatch(result.body, /Martin Jeker/);
+  // Neither the caller's notes nor the original saved master text is edited.
+  assert.match(legacy, /Martin Jeker/);
+  const inappropriate = architectureNotes.replace(
+    "Studiojeker unterstützt",
+    "Ich bin Martin Jeker. Studiojeker unterstützt",
+  );
+  assert.throws(
+    () => importedDraft(inappropriate),
+    /anderen Absender im Text/,
+  );
+});
+
+test("Neue lokale Mailvorlage ist persönlich, nennt Nora und bleibt ein Entwurf", async () => {
+  const generated = await generateDraft({
+    ...architectureContact,
+    notes: "",
+    hook: "Dokumentierte Projektvisualisierung für ein neues Wohnhaus.",
+  });
+  assert.ok(generated.body.length >= 650);
+  assert.match(generated.body, /Ich bin Nora Jeker/);
+  assert.match(generated.body, /Beispiel Architekten AG/);
+  assert.match(generated.body, /Projektvisualisierung für ein neues Wohnhaus/);
+  assert.doesNotMatch(generated.body, /Martin Jeker/);
+  assert.match(generated.body, /unverbindlichen Austausch/);
+});
+
+
+test("Versand- und Freigabesperre für alte Martin-Mailtexte", () => {
+  assert.throws(
+    () => assertNoraMailText("Guten Tag\n\nFreundliche Grüsse\nMartin Jeker"),
+    /statt Nora/,
+  );
+  assert.throws(
+    () => assertNoraMailText("Ich bin Martin Jeker, melde mich aus Zuchwil."),
+    /statt Nora/,
+  );
+  assert.doesNotThrow(() =>
+    assertNoraMailText("Guten Tag\n\nBeste Grüsse\nNora Jeker"),
+  );
+});
+
+ test("Nora correction preserves greeting and personalised content", () => {
+  const body = "Guten Tag Marcel Müller\n\nich bin Martin Jeker von Studiojeker GmbH und melde mich mit einer Idee.\nMartin Jeker hat Ihr Projekt fotografiert.";
+  const fixed = noraSenderText(body);
+  assert.equal(fixed, body.replace("ich bin Martin Jeker", "ich bin Nora Jeker"));
+  assert.equal(noraSenderText(fixed), fixed);
+  assert.equal(noraSenderText("Guten Tag Martin Jeker"), "Guten Tag Martin Jeker");
+  assert.equal(noraSenderText("Ich bin Martin Jeker von Studiojeker GmbH."), "Ich bin Nora Jeker von Studiojeker GmbH.");
+});
+
+test("Nora correction also upgrades the known legacy closing", () => {
+  assert.equal(noraSenderText("Beste Grüsse\nMartin Jeker\nStudiojeker GmbH"), "Beste Grüsse\nNora Jeker\nStudiojeker GmbH");
 });

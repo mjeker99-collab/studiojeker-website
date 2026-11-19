@@ -12,7 +12,8 @@ export async function GET() {
     await db.$queryRaw`SELECT "version", "workspace", "archivedAt" FROM "MarketingContent" LIMIT 0`;
     await db.$queryRaw`SELECT "planningRevision" FROM "Draft" LIMIT 0`;
     await db.$queryRaw`SELECT "status" FROM "StudioJob" LIMIT 0`;
-    await db.$queryRaw`SELECT "revision" FROM "LibraryItem" LIMIT 0`;
+    await db.$queryRaw`SELECT "revision", "folderId", "deletedAt" FROM "LibraryItem" LIMIT 0`;
+    await db.$queryRaw`SELECT "parentId", "revision", "deletedAt" FROM "LibraryFolder" LIMIT 0`;
     await db.$queryRaw`SELECT "brandRevision" FROM "StudioOrganization" LIMIT 0`;
     await db.$queryRaw`SELECT "studioContext", "studioContextRevision" FROM "User" LIMIT 0`;
     return Response.json(

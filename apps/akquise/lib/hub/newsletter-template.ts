@@ -91,6 +91,45 @@ export const newsletterSnapshot = z
       });
   });
 export type NewsletterSnapshot = z.infer<typeof newsletterSnapshot>;
+
+/**
+ * Move an existing V4 draft to the corrected immutable video layout.
+ * Keep all authored content, replacing only the original umbrella placeholder.
+ */
+export function correctedV4Newsletter(source: NewsletterSnapshot): NewsletterSnapshot {
+  const previous = ["newsletter-04-github-364bba2", "newsletter-04-video-promo-20261102"];
+  if (!previous.includes(source.templateId))
+    throw new Error("Nur bisherige V4-Ausgaben lassen sich auf die korrigierte Video-Vorlage umstellen.");
+  const prior = getNewsletterTemplate(source.templateId);
+  const olderPromo = getNewsletterTemplate("newsletter-04-video-promo-20261102");
+  const newTemplate = getNewsletterTemplate("newsletter-04-video-promo-20261103");
+  const priorFields = source.fields;
+  const oldDefault = olderPromo.slots.find((s) => s.key === "promo_image.image.1")!.value;
+  const oldAlt = olderPromo.slots.find((s) => s.key === "promo_image.alt.1")!.value;
+  const newDefault = newTemplate.slots.find((s) => s.key === "promo_image.image.1")!.value;
+  const newAlt = newTemplate.slots.find((s) => s.key === "promo_image.alt.1")!.value;
+  const fields = { ...priorFields };
+  // Replace only the known outdated template placeholder; never overwrite a
+  // manually chosen asset from the library or the existing Nora picture.
+  if (fields["promo_image.image.1"] === oldDefault)
+    fields["promo_image.image.1"] = newDefault;
+  if (fields["promo_image.alt.1"] === oldAlt)
+    fields["promo_image.alt.1"] = newAlt;
+  if (!("promo_image.link.1" in fields))
+    fields["promo_image.link.1"] = fields["hero_video_cta.link.1"] ||
+      newTemplate.slots.find((s) => s.key === "promo_image.link.1")!.value;
+  // Prevent silent content loss if this template differs from the expected V4.
+  for (const key of Object.keys(fields))
+    if (!newTemplate.slots.some((s) => !s.special && s.key === key))
+      throw new Error(`Unbekanntes Newsletter-Feld: ${key}`);
+  if (prior.slots.filter((s) => !s.special).length < 76)
+    throw new Error("Ungültige V4-Vorlage.");
+  return newsletterSnapshot.parse({
+    templateId: "newsletter-04-video-promo-20261103",
+    fields,
+  });
+}
+
 export function renderNewsletter(input: {
   subject: string;
   preheader: string;
@@ -117,7 +156,31 @@ export function renderNewsletter(input: {
           : escapeHtml(value);
     cursor = slot.end;
   }
-  return result + template.html.slice(cursor);
+  const rendered = result + template.html.slice(cursor);
+  // Existing V4 video drafts must show the contact heading before its body,
+  // without altering stored slot content or the immutable source template.
+  return [
+    "newsletter-04-video-promo-20261102",
+    "newsletter-04-video-promo-20261103",
+  ].includes(snapshot.templateId) ? v4ContactHeadlineFirst(rendered) : rendered;
+}
+
+/** Make the correction in rendered HTML, shared by preview and Mailchimp export. */
+export function v4ContactHeadlineFirst(html: string): string {
+  const bodyStart = html.indexOf('<div mc:edit="contact_body"');
+  if (bodyStart < 0) return html;
+  const headingOpen = '<div style="padding-top:14px;"><h2 class="sj-heading" mc:edit="contact_headline"';
+  const headingStart = html.indexOf(headingOpen, bodyStart);
+  if (headingStart < 0) return html;
+  const body = html.slice(bodyStart, headingStart);
+  if (!body.endsWith("</div>")) return html;
+  const closing = "</h2></div>";
+  const headingEnd = html.indexOf(closing, headingStart);
+  if (headingEnd < 0) return html;
+  const afterHeading = headingEnd + closing.length;
+  const headline = html.slice(headingStart, afterHeading)
+    .replace('style="padding-top:14px;"', 'style="padding-top:0;"');
+  return html.slice(0, bodyStart) + headline + body + html.slice(afterHeading);
 }
 export function newsletterText(snapshot: NewsletterSnapshot) {
   const template = getNewsletterTemplate(snapshot.templateId);

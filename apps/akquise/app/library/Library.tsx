@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import type { libraryState } from "@/lib/library/service";
 import type { BrandProfile } from "@/lib/library/input";
+import Folders, { FolderOptions } from "./Folders";
+import { folderLabel, folderPath, folderVisible } from "@/lib/library/tree";
 import DriveConnection from "./DriveConnection";
 import { uploadProblem } from "@/lib/studio/upload-policy";
 export type LibraryState = Awaited<ReturnType<typeof libraryState>>;
@@ -101,34 +103,150 @@ function LibraryGrid({
   state,
   onSelect,
   imagesOnly = false,
+  folderId: controlledFolder,
+  onNavigate,
+  trash = false,
+  busy = false,
+  onMove,
+  onRestore,
 }: {
   state: LibraryState;
   onSelect: (item: LibraryEntry) => void;
   imagesOnly?: boolean;
+  folderId?: string | null;
+  onNavigate?: (id: string | null) => void;
+  trash?: boolean;
+  busy?: boolean;
+  onMove?: (items: LibraryEntry[], folderId: string | null) => void;
+  onRestore?: (item: LibraryEntry) => void;
 }) {
+  const [localFolder, setLocalFolder] = useState<string | null>(null);
+  const folderId =
+    controlledFolder === undefined ? localFolder : controlledFolder;
   const [query, setQuery] = useState(""),
     [kind, setKind] = useState(""),
     [campaign, setCampaign] = useState(""),
     [tag, setTag] = useState(""),
-    [archive, setArchive] = useState(false);
-  const items = state.items.filter(
+    [customer, setCustomer] = useState(""),
+    [project, setProject] = useState(""),
+    [archive, setArchive] = useState(false),
+    [checked, setChecked] = useState<string[]>([]),
+    [target, setTarget] = useState("");
+  const global = Boolean(
+    query.trim() || kind || campaign || tag || customer || project || archive,
+  );
+  const matches = state.items.filter(
     (i) =>
-      (archive ? !!i.archivedAt : !i.archivedAt) &&
+      (trash
+        ? !!i.deletedAt
+        : !i.deletedAt && (archive ? !!i.archivedAt : !i.archivedAt)) &&
+      folderVisible(state.folders, i.folderId) &&
       (!imagesOnly || i.asset?.mime.startsWith("image/")) &&
       (!kind || i.kind === kind) &&
       (!campaign || i.campaignId === campaign) &&
+      (!customer ||
+        folderPath(state.folders, i.folderId).some(
+          (f) => f.customerId === customer,
+        )) &&
+      (!project ||
+        folderPath(state.folders, i.folderId).some(
+          (f) => f.projectId === project,
+        )) &&
       (!tag ||
         i.tags.some((t) => t.toLowerCase().includes(tag.toLowerCase()))) &&
-      `${i.title} ${i.description} ${i.text} ${i.tags.join(" ")}`
+      `${i.title} ${i.description} ${i.text} ${i.tags.join(" ")} ${folderLabel(state.folders, i.folderId)}`
         .toLowerCase()
-        .includes(query.toLowerCase()),
+        .includes(query.trim().toLowerCase()),
+  );
+  const items = matches.filter(
+    (i) => trash || global || i.folderId === folderId,
+  );
+  const recent =
+    !folderId && !trash && !global
+      ? matches.filter((i) => i.folderId).slice(0, 8)
+      : [];
+  const navigate = (id: string | null) => {
+    setChecked([]);
+    setQuery("");
+    (onNavigate || setLocalFolder)(id);
+  };
+  const cards = (list: LibraryEntry[], selectable: boolean) => (
+    <div className="library-grid">
+      {list.map((i) => (
+        <div key={i.id} className="library-entry">
+          {selectable && onMove && !trash && (
+            <label className="library-select">
+              <input
+                type="checkbox"
+                checked={checked.includes(i.id)}
+                aria-label={`${i.title} auswählen`}
+                onChange={(e) =>
+                  setChecked(
+                    e.target.checked
+                      ? [...checked, i.id]
+                      : checked.filter((id) => id !== i.id),
+                  )
+                }
+              />{" "}
+              Auswählen
+            </label>
+          )}
+          <button
+            className="library-card"
+            disabled={busy}
+            draggable={!!onMove && !trash}
+            onDragStart={(e) =>
+              e.dataTransfer.setData("text/studioone-item", i.id)
+            }
+            onClick={() => onSelect(i)}
+          >
+            {i.asset?.mime.startsWith("image/") || i.thumbnailAssetId ? (
+              <img
+                loading="lazy"
+                src={`/api/studio/assets/${i.asset?.mime.startsWith("image/") ? i.asset.id : i.thumbnailAssetId}`}
+                alt={i.title}
+              />
+            ) : (
+              <span className="library-type">{names[i.kind]}</span>
+            )}
+            <strong>{i.title}</strong>
+            <span>
+              {names[i.kind]} · {i.tags.join(", ") || "Keine Schlagwörter"}
+            </span>
+            <small>{folderLabel(state.folders, i.folderId)}</small>
+            {i.kind === "DOCUMENT" && (
+              <small>
+                {i.asset?.mime.startsWith("text/plain")
+                  ? "Text verfügbar (max. 16 000 Zeichen)"
+                  : "Nur abgelegt · kein KI-Text"}
+              </small>
+            )}
+          </button>
+          {trash && onRestore && (
+            <button disabled={busy} onClick={() => onRestore(i)}>
+              Wiederherstellen
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
   );
   return (
     <>
+      {controlledFolder === undefined && (
+        <Folders state={state} folderId={folderId} onNavigate={navigate} />
+      )}
       <div className="library-filters">
         <label>
           Suche
-          <input value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input
+            placeholder="In der ganzen Bibliothek suchen"
+            value={query}
+            onChange={(e) => {
+              setChecked([]);
+              setQuery(e.target.value);
+            }}
+          />
         </label>
         <label>
           Inhaltstyp
@@ -156,62 +274,110 @@ function LibraryGrid({
           </select>
         </label>
         <label>
-          Marke/Kunde
-          <select aria-label="Marke/Kunde">
-            <option>{state.organization.name}</option>
+          Kunde
+          <select
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+          >
+            <option value="">Alle Kunden</option>
+            {state.customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Projekt
+          <select value={project} onChange={(e) => setProject(e.target.value)}>
+            <option value="">Alle Projekte</option>
+            {state.projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Schlagwort
           <input value={tag} onChange={(e) => setTag(e.target.value)} />
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={archive}
-            onChange={(e) => setArchive(e.target.checked)}
-          />{" "}
-          Archiv anzeigen
-        </label>
+        {!trash && (
+          <label>
+            <input
+              type="checkbox"
+              checked={archive}
+              onChange={(e) => setArchive(e.target.checked)}
+            />{" "}
+            Archiv anzeigen
+          </label>
+        )}
       </div>
+      {onMove && !trash && (
+        <div className="library-move">
+          <label>
+            <input
+              type="checkbox"
+              checked={
+                items.length > 0 && items.every((i) => checked.includes(i.id))
+              }
+              onChange={(e) =>
+                setChecked(
+                  e.target.checked ? items.slice(0, 500).map((i) => i.id) : [],
+                )
+              }
+            />{" "}
+            Alle auswählen (max. 500)
+          </label>
+          {items.some((i) => checked.includes(i.id)) && (
+            <>
+              <label>
+                Verschieben nach
+                <select
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                >
+                  <FolderOptions state={state} />
+                </select>
+              </label>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  onMove(
+                    items.filter((i) => checked.includes(i.id)),
+                    target || null,
+                  );
+                  setChecked([]);
+                }}
+              >
+                Auswahl verschieben
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <p>
-        {items.length} Inhalte · Nur interner Studiojeker-Bereich. Kundenzugänge
-        sind nicht freigeschaltet.
+        {items.length} Inhalte
+        {global ? " · Suche und Filter gelten für die gesamte Bibliothek" : ""}
       </p>
-      <div className="library-grid">
-        {items.map((i) => (
-          <button
-            className="library-card"
-            key={i.id}
-            onClick={() => onSelect(i)}
-          >
-            {i.asset?.mime.startsWith("image/") || i.thumbnailAssetId ? (
-              <img
-                loading="lazy"
-                src={`/api/studio/assets/${i.asset?.mime.startsWith("image/") ? i.asset.id : i.thumbnailAssetId}`}
-                alt={i.title}
-              />
-            ) : (
-              <span className="library-type">{names[i.kind]}</span>
-            )}
-            <strong>{i.title}</strong>
-            <span>
-              {names[i.kind]} · {i.tags.join(", ") || "Keine Schlagwörter"}
-            </span>
-            {i.kind === "DOCUMENT" && (
-              <small>
-                {i.asset?.mime.startsWith("text/plain")
-                  ? "Text verfügbar (max. 16 000 Zeichen)"
-                  : "Nur abgelegt · kein KI-Text"}
-              </small>
-            )}
-          </button>
-        ))}
-      </div>
-      {!items.length && <p>Keine passenden Inhalte.</p>}
+      {cards(items, true)}
+      {!items.length && (
+        <p>
+          {trash
+            ? "Keine einzelnen Dateien im Papierkorb."
+            : "Keine passenden Inhalte in diesem Ordner."}
+        </p>
+      )}
+      {recent.length > 0 && (
+        <>
+          <h3>Zuletzt hinzugefügt</h3>
+          {cards(recent, false)}
+        </>
+      )}
     </>
   );
 }
+
 const emptyItem = {
   kind: "TEXT",
   title: "",
@@ -220,11 +386,14 @@ const emptyItem = {
   rights: "",
   tags: [] as string[],
   campaignId: null as string | null,
+  folderId: null as string | null,
   text: "",
   url: "",
   thumbnailAssetId: null as string | null,
 };
 export default function Library() {
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [trash, setTrash] = useState(false);
   const [state, setState] = useState<LibraryState | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -296,6 +465,7 @@ export default function Library() {
             "x-rights-confirmed": "true",
             "x-studio-kind": kind,
             "x-file-name": encodeURIComponent(f.name),
+            ...(folderId ? { "x-library-folder": folderId } : {}),
           },
           body: f,
           signal: AbortSignal.timeout(180000),
@@ -304,7 +474,7 @@ export default function Library() {
         if (!r.ok) throw new Error(a.error);
         status(
           a.reused
-            ? "Identische Datei vorhanden · wiederverwendet"
+            ? `Identische Datei vorhanden · wiederverwendet · ${a.existingInTrash ? "im Papierkorb" : folderLabel(state?.folders || [], a.existingFolderId ?? null)}`
             : "gespeichert",
         );
       } catch (e) {
@@ -399,7 +569,11 @@ export default function Library() {
                 <option value="">Mitgeliefertes Studiojeker-Original</option>
                 {state.items
                   .filter(
-                    (i) => i.asset?.mime.startsWith("image/") && !i.archivedAt,
+                    (i) =>
+                      i.asset?.mime.startsWith("image/") &&
+                      !i.archivedAt &&
+                      !i.deletedAt &&
+                      folderVisible(state.folders, i.folderId),
                   )
                   .map((i) => (
                     <option key={i.id} value={i.assetId!}>
@@ -418,7 +592,13 @@ export default function Library() {
               >
                 <option value="">Offen · keine Ersatzschrift</option>
                 {state.items
-                  .filter((i) => i.kind === "FONT" && !i.archivedAt)
+                  .filter(
+                    (i) =>
+                      i.kind === "FONT" &&
+                      !i.archivedAt &&
+                      !i.deletedAt &&
+                      folderVisible(state.folders, i.folderId),
+                  )
                   .map((i) => (
                     <option key={i.id} value={i.assetId!}>
                       {i.title}
@@ -489,7 +669,11 @@ export default function Library() {
             <legend>Freigegebene Logo-Varianten</legend>
             {state.items
               .filter(
-                (i) => i.asset?.mime.startsWith("image/") && !i.archivedAt,
+                (i) =>
+                  i.asset?.mime.startsWith("image/") &&
+                  !i.archivedAt &&
+                  !i.deletedAt &&
+                  folderVisible(state.folders, i.folderId),
               )
               .map((i) => (
                 <label key={i.id}>
@@ -518,69 +702,100 @@ export default function Library() {
         </form>
       ) : (
         <>
-          <section className="panel">
-            <h2>Inhalte hinzufügen</h2>
-            <p>
-              Bilder (JPEG, PNG, WebP), PDF, TXT und TTF/OTF bis 8 MB;
-              Videos (MP4, M4V, MOV) bis 64 MB. Höchstens 8 Dateien je Auswahl.
-              Originale bleiben unverändert.
-            </p>
-            {state.config.storage === "DISCONNECTED" && (
-              <p role="status">
-                Privater Speicher nicht verbunden. Fehlende Einstellungen:{" "}
-                {state.config.missingStorage.join(", ") ||
-                  "S3-Verbindung prüfen"}
-                . Texte und Links können bereits gespeichert werden.
+          <Folders
+            state={state}
+            folderId={folderId}
+            busy={busy}
+            action={action}
+            trash={trash}
+            onTrash={(value) => {
+              setTrash(value);
+              setItem(null);
+              setSelected(null);
+            }}
+            onNavigate={(id) => {
+              setFolderId(id);
+              setItem(null);
+              setSelected(null);
+            }}
+            onDrop={(id, target) => {
+              const entry = state.items.find((i) => i.id === id);
+              if (!entry || busy) return;
+              void action(async () => {
+                await libraryApi("move", {
+                  items: [{ id: entry.id, revision: entry.revision }],
+                  folderId: target,
+                });
+                setNotice("Datei verschoben.");
+              });
+            }}
+          />
+          {!trash && (
+            <section className="panel">
+              <h2>Inhalte hinzufügen</h2>
+              <p>Ablageort: {folderLabel(state.folders, folderId)}</p>
+              <p>
+                Bilder (JPEG, PNG, WebP), PDF, TXT und TTF/OTF bis 8 MB; Videos
+                (MP4, M4V, MOV) bis 64 MB. Höchstens 8 Dateien je Auswahl.
+                Originale bleiben unverändert.
               </p>
-            )}
-            <label>
-              <input
-                type="checkbox"
-                checked={rights}
-                onChange={(e) => setRights(e.target.checked)}
-              />{" "}
-              Ich darf die Dateien und Schriften für diese Zwecke verwenden.
-            </label>
-            <label>
-              Dateien hochladen
-              <input
-                type="file"
-                multiple
-                // No accept filter: iPad Drive providers can label valid media
-                // as generic files. Validate after selection and on the server.
-                disabled={
-                  busy || !rights || state.config.storage === "DISCONNECTED"
-                }
-                onChange={(e) => {
-                  void upload(e.target.files);
-                  e.target.value = "";
+              {state.config.storage === "DISCONNECTED" && (
+                <p role="status">
+                  Privater Speicher nicht verbunden. Fehlende Einstellungen:{" "}
+                  {state.config.missingStorage.join(", ") ||
+                    "S3-Verbindung prüfen"}
+                  . Texte und Links können bereits gespeichert werden.
+                </p>
+              )}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={rights}
+                  onChange={(e) => setRights(e.target.checked)}
+                />{" "}
+                Ich darf die Dateien und Schriften für diese Zwecke verwenden.
+              </label>
+              <label>
+                Dateien hochladen
+                <input
+                  type="file"
+                  multiple
+                  // No accept filter: iPad Drive providers can label valid media
+                  // as generic files. Validate after selection and on the server.
+                  disabled={
+                    busy || !rights || state.config.storage === "DISCONNECTED"
+                  }
+                  onChange={(e) => {
+                    void upload(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <ul aria-live="polite">
+                {uploads.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setSelected(null);
+                  setItem({ ...emptyItem, folderId });
                 }}
-              />
-            </label>
-            <ul aria-live="polite">
-              {uploads.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-            <button
-              disabled={busy}
-              onClick={() => {
-                setSelected(null);
-                setItem({ ...emptyItem });
-              }}
-            >
-              Text erfassen
-            </button>{" "}
-            <button
-              disabled={busy}
-              onClick={() => {
-                setSelected(null);
-                setItem({ ...emptyItem, kind: "LINK" });
-              }}
-            >
-              Link hinzufügen
-            </button>
-          </section>
+              >
+                Text erfassen
+              </button>{" "}
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setSelected(null);
+                  setItem({ ...emptyItem, kind: "LINK", folderId });
+                }}
+              >
+                Link hinzufügen
+              </button>
+            </section>
+          )}
           {item ? (
             <form
               className="panel"
@@ -637,6 +852,17 @@ export default function Library() {
                   />
                 </label>
               ))}
+              <label>
+                Ablageordner
+                <select
+                  value={item.folderId || ""}
+                  onChange={(e) =>
+                    setItem({ ...item, folderId: e.target.value || null })
+                  }
+                >
+                  <FolderOptions state={state} />
+                </select>
+              </label>
               <label>
                 Schlagwörter (mit Komma trennen)
                 <input
@@ -697,7 +923,10 @@ export default function Library() {
                       {state.items
                         .filter(
                           (i) =>
-                            i.asset?.mime.startsWith("image/") && !i.archivedAt,
+                            i.asset?.mime.startsWith("image/") &&
+                            !i.archivedAt &&
+                            !i.deletedAt &&
+                            folderVisible(state.folders, i.folderId),
                         )
                         .map((i) => (
                           <option key={i.id} value={i.assetId!}>
@@ -748,6 +977,31 @@ export default function Library() {
               )}
               {selected && (
                 <>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `«${selected.title}» in den Papierkorb verschieben? Bestehende Verwendungen bleiben erhalten.`,
+                        )
+                      )
+                        return;
+                      void action(async () => {
+                        await libraryApi("trash", {
+                          id: selected.id,
+                          revision: selected.revision,
+                          type: "item",
+                          restore: false,
+                        });
+                        setItem(null);
+                        setSelected(null);
+                        setNotice("In den Papierkorb verschoben.");
+                      });
+                    }}
+                  >
+                    Inhalt löschen
+                  </button>
                   <h3>Verwendung in Beiträgen</h3>
                   {selected.usage.length ? (
                     <ul>
@@ -800,9 +1054,35 @@ export default function Library() {
             </form>
           ) : null}
           <LibraryGrid
+            key={`${folderId}-${trash}`}
             state={state}
+            folderId={folderId}
+            trash={trash}
+            busy={busy}
+            onMove={(items, target) =>
+              void action(async () => {
+                await libraryApi("move", {
+                  items: items.map((i) => ({ id: i.id, revision: i.revision })),
+                  folderId: target,
+                });
+                setItem(null);
+                setSelected(null);
+                setNotice("Auswahl verschoben.");
+              })
+            }
+            onRestore={(i) =>
+              void action(async () => {
+                await libraryApi("trash", {
+                  id: i.id,
+                  revision: i.revision,
+                  type: "item",
+                  restore: true,
+                });
+                setNotice("Inhalt wiederhergestellt.");
+              })
+            }
             onSelect={(i) => {
-              if (busy) return;
+              if (busy || trash) return;
               setSelected(i);
               setItem({
                 id: i.id,
@@ -814,6 +1094,7 @@ export default function Library() {
                 rights: i.rights,
                 tags: i.tags,
                 campaignId: i.campaignId,
+                folderId: i.folderId,
                 text: i.text,
                 url: i.url,
                 thumbnailAssetId: i.thumbnailAssetId,
@@ -825,4 +1106,3 @@ export default function Library() {
     </div>
   );
 }
-

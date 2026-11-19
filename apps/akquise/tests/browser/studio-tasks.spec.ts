@@ -13,7 +13,7 @@ test("Content tasks are directly available and preserve drafts when GPT and edit
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   const picker = page.getByRole("region", {
     name: "Aufgaben im Content-Studio",

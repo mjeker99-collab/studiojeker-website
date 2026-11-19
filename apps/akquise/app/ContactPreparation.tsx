@@ -6,6 +6,7 @@ import type {
 } from "../lib/contact-preparation";
 
 import { normalizeSourceUrl, sourceUrlIssue } from "../lib/contact-source-url";
+import { isTeamMailbox } from "../lib/contact-identity";
 
 type Result = { id: string; ok: boolean; message: string; revision?: number };
 type Edit = { id: string; revision: number; values: PreparationFields };
@@ -146,48 +147,55 @@ export default function ContactPreparation({
   }
   async function save() {
     if (!confirmed || busy) return;
-    const dates = [
-      shared.verifiedAt,
-      ...Object.values(edits).map((e) => e.values.verifiedAt),
-    ].filter(Boolean) as string[];
+    if (sourceUrlIssue(shared.sourceUrl ?? "")) {
+      setError(
+        "Bitte die markierte Quellenadresse korrigieren. Deine Eingaben bleiben erhalten.",
+      );
+      return;
+    }
     if (
-      dates.some(
-        (date) => Number.isNaN(Date.parse(date)) || date.slice(0, 10) > today,
-      )
+      shared.verifiedAt &&
+      (Number.isNaN(Date.parse(shared.verifiedAt)) ||
+        shared.verifiedAt.slice(0, 10) > today)
     ) {
       setError(
         "Das Prüfdatum liegt in der Zukunft oder ist ungültig. Bitte das tatsächliche Prüfdatum wählen; deine Eingaben bleiben erhalten.",
       );
       return;
     }
-    const invalid =
-      sourceUrlIssue(shared.sourceUrl ?? "") ||
-      Object.values(edits)
-        .map((edit) => sourceUrlIssue(edit.values.sourceUrl ?? ""))
-        .find(Boolean);
-    if (invalid) {
-      setError(
-        "Bitte die markierte Quellenadresse korrigieren. Deine Eingaben bleiben erhalten.",
-      );
-      return;
-    }
     setBusy(true);
     setError("");
     try {
-      const data = await post<{ results: Result[] }>("save", {
-        confirmed: true,
-        // The visible checkbox explicitly confirms address verification as well
-        // as the data. The server still preserves existing non-UNCONFIRMED
-        // classifications and requires source, date and a documented context.
-        shared: requireComplete
-          ? { ...shared, confidence: "VERIFIED" }
-          : shared,
-        contacts: proposals.map((p) => ({
-          id: p.id,
-          revision: p.revision,
-          values: edits[p.id]?.values,
-        })),
+      const data = { results: [] as Result[] };
+      const valid = proposals.filter((p) => {
+        const values = edits[p.id]?.values;
+        const invalid =
+          sourceUrlIssue(values?.sourceUrl ?? "") ||
+          (values?.verifiedAt &&
+            (Number.isNaN(Date.parse(values.verifiedAt)) ||
+              values.verifiedAt.slice(0, 10) > today));
+        if (invalid)
+          data.results.push({
+            id: p.id,
+            ok: false,
+            message: "Quellenadresse oder Prüfdatum korrigieren.",
+          });
+        return !invalid;
       });
+      if (valid.length) {
+        const result = await post<{ results: Result[] }>("save", {
+          confirmed: true,
+          shared: requireComplete
+            ? { ...shared, confidence: "VERIFIED" }
+            : shared,
+          contacts: valid.map((p) => ({
+            id: p.id,
+            revision: p.revision,
+            values: edits[p.id]?.values,
+          })),
+        });
+        data.results.push(...result.results);
+      }
       setResults(data.results);
       const remaining = Object.fromEntries(
         Object.entries(edits).filter(
@@ -204,8 +212,8 @@ export default function ContactPreparation({
       await refresh();
       if (
         requireComplete &&
-        data.results.every((r) => r.ok) &&
-        fresh.contacts.every((p) => p.ready && !p.changed)
+        Object.keys(remaining).length === 0 &&
+        fresh.contacts.some((p) => p.ready && !p.changed)
       )
         onDone();
     } catch (e) {
@@ -219,6 +227,7 @@ export default function ContactPreparation({
     }
   }
   const open = proposals.filter((p) => !p.ready);
+  const teamMailboxCount = proposals.filter((p) => isTeamMailbox(p.email)).length;
   // Show the real reasons for an incomplete selection. A verified email address
   // alone does not satisfy source, date, hook and human review requirements.
   const issueCounts = Array.from(
@@ -251,8 +260,7 @@ export default function ContactPreparation({
       {!requireComplete && unconfirmed > 0 && !shared.confidence && (
         <p role="status">
           Bei {unconfirmed} Kontakten fehlt die Bestätigung der Adressprüfung.
-          Wenn du diese persönlichen Adressen geprüft hast, wähle unten
-          «Persönliche Adresse verifiziert». «Aus vorhandenen Angaben
+          Bestätige nur tatsächlich geprüfte Adressen. «Aus vorhandenen Angaben
           übernehmen» lässt unbestätigte Adressen unverändert.
         </p>
       )}
@@ -286,7 +294,9 @@ export default function ContactPreparation({
           onChange={(e) => setConfirmed(e.target.checked)}
         />
         {requireComplete
-          ? `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
+          ? teamMailboxCount > 0
+            ? `Ich habe die E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft (${teamMailboxCount} Team-Postfächer) und bestätige ihre dokumentierten Quellen, Prüfdaten und Anknüpfungspunkte.`
+            : `Ich habe die persönlichen E-Mail-Adressen der ${proposals.length} ausgewählten Kontakte geprüft und bestätige die Rechercheangaben einschliesslich Quelle, Prüfdatum und Anlass.`
           : "Ich bestätige die eingetragenen Angaben und die unten angezeigten Ergänzungen aus den Notizen."}
       </label>
       <div className="actions">
@@ -294,7 +304,7 @@ export default function ContactPreparation({
           {busy
             ? "Wird gespeichert …"
             : requireComplete
-              ? "Weiter zum Sofortversand →"
+              ? "Angaben speichern und weiter →"
               : "Änderungen speichern"}
         </button>
         {!requireComplete && (
@@ -351,14 +361,15 @@ export default function ContactPreparation({
           </ul>
         </div>
       )}
-      {onExclude && open.length > 0 && open.length < proposals.length && (
+      {onExclude && open.length > 0 && (
         <button
           className="secondary"
-          disabled={busy || dirty}
+          disabled={busy}
           onClick={() => onExclude(open.map((p) => p.id))}
         >
-          Bewusst nur mit {proposals.length - open.length} vollständigen
-          Kontakten fortfahren
+          {open.length === proposals.length
+            ? "Alle offenen Kontakte aus diesem Versand entfernen"
+            : `Bewusst nur mit ${proposals.length - open.length} vollständigen Kontakten fortfahren`}
         </button>
       )}
       <details>
@@ -374,6 +385,15 @@ export default function ContactPreparation({
               {p.ready ? "vollständig" : "Angaben offen"}
             </summary>
             <p>{p.email || "E-Mail-Adresse fehlt"}</p>
+            {onExclude && (
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => onExclude([p.id])}
+              >
+                Aus diesem Versand entfernen
+              </button>
+            )}
             {!!p.issues.length && (
               <p>
                 <strong>Noch zu ergänzen:</strong> {p.issues.join(" ")}

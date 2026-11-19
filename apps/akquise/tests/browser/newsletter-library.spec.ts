@@ -20,22 +20,9 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Newsletter/ })
     .click();
-  // The simplified UI intentionally hides the one-time template import.
-  // Seed the synthetic newsletter sources through the authenticated API.
-  const imported = await page.evaluate(async () => {
-    const response = await fetch("/api/hub/newsletter/import", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    return response.ok;
-  });
-  expect(imported).toBe(true);
-  await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Newsletter/ })
-    .click();
+  await page.getByRole("button", { name: "Aus GitHub importieren", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "GitHub-Vorlagen importiert" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Newsletter 04 · Sichtbarkeit", exact: true })).toBeVisible();
   const source = page.locator("article[data-content-id]").filter({
     has: page.getByRole("heading", {
       name: "Newsletter 02 · Visibility",
@@ -46,6 +33,9 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
     .getByRole("button", { name: "Duplizieren", exact: true })
     .click();
   const editor = page.getByRole("region", { name: "Inhaltseditor" });
+  await expect(editor.getByRole("heading", { name: "Mit GPT bearbeiten" })).toBeVisible();
+  await expect(editor.getByLabel("Was möchtest du ändern?")).toBeVisible();
+  await editor.getByRole("button", { name: "Texte und Bilder manuell bearbeiten" }).click();
   await expect(editor.getByLabel("Interner Titel")).toHaveValue(/Kopie/);
   await editor.getByLabel("Interner Titel").fill("Browserprüfung Newsletter");
   await editor
@@ -137,3 +127,4 @@ test("Newsletter library: import, edit, preview, copy and export", async ({
   await editor.getByRole("button", { name: "HTML & Text exportieren" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.html$/);
 });
+

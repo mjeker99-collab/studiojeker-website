@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { accessibleFolder, lockLibrary } from "../library/folders";
 import { createHash, randomUUID } from "node:crypto";
 import { db } from "../db";
 import { hubActor } from "../hub/workflow";
@@ -18,6 +19,7 @@ export async function storeAsset(
   kind: "ORIGINAL" | "MOTIF" | "FONT" | "EXPORT" | "DOCUMENT",
   mime?: string,
   store: ObjectStore = objectStore(),
+  folderId?: string | null,
 ) {
   if (
     !bytes.length ||
@@ -94,6 +96,8 @@ export async function storeAsset(
     return await db.$transaction(
       async (tx) => {
         await hubActor(tx, actor);
+        await lockLibrary(tx);
+        if (folderId !== undefined) await accessibleFolder(tx, folderId);
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"asset:" + ORG + sha256}))`;
         const existing = await tx.studioAsset.findFirst({
           where: { organizationId: ORG, sha256, kind, deletedAt: null },
@@ -105,7 +109,9 @@ export async function storeAsset(
               "Vorhandene Datei ist beschädigt. Wiederverwendung blockiert; Wiederherstellung prüfen.",
               503,
             );
-          return { ...existing, reused: true };
+          const item = await tx.libraryItem.findUnique({ where: { assetId: existing.id } });
+          // A duplicate never silently moves or restores an existing file.
+          return { ...existing, reused: true, existingFolderId: item?.folderId ?? null, existingInTrash: Boolean(item?.deletedAt) };
         }
         await store.put(objectKey, bytes, mime!);
         uploaded = true;
@@ -127,6 +133,7 @@ export async function storeAsset(
         await tx.libraryItem.create({
           data: {
             assetId: id,
+            folderId: folderId ?? null,
             organizationId: ORG,
             title: a.name,
             kind:

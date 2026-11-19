@@ -29,6 +29,7 @@ export const itemInput = z
     rights: t(2000),
     tags: z.array(t(60).min(1)).max(20),
     campaignId: t(200).nullable(),
+    folderId: t(200).min(1).nullable().optional(),
     text: t(16000),
     url: referenceUrl,
     thumbnailAssetId: t(200).nullable(),

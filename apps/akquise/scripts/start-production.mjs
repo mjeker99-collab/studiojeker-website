@@ -24,6 +24,11 @@ for (const path of [
 const standalone = existsSync("server.js");
 // Ephemeral per-process credential. Never exposed to the browser or stored in settings.
 const tickToken = randomBytes(32).toString("hex");
+// Independent, ephemeral credential for the additive Google masterlist import.
+// Never reuses the SMTP scheduler token and never grants sending privileges.
+const contactSyncToken = randomBytes(32).toString("hex");
+const contactSyncEnabled = Boolean(process.env.GOOGLE_SHEET_ID) &&
+  process.env.DISABLE_CONTACT_SYNC !== "true";
 const child = spawn(
   process.execPath,
   standalone
@@ -43,6 +48,7 @@ const child = spawn(
       HOSTNAME: "0.0.0.0",
       PORT: process.env.PORT || "3100",
       INTERNAL_MAIL_TICK_TOKEN: tickToken,
+      INTERNAL_CONTACT_SYNC_TOKEN: contactSyncToken,
     },
   },
 );
@@ -68,9 +74,58 @@ const timer = setInterval(async () => {
   }
 }, 60000);
 timer.unref();
+
+// Keep StudioONE contacts in sync with the existing Google masterlist.
+// The endpoint only imports missing records as UNCONFIRMED/NEW; it cannot
+// approve contacts or drafts and it never triggers a delivery.
+let contactSyncRunning = false;
+async function syncMasterContacts() {
+  if (!contactSyncEnabled || contactSyncRunning) return;
+  contactSyncRunning = true;
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${process.env.PORT || "3100"}/api/internal/contact-sync`,
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${contactSyncToken}` },
+        signal: AbortSignal.timeout(120000),
+      },
+    );
+    if (!response.ok) {
+      console.error("Masterlist sync unavailable:", response.status);
+    } else {
+      const result = await response.json();
+      if (result?.ok === true &&
+          Number.isInteger(result.imported) &&
+          Number.isInteger(result.duplicates)) {
+        console.info(
+          `Masterlist sync: ${result.imported} new, ${result.duplicates} already present.`,
+        );
+      } else {
+        console.error("Masterlist sync returned an invalid response.");
+      }
+    }
+  } catch {
+    console.error("Masterlist sync unavailable; retrying next interval.");
+  } finally {
+    contactSyncRunning = false;
+  }
+}
+// First pass after startup, then every 30 minutes. Restarts are harmless:
+// importContacts uses skipDuplicates and never resets manual approvals.
+const firstContactSync = contactSyncEnabled
+  ? setTimeout(syncMasterContacts, 120000)
+  : null;
+firstContactSync?.unref();
+const contactSyncTimer = contactSyncEnabled
+  ? setInterval(syncMasterContacts, 30 * 60000)
+  : null;
+contactSyncTimer?.unref();
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
     clearInterval(timer);
+    if (firstContactSync) clearTimeout(firstContactSync);
+    if (contactSyncTimer) clearInterval(contactSyncTimer);
     child.kill(signal);
   });
 child.on("exit", (code) => process.exit(code ?? 1));

@@ -21,6 +21,8 @@ type Item = {
   subject: string;
   status: string;
   error: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 type Data = {
   workerHealthy: boolean;
@@ -58,12 +60,17 @@ export default function MailSchedule({
   drafts,
   openDraft,
   compact = false,
-  readyCount,
   onQueueChange,
   onSendableQueueChange,
   onSendNow,
+  onReviewApproved,
   reviewBusy = false,
+  observerOnly = false,
+  onSummaryChange,
 }: {
+  onReviewApproved?: (ids: string[]) => void;
+  observerOnly?: boolean;
+  onSummaryChange?: (summary: string) => void;
   onSendNow?: (ids: string[]) => void;
   onSendableQueueChange?: (ids: string[]) => void;
   reviewBusy?: boolean;
@@ -73,11 +80,14 @@ export default function MailSchedule({
   drafts: Candidate[];
   openDraft: (id: string) => void;
 }) {
+  const [shippingView, setShippingView] = useState("Geplant");
   const [showStart, setShowStart] = useState(false);
   const [data, setData] = useState<Data | null>(null);
   const [settings, setSettings] = useState<Schedule | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
   const [confirmQueue, setConfirmQueue] = useState(false);
+  const [confirmedSelectionVersion, setConfirmedSelectionVersion] =
+    useState("");
   const [confirmStart, setConfirmStart] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -106,6 +116,7 @@ export default function MailSchedule({
         if (!response.ok) throw new Error(json.error);
         if (active) {
           setData(json);
+          setError("");
           setSettings((old) => old || json.schedule);
         }
       } catch (e) {
@@ -138,6 +149,7 @@ export default function MailSchedule({
         setResults(json.results);
         setSelection([]);
         setConfirmQueue(false);
+        setConfirmedSelectionVersion("");
       }
       setConfirmStart(false);
       setShowStart(false);
@@ -168,6 +180,21 @@ export default function MailSchedule({
           !["CANCELLED", "BLOCKED"].includes(i.status),
       ),
   );
+  // Bind a group approval to the exact approved draft versions, not only IDs.
+  // A refreshed or revoked approval must never silently enqueue a changed draft.
+  const selectedCandidates = candidates.filter((draft) =>
+    selection.includes(draft.id),
+  );
+  const selectedVersions = selectedCandidates
+    .map((draft) => `${draft.id}:${draft.version}`)
+    .sort()
+    .join("|");
+  const selectionCurrent =
+    selection.length > 0 && selectedCandidates.length === selection.length;
+  const queueConfirmationValid =
+    selectionCurrent &&
+    confirmQueue &&
+    confirmedSelectionVersion === selectedVersions;
   useEffect(() => {
     if (data) {
       onSendableQueueChange?.(
@@ -225,6 +252,18 @@ export default function MailSchedule({
             Math.min(data.schedule.dailyLimit, data.serverLimit),
         )
       : null;
+  useEffect(() => {
+    if (error) {
+      onSummaryChange?.(
+        "Zeitplan derzeit nicht abrufbar. Unter Versand den aktuellen Status prüfen.",
+      );
+      return;
+    }
+    if (!data) return;
+    onSummaryChange?.(
+      `${data.schedule.weekdaysOnly ? "Montag bis Freitag" : "Jeden Tag"}, ${String(data.schedule.startHour).padStart(2, "0")}:00–${String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · maximal ${Math.min(data.schedule.dailyLimit, data.serverLimit)} Mails pro Tag. ${!data.productionReady ? "Versand derzeit deaktiviert." : !data.workerHealthy ? "Versanddienst derzeit nicht erreichbar." : data.schedule.enabled ? "Beginn im nächsten verfügbaren Zeitfenster." : "Der Versand ist pausiert. Die eingeplanten Mails warten, bis du ihn unter Versand fortsetzt."}`,
+    );
+  }, [data, error, onSummaryChange]);
   const staleWorker = !data?.workerHealthy;
   const capacity = settings
     ? Math.ceil(
@@ -232,13 +271,14 @@ export default function MailSchedule({
           settings.intervalMinutes,
       )
     : 0;
+  if (observerOnly) return null;
   return (
     <section
       className="panel mail-schedule"
       aria-labelledby="mail-schedule-title"
     >
       <div className="section-head">
-        <h2 id="mail-schedule-title">Täglicher Mailversand</h2>
+        <h2 id="mail-schedule-title">Versand</h2>
         <strong>
           {data?.schedule.enabled ? "Automatik aktiv" : "Pausiert"}
         </strong>
@@ -262,11 +302,6 @@ export default function MailSchedule({
             aria-label="Versandübersicht"
           >
             <p>
-              <strong>{readyCount ?? candidates.length}</strong>
-              <br />
-              Bereit zur Prüfung
-            </p>
-            <p>
               <strong>{count("QUEUED")}</strong>
               <br />
               Geplant
@@ -281,7 +316,7 @@ export default function MailSchedule({
                 {count("BLOCKED") + count("UNKNOWN") + count("FAILED")}
               </strong>
               <br />
-              Handlungsbedarf
+              Klärung nötig
             </p>
           </div>
           <p role="status">
@@ -439,11 +474,21 @@ export default function MailSchedule({
             </p>
           )}
           {data.schedule.pauseReason && (
-            <p role="status">{data.schedule.pauseReason}</p>
+            <div role="status" className="warning">
+              <p>Versand angehalten: {data.schedule.pauseReason}</p>
+              {count("UNKNOWN") > 0 && (
+                <button
+                  className="secondary"
+                  onClick={() => setShippingView("Klärung nötig")}
+                >
+                  Unklare Sendungen prüfen
+                </button>
+              )}
+            </div>
           )}
           <details className="mail-schedule-settings">
             <summary>
-              Zeitplan bearbeiten{dirty ? " · Ungespeicherte Änderungen" : ""}
+              Versandeinstellungen{dirty ? " · Ungespeicherte Änderungen" : ""}
             </summary>
             <fieldset disabled={busy || reviewBusy}>
               <div
@@ -598,6 +643,17 @@ export default function MailSchedule({
               </button>
             </div>
           </details>
+          {!compact && onReviewApproved && candidates.length > 0 && (
+            <section className="panel-note" aria-label="Freigegebene Mails versenden">
+              <h3>{candidates.length} freigegebene Mails warten auf den Versand</h3>
+              <p>Alle gemeinsam prüfen und mit einer Bestätigung einplanen. Einzelne Mails kannst du dort abwählen.</p>
+              <button type="button" disabled={busy || reviewBusy}
+                onClick={() => onReviewApproved(candidates.slice(0, 200).map((d) => d.id))}>
+                {Math.min(200, candidates.length)} Mails gemeinsam freigeben →
+              </button>
+              {candidates.length > 200 && <p>Die ersten 200 Mails werden geöffnet. Weitere Mails bleiben für die nächste Gruppe erhalten.</p>}
+            </section>
+          )}
           {!compact && (
             <details>
               <summary>
@@ -610,18 +666,80 @@ export default function MailSchedule({
                 und vor jedem Versand erneut geprüft.
               </p>
               <button
+                className="secondary"
                 disabled={busy || !candidates.length}
-                onClick={() =>
-                  setSelection(candidates.slice(0, 200).map((d) => d.id))
-                }
+                onClick={() => {
+                  setSelection(candidates.slice(0, 200).map((d) => d.id));
+                  setConfirmQueue(false);
+                  setConfirmedSelectionVersion("");
+                }}
               >
-                Bis zu 200 angezeigte Mails auswählen
+                {candidates.length <= 200
+                  ? "Alle auswählen"
+                  : "Erste 200 auswählen"}
               </button>{" "}
               <button
+                className="secondary"
                 disabled={busy || !selection.length}
-                onClick={() => setSelection([])}
+                onClick={() => {
+                  setSelection([]);
+                  setConfirmQueue(false);
+                  setConfirmedSelectionVersion("");
+                }}
               >
                 Auswahl leeren
+              </button>
+              <p role="status">
+                <strong>
+                  {selection.length} von {candidates.length} Mails ausgewählt.
+                </strong>
+              </p>
+              {!selectionCurrent && selection.length > 0 && (
+                <p role="alert">
+                  Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut
+                  auswählen.
+                </p>
+              )}
+              {selectionCurrent && confirmQueue && !queueConfirmationValid && (
+                <p role="alert">
+                  Eine freigegebene Nachricht hat sich geändert. Bitte den
+                  Versand erneut bestätigen.
+                </p>
+              )}
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={queueConfirmationValid}
+                  disabled={busy || !selectionCurrent}
+                  onChange={(e) => {
+                    setConfirmQueue(e.target.checked);
+                    setConfirmedSelectionVersion(
+                      e.target.checked ? selectedVersions : "",
+                    );
+                  }}
+                />
+                Diese {selection.length} Nachrichten für den automatischen
+                Versand einplanen. Bei aktiver Automatik beginnt der Versand im
+                eingestellten Zeitfenster.
+              </label>
+              <button
+                disabled={
+                  busy ||
+                  !queueConfirmationValid ||
+                  !selectionCurrent ||
+                  selection.length > 200
+                }
+                onClick={() =>
+                  void mutate("enqueue", {
+                    confirmDispatch: true,
+                    items: selectedCandidates.map((d) => ({
+                      draftId: d.id,
+                      version: d.version,
+                    })),
+                  })
+                }
+              >
+                {selection.length} ausgewählte Mails einplanen
               </button>
               <div className="draft-list">
                 {candidates.map((d) => (
@@ -630,18 +748,23 @@ export default function MailSchedule({
                       <input
                         type="checkbox"
                         checked={selection.includes(d.id)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setConfirmQueue(false);
+                          setConfirmedSelectionVersion("");
                           setSelection((old) =>
                             e.target.checked
                               ? [...old, d.id]
                               : old.filter((id) => id !== d.id),
-                          )
-                        }
+                          );
+                        }}
                       />
                       {d.versions[0].recipient} · {d.versions[0].subject} · V
                       {d.version}
                     </label>
-                    <button onClick={() => openDraft(d.id)}>
+                    <button
+                      className="secondary"
+                      onClick={() => openDraft(d.id)}
+                    >
                       Nachricht prüfen
                     </button>
                   </div>
@@ -654,34 +777,6 @@ export default function MailSchedule({
                   </p>
                 )}
               </div>
-              <label className="check">
-                <input
-                  type="checkbox"
-                  checked={confirmQueue}
-                  onChange={(e) => setConfirmQueue(e.target.checked)}
-                />
-                Diese {selection.length} Nachrichten für den automatischen
-                Versand einplanen. Bei aktiver Automatik beginnt der Versand im
-                eingestellten Zeitfenster.
-              </label>
-              <button
-                disabled={
-                  busy ||
-                  !confirmQueue ||
-                  !selection.length ||
-                  selection.length > 200
-                }
-                onClick={() =>
-                  void mutate("enqueue", {
-                    confirmDispatch: true,
-                    items: candidates
-                      .filter((d) => selection.includes(d.id))
-                      .map((d) => ({ draftId: d.id, version: d.version })),
-                  })
-                }
-              >
-                Auswahl einplanen
-              </button>
               {results.length > 0 && (
                 <ul aria-label="Ergebnis der Auswahl">
                   {results.map((r, index) => (
@@ -697,98 +792,134 @@ export default function MailSchedule({
               )}
             </details>
           )}
+          <div
+            className="shipping-tabs"
+            role="group"
+            aria-label="Versand anzeigen"
+          >
+            {[
+              ["Geplant", count("QUEUED") + count("SENDING")],
+              ["Versendet", count("SENT")],
+              [
+                "Klärung nötig",
+                count("FAILED") + count("BLOCKED") + count("UNKNOWN"),
+              ],
+              [
+                "Weitere",
+                count("SKIPPED") + count("CANCELLED") + count("CLOSED"),
+              ],
+            ].map(([label, total]) => (
+              <button
+                key={label}
+                className="secondary"
+                aria-pressed={shippingView === label}
+                onClick={() => setShippingView(String(label))}
+              >
+                {label} ({total})
+              </button>
+            ))}
+          </div>
           {[
             {
-              title: "Handlungsbedarf",
+              title: "Klärung nötig",
               statuses: ["FAILED", "BLOCKED", "UNKNOWN"],
             },
-            { title: "Warteschlange", statuses: ["QUEUED", "SENDING"] },
-            {
-              title: "Verlauf",
-              statuses: ["SENT", "SKIPPED", "CANCELLED", "CLOSED"],
-            },
-          ].map((group) => {
-            const items = data.items.filter((item) =>
-              group.statuses.includes(item.status),
-            );
-            return (
-              <details
-                key={group.title}
-                open={group.title === "Handlungsbedarf" && items.length > 0}
-              >
-                <summary>
-                  {group.title} (
-                  {group.statuses.reduce(
-                    (sum, status) => sum + count(status),
-                    0,
-                  )}
-                  )
-                </summary>
-                {!items.length && <p>Keine Einträge.</p>}
-                {group.title === "Verlauf" && (
-                  <p>
-                    Letzte Einträge. Versandt bedeutet vom Mailserver
-                    angenommen. Bereits gestartete Versandversuche werden nicht
-                    automatisch wiederholt.
-                  </p>
-                )}
-                {items.map((item) => (
-                  <div key={item.id} className="panel-note">
-                    <strong>{item.recipient}</strong>
+            { title: "Geplant", statuses: ["QUEUED", "SENDING"] },
+            { title: "Versendet", statuses: ["SENT"] },
+            { title: "Weitere", statuses: ["SKIPPED", "CANCELLED", "CLOSED"] },
+          ]
+            .filter((group) => group.title === shippingView)
+            .map((group) => {
+              const items = data.items.filter((item) =>
+                group.statuses.includes(item.status),
+              );
+              return (
+                <section key={group.title} aria-label={group.title}>
+                  <h3>
+                    {group.title} (
+                    {group.statuses.reduce(
+                      (sum, status) => sum + count(status),
+                      0,
+                    )}
+                    )
+                  </h3>
+                  {!items.length && <p>Keine Einträge.</p>}
+                  {group.title === "Versendet" && (
                     <p>
-                      {item.subject} · V{item.version} ·{" "}
-                      {labels[item.status] || item.status}
+                      Letzte Einträge. Versandt bedeutet vom Mailserver
+                      angenommen. Bereits gestartete Versandversuche werden
+                      nicht automatisch wiederholt.
                     </p>
-                    {item.error && <p className="error">{item.error}</p>}
-                    {["BLOCKED", "FAILED"].includes(item.status) && (
-                      <button onClick={() => openDraft(item.draftId)}>
-                        Nachricht prüfen und bearbeiten
-                      </button>
-                    )}
-                    {["QUEUED", "BLOCKED"].includes(item.status) && (
-                      <button
-                        disabled={busy}
-                        onClick={() => void mutate("cancel", { id: item.id })}
-                      >
-                        Aus Warteschlange entfernen
-                      </button>
-                    )}
-                    {item.status === "UNKNOWN" && (
-                      <div>
-                        <label>
-                          Ergebnis des manuellen Abgleichs mit
-                          Postfach/SMTP-Protokoll
-                          <textarea
-                            value={reconciliation[item.id] || ""}
-                            onChange={(e) =>
-                              setReconciliation({
-                                ...reconciliation,
-                                [item.id]: e.target.value,
+                  )}
+                  {items.map((item) => (
+                    <div key={item.id} className="panel-note">
+                      <strong>{item.recipient}</strong>
+                      <p>
+                        {item.subject} · {labels[item.status] || item.status}
+                      </p>
+                      {(item.updatedAt || item.createdAt) && (
+                        <small>
+                          {item.status === "QUEUED"
+                            ? "Eingeplant"
+                            : "Status aktualisiert"}
+                          :{" "}
+                          {new Date(
+                            item.updatedAt || item.createdAt!,
+                          ).toLocaleString("de-CH", {
+                            timeZone: "Europe/Zurich",
+                          })}
+                        </small>
+                      )}
+                      {item.error && <p className="error">{item.error}</p>}
+                      {["BLOCKED", "FAILED"].includes(item.status) && (
+                        <button onClick={() => openDraft(item.draftId)}>
+                          Nachricht prüfen und bearbeiten
+                        </button>
+                      )}
+                      {["QUEUED", "BLOCKED"].includes(item.status) && (
+                        <button
+                          disabled={busy}
+                          onClick={() => void mutate("cancel", { id: item.id })}
+                        >
+                          Aus Warteschlange entfernen
+                        </button>
+                      )}
+                      {item.status === "UNKNOWN" && (
+                        <div>
+                          <label>
+                            Ergebnis des manuellen Abgleichs mit
+                            Postfach/SMTP-Protokoll
+                            <textarea
+                              value={reconciliation[item.id] || ""}
+                              onChange={(e) =>
+                                setReconciliation({
+                                  ...reconciliation,
+                                  [item.id]: e.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <button
+                            disabled={
+                              busy ||
+                              (reconciliation[item.id] || "").trim().length < 15
+                            }
+                            onClick={() =>
+                              void mutate("resolve", {
+                                id: item.id,
+                                rationale: reconciliation[item.id],
                               })
                             }
-                          />
-                        </label>
-                        <button
-                          disabled={
-                            busy ||
-                            (reconciliation[item.id] || "").trim().length < 15
-                          }
-                          onClick={() =>
-                            void mutate("resolve", {
-                              id: item.id,
-                              rationale: reconciliation[item.id],
-                            })
-                          }
-                        >
-                          Abgleich dokumentieren · keine Wiederholung
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </details>
-            );
-          })}
+                          >
+                            Abgleich dokumentieren · keine Wiederholung
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </section>
+              );
+            })}
         </>
       )}
     </section>

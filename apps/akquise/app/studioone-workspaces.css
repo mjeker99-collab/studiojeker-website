@@ -24,3 +24,39 @@
 .shell .hub-subnav button{border-radius:11px}
 @media(max-width:800px){.shell .content{padding-inline:clamp(12px,3vw,24px)}.shell .panel{border-radius:12px}.shell .page-heading h1{font-size:30px}}
 @media(prefers-reduced-motion:reduce){.shell .hub-card,.shell .metric{transition:none}}
+
+/* Targeted control spacing: Drive, assistant project picker and calendar. */
+.shell [aria-labelledby="drive-heading"] form {
+  margin-block: 16px;
+}
+.shell [aria-labelledby="drive-heading"] form > button {
+  margin: 0;
+}
+.shell [aria-labelledby="drive-heading"] > button {
+  margin: 0 12px 12px 0;
+}
+.shell .assistant-project-picker > label {
+  margin-bottom: 0;
+}
+.shell .assistant-project-picker > button {
+  align-self: end;
+  margin: 0;
+  min-height: 44px;
+}
+.shell .assistant-project-picker > p {
+  margin-top: 4px;
+}
+.shell .hub-calendar-toolbar {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block: 20px;
+}
+.shell .hub-calendar-toolbar > button,
+.shell .hub-calendar-toolbar input {
+  min-height: 44px;
+  margin-bottom: 0;
+}
+.shell .hub-calendar-toolbar > label {
+  margin: 0;
+}

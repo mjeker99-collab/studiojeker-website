@@ -25,16 +25,16 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Neues Briefing" }),
+    page.getByRole("button", { name: "Neuen Beitrag erstellen" }),
   ).toBeVisible();
   await expect(
-    page.getByText("Nicht verbunden", { exact: true }).first(),
+    page.getByText("Die KI ist noch nicht verbunden. Bitte wende dich an die Administration.").first(),
   ).toBeVisible();
   mkdirSync(".local/hub-screenshots", { recursive: true });
   await page
@@ -65,7 +65,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await expect(page.locator('.notice[role="status"]')).toContainText(
     "privat gespeichert",
   );
-  await page.getByRole("button", { name: "Neues Briefing" }).click();
+  await page.getByRole("button", { name: "Neuen Beitrag erstellen" }).click();
   await page
     .getByLabel("Serientitel", { exact: true })
     .fill("Synthetische Desktop-Abnahme");
@@ -144,7 +144,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })

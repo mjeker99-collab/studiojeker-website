@@ -13,3 +13,50 @@
 .shell .panel p,.shell .hub-card p,.shell .assistant-entry p{line-height:1.65}
 .shell .hub-subnav{margin-bottom:22px}
 @media(max-width:650px){.studioone-area-intro{min-height:170px;padding:24px}.studioone-area-intro h2{font-size:27px}}
+
+/* Dashboard rhythm and ONE motif, retaining the approved black area headers. */
+.shell .studioone-area-intro,
+.shell .mail-studio .mail-studio-toolbar {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: clamp(28px, 4vw, 46px);
+  margin-bottom: 26px;
+}
+.shell .studioone-area-intro::after,
+.shell .mail-studio .mail-studio-toolbar::after {
+  content: "ONE" / "";
+  position: absolute;
+  z-index: -1;
+  right: 3%;
+  bottom: -.22em;
+  font-size: clamp(100px, 18vw, 300px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.1em;
+  color: #00c5ef13;
+  pointer-events: none;
+  user-select: none;
+}
+.shell .studioone-area-intro h2,
+.shell .mail-studio .mail-studio-toolbar h2 {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+.shell .studioone-area-intro p {
+  max-width: 780px;
+}
+@media (max-width: 650px) {
+  .shell .studioone-area-intro,
+  .shell .mail-studio .mail-studio-toolbar {
+    padding: 24px;
+  }
+  .shell .studioone-area-intro h2,
+  .shell .mail-studio .mail-studio-toolbar h2 {
+    font-size: 28px;
+  }
+}

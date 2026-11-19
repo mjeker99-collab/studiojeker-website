@@ -11,7 +11,8 @@ import {
 } from "./policy";
 import { appendMailContent, mailImageIds } from "./mail-content";
 import { mailImageAttachments } from "./mail-images";
-import { editDraft, reviewDraft } from "./workflow";
+import { editDraft, reviewDraft, discardDrafts, correctNoraSender } from "./workflow";
+import { assertNoraMailText, noraSenderText } from "./generation";
 
 const ids = z
   .array(z.string().min(1).max(100))
@@ -32,6 +33,27 @@ export async function mailReview(
   raw: unknown,
   sender?: SmtpSender,
 ) {
+  if (action === "discard") {
+    const input = z
+      .object({
+        confirmed: z.literal(true),
+        items: z
+          .array(
+            z
+              .object({
+                id: z.string().min(1),
+                version: z.number().int().positive(),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(200),
+      })
+      .strict()
+      .parse(raw);
+    const result = await discardDrafts(userId, input.items);
+    return { results: result.results };
+  }
   if (action === "content") {
     const input = z
       .object({
@@ -84,6 +106,14 @@ export async function mailReview(
   }
   if (action === "preview") {
     const input = z.object({ ids }).strict().parse(raw);
+    const candidates = await db.draft.findMany({
+      where: { id: { in: input.ids }, versions: { some: { body: { contains: "Martin", mode: "insensitive" } } } },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+    });
+    for (const d of candidates) {
+      const body = d.versions[0]?.body;
+      if (body && noraSenderText(body) !== body) await correctNoraSender(userId, d.id);
+    }
     const drafts = await db.draft.findMany({
       where: { id: { in: input.ids } },
       include: {
@@ -95,14 +125,26 @@ export async function mailReview(
         versions: { orderBy: { version: "desc" }, take: 1 },
       },
     });
-    if (drafts.length !== input.ids.length)
-      throw new PolicyError("Entwurf nicht mehr vorhanden. Neu laden.", 409);
     const rows = [];
+    const unavailable: { id: string; message: string }[] = [];
     for (const id of input.ids) {
-      const d = drafts.find((d) => d.id === id)!;
-      const v = d.versions[0];
-      if (!v) throw new PolicyError("Nachrichtenversion fehlt.");
+      const d = drafts.find((d) => d.id === id);
+      const v = d?.versions[0];
+      if (!d || !v) {
+        unavailable.push({
+          id,
+          message: !d
+            ? "Entwurf nicht mehr vorhanden. Aus der Auswahl entfernt."
+            : "Nachrichtenversion fehlt. Entwurf erneut erstellen.",
+        });
+        continue;
+      }
       const issues = verificationIssues(d.contact);
+      try {
+        assertNoraMailText(v.body);
+      } catch (error) {
+        issues.push(error instanceof Error ? error.message : "Absendertext prüfen.");
+      }
       if (
         v.contactRevision !== d.contact.revision ||
         v.recipient !== d.contact.email
@@ -135,6 +177,7 @@ export async function mailReview(
       }
       rows.push({
         id,
+        contactId: d.contactId,
         version: d.version,
         hash: v.hash,
         contactRevision: d.contact.revision,
@@ -147,11 +190,12 @@ export async function mailReview(
         issues,
       });
     }
-    return { rows };
+    return { rows, unavailable };
   }
   if (
     action === "approve" ||
     action === "approve-and-enqueue" ||
+    action === "approve-and-start" ||
     action === "approve-and-send"
   ) {
     const input = z
@@ -178,6 +222,10 @@ export async function mailReview(
       throw new PolicyError("Automatischen Versand ausdrücklich bestätigen.");
     if (action === "approve-and-send" && input.items.length !== 1)
       throw new PolicyError("Sofortversand erfolgt einzeln pro Nachricht.");
+    if (action === "approve-and-start")
+      await mailScheduleMutation(userId, "check-start", {
+        confirmDispatch: true,
+      });
     const results = [];
     for (const entry of input.items) {
       let approved = false;
@@ -207,7 +255,10 @@ export async function mailReview(
                   ? "Testmail an Testempfänger übergeben"
                   : "Versand nicht bestätigt. Versandhistorie prüfen; keine automatische Wiederholung.",
           });
-        } else if (action === "approve-and-enqueue") {
+        } else if (
+          action === "approve-and-enqueue" ||
+          action === "approve-and-start"
+        ) {
           try {
             const queued = await mailScheduleMutation(userId, "enqueue", {
               confirmDispatch: true,
@@ -246,7 +297,15 @@ export async function mailReview(
         });
       }
     }
-    return { results };
+    let notice = "";
+    if (action === "approve-and-start" && results.some((r) => r.ok)) {
+      try {
+        await mailScheduleMutation(userId, "start", { confirmDispatch: true });
+      } catch (e) {
+        notice = `Mails sind eingeplant; Start nicht bestätigt: ${e instanceof Error ? e.message : "Versandstatus prüfen."}`;
+      }
+    }
+    return { results, notice };
   }
   throw new PolicyError("Unbekannte Prüfaktion.", 404);
 }

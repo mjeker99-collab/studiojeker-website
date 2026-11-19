@@ -12,7 +12,7 @@ test("Content chat is accessible on iPad and phone and disabled without provider
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   for (const width of [1024, 390]) {
     await page.setViewportSize({ width, height: 900 });
@@ -61,7 +61,7 @@ test("Content chat is accessible on iPad and phone and disabled without provider
   await page.reload();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content-Studio/ })
+    .getByRole("button", { name: /Content Studio/ })
     .click();
   await page
     .getByText("Was GPT über dich und die Firma weiss", { exact: true })

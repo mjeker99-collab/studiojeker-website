@@ -14,7 +14,7 @@ async function signIn(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(credential[2]);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await expect(
-    page.getByRole("heading", { name: "Übersicht", exact: true }),
+    page.getByRole("heading", { name: "We create visibility.", exact: true }),
   ).toBeVisible();
 }
 async function go(page: Page, name: string) {

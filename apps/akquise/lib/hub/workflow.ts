@@ -121,6 +121,8 @@ export async function saveContentInTx(
     : null;
   if (old && (old.version !== expectedVersion || old.kind !== payload.kind))
     throw new PolicyError("Inhalt wurde geändert. Neu laden.", 409);
+  if (old?.kind === "NEWSLETTER" && old.archivedAt)
+    throw new PolicyError("Dieser Newsletter liegt im Papierkorb. Bitte zuerst wiederherstellen.", 409);
   if (old?.studioSeriesId && old.studioSeriesId !== payload.studio?.seriesId) {
     const previous = await tx.marketingVersion.findUniqueOrThrow({
       where: { contentId_version: { contentId: old.id, version: old.version } },

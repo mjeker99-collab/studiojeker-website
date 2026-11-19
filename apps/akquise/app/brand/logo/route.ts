@@ -7,11 +7,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-static";
 export async function GET() {
   const bytes = await readFile(
-    join(process.cwd(), "brand/studioone-app-logo.jpg"),
+    join(process.cwd(), "brand/studioone-app-logo.png"),
   );
   return new Response(new Uint8Array(bytes), {
     headers: {
-      "Content-Type": "image/jpeg",
+      "Content-Type": "image/png",
       "Cache-Control": "public, max-age=3600, must-revalidate",
       "X-Content-Type-Options": "nosniff",
     },

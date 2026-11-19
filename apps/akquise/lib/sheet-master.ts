@@ -20,11 +20,20 @@ export function mapMasterSheet(values: string[][]) {
     const cells = masterHeaders.map((_, col) => (raw[col] ?? "").trim());
     if (!cells.some(Boolean)) continue;
     const person = cells[0].replace(/^(?:Dr\.|Prof\.)\s+/i, "").split(/\s+/);
-    if (!cells[0] || !cells[2] || person.length < 2) {
-      throw new Error(`Masterliste Zeile ${i + 2}: Person oder Organisation fehlt.`);
-    }
+    // An unassigned company mailbox is not a verified person. Skip such
+    // research rows instead of fabricating identities or failing the whole sync.
+    if (!cells[0] || !cells[2] || person.length < 2) continue;
+    // Never ingest generic info@ addresses into the acquisition workspace.
+    if (/^info(?:[.+_-][^@]*)?@/i.test(cells[4])) continue;
+    // The source column can contain several URLs separated by " | ".
+    // Keep the original string in notes but validate one canonical URL for import.
+    const sourceCandidate = cells[8].match(/https?:\/\/[^\s|;]+/i)?.[0] ?? "";
+    const sourceUrl = sourceCandidate && URL.canParse(sourceCandidate)
+      ? sourceCandidate : "";
     const notes = [
       `Originalname: ${cells[0]}`,
+      ...(cells[8] && cells[8] !== sourceUrl
+        ? [`Originalquelle: ${cells[8]}`] : []),
       ...(cells[4] && !z.string().email().safeParse(cells[4]).success
         ? [`Originaladresse aus Masterliste (Format nicht unterstützt): ${cells[4]}`]
         : []),
@@ -41,7 +50,7 @@ export function mapMasterSheet(values: string[][]) {
       lastName: person.slice(1).join(" "),
       position: cells[1],
       email: z.string().email().safeParse(cells[4]).success ? cells[4] : "",
-      sourceUrl: cells[8],
+      sourceUrl,
       notes,
       // Conservative categorisation. Never grants legal approval.
       legalCategory: /^(?:Kanton Solothurn|Stadt |Bürgergemeinde )/i.test(cells[2])

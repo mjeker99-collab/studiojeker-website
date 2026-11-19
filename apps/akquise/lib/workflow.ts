@@ -10,7 +10,7 @@ import {
   messageHash,
   normalizeEmail,
 } from "./policy";
-import { generateDraft, importedDraft } from "./generation";
+import { generateDraft, importedDraft, assertNoraMailText, noraSenderText } from "./generation";
 import { renderLocalMessage } from "./mail";
 import { replyInput } from "./contact-reply-input";
 import { randomUUID } from "node:crypto";
@@ -32,6 +32,193 @@ async function actor(tx: Tx, userId: string) {
 }
 async function lock(tx: Tx, key: string) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
+}
+// Use the same lock order as dispatch. Never remove delivery history or the
+// recipient records that enforce duplicate-send protection.
+export async function discardDrafts(
+  userId: string,
+  items: { id: string; version: number }[],
+) {
+  return db.$transaction(
+    async (tx) => {
+      await actor(tx, userId);
+      await lock(tx, "delivery-global");
+      const drafts = await tx.draft.findMany({
+        where: { id: { in: items.map((i) => i.id) } },
+      });
+      for (const contactId of [
+        ...new Set(drafts.map((d) => d.contactId)),
+      ].sort())
+        await lock(tx, "contact:" + contactId);
+      const results = [];
+      for (const item of items.filter(
+        (v, i, a) => a.findIndex((x) => x.id === v.id) === i,
+      )) {
+        const draft = await tx.draft.findUnique({ where: { id: item.id } });
+        if (!draft) {
+          results.push({
+            id: item.id,
+            ok: true,
+            message: "Bereits verworfen.",
+          });
+          continue;
+        }
+        const delivery = await tx.delivery.findFirst({
+          where: { draftId: item.id },
+        });
+        const active = await tx.mailQueueItem.findFirst({
+          where: {
+            draftId: item.id,
+            status: { in: ["SENDING", "SENT", "UNKNOWN"] },
+          },
+        });
+        if (draft.version !== item.version || delivery || active) {
+          results.push({
+            id: item.id,
+            ok: false,
+            message:
+              draft.version !== item.version
+                ? "Entwurf wurde geändert. Auswahl neu laden."
+                : "Versand oder Versandversuch vorhanden. Entwurf und Verlauf bleiben erhalten.",
+          });
+          continue;
+        }
+        await tx.mailQueueItem.updateMany({
+          where: { draftId: item.id, status: "QUEUED" },
+          data: {
+            status: "CANCELLED",
+            error: "Entwurf ausdrücklich verworfen.",
+          },
+        });
+        await tx.approval.deleteMany({ where: { draftId: item.id } });
+        await tx.draftVersion.deleteMany({ where: { draftId: item.id } });
+        await tx.draft.delete({ where: { id: item.id } });
+        await audit(tx, userId, "DRAFT_DISCARDED", item.id, {
+          contactId: draft.contactId,
+          version: draft.version,
+        });
+        results.push({
+          id: item.id,
+          ok: true,
+          message: "Ungesendeten Entwurf verworfen. Kontakt bleibt erhalten.",
+        });
+      }
+      return { results };
+    },
+    { timeout: 30000 },
+  );
+}
+// Only unused contacts can be removed. Preserve all mail and suppression history.
+export async function deleteUnusedContact(
+  userId: string,
+  id: string,
+  revision: number,
+) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    await lock(tx, "contact:" + id);
+    const contact = await tx.contact.findFirst({
+      where: { id, organizationId: "studiojeker" },
+    });
+    if (!contact) throw new PolicyError("Kontakt nicht gefunden.", 404);
+    if (contact.revision !== revision)
+      throw new PolicyError("Kontakt wurde geändert. Bitte neu öffnen.", 409);
+    const drafts = await tx.draft.findMany({
+      where: { contactId: id },
+      select: { id: true },
+    });
+    const draftIds = drafts.map((draft) => draft.id);
+    const delivery = await tx.delivery.findFirst({
+      where: { draftId: { in: draftIds } },
+    });
+    const active = await tx.mailQueueItem.findFirst({
+      where: {
+        draftId: { in: draftIds },
+        status: { in: ["SENDING", "SENT", "UNKNOWN"] },
+      },
+    });
+    const suppression = contact.email
+      ? await tx.suppression.findUnique({
+          where: { email: normalizeEmail(contact.email) },
+        })
+      : null;
+    if (
+      delivery ||
+      active ||
+      suppression ||
+      contact.status === "SENT" ||
+      contact.status === "REPLIED" ||
+      contact.status === "DO_NOT_CONTACT" ||
+      contact.replyOutcome
+    )
+      throw new PolicyError(
+        `${delivery ? "Versandprotokoll vorhanden (" + delivery.status + ")." : active ? "Versand läuft oder ist noch unklar (" + active.status + ")." : suppression ? "Adresse steht auf der Versandsperrliste." : "Kontakt hat einen Versand- oder Antwortverlauf."} Bitte den Kontakt archivieren. Verlauf und Schutz vor Doppelversand bleiben erhalten.`,
+        409,
+      );
+    await tx.mailQueueItem.updateMany({
+      where: { draftId: { in: draftIds }, status: "QUEUED" },
+      data: {
+        status: "CANCELLED",
+        error: "Kontakt samt ungesendeten Entwürfen ausdrücklich gelöscht.",
+      },
+    });
+    await tx.approval.deleteMany({ where: { draftId: { in: draftIds } } });
+    await tx.draftVersion.deleteMany({ where: { draftId: { in: draftIds } } });
+    await tx.draft.deleteMany({ where: { id: { in: draftIds } } });
+    await tx.legalReview.deleteMany({ where: { contactId: id } });
+    await tx.contact.delete({ where: { id } });
+    await audit(tx, userId, "UNUSED_CONTACT_DELETED", id, {
+      revision,
+      discardedDraftIds: draftIds,
+    });
+    return { ok: true };
+  });
+}
+export async function archiveContact(
+  userId: string,
+  id: string,
+  revision: number,
+  archived: boolean,
+) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    await lock(tx, "contact:" + id);
+    const c = await tx.contact.findFirst({
+      where: { id, organizationId: "studiojeker" },
+    });
+    if (!c || c.revision !== revision)
+      throw new PolicyError("Kontakt wurde geändert. Neu öffnen.", 409);
+    const drafts = await tx.draft.findMany({
+      where: { contactId: id },
+      select: { id: true },
+    });
+    if (archived)
+      await tx.mailQueueItem.updateMany({
+        where: {
+          draftId: { in: drafts.map((d) => d.id) },
+          status: { in: ["QUEUED", "BLOCKED"] },
+        },
+        data: { status: "CANCELLED", error: "Kontakt archiviert." },
+      });
+    await invalidate(tx, id, userId);
+    await tx.contact.update({
+      where: { id },
+      data: {
+        archivedAt: archived ? new Date() : null,
+        revision: { increment: 1 },
+      },
+    });
+    await audit(
+      tx,
+      userId,
+      archived ? "CONTACT_ARCHIVED" : "CONTACT_RESTORED",
+      id,
+      {},
+    );
+    return { ok: true };
+  });
 }
 async function invalidate(tx: Tx, contactId: string, userId: string) {
   await tx.approval.updateMany({
@@ -101,17 +288,41 @@ export async function saveContact(
     return contact;
   });
 }
-export async function importContacts(userId: string, rows: ContactInput[]) {
+export async function importContacts(userId: string, rows: ContactInput[], options: { dedupeEmails?: boolean } = {}) {
   return db.$transaction(
     async (tx) => {
       await actor(tx, userId);
-      // Keep large master imports atomic without exceeding database bind limits.
-      // Each chunk preserves unique-person deduplication and never grants approval.
+      // A personKey is unique, but email is not: preserve existing contacts,
+      // their manually edited drafts and approvals, and global suppressions.
+      // Keep imports additive, idempotent and free of duplicate email recipients.
+      const seenEmails = new Set<string>();
       let imported = 0;
       for (let offset = 0; offset < rows.length; offset += 250) {
         const batch = rows.slice(offset, offset + 250);
+        const emailAddresses = [...new Set(batch.map((c) => normalizeEmail(c.email)).filter(Boolean))];
+        const [present, blocked] = await Promise.all([
+          tx.contact.findMany({
+            where: { email: { in: emailAddresses } },
+            select: { email: true },
+          }),
+          tx.suppression.findMany({
+            where: { email: { in: emailAddresses } },
+            select: { email: true },
+          }),
+        ]);
+        const existingEmails = new Set(present.map((c) => normalizeEmail(c.email)));
+        const suppressedEmails = new Set(blocked.map((s) => normalizeEmail(s.email)));
+        const eligible = options.dedupeEmails ? batch.filter((c) => {
+          const email = normalizeEmail(c.email);
+          if (!email) return true; // Historical research-only contacts have no address.
+          if (seenEmails.has(email) || existingEmails.has(email) || suppressedEmails.has(email))
+            return false;
+          seenEmails.add(email);
+          return true;
+        }) : batch;
+        if (!eligible.length) continue;
         const created = await tx.contact.createMany({
-          data: batch.map((c) => ({
+          data: eligible.map((c) => ({
             ...c,
             publicAuthority:
               c.publicAuthority || c.legalCategory === "PUBLIC_AUTHORITY",
@@ -144,7 +355,9 @@ export async function newDraft(
   return db.$transaction(async (tx) => {
     await actor(tx, userId);
     await lock(tx, "contact:" + contactId);
-    const c = await tx.contact.findUniqueOrThrow({ where: { id: contactId } });
+    const c = await tx.contact.findUnique({ where: { id: contactId } });
+    if (!c) throw new PolicyError("Kontakt wurde entfernt.", 409);
+    if (c.archivedAt) throw new PolicyError("Kontakt ist archiviert.");
     if (await tx.suppression.findUnique({ where: { email: c.email } }))
       throw new PolicyError("Adresse auf Sperrliste.");
     const generated = await generateDraft(c);
@@ -188,6 +401,40 @@ export async function newDraft(
     return draft;
   });
 }
+// Upgrade legacy sender introductions on review, retaining immutable history.
+// Serialise with dispatch so an already claimed/sent message is never rewritten.
+export async function correctNoraSender(userId: string, id: string) {
+  return db.$transaction(async (tx) => {
+    await actor(tx, userId);
+    await lock(tx, "delivery-global");
+    const draft = await tx.draft.findUnique({ where: { id } });
+    if (!draft) return;
+    await lock(tx, "contact:" + draft.contactId);
+    const current = await tx.draft.findUniqueOrThrow({
+      where: { id },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+    });
+    const v = current.versions[0];
+    if (!v) return;
+    const body = noraSenderText(v.body);
+    if (body === v.body) return;
+    if (await tx.delivery.findFirst({ where: { draftId: id } })) return;
+    const version = current.version + 1;
+    await tx.draftVersion.create({ data: {
+      draftId: id, version, recipient: v.recipient, subject: v.subject, body,
+      hash: messageHash(v.recipient, v.subject, body),
+      contactRevision: v.contactRevision, authorId: userId,
+    } });
+    await tx.draft.update({ where: { id }, data: { version } });
+    await invalidate(tx, draft.contactId, userId);
+    await tx.mailQueueItem.updateMany({
+      where: { draftId: id, status: "QUEUED" },
+      data: { status: "CANCELLED", error: "Absender auf Nora korrigiert. Neue Textversion bitte freigeben." },
+    });
+    await audit(tx, userId, "DRAFT_SENDER_CORRECTED", id, { version });
+  });
+}
+
 export async function editDraft(
   userId: string,
   id: string,
@@ -286,6 +533,7 @@ export async function reviewDraft(
         throw new PolicyError("Adresse auf Sperrliste.");
     }
     if (decision === "APPROVED") {
+      assertNoraMailText(v.body);
       if (v.hash !== messageHash(v.recipient, v.subject, v.body))
         throw new PolicyError(
           "Signatur geändert. Nachricht als neue Version speichern und erneut prüfen.",

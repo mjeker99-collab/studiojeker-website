@@ -49,3 +49,33 @@ test("Duplicate people across organisation variants retain the better documented
   assert.equal(rows[0].organisation, "Regiobank Solothurn");
   assert.match(rows[0].notes, /Persönlicher Betreff/);
 });
+
+test("Unassigned companies and info@ addresses cannot block or enter the sync", () => {
+  const rows = mapMasterSheet([
+    headers,
+    ["", "", "Unternehmen ohne namentlichen Kontakt", "Olten", "marketing@example.test"],
+    ["Max Muster", "Einkauf", "Unzulässige Infoadresse AG", "Biel", "info@example.test"],
+    ["Anna Beispiel", "Marketing", "Gültiges Unternehmen AG", "Bern", "anna@example.test",
+      "", "", "A", "https://example.test/team | https://example.test/about", "",
+      "Nicht kontaktiert – keine Versandfreigabe", "Individuelle Headline",
+      "Guten Tag Anna Beispiel\n\nBeispieltext"],
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].organisation, "Gültiges Unternehmen AG");
+  assert.equal(rows[0].sourceUrl, "https://example.test/team");
+  assert.match(rows[0].notes, /Originalquelle: https:\/\/example.test\/team \| https:\/\/example.test\/about/);
+  assert.match(rows[0].notes, /Betreff: Individuelle Headline/);
+  assert.ok(!("status" in rows[0]));
+  assert.ok(!("newsletterConsent" in rows[0]));
+});
+
+test("Non-URL source notes are retained without corrupting the importer", () => {
+  const rows = mapMasterSheet([
+    headers,
+    ["Walter Meier", "", "Beispiel Technik AG", "Solothurn", "walter@example.test",
+      "", "", "", "Regionaler Gewerbeverband, Mitgliedsregister"],
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].sourceUrl, "");
+  assert.match(rows[0].notes, /Originalquelle: Regionaler Gewerbeverband/);
+});
