@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "project": "Etziken-Verkaufsdokumentation",
+    "document_label": "Layoutentwurf",
+    "format": "A4",
+    "orientation": "portrait",
+    "object_label": "Bolackerweg 10 · Etziken",
+    "note": "Die Dateinamen 72772F95-… und 929C58FE-… aus dem Auftrag waren in der Lieferung nicht enthalten. Zuordnung erfolgt über Bildinhalt (Garten / Wohn-Essbereich). Gelieferte Dateien unverändert übernommen."
+  },
+  "object": {
+    "location_line": "ETZIKEN · KANTON SOLOTHURN",
+    "address": "Bolackerweg 10 · Etziken",
+    "sale_process": "Verkauf im Bieterverfahren",
+    "living_area": "260 m² Wohnfläche",
+    "rooms": "6.5 Zimmer + Einliegerstudio",
+    "price": "CHF 1’350’000 Startpreis"
+  },
+  "pages": {
+    "title": {
+      "headline": "Wohnen mit Weitblick",
+      "subheadline": "Einfamilienhaus mit Einliegerstudio",
+      "image": "01a10d34-fb96-7eaf-9908-ab5d40922ee5.jpg",
+      "image_role": "Gartenansicht Hausrückseite",
+      "requested_filename": "72772F95-2BCC-4B7B-AD76-EE155BEF8AB0.jpeg",
+      "stats": [
+        "260 m² Wohnfläche",
+        "6.5 Zimmer + Einliegerstudio",
+        "CHF 1’350’000 Startpreis"
+      ]
+    },
+    "wohnen": {
+      "rubric": "WOHNEN & LEBEN",
+      "headline": "Raum für das Leben",
+      "intro": "Die offene Küche und der grosszügige, helle Wohnbereich bilden das Herz dieses Einfamilienhauses. Hier verbinden sich gemeinsames Kochen, Essen und Wohnen zu einem offenen Lebensmittelpunkt.",
+      "image": "01a10d34-fcfa-7716-9197-f9478e2cc1cf.jpg",
+      "image_role": "Wohn- und Essbereich mit offener Küche",
+      "requested_filename": "929C58FE-9A37-45E0-96FA-CEC560E4A740.jpeg",
+      "columns": [
+        {
+          "title": "Grosszügiges Raumangebot",
+          "text": "260 m² Wohnfläche, 6.5 Zimmer und ein Einliegerstudio bieten viel Platz für unterschiedliche Wohnbedürfnisse."
+        },
+        {
+          "title": "Komfort im Alltag",
+          "text": "Zwei grosszügige Badezimmer, eine Garage für zwei Fahrzeuge und ein grosser Vorplatz ergänzen das Raumangebot."
+        }
+      ],
+      "page_number": "02"
+    }
+  },
+  "image_assignment": {
+    "title_page": "01a10d34-fb96-7eaf-9908-ab5d40922ee5.jpg",
+    "interior_page": "01a10d34-fcfa-7716-9197-f9478e2cc1cf.jpg"
+  }
+}
