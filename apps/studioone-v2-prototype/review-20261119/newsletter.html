@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Newsletter-Editor · StudioONE V2 Designentwurf</title>
+  <link rel="stylesheet" href="entwurf.css">
+</head>
+<body>
+  <input class="tab-state" id="tab-edit" type="radio" name="ansicht" checked>
+  <input class="tab-state" id="tab-preview" type="radio" name="ansicht">
+  <a class="skip" href="#inhalt">Zum Inhalt</a>
+  <div class="app">
+    <aside class="sidebar">
+      <img class="logo" src="assets/studioone-app-logo.png" width="1280" height="593" alt="STUDIOONE – Dein Marketing. Ein Ort.">
+      <nav aria-label="Hauptbereiche">
+        <a href="uebersicht.html">Übersicht</a>
+        <a href="akquise.html">Akquise</a>
+        <a href="newsletter.html" aria-current="page">Inhalte</a>
+        <a href="noch-offen.html#projekte">Projekte</a>
+        <a href="noch-offen.html#bibliothek">Bibliothek</a>
+        <a href="noch-offen.html#kalender">Kalender</a>
+      </nav>
+      <div class="sidebar-foot">
+        <a href="noch-offen.html#einstellungen">Einstellungen</a>
+        <p class="account"><span class="avatar" aria-hidden="true">BK</span><span>Beispielkonto<br>Keine Anmeldung</span></p>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="top">
+        <p class="crumb">Studiojeker <span>/ Inhalte / Newsletter</span></p>
+        <p class="draft-flag">Designentwurf · Beispieldaten · kein Versand</p>
+      </header>
+      <main id="inhalt" class="stack">
+        <section class="panel">
+          <p class="kicker">Inhalte · Newsletter</p>
+          <h1>Ausgabe Dezember</h1>
+          <p class="saved">Gespeichert in dieser Darstellung · 19. November 2026, 09:14 · keine Ablage</p>
+          <p class="note">Bearbeiten steht direkt neben der aktuellen Vorschau. Auf dem iPad im Hochformat wechselst du die Ansicht. Die Eingaben bleiben im selben Entwurf.</p>
+          <div class="actions">
+            <a class="button secondary" href="#kopie">Vorige Ausgabe kopieren</a>
+          </div>
+        </section>
+
+        <div class="pane-switch" aria-label="Ansicht desselben Entwurfs">
+          <label for="tab-edit">Bearbeiten</label>
+          <label for="tab-preview">Vorschau</label>
+        </div>
+
+        <div class="editor">
+          <section class="panel edit-pane" aria-labelledby="edit-titel">
+            <h2 id="edit-titel">Bearbeiten</h2>
+            <label class="field" for="betreff">Betreff
+              <input id="betreff" type="text" value="Sichtbarkeit im Dezember">
+            </label>
+            <label class="field" for="preheader">Vorschautext
+              <input id="preheader" type="text" value="Ein Beispiel für die aktuelle Ausgabe">
+            </label>
+            <label class="field" for="text">Text
+              <textarea id="text">Guten Tag
+
+Im Dezember bleibt Ihr Unternehmen mit einem klaren Thema präsent. Diese Ausgabe zeigt, wie ein Angebot über Newsletter, Social Media und Website zusammenpasst.
+
+Freundliche Grüsse
+Studiojeker</textarea>
+            </label>
+
+            <fieldset class="thumbs">
+              <legend>Bilder</legend>
+              <label class="thumb">
+                <input id="bild-a" type="radio" name="bild" checked>
+                <span class="swatch">Bild 1</span>
+              </label>
+              <label class="thumb">
+                <input id="bild-b" type="radio" name="bild">
+                <span class="swatch">Bild 2</span>
+              </label>
+              <label class="thumb">
+                <input id="bild-c" type="radio" name="bild">
+                <span class="swatch">Bild 3</span>
+              </label>
+            </fieldset>
+            <p class="note">Platzhalter, keine Fotos und kein neu gezeichnetes Logo. Das gewählte Bild erscheint in der aktuellen Vorschau.</p>
+
+            <h3 style="margin-top:16px">Links</h3>
+            <div class="linkrow">
+              <p><strong>Mehr erfahren</strong><br><span class="note">Ziel fehlt</span></p>
+              <p><strong>Studiojeker ansehen</strong><br><span class="note">beispiel.invalid/sichtbarkeit</span></p>
+            </div>
+            <div class="alert" role="alert">
+              <p><strong>Der Link «Mehr erfahren» hat kein Ziel.</strong></p>
+              <p>Trage eine Adresse ein oder entferne den Link. Danach kannst du erneut prüfen.</p>
+            </div>
+            <div class="actions">
+              <a class="button primary" href="#pruefung">Prüfen</a>
+            </div>
+            <p class="note" style="margin-top:10px">Danach, erst wenn die Prüfung ohne offenen Punkt durch ist: Mailchimp-Entwurf, dann eine ausdrückliche Testmail. Der Versand an die Liste erfolgt in Mailchimp.</p>
+          </section>
+
+          <section class="preview-pane" aria-labelledby="vorschau-titel">
+            <article class="preview-card">
+              <header>
+                <p id="vorschau-titel">Aktuelle Vorschau</p>
+                <p>Entwurf</p>
+              </header>
+              <div class="preview-body">
+                <p class="figure" id="fig-a">Bild 1<br><span class="note" style="color:#d5dee3">Platzhalter, kein Foto</span></p>
+                <p class="figure" id="fig-b" hidden>Bild 2<br><span class="note" style="color:#d5dee3">Platzhalter, kein Foto</span></p>
+                <p class="figure" id="fig-c" hidden>Bild 3<br><span class="note" style="color:#d5dee3">Platzhalter, kein Foto</span></p>
+                <p class="kicker" style="margin-top:14px">Betreff</p>
+                <h3>Sichtbarkeit im Dezember</h3>
+                <p class="note">Ein Beispiel für die aktuelle Ausgabe</p>
+                <p style="margin-top:12px">Guten Tag</p>
+                <p>Im Dezember bleibt Ihr Unternehmen mit einem klaren Thema präsent. Diese Ausgabe zeigt, wie ein Angebot über Newsletter, Social Media und Website zusammenpasst.</p>
+                <p>Freundliche Grüsse<br>Studiojeker</p>
+                <p style="margin-top:12px"><strong>Mehr erfahren</strong> · Ziel fehlt</p>
+              </div>
+            </article>
+          </section>
+        </div>
+
+        <section class="panel" id="kopie" aria-labelledby="kopie-titel">
+          <h2 id="kopie-titel">Vorige Ausgabe bleibt erhalten</h2>
+          <p>Die Ausgabe Dezember ist in diesem Entwurf bereits eine Kopie der Ausgabe November. November wird nicht überschrieben. Eine neue Kopie würde wieder eine eigene Ausgabe erzeugen.</p>
+        </section>
+
+        <section class="panel" id="pruefung" aria-labelledby="pruef-titel">
+          <h2 id="pruef-titel">Prüfung angehalten</h2>
+          <p>Der Link «Mehr erfahren» hat kein Ziel. Es entsteht kein Mailchimp-Entwurf und keine Testmail, solange dieser Punkt offen ist.</p>
+          <p>Nächster Schritt: Adresse eintragen oder den Link entfernen. Wenn danach nichts mehr offen ist: Mailchimp-Entwurf anlegen und eine Testmail ausdrücklich auslösen. Der Versand an die Liste erfolgt in Mailchimp, nicht hier.</p>
+          <p><a class="button secondary" href="uebersicht.html">Zurück zur Übersicht</a></p>
+        </section>
+      </main>
+    </div>
+  </div>
+  <style>
+    body:has(#bild-a:checked) #fig-b,
+    body:has(#bild-a:checked) #fig-c,
+    body:has(#bild-b:checked) #fig-a,
+    body:has(#bild-b:checked) #fig-c,
+    body:has(#bild-c:checked) #fig-a,
+    body:has(#bild-c:checked) #fig-b { display: none; }
+    body:has(#bild-a:checked) #fig-a,
+    body:has(#bild-b:checked) #fig-b,
+    body:has(#bild-c:checked) #fig-c { display: grid; }
+  </style>
+</body>
+</html>

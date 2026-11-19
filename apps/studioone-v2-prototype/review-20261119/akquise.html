@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Akquise · Kontaktauswahl · StudioONE V2 Designentwurf</title>
+  <link rel="stylesheet" href="entwurf.css">
+</head>
+<body>
+  <a class="skip" href="#inhalt">Zum Inhalt</a>
+  <div class="app">
+    <aside class="sidebar">
+      <img class="logo" src="assets/studioone-app-logo.png" width="1280" height="593" alt="STUDIOONE – Dein Marketing. Ein Ort.">
+      <nav aria-label="Hauptbereiche">
+        <a href="uebersicht.html">Übersicht</a>
+        <a href="akquise.html" aria-current="page">Akquise</a>
+        <a href="newsletter.html">Inhalte</a>
+        <a href="noch-offen.html#projekte">Projekte</a>
+        <a href="noch-offen.html#bibliothek">Bibliothek</a>
+        <a href="noch-offen.html#kalender">Kalender</a>
+      </nav>
+      <div class="sidebar-foot">
+        <a href="noch-offen.html#einstellungen">Einstellungen</a>
+        <p class="account"><span class="avatar" aria-hidden="true">BK</span><span>Beispielkonto<br>Keine Anmeldung</span></p>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="top">
+        <p class="crumb">Studiojeker <span>/ Akquise</span></p>
+        <p class="draft-flag">Designentwurf · Beispieldaten · kein Versand</p>
+      </header>
+      <main id="inhalt" class="stack">
+        <section class="panel" aria-labelledby="akquise-titel">
+          <p class="kicker">Akquise</p>
+          <h1 id="akquise-titel">Empfänger wählen</h1>
+          <ol class="steps" aria-label="Ablauf">
+            <li class="done">Recherche oder Import</li>
+            <li class="now" aria-current="step">Empfänger</li>
+            <li>Gemeinsames Briefing</li>
+            <li>Entwürfe prüfen</li>
+            <li>Auswahl und Zeitpunkt</li>
+            <li>Einzelresultate</li>
+          </ol>
+          <div class="countline" style="margin-top:16px">
+            <p><strong>4 von 6 Beispielkontakten ausgewählt</strong><br><span class="note">1 bereits angeschrieben und 1 ohne E-Mail sind nicht dabei.</span></p>
+            <a class="button primary" href="#danach">Gemeinsames Briefing öffnen</a>
+          </div>
+          <p class="note" style="margin-top:12px">Du musst nicht jeden Kontakt einzeln antippen. Mit «Alle vollständigen auswählen» gilt die Liste. Zeilen sind nur für Ausnahmen.</p>
+          <div class="actions">
+            <a class="button secondary" href="#auswahl">Alle vollständigen auswählen</a>
+          </div>
+        </section>
+
+        <section class="panel" id="auswahl" aria-labelledby="liste-titel">
+          <h2 id="liste-titel">Beispielkontakte</h2>
+          <p class="note">Sechs erfundene Kontakte, keine Kundendaten. Die Auswahl ist in diesem Entwurf bereits gesetzt.</p>
+          <ul class="people">
+            <li>
+              <label class="person">
+                <input type="checkbox" checked aria-label="Anna Beispiel auswählen">
+                <span class="who"><strong>Anna Beispiel</strong><small>Beispiel Maschinen AG · Marketing</small></span>
+                <span class="pill ok">Angaben vollständig</span>
+              </label>
+            </li>
+            <li>
+              <label class="person">
+                <input type="checkbox" checked aria-label="Lukas Muster auswählen">
+                <span class="who"><strong>Lukas Muster</strong><small>Muster Architektur GmbH · Geschäftsleitung</small></span>
+                <span class="pill ok">Angaben vollständig</span>
+              </label>
+            </li>
+            <li>
+              <label class="person">
+                <input type="checkbox" checked aria-label="Sara Beispiel auswählen">
+                <span class="who"><strong>Sara Beispiel</strong><small>Beispiel Handel AG · Inhaberin</small></span>
+                <span class="pill ok">Angaben vollständig</span>
+              </label>
+            </li>
+            <li>
+              <label class="person">
+                <input type="checkbox" checked aria-label="Tim Muster auswählen">
+                <span class="who"><strong>Tim Muster</strong><small>Muster Beratung GmbH · Partner</small></span>
+                <span class="pill ok">Angaben vollständig</span>
+              </label>
+            </li>
+            <li>
+              <label class="person">
+                <input type="checkbox" aria-label="Jan Muster auswählen">
+                <span class="who"><strong>Jan Muster</strong><small>Muster Technik AG · Nicht vorausgewählt, bereits angeschrieben am 3. November 2026</small></span>
+                <span class="pill neutral">Bereits angeschrieben</span>
+              </label>
+            </li>
+            <li>
+              <label class="person">
+                <input type="checkbox" aria-label="Mia Beispiel auswählen">
+                <span class="who"><strong>Mia Beispiel</strong><small>Beispiel Dienstleistungen AG · E-Mail fehlt. Ergänzen oder aus dieser Sendung lassen. Der Kontakt bleibt gespeichert.</small></span>
+                <span class="pill warn">E-Mail fehlt</span>
+              </label>
+            </li>
+          </ul>
+          <div class="callout">
+            <p><strong>Mia Beispiel braucht eine E-Mail, oder sie bleibt aussen vor.</strong></p>
+            <p>Die vier vollständigen Kontakte sind davon nicht blockiert.</p>
+          </div>
+          <details>
+            <summary>Weitere Optionen</summary>
+            <p class="note">Recherche wiederholen, Kontakte importieren oder die Auswahl leeren. In diesem Entwurf sind das Hinweise, keine angebundenen Funktionen.</p>
+            <div class="actions">
+              <a class="button secondary" href="noch-offen.html#akquise">Recherche oder Import</a>
+              <a class="button secondary" href="#auswahl">Auswahl leeren</a>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel" id="danach" aria-labelledby="danach-titel">
+          <h2 id="danach-titel">Nächster Schritt</h2>
+          <p>Als Nächstes ein gemeinsames Briefing für die vier ausgewählten Beispielkontakte. Dann persönliche Entwürfe prüfen, die konkrete Auswahl und den Zeitpunkt bestätigen, am Schluss die Einzelresultate.</p>
+          <p>Diese Folgeseiten sind in diesem Entwurf nicht enthalten. Es wird nichts versendet.</p>
+          <p><a class="button secondary" href="uebersicht.html">Zurück zur Übersicht</a></p>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
