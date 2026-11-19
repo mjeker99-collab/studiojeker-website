@@ -1,0 +1,20 @@
+/**
+ * Service media galleries — spacing tweaks on shared Work grid tokens.
+ * Typography, tile aspect and breakpoints stay in WorkPage.module.css.
+ */
+
+.section {
+  padding-block-start: var(--space-3);
+}
+
+.header {
+  margin-bottom: var(--space-4);
+}
+
+.description {
+  margin: 0 0 var(--space-2);
+  max-width: 36rem;
+  color: var(--color-black);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}

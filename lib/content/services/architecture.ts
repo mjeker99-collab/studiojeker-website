@@ -1,6 +1,7 @@
 import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
+import { getServiceMediaFallback } from "@/lib/content/services/media-sections";
 import { getServicePaths } from "@/lib/content/services/paths";
 import { showreels } from "@/lib/content/showreels";
 
@@ -8,6 +9,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
   const paths = getServicePaths(locale);
   const clientsLabel =
     locale === "en" ? "Brands that trust us" : "Brands, die uns vertrauen";
+  const mediaFallback = getServiceMediaFallback("architecture", locale);
 
   if (locale === "en") {
     return {
@@ -84,64 +86,16 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         },
         videoId: showreels.architecture,
       },
+      media: {
+        label: mediaFallback.label,
+        headline: mediaFallback.headline,
+        sections: mediaFallback.sections,
+      },
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
         viewAll: { label: "View all projects", href: paths.work },
-        items: [
-          {
-            id: "arch-1",
-            title: "Architecture & Real Estate",
-            category: "Visualization",
-            href: paths.work,
-            image: {
-              src: "/images/architecture/v5_02_korr.jpg",
-              alt: "Architecture project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "arch-2",
-            title: "Architecture & Real Estate",
-            category: "3D Animation",
-            href: paths.work,
-            image: {
-              src: "/images/architecture/3D_2.jpg",
-              alt: "3D architecture project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "arch-3",
-            title: "Architecture & Real Estate",
-            category: "Real Estate",
-            href: paths.work,
-            image: {
-              src: "/images/architecture/troesch4.jpg",
-              alt: "Real estate project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "arch-4",
-            title: "Architecture & Real Estate",
-            category: "Visualization",
-            href: paths.work,
-            image: {
-              src: "/images/architecture/IMG_9915.jpg",
-              alt: "Architecture photography visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-        ],
+        items: [],
       },
       about: {
         label: "About Studiojeker",
@@ -167,6 +121,7 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
         text: "From the first visualization to the finished campaign — we create visibility across every channel.",
         cta: { label: "Get in touch", href: paths.contact },
       },
+      missingContent: mediaFallback.missingContent,
     };
   }
 
@@ -244,64 +199,16 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
       },
       videoId: showreels.architecture,
     },
+    media: {
+      label: mediaFallback.label,
+      headline: mediaFallback.headline,
+      sections: mediaFallback.sections,
+    },
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
       viewAll: { label: "Alle Projekte ansehen", href: paths.work },
-      items: [
-        {
-          id: "arch-1",
-          title: "Architecture & Real Estate",
-          category: "Visualisierung",
-          href: paths.work,
-          image: {
-            src: "/images/architecture/v5_02_korr.jpg",
-            alt: "Architektur-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "arch-2",
-          title: "Architecture & Real Estate",
-          category: "3D-Animation",
-          href: paths.work,
-          image: {
-            src: "/images/architecture/3D_2.jpg",
-            alt: "3D-Architektur-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "arch-3",
-          title: "Architecture & Real Estate",
-          category: "Immobilien",
-          href: paths.work,
-          image: {
-            src: "/images/architecture/troesch4.jpg",
-            alt: "Immobilien-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "arch-4",
-          title: "Architecture & Real Estate",
-          category: "Visualisierung",
-          href: paths.work,
-          image: {
-            src: "/images/architecture/IMG_9915.jpg",
-            alt: "Architekturfotografie-Visual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-      ],
+      items: [],
     },
     about: {
       label: "Über Studiojeker",
@@ -327,5 +234,6 @@ export function getArchitectureContent(locale: Locale): ServicePageContent {
       text: "Von der ersten Visualisierung bis zur fertigen Kommunikationskampagne schaffen wir Sichtbarkeit über alle Kanäle hinweg.",
       cta: { label: "Kontakt aufnehmen", href: paths.contact },
     },
+    missingContent: mediaFallback.missingContent,
   };
 }

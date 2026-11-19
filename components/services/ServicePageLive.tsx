@@ -103,9 +103,23 @@ export function ServicePageLive({
     resolved.showreel.videoId ?? "",
     resolved.showreel.media.src,
     resolved.about.media.src,
+    resolved.media.sections
+      .map(
+        (section) =>
+          `${section.id}:${section.items
+            .map((item) =>
+              item.media.type === "image"
+                ? item.media.src
+                : item.media.type === "video"
+                  ? item.media.src
+                  : item.media.images.map((image) => image.src).join(","),
+            )
+            .join(",")}`,
+      )
+      .join("|"),
     resolved.projects.items.map((item) => item.image.src).join(","),
     resolved.clients.logos.map((logo) => logo.src).join(","),
   ].join("|");
 
-  return <ServicePage key={contentKey} content={resolved} />;
+  return <ServicePage key={contentKey} content={resolved} locale={locale} />;
 }

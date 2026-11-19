@@ -1,6 +1,7 @@
 import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
 import { getClientLogos } from "@/lib/content/clients";
+import { getServiceMediaFallback } from "@/lib/content/services/media-sections";
 import { getServicePaths } from "@/lib/content/services/paths";
 import { showreels } from "@/lib/content/showreels";
 
@@ -11,6 +12,10 @@ export function getBusinessCommunicationContent(
   const paths = getServicePaths(locale);
   const clientsLabel =
     locale === "en" ? "Brands that trust us" : "Brands, die uns vertrauen";
+  const mediaFallback = getServiceMediaFallback(
+    "business-communication",
+    locale,
+  );
 
   if (locale === "en") {
     return {
@@ -89,64 +94,16 @@ export function getBusinessCommunicationContent(
         },
         videoId: showreels.businessCommunication,
       },
+      media: {
+        label: mediaFallback.label,
+        headline: mediaFallback.headline,
+        sections: mediaFallback.sections,
+      },
       projects: {
         label: "Selected projects",
         headline: "Selected projects",
         viewAll: { label: "View all projects", href: paths.work },
-        items: [
-          {
-            id: "biz-1",
-            title: "Business Communication",
-            category: "Corporate Film",
-            href: paths.work,
-            image: {
-              src: "/images/business/Business_1-03e4abec.jpg",
-              alt: "Business Communication project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "biz-2",
-            title: "Business Communication",
-            category: "Business Portrait",
-            href: paths.work,
-            image: {
-              src: "/images/business/Business_4-22cbf9b5.jpg",
-              alt: "Business portrait project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "biz-3",
-            title: "Business Communication",
-            category: "Reportage",
-            href: paths.work,
-            image: {
-              src: "/images/business/Reportage_21-d196d171.jpg",
-              alt: "Reportage project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-          {
-            id: "biz-4",
-            title: "Business Communication",
-            category: "Corporate Film",
-            href: paths.work,
-            image: {
-              src: "/images/business/Reportage_9-cb3c2e4c.jpg",
-              alt: "Corporate storytelling project visual",
-              width: 1200,
-              height: 800,
-            },
-            isPlaceholder: true,
-          },
-        ],
+        items: [],
       },
       about: {
         label: "About Studiojeker",
@@ -172,6 +129,7 @@ export function getBusinessCommunicationContent(
         text: "Let's talk about your organisation, your goals and how we can help you communicate with clarity and confidence.",
         cta: { label: "Get in touch", href: paths.contact },
       },
+      missingContent: mediaFallback.missingContent,
     };
   }
 
@@ -251,64 +209,16 @@ export function getBusinessCommunicationContent(
       },
       videoId: showreels.businessCommunication,
     },
+    media: {
+      label: mediaFallback.label,
+      headline: mediaFallback.headline,
+      sections: mediaFallback.sections,
+    },
     projects: {
       label: "Ausgewählte Projekte",
       headline: "Ausgewählte Projekte",
       viewAll: { label: "Alle Projekte ansehen", href: paths.work },
-      items: [
-        {
-          id: "biz-1",
-          title: "Business Communication",
-          category: "Unternehmensfilm",
-          href: paths.work,
-          image: {
-            src: "/images/business/Business_1-03e4abec.jpg",
-            alt: "Business-Communication-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "biz-2",
-          title: "Business Communication",
-          category: "Businessporträt",
-          href: paths.work,
-          image: {
-            src: "/images/business/Business_4-22cbf9b5.jpg",
-            alt: "Businessporträt-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "biz-3",
-          title: "Business Communication",
-          category: "Reportage",
-          href: paths.work,
-          image: {
-            src: "/images/business/Reportage_21-d196d171.jpg",
-            alt: "Reportage-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-        {
-          id: "biz-4",
-          title: "Business Communication",
-          category: "Unternehmensfilm",
-          href: paths.work,
-          image: {
-            src: "/images/business/Reportage_9-cb3c2e4c.jpg",
-            alt: "Corporate-Storytelling-Projektvisual",
-            width: 1200,
-            height: 800,
-          },
-          isPlaceholder: true,
-        },
-      ],
+      items: [],
     },
     about: {
       label: "Über Studiojeker",
@@ -334,5 +244,6 @@ export function getBusinessCommunicationContent(
       text: "Gemeinsam entwickeln wir Kommunikationslösungen, die Vertrauen schaffen und Ihre Organisation nachhaltig sichtbar machen.",
       cta: { label: "Kontakt aufnehmen", href: paths.contact },
     },
+    missingContent: mediaFallback.missingContent,
   };
 }

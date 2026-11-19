@@ -100,6 +100,52 @@ $query = <<<GROQ
   showreelCtaHref,
   showreelImage{$imageProjection},
   showreelVideoId,
+  mediaLabel,
+  mediaHeadline,
+  mediaSections[]{
+    sectionId,
+    title{ de, en },
+    description{ de, en },
+    sortOrder,
+    items[]{
+      itemId,
+      active,
+      title{ de, en },
+      caption{ de, en },
+      subtitle{ de, en },
+      description{ de, en },
+      client,
+      year,
+      href,
+      sortOrder,
+      media{
+        mediaType,
+        vimeoUrl,
+        youtubeUrl,
+        externalVideoUrl,
+        videoAlt,
+        duration,
+        videoAutoplay,
+        videoLoop,
+        videoMuted,
+        videoFile{
+          ...,
+          "url": asset->url
+        },
+        image{$imageProjection},
+        poster{$imageProjection},
+        slideshowAlt,
+        slideshowInterval,
+        "slideshowImages": slideshowImages[]{
+          ...,
+          "url": asset->url,
+          "dimensions": asset->metadata.dimensions,
+          "alt": coalesce(alt, asset->altText),
+          caption
+        }
+      }
+    }
+  },
   projectsLabel,
   projectsHeadline,
   projectsViewAllLabel,

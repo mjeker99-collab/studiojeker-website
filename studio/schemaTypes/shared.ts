@@ -656,6 +656,72 @@ export const workCategory = defineType({
   },
 });
 
+/**
+ * Media-type gallery section on a Service landing page.
+ * Reuses Work tile items (image | video | slideshow). Empty sections are
+ * hidden on the public website.
+ */
+export const serviceMediaSection = defineType({
+  name: "serviceMediaSection",
+  title: "Service Media Section",
+  type: "object",
+  fields: [
+    defineField({
+      name: "sectionId",
+      title: "Section Type",
+      type: "string",
+      options: {
+        list: [
+          { title: "Fotos / Bildserien", value: "photos" },
+          { title: "Videos", value: "videos" },
+          { title: "Visualisierungen", value: "visualizations" },
+          { title: "Animationen", value: "animations" },
+        ],
+        layout: "dropdown",
+      },
+      validation: (Rule) => Rule.required(),
+      description:
+        "Business: photos + videos. Product: photos + videos + animations. Architecture: photos + videos + visualizations + animations.",
+    }),
+    defineField({
+      name: "title",
+      title: "Section Title",
+      type: "localizedString",
+      validation: (Rule) => Rule.required(),
+      description: "Shown above the media grid (e.g. Fotos, Videos).",
+    }),
+    defineField({
+      name: "description",
+      title: "Short Description (optional)",
+      type: "localizedText",
+      description: "Optional short intro under the section title.",
+    }),
+    defineField({
+      name: "items",
+      title: "Media Items",
+      type: "array",
+      description:
+        "Drag to reorder. Leave empty to hide this section on the public page.",
+      of: [{ type: "workProjectItem" }],
+    }),
+    sortOrderField(),
+  ],
+  preview: {
+    select: {
+      titleDe: "title.de",
+      sectionId: "sectionId",
+      items: "items",
+    },
+    prepare({ titleDe, sectionId, items }) {
+      const count = Array.isArray(items) ? items.length : 0;
+      return {
+        title: titleDe || sectionId || "Media section",
+        subtitle: `${sectionId ?? "section"} · ${count} item(s)`,
+      };
+    },
+  },
+});
+
 /** Benefit item for the Sichtbarkeit im Abo section. */
 export const homepageBenefitItem = defineType({
   name: "homepageBenefitItem",
