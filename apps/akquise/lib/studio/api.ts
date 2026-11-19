@@ -20,6 +20,7 @@ import { hubActor } from "../hub/workflow";
 import { PolicyError } from "../policy";
 import { saveAssistantPreferences } from "./context";
 import { assignProject } from "./projects";
+import { createSeriesBatch } from "./batch";
 export async function studioMutation(
   actor: string,
   path: string[],
@@ -36,6 +37,8 @@ export async function studioMutation(
     return assignProject(actor, id, body);
   if (path[1] === "preferences" && path.length === 2)
     return saveAssistantPreferences(actor, body);
+  if (path[1] === "series" && path[2] === "batch" && path.length === 3)
+    return createSeriesBatch(actor, body);
   if (path[1] === "series" && path.length === 2)
     return createSeries(actor, body);
   if (path[1] === "jobs" && path.length === 2) return queueJob(actor, body);
