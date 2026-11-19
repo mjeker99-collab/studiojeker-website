@@ -1,0 +1,55 @@
+{
+  "images_ok": true,
+  "overflow": {
+    "v4-video-desktop-700.png": false,
+    "v4-video-mobile-390.png": false,
+    "v4-video-mobile-320.png": false
+  },
+  "widths": {
+    "v4-video-desktop-700.png": {
+      "total": 14,
+      "complete": 14,
+      "broken": [],
+      "scrollWidth": 700,
+      "clientWidth": 700,
+      "scrollHeight": 2786
+    },
+    "v4-video-mobile-390.png": {
+      "total": 14,
+      "complete": 14,
+      "broken": [],
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 4647
+    },
+    "v4-video-mobile-320.png": {
+      "total": 14,
+      "complete": 14,
+      "broken": [],
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "scrollHeight": 4682
+    }
+  },
+  "fonts": {
+    "v4-video-desktop-700.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    },
+    "v4-video-mobile-390.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    },
+    "v4-video-mobile-320.png": {
+      "stack": 214.52,
+      "arialBlack": 214.52,
+      "liberationBold": 183.17
+    }
+  },
+  "links": {
+    "hero": "https://vimeo.com/1216349266",
+    "promo": "https://vimeo.com/1216347773"
+  }
+}
