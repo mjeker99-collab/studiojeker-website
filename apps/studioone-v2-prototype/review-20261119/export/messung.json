@@ -1,0 +1,280 @@
+{
+  "chromePid": 2634,
+  "shots": [
+    {
+      "file": "uebersicht_desktop_1440.png",
+      "viewport": [
+        1440,
+        900
+      ],
+      "content": [
+        1440,
+        900
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 900,
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "small": []
+      }
+    },
+    {
+      "file": "uebersicht_ipad_quer_1024.png",
+      "viewport": [
+        1024,
+        768
+      ],
+      "content": [
+        1024,
+        950
+      ],
+      "metrics": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "scrollHeight": 950,
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "small": []
+      }
+    },
+    {
+      "file": "uebersicht_ipad_hoch_768.png",
+      "viewport": [
+        768,
+        1024
+      ],
+      "content": [
+        768,
+        1429
+      ],
+      "metrics": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "scrollHeight": 1429,
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "small": []
+      }
+    },
+    {
+      "file": "akquise_desktop_1440.png",
+      "viewport": [
+        1440,
+        900
+      ],
+      "content": [
+        1440,
+        1366
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 1366,
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "small": []
+      }
+    },
+    {
+      "file": "akquise_ipad_quer_1024.png",
+      "viewport": [
+        1024,
+        768
+      ],
+      "content": [
+        1024,
+        1499
+      ],
+      "metrics": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "scrollHeight": 1499,
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "small": []
+      }
+    },
+    {
+      "file": "akquise_ipad_hoch_768.png",
+      "viewport": [
+        768,
+        1024
+      ],
+      "content": [
+        768,
+        2083
+      ],
+      "metrics": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "scrollHeight": 2083,
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "small": []
+      }
+    },
+    {
+      "file": "newsletter_desktop_1440.png",
+      "viewport": [
+        1440,
+        900
+      ],
+      "content": [
+        1440,
+        1861
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 1861,
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "small": []
+      }
+    },
+    {
+      "file": "newsletter_ipad_quer_1024.png",
+      "viewport": [
+        1024,
+        768
+      ],
+      "content": [
+        1024,
+        2049
+      ],
+      "metrics": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "scrollHeight": 2049,
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "small": []
+      }
+    },
+    {
+      "file": "newsletter_ipad_hoch_768.png",
+      "viewport": [
+        768,
+        1024
+      ],
+      "content": [
+        768,
+        2278
+      ],
+      "metrics": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "scrollHeight": 2278,
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "small": []
+      }
+    }
+  ],
+  "checks": [
+    {
+      "view": "uebersicht desktop",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "uebersicht ipad_quer",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "uebersicht ipad_hoch",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "akquise desktop",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "akquise ipad_quer",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "akquise ipad_hoch",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "newsletter desktop",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "newsletter ipad_quer",
+      "overflow": false,
+      "smallControls": []
+    },
+    {
+      "view": "newsletter ipad_hoch",
+      "overflow": false,
+      "smallControls": []
+    }
+  ],
+  "font": {
+    "specified": "Arial, Helvetica, sans-serif",
+    "bodyLetterSpacing": "normal",
+    "headingLetterSpacing": "normal",
+    "bodyFontSize": "16px",
+    "bodyWeight": "400",
+    "headingSize": "34px",
+    "headingWeight": "700",
+    "headingLineHeight": "40.8px",
+    "matches": [
+      {
+        "name": "Arial",
+        "pixels": 0
+      },
+      {
+        "name": "Helvetica",
+        "pixels": 0
+      },
+      {
+        "name": "Arimo",
+        "pixels": 0
+      },
+      {
+        "name": "Liberation Sans",
+        "pixels": 0
+      },
+      {
+        "name": "Noto Sans",
+        "pixels": 6858
+      },
+      {
+        "name": "DejaVu Sans",
+        "pixels": 9123
+      },
+      {
+        "name": "Cantarell",
+        "pixels": 7900
+      },
+      {
+        "name": "Inter",
+        "pixels": 8901
+      },
+      {
+        "name": "sans-serif",
+        "pixels": 0
+      }
+    ]
+  },
+  "newsletterIpad": {
+    "before": "Sichtbarkeit im Dezember",
+    "after": "Sichtbarkeit im Dezember",
+    "editHidden": true,
+    "previewShown": true,
+    "figureA": "none",
+    "figureB": "grid",
+    "sameValue": true
+  }
+}
