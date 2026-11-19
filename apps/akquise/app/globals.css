@@ -45,6 +45,17 @@ button:hover {
   background: #398bd0;
 }
 .assistant-entry { padding: clamp(16px, 3vw, 26px); border-radius: 14px; }
+.newsletter-cursor { margin-top: 18px; display: grid; gap: 12px; min-width: 0; }
+.newsletter-cursor h3, .newsletter-cursor p { margin: 0; }
+.newsletter-cursor textarea { min-height: 96px; }
+.newsletter-cursor-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.newsletter-cursor-actions button, .newsletter-cursor-actions a { font-size: 14px; min-height: 44px; text-decoration: none; }
+.newsletter-cursor-actions a.secondary { display: inline-flex; align-items: center; justify-content: center; padding: 12px 17px; border-radius: var(--button-radius); font-weight: 600; }
+.assistant-entry > button.secondary { margin-top: 12px; }
+@media (max-width: 700px) {
+  .newsletter-cursor-actions > * { flex: 1 1 100%; }
+  .assistant-entry > button.secondary { width: 100%; }
+}
 .assistant-entry-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .assistant-entry-intro > div { flex: 1 1 240px; min-width: 0; }
 .assistant-entry .eyebrow { color: #1f639c; margin-bottom: 8px; }

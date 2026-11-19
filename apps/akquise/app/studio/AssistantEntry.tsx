@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import StudioChat from "./StudioChat";
+import NewsletterCursor from "../newsletter/NewsletterCursor";
 import type { studioState } from "@/lib/studio/service";
 
 type State = Awaited<ReturnType<typeof studioState>>;
@@ -18,7 +19,8 @@ const sections = {
       "Ich möchte eine Kampagne planen. Bitte hilf mir Schritt für Schritt und frage zuerst nach meinem Vorhaben.",
   },
   Newsletter: {
-    description: "Newsletter-Ideen, Betreffzeilen und Texte mit GPT vorbereiten.",
+    description:
+      "Newsletter-Ideen, Betreffzeilen und Texte mit GPT vorbereiten.",
     message:
       "Ich möchte einen Newsletter vorbereiten. Hilf mir bei Thema, Zielgruppe, Betreff und Text. Verwende nur bestätigte Angebotsangaben. Erstelle einen Entwurf, aber versende und veröffentliche nichts.",
   },
@@ -48,6 +50,7 @@ export default function AssistantEntry({
   onProjectAssigned?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [taskText, setTaskText] = useState("");
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -177,9 +180,56 @@ export default function AssistantEntry({
           <h2>Was möchtest du machen?</h2>
           <p>{entry.description}</p>
         </div>
+        {section !== "Newsletter" && (
+          <button
+            type="button"
+            className="ai-button"
+            aria-expanded={open}
+            aria-controls={id}
+            onClick={() => {
+              setError("");
+              if (!open && !chatRequest) openProject();
+              else setOpen((value) => !value);
+            }}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            >
+              <path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z" />
+              <path d="M20 2v4M18 4h4" />
+            </svg>
+            {open ? "GPT-Dialog einklappen" : "GPT beauftragen"}
+          </button>
+        )}
+      </div>
+      {section === "Newsletter" && !open && (
+        <label>
+          Dein Auftrag
+          <textarea
+            rows={4}
+            maxLength={4000}
+            value={taskText}
+            onChange={(event) => setTaskText(event.target.value)}
+          />
+        </label>
+      )}
+      {section === "Newsletter" && (
+        <NewsletterCursor
+          instruction={taskText}
+          onOpenTask={() => setOpen(true)}
+        />
+      )}
+      {section === "Newsletter" && (
         <button
           type="button"
-          className="ai-button"
+          className="secondary"
           aria-expanded={open}
           aria-controls={id}
           onClick={() => {
@@ -188,22 +238,9 @@ export default function AssistantEntry({
             else setOpen((value) => !value);
           }}
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            width="22"
-            height="22"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          >
-            <path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z" />
-            <path d="M20 2v4M18 4h4" />
-          </svg>
           {open ? "GPT-Dialog einklappen" : "GPT beauftragen"}
         </button>
-      </div>
+      )}
       {state && (
         <div className="assistant-project-picker">
           <label>
@@ -304,6 +341,10 @@ export default function AssistantEntry({
                 refresh={refresh}
                 onProjectAssigned={onProjectAssigned}
                 initialRequest={chatRequest}
+                draftMessage={section === "Newsletter" ? taskText : undefined}
+                onDraftChange={
+                  section === "Newsletter" ? setTaskText : undefined
+                }
               />
             )}
           </>
