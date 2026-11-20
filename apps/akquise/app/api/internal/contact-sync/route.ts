@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
+import { contactSyncFailure } from "@/lib/drive/access-error";
 import { PolicyError } from "@/lib/policy";
 import { allowedAccount } from "@/lib/config.mjs";
 import { readSheetContacts } from "@/lib/sheets";
@@ -54,7 +55,11 @@ export async function POST(req: Request) {
         : error instanceof Error
           ? error.name
           : "unknown";
+    const failure = contactSyncFailure(error);
     console.error(`Google master contact sync failed: ${cause}; no email was sent.`);
-    return Response.json({ error: "Contact sync failed" }, { status: 500 });
+    return Response.json(
+      { error: "Contact sync failed", reason: failure.reason },
+      { status: failure.status },
+    );
   }
 }

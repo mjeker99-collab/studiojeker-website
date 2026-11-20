@@ -5,8 +5,10 @@ import { db } from "../db";
 import { hubActor } from "../hub/workflow";
 import { appOrigin, allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
+import { googleAccessPolicy, needsGoogleConsent } from "./access-error";
 import { seal, unseal } from "./crypto";
 const scope = "https://www.googleapis.com/auth/drive.readonly";
+export const driveConsentPrompt = "consent select_account";
 import {
   DriveFiles,
   driveRequest,
@@ -37,13 +39,32 @@ function client() {
 async function authorize(actor: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
 }
-export async function driveStatus(actor: string) {
+export async function driveStatus(actor: string, probe = false) {
   await authorize(actor);
   const connection = await db.driveConnection.findUnique({
     where: { userId: actor },
     select: { email: true, folderId: true, folderName: true },
   });
-  return { configured: driveConfigured(), connection };
+  const status = { configured: driveConfigured(), connection };
+  if (!probe) return status;
+  if (!status.configured || !connection)
+    return { ...status, access: "missing" as const };
+  try {
+    await access(actor);
+    return { ...status, access: "ready" as const };
+  } catch (error) {
+    if (
+      error instanceof PolicyError &&
+      /Serverkonfiguration/.test(error.message)
+    )
+      return { ...status, access: "missing" as const };
+    return {
+      ...status,
+      access: needsGoogleConsent(error)
+        ? ("consent_required" as const)
+        : ("unreachable" as const),
+    };
+  }
 }
 export async function beginDrive(actor: string, sessionId: string) {
   await authorize(actor);
@@ -69,7 +90,7 @@ export async function beginDrive(actor: string, sessionId: string) {
     url: oauth.generateAuthUrl({
       access_type: "offline",
       scope: [scope],
-      prompt: "consent select_account",
+      prompt: driveConsentPrompt,
       state,
       code_challenge: pkce.codeChallenge,
       code_challenge_method: CodeChallengeMethod.S256,
@@ -172,6 +193,12 @@ export async function completeDrive(
         "Google-Verbindung wurde inzwischen geändert.",
         409,
       );
+    // Same rule as draft PR #378: keep the folder only for the same account.
+    const previous = await tx.driveConnection.findUnique({
+      where: { userId: pending.userId },
+      select: { email: true, folderId: true, folderName: true },
+    });
+    const retainedFolder = retainedDriveFolder(previous, email);
     await tx.driveConnection.upsert({
       where: { userId: pending.userId },
       create: {
@@ -182,11 +209,25 @@ export async function completeDrive(
       update: {
         email,
         encryptedToken,
-        folderId: null,
-        folderName: null,
+        ...retainedFolder,
       },
     });
   });
+}
+export function retainedDriveFolder(
+  previous: {
+    email: string;
+    folderId: string | null;
+    folderName: string | null;
+  } | null,
+  nextEmail: string,
+) {
+  const sameAccount =
+    previous?.email.trim().toLowerCase() === nextEmail.trim().toLowerCase();
+  return {
+    folderId: sameAccount ? (previous?.folderId ?? null) : null,
+    folderName: sameAccount ? (previous?.folderName ?? null) : null,
+  };
 }
 async function access(actor: string) {
   await authorize(actor);
@@ -196,13 +237,15 @@ async function access(actor: string) {
   oauth.setCredentials({ refresh_token: unseal(c.encryptedToken, actor) });
   try {
     const token = (await oauth.getAccessToken()).token;
-    if (!token) throw new Error();
+    if (!token) {
+      const missing = new Error("missing_token");
+      (missing as Error & { code: string }).code = "invalid_grant";
+      throw missing;
+    }
     return { token, connection: c };
-  } catch {
-    throw new PolicyError(
-      "Google-Freigabe abgelaufen oder nicht erreichbar. Bitte erneut verbinden.",
-      503,
-    );
+  } catch (error) {
+    const failure = googleAccessPolicy(error);
+    throw new PolicyError(failure.message, failure.status);
   }
 }
 // Reuse the user's existing read-only Drive grant for a Sheets snapshot.

@@ -394,9 +394,13 @@ async function handler(
       );
     }
     if (route === "drive/status" && req.method === "GET")
-      return NextResponse.json(await driveStatus(user.id), {
-        headers: { "Cache-Control": "no-store" },
-      });
+      return NextResponse.json(
+        await driveStatus(
+          user.id,
+          req.nextUrl.searchParams.get("probe") === "1",
+        ),
+        { headers: { "Cache-Control": "no-store" } },
+      );
     if (route === "drive/files" && req.method === "GET")
       return NextResponse.json(
         await listDriveFiles(

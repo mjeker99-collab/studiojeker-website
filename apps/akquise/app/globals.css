@@ -395,6 +395,21 @@ header {
   margin-bottom: 22px;
   min-width: 0;
 }
+.google-reconnect {
+  padding: 20px;
+}
+.google-reconnect h2 {
+  margin-bottom: 8px;
+}
+.google-reconnect p {
+  margin: 0 0 16px;
+  max-width: 65ch;
+}
+@media (max-width: 720px) {
+  .google-reconnect button {
+    width: 100%;
+  }
+}
 .section-head {
   display: flex;
   align-items: center;
