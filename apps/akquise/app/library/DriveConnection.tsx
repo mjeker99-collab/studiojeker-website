@@ -143,6 +143,20 @@ export default function DriveConnection() {
           </button>{" "}
           <button
             type="button"
+            className="secondary"
+            disabled={busy || !status.configured}
+            onClick={() =>
+              void act(async () => {
+                const data = await api("connect", {});
+                window.location.assign(data.url);
+              })
+            }
+          >
+            Google-Verbindung erneuern
+          </button>{" "}
+          <button
+            type="button"
+            className="secondary"
             disabled={busy}
             onClick={() =>
               void act(async () => {

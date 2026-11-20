@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { seal, unseal } from "../lib/drive/crypto";
-import { parseFolder } from "../lib/drive/service";
+import { parseFolder, retainedDriveFolder } from "../lib/drive/service";
 test("Drive tokens are encrypted, authenticated and bound to one user", () => {
   const previous = process.env.DRIVE_TOKEN_ENCRYPTION_KEY;
   process.env.DRIVE_TOKEN_ENCRYPTION_KEY = "ab".repeat(32);
@@ -19,6 +19,19 @@ test("Drive tokens are encrypted, authenticated and bound to one user", () => {
     else process.env.DRIVE_TOKEN_ENCRYPTION_KEY = previous;
   }
 });
+test("Drive reauthorization keeps the folder only for the same Google account", () => {
+  const previous = { email: "USER@example.test", folderId: "folder_123", folderName: "Adressen" };
+  assert.deepEqual(retainedDriveFolder(previous, "user@example.test"), {
+    folderId: "folder_123", folderName: "Adressen",
+  });
+  assert.deepEqual(retainedDriveFolder(previous, "other@example.test"), {
+    folderId: null, folderName: null,
+  });
+  assert.deepEqual(retainedDriveFolder(null, "user@example.test"), {
+    folderId: null, folderName: null,
+  });
+});
+
 test("Drive folder input rejects external URLs and query injection", () => {
   assert.equal(
     parseFolder("https://drive.google.com/drive/folders/test_123?usp=sharing"),
