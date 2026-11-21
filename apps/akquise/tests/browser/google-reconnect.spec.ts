@@ -23,13 +23,14 @@ const schedule = {
 
 async function openAkquise(
   page: Page,
-  access: "consent_required" | "unreachable" | "ready",
+  notice: Record<string, unknown>,
 ) {
   const calls: string[] = [];
-  let current = access;
+  let current = notice;
   await page.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    calls.push(`${route.request().method()} ${path}`);
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+    calls.push(`${route.request().method()} ${path}${url.search}`);
     if (path === "/api/mail-assistant/history") return route.fulfill({ json: [] });
     if (path === "/api/state") {
       return route.fulfill({
@@ -50,19 +51,8 @@ async function openAkquise(
       });
     }
     if (path === "/api/mail-schedule") return route.fulfill({ json: schedule });
-    if (path === "/api/drive/status") {
-      return route.fulfill({
-        json: {
-          configured: true,
-          access: current,
-          connection: {
-            email: "user@example.test",
-            folderId: "folder_123",
-            folderName: "Adressen",
-          },
-        },
-      });
-    }
+    if (path === "/api/drive/status" && url.searchParams.get("masterlist") === "1")
+      return route.fulfill({ json: current });
     if (path === "/api/drive/connect") {
       return route.fulfill({
         json: {
@@ -93,7 +83,7 @@ async function openAkquise(
   return {
     calls,
     markReady() {
-      current = "ready";
+      current = { role: "self", access: "ready", folderName: "Adressen" };
     },
   };
 }
@@ -103,7 +93,11 @@ for (const width of [390, 1280]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    const { calls } = await openAkquise(page, "consent_required");
+    const { calls } = await openAkquise(page, {
+      role: "self",
+      access: "consent_required",
+      folderName: "Adressen",
+    });
     const notice = page.locator(".google-reconnect");
     await expect(
       notice.getByRole("heading", { name: "Google-Verbindung erneuern" }),
@@ -139,7 +133,11 @@ for (const width of [390, 1280]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    const { calls, markReady } = await openAkquise(page, "unreachable");
+    const { calls, markReady } = await openAkquise(page, {
+      role: "self",
+      access: "unreachable",
+      folderName: "Adressen",
+    });
     const notice = page.locator(".google-reconnect");
     await expect(
       notice.getByRole("heading", {
@@ -171,5 +169,82 @@ for (const width of [390, 1280]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+  });
+}
+
+for (const width of [390, 1280]) {
+  test(`another person cannot renew the designated Google connection at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const { calls } = await openAkquise(page, {
+      role: "other",
+      access: "consent_required",
+      actorName: "Martin",
+    });
+    const notice = page.locator(".google-reconnect");
+    await expect(
+      notice.getByRole("heading", { name: "Google-Verbindung von Martin" }),
+    ).toBeVisible();
+    await expect(notice).toContainText("von Martin aktualisiert");
+    await expect(notice).toContainText("ändert die Liste nicht");
+    await expect(notice).toContainText("keine E-Mail");
+    await expect(notice.getByRole("button")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Google-Verbindung erneuern" }),
+    ).toHaveCount(0);
+    expect(calls.some((call) => call.startsWith("POST /api/drive/connect"))).toBe(
+      false,
+    );
+    expect(calls.some((call) => call.includes("/api/smtp"))).toBe(false);
+    expect(calls.some((call) => call.includes("/api/drive/disconnect"))).toBe(
+      false,
+    );
+    await page.screenshot({
+      path: `/opt/cursor/artifacts/google-reconnect-other-account-${width}.png`,
+      fullPage: false,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+
+  test(`a missing designated grant stays with that person at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const other = await openAkquise(page, {
+      role: "other",
+      access: "missing",
+      actorName: "Martin",
+    });
+    await expect(page.locator(".google-reconnect")).toContainText(
+      "noch nicht eingerichtet",
+    );
+    await expect(
+      page.getByRole("button", { name: "Google-Verbindung erneuern" }),
+    ).toHaveCount(0);
+    expect(
+      other.calls.some((call) => call.startsWith("POST /api/drive/connect")),
+    ).toBe(false);
+    await page.goto("/");
+    const self = await openAkquise(page, {
+      role: "self",
+      access: "missing",
+      folderName: null,
+    });
+    const notice = page.locator(".google-reconnect");
+    await expect(notice).toContainText("noch keine Google-Verbindung");
+    await expect(notice.getByRole("button")).toHaveText(
+      "Google-Verbindung erneuern",
+    );
+    await notice.getByRole("button").click();
+    await expect(page).toHaveURL(/prompt=consent\+select_account/);
+    expect(self.calls.some((call) => call.includes("/api/smtp"))).toBe(false);
+    expect(
+      self.calls.some((call) => call.includes("/api/drive/disconnect")),
+    ).toBe(false);
   });
 }

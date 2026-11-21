@@ -8,6 +8,11 @@ import {
   needsGoogleConsent,
 } from "../lib/drive/access-error";
 import { retainedDriveFolder, driveConsentPrompt } from "../lib/drive/service";
+import {
+  masterlistActorOrder,
+  masterlistNoticeView,
+  selectMasterlistActor,
+} from "../lib/masterlist-actor";
 
 test("Google refresh failure keeps secrets out of the user message", () => {
   const secret = "synthetic-refresh-token-do-not-copy";
@@ -86,4 +91,76 @@ test("Reconnect keeps the selected folder only for the same Google account", () 
     folderId: null,
     folderName: null,
   });
+});
+
+const martin = {
+  id: "martin",
+  name: "Martin Jeker",
+  email: "martin@example.test",
+  active: true,
+};
+const nora = {
+  id: "nora",
+  name: "Nora Jeker",
+  email: "nora@example.test",
+  active: true,
+};
+const allow = (user: { email: string }) => user.email.endsWith("@example.test");
+
+test("Master list keeps the first active account when that grant is unusable", () => {
+  const order = masterlistActorOrder({
+    MARTIN_EMAIL: "MARTIN@example.test",
+    NORA_EMAIL: "nora@example.test",
+  });
+  assert.deepEqual(order, ["martin@example.test", "nora@example.test"]);
+  assert.equal(selectMasterlistActor(order, [nora, martin], allow)?.id, "martin");
+  assert.equal(
+    selectMasterlistActor(order, [{ ...martin, active: false }, nora], allow)?.id,
+    "nora",
+  );
+  assert.equal(
+    selectMasterlistActor(order, [martin, nora], () => false),
+    null,
+  );
+  assert.equal(selectMasterlistActor([], [martin], allow), null);
+});
+
+test("Another signed-in person cannot see the designated token or folder", () => {
+  const secret = "synthetic-refresh-token";
+  const view = masterlistNoticeView({
+    viewerId: nora.id,
+    actor: { id: martin.id, name: `${martin.name} ${secret}` },
+    access: "consent_required",
+    folderName: "Adressen",
+  });
+  assert.deepEqual(view, {
+    role: "other",
+    access: "consent_required",
+    actorName: "Martin",
+  });
+  assert.equal(JSON.stringify(view).includes(secret), false);
+  assert.equal(JSON.stringify(view).includes("Adressen"), false);
+  assert.equal(JSON.stringify(view).includes("@"), false);
+  assert.deepEqual(
+    masterlistNoticeView({
+      viewerId: martin.id,
+      actor: martin,
+      access: "missing",
+      folderName: "Adressen",
+    }),
+    { role: "self", access: "missing", folderName: "Adressen" },
+  );
+  assert.equal(
+    masterlistNoticeView({
+      viewerId: nora.id,
+      actor: { id: martin.id, name: "owner@example.test" },
+      access: "consent_required",
+    }).role === "other" &&
+      masterlistNoticeView({
+        viewerId: nora.id,
+        actor: { id: martin.id, name: "owner@example.test" },
+        access: "consent_required",
+      }).actorName,
+    "der zuständigen Person",
+  );
 });

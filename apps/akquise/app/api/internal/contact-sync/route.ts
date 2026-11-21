@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
-import { db } from "@/lib/db";
 import { contactSyncFailure } from "@/lib/drive/access-error";
+import { designatedMasterlistActor } from "@/lib/drive/service";
+import { masterlistActorOrder } from "@/lib/masterlist-actor";
 import { PolicyError } from "@/lib/policy";
-import { allowedAccount } from "@/lib/config.mjs";
 import { readSheetContacts } from "@/lib/sheets";
 import { importContacts } from "@/lib/workflow";
 
@@ -19,23 +19,11 @@ export async function POST(req: Request) {
     return new Response(null, { status: 401 });
   }
   try {
-    // Use only existing, active StudioONE accounts authorised by the same
-    // production allowlist as the interactive Akquise workflow. If Martin
-    // has not yet been provisioned, the already-authorised Nora account can
-    // perform the additive import. Never create a user or bypass access rules.
-    const allowedEmails = [process.env.MARTIN_EMAIL, process.env.NORA_EMAIL]
-      .filter((value): value is string => Boolean(value))
-      .map((value) => value.trim().toLowerCase());
-    if (!allowedEmails.length)
+    // One designated account owns the master-list Drive folder. A failed
+    // grant does not continue with the other account or another spreadsheet.
+    if (!masterlistActorOrder().length)
       return Response.json({ error: "Actor not configured" }, { status: 503 });
-    const candidates = await db.user.findMany({
-      where: { email: { in: allowedEmails }, active: true },
-      select: { id: true, name: true, email: true, active: true },
-    });
-    const actor = allowedEmails
-      .map((email) => candidates.find((candidate) =>
-        candidate.email === email && allowedAccount(candidate)))
-      .find((candidate) => Boolean(candidate));
+    const actor = await designatedMasterlistActor();
     if (!actor) {
       console.error("Google master contact sync: no active authorised StudioONE account.");
       return Response.json({ error: "No authorised active StudioONE account" }, { status: 503 });
@@ -56,7 +44,7 @@ export async function POST(req: Request) {
           ? error.name
           : "unknown";
     const failure = contactSyncFailure(error);
-    console.error(`Google master contact sync failed: ${cause}; no email was sent.`);
+    console.error(`Google master contact sync failed: ${cause}; designated account only; no email was sent.`);
     return Response.json(
       { error: "Contact sync failed", reason: failure.reason },
       { status: failure.status },

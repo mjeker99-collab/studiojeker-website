@@ -6,6 +6,12 @@ import { hubActor } from "../hub/workflow";
 import { appOrigin, allowedAccount } from "../config.mjs";
 import { PolicyError } from "../policy";
 import { googleAccessPolicy, needsGoogleConsent } from "./access-error";
+import {
+  masterlistActorOrder,
+  masterlistNoticeView,
+  selectMasterlistActor,
+  type MasterlistAccess,
+} from "../masterlist-actor";
 import { seal, unseal } from "./crypto";
 const scope = "https://www.googleapis.com/auth/drive.readonly";
 export const driveConsentPrompt = "consent select_account";
@@ -65,6 +71,53 @@ export async function driveStatus(actor: string, probe = false) {
         : ("unreachable" as const),
     };
   }
+}
+async function classifyDriveAccess(actor: string): Promise<MasterlistAccess> {
+  const connection = await db.driveConnection.findUnique({
+    where: { userId: actor },
+    select: { userId: true },
+  });
+  if (!driveConfigured() || !connection) return "missing";
+  try {
+    await access(actor);
+    return "ready";
+  } catch (error) {
+    if (error instanceof PolicyError && /Serverkonfiguration/.test(error.message))
+      return "missing";
+    return needsGoogleConsent(error) ? "consent_required" : "unreachable";
+  }
+}
+export async function designatedMasterlistActor() {
+  const order = masterlistActorOrder();
+  if (!order.length) return null;
+  const candidates = await db.user.findMany({
+    where: { email: { in: order }, active: true },
+    select: { id: true, name: true, email: true, active: true },
+  });
+  return selectMasterlistActor(order, candidates, (user) => allowedAccount(user));
+}
+export async function masterlistDriveNotice(viewerId: string) {
+  await authorize(viewerId);
+  const actor = await designatedMasterlistActor();
+  if (!actor) return { role: "unset" as const };
+  const viewer = await db.user.findUnique({
+    where: { id: viewerId },
+    select: { email: true },
+  });
+  const pool = masterlistActorOrder();
+  if (actor.id !== viewerId && !pool.includes((viewer?.email ?? "").toLowerCase()))
+    return { role: "unset" as const };
+  const access = await classifyDriveAccess(actor.id);
+  const folderName =
+    actor.id === viewerId
+      ? (
+          await db.driveConnection.findUnique({
+            where: { userId: viewerId },
+            select: { folderName: true },
+          })
+        )?.folderName ?? null
+      : null;
+  return masterlistNoticeView({ viewerId, actor, access, folderName });
 }
 export async function beginDrive(actor: string, sessionId: string) {
   await authorize(actor);

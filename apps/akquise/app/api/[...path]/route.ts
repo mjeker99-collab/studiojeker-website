@@ -95,6 +95,7 @@ import {
   chooseDriveFolder,
   disconnectDrive,
   driveStatus,
+  masterlistDriveNotice,
   listDriveFiles,
   driveImagePreview,
 } from "@/lib/drive/service";
@@ -393,14 +394,15 @@ async function handler(
         await disconnectSocial(user.id, input.provider, input.accountId),
       );
     }
-    if (route === "drive/status" && req.method === "GET")
+    if (route === "drive/status" && req.method === "GET") {
+      const headers = { "Cache-Control": "no-store, private" };
+      if (req.nextUrl.searchParams.get("masterlist") === "1")
+        return NextResponse.json(await masterlistDriveNotice(user.id), { headers });
       return NextResponse.json(
-        await driveStatus(
-          user.id,
-          req.nextUrl.searchParams.get("probe") === "1",
-        ),
-        { headers: { "Cache-Control": "no-store" } },
+        await driveStatus(user.id, req.nextUrl.searchParams.get("probe") === "1"),
+        { headers },
       );
+    }
     if (route === "drive/files" && req.method === "GET")
       return NextResponse.json(
         await listDriveFiles(
