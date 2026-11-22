@@ -13,6 +13,7 @@ import "./studioone-design-system.css";
 import ContactReply from "./ContactReply";
 import { replyLabels } from "../lib/contact-reply-input";
 import MailSchedule from "./MailSchedule";
+import GoogleReconnectNotice from "./GoogleReconnectNotice";
 import MailStudio from "./MailStudio";
 import MailAssistant from "./MailAssistant";
 import { contactStage, contactStageLabels } from "../lib/contact-stage";
@@ -821,6 +822,7 @@ export default function App() {
           )}
           {acquisitionTabs.includes(tab) && (
             <>
+              <GoogleReconnectNotice />
               <div
                 hidden={tab !== "Kontakte finden"}
                 className="acquisition-research"
