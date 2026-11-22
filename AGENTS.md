@@ -23,6 +23,13 @@ Before work on StudioONE or the Studiojeker website, read and follow
 The agreement defines autonomous implementation, tests, pull requests, merges,
 staging deployment verification, release approvals and concise completion reporting.
 Never bypass branch protection, credentials or production release gates.
+For Martin's programming assignments, Codex implements the change directly. The following completion criteria take precedence over older automatic release instructions for these assignments:
+- A development request authorises a working branch, implementation, relevant checks, fixes, commit, push and pull request. Complete the assignment at the tested pull request unless Martin also requests release.
+- “Mergen und deployen” authorises both steps for the specified change and environment. Respect branch protections, check deployment status and verify the affected function where accessible.
+- Keep StudioONE V1 and V2 separate. Check the target version, branch and deployment destination before releasing.
+- Ask once if a material decision, risk of data loss or missing access requires Martin's input. For access blockers, name the service and the exact permission needed.
+- Report the change, checks, PR link, commit and deployment status.
+
 This workflow supplements the technical/design specifications below.
 
 ---
@@ -54,7 +61,7 @@ Preserve Studiojeker Pro functionality while keeping KMU workflows simple.
 ## STUDIOONE PROJECT ROLES (28 OCTOBER 2026)
 
 - Martin leads StudioONE as project owner: he defines business objectives, priorities and acceptance criteria. He is not expected to program or perform routine technical administration.
-- Julie (ChatGPT) coordinates the StudioONE delivery workflow across GitHub, Render, Cursor, Exoscale and Mailchimp wherever the connected tools provide access.
+- Julie (ChatGPT) coordinates the StudioONE delivery workflow across GitHub, Render, Codex, Exoscale and Mailchimp wherever the connected tools provide access.
 - Routine development tasks, including implementation, checks, pull requests, merges, deployments and verification, should be handled through authorised tools without repeatedly asking Martin to perform technical steps.
 - Respect repository protections, mandatory checks, existing permissions and publication safeguards. Never claim an inaccessible or incomplete action succeeded.
 - Customer-facing email sending, destructive actions, sensitive access changes and other externally consequential actions still follow their applicable approval requirements.
