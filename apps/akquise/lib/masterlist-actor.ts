@@ -64,3 +64,52 @@ export function masterlistNoticeView(input: {
     actorName: syncActorLabel(input.actor.name),
   };
 }
+
+const accesses = new Set<MasterlistAccess>([
+  "ready",
+  "consent_required",
+  "unreachable",
+  "missing",
+]);
+
+export type MasterlistNotice =
+  | { role: "unset" }
+  | { role: "self"; access: MasterlistAccess; folderName: string | null }
+  | { role: "other"; access: MasterlistAccess; actorName: string };
+
+function isAccess(value: unknown): value is MasterlistAccess {
+  return typeof value === "string" && accesses.has(value as MasterlistAccess);
+}
+
+// A failed or unfamiliar status response is not a revoked grant and not a
+// folder or account fact. The caller shows a neutral retry instead.
+export function interpretMasterlistNotice(body: unknown): MasterlistNotice | "invalid" {
+  if (!body || typeof body !== "object") return "invalid";
+  const value = body as Record<string, unknown>;
+  if (value.role === "unset" && Object.keys(value).every((key) => key === "role"))
+    return { role: "unset" };
+  if (value.role === "self" && isAccess(value.access)) {
+    const folder = value.folderName;
+    return {
+      role: "self",
+      access: value.access,
+      folderName: typeof folder === "string" && folder.trim() && !folder.includes("@")
+        ? folder.trim().slice(0, 120)
+        : null,
+    };
+  }
+  if (
+    value.role === "other" &&
+    isAccess(value.access) &&
+    typeof value.actorName === "string" &&
+    value.actorName.trim() &&
+    !value.actorName.includes("@") &&
+    value.actorName.trim().length <= 40
+  )
+    return {
+      role: "other",
+      access: value.access,
+      actorName: value.actorName.trim(),
+    };
+  return "invalid";
+}

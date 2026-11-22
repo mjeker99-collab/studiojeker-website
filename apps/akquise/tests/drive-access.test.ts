@@ -9,6 +9,7 @@ import {
 } from "../lib/drive/access-error";
 import { retainedDriveFolder, driveConsentPrompt } from "../lib/drive/service";
 import {
+  interpretMasterlistNotice,
   masterlistActorOrder,
   masterlistNoticeView,
   selectMasterlistActor,
@@ -163,4 +164,38 @@ test("Another signed-in person cannot see the designated token or folder", () =>
       }).actorName,
     "der zuständigen Person",
   );
+});
+
+test("A failed status payload is not treated as a revoked grant or a folder", () => {
+  assert.equal(interpretMasterlistNotice(null), "invalid");
+  assert.equal(interpretMasterlistNotice({ error: "HTTP 500", token: "synthetic" }), "invalid");
+  assert.equal(
+    interpretMasterlistNotice({ role: "other", access: "consent_required", actorName: "a@b.test" }),
+    "invalid",
+  );
+  assert.deepEqual(
+    interpretMasterlistNotice({
+      role: "other",
+      access: "consent_required",
+      actorName: "Martin",
+      folderName: "Adressen",
+      email: "secret@example.test",
+    }),
+    { role: "other", access: "consent_required", actorName: "Martin" },
+  );
+  assert.deepEqual(
+    interpretMasterlistNotice({
+      role: "self",
+      access: "consent_required",
+      folderName: "Adressen",
+      email: "secret@example.test",
+    }),
+    { role: "self", access: "consent_required", folderName: "Adressen" },
+  );
+  assert.deepEqual(interpretMasterlistNotice({ role: "unset" }), { role: "unset" });
+  assert.deepEqual(interpretMasterlistNotice({ role: "self", access: "ready" }), {
+    role: "self",
+    access: "ready",
+    folderName: null,
+  });
 });

@@ -1,18 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
-
-type Access = "ready" | "consent_required" | "unreachable" | "missing";
-type Notice =
-  | { role: "unset" }
-  | { role: "self"; access: Access; folderName: string | null }
-  | { role: "other"; access: Access; actorName: string };
+import {
+  interpretMasterlistNotice,
+  type MasterlistNotice,
+} from "../lib/masterlist-actor";
 
 export default function GoogleReconnectNotice() {
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState<MasterlistNotice | null>(null);
+  const [phase, setPhase] = useState<"loading" | "failed" | "ready">("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   async function load() {
+    setPhase("loading");
     setError("");
     try {
       const response = await fetch("/api/drive/status?masterlist=1", {
@@ -21,11 +21,20 @@ export default function GoogleReconnectNotice() {
       });
       if (!response.ok) {
         setNotice(null);
+        setPhase("failed");
         return;
       }
-      setNotice((await response.json()) as Notice);
+      const parsed = interpretMasterlistNotice(await response.json());
+      if (parsed === "invalid") {
+        setNotice(null);
+        setPhase("failed");
+        return;
+      }
+      setNotice(parsed);
+      setPhase("ready");
     } catch {
       setNotice(null);
+      setPhase("failed");
     }
   }
 
@@ -40,11 +49,23 @@ export default function GoogleReconnectNotice() {
         if (!active) return;
         if (!response.ok) {
           setNotice(null);
+          setPhase("failed");
           return;
         }
-        setNotice((await response.json()) as Notice);
+        const parsed = interpretMasterlistNotice(await response.json());
+        if (!active) return;
+        if (parsed === "invalid") {
+          setNotice(null);
+          setPhase("failed");
+          return;
+        }
+        setNotice(parsed);
+        setPhase("ready");
       } catch {
-        if (active) setNotice(null);
+        if (active) {
+          setNotice(null);
+          setPhase("failed");
+        }
       }
     })();
     return () => {
@@ -80,6 +101,39 @@ export default function GoogleReconnectNotice() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (phase === "loading") {
+    return (
+      <section
+        className="panel google-reconnect"
+        role="status"
+        aria-labelledby="google-check-title"
+        aria-busy="true"
+      >
+        <h2 id="google-check-title">Kontaktliste wird geprüft</h2>
+        <p>Einen Moment. Die Liste bleibt unverändert, und es wird keine E-Mail versendet.</p>
+      </section>
+    );
+  }
+
+  if (phase === "failed") {
+    return (
+      <section
+        className="panel google-reconnect"
+        role="alert"
+        aria-labelledby="google-check-failed-title"
+      >
+        <h2 id="google-check-failed-title">Kontaktliste gerade nicht prüfbar</h2>
+        <p>
+          Die Prüfung ist gerade nicht gelungen. Die Liste bleibt unverändert,
+          und es wird keine E-Mail versendet.
+        </p>
+        <button type="button" disabled={busy} onClick={() => void load()}>
+          Erneut prüfen
+        </button>
+      </section>
+    );
   }
 
   if (!notice || notice.role === "unset" || notice.access === "ready") return null;

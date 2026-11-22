@@ -248,3 +248,155 @@ for (const width of [390, 1280]) {
     ).toBe(false);
   });
 }
+
+for (const width of [390, 1280]) {
+  test(`status HTTP 500 stays neutral and retries the designated person at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const calls: string[] = [];
+    let fail = true;
+    await page.route("**/api/**", async (route) => {
+      const url = new URL(route.request().url());
+      calls.push(`${route.request().method()} ${url.pathname}`);
+      if (url.pathname === "/api/mail-assistant/history")
+        return route.fulfill({ json: [] });
+      if (url.pathname === "/api/state") {
+        return route.fulfill({
+          json: {
+            user: { id: "nora", name: "Nora" },
+            users: [],
+            contacts: [],
+            drafts: [],
+            deliveries: [],
+            suppressions: [],
+            audits: [],
+            generator: "disabled",
+            externalSending: false,
+            mailMode: "disabled",
+            smtpPort: null,
+            smtpSecure: false,
+          },
+        });
+      }
+      if (url.pathname === "/api/mail-schedule")
+        return route.fulfill({ json: schedule });
+      if (url.pathname === "/api/drive/status") {
+        if (fail)
+          return route.fulfill({ status: 500, json: { error: "unavailable" } });
+        return route.fulfill({
+          json: {
+            role: "other",
+            access: "consent_required",
+            actorName: "Martin",
+            folderName: "Adressen",
+            email: "secret@example.test",
+          },
+        });
+      }
+      if (url.pathname === "/api/drive/connect" || url.pathname === "/api/drive/disconnect" || url.pathname.startsWith("/api/smtp"))
+        return route.fulfill({ status: 500, json: { error: "unerlaubt" } });
+      return route.fulfill({ json: {} });
+    });
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Was möchtest du heute erledigen?" }),
+    ).toBeVisible();
+    await page
+      .getByRole("navigation", { name: "Hauptnavigation" })
+      .getByRole("button", { name: "Akquise", exact: true })
+      .click();
+    const notice = page.locator(".google-reconnect");
+    await expect(
+      notice.getByRole("heading", { name: "Kontaktliste gerade nicht prüfbar" }),
+    ).toBeVisible();
+    await expect(notice).toContainText("keine E-Mail");
+    await expect(notice).not.toContainText(/abgelaufen|Martin|Adressen|OAuth|Token|HTTP|500/);
+    await expect(notice.getByRole("button")).toHaveCount(1);
+    await expect(notice.getByRole("button")).toHaveText("Erneut prüfen");
+    fail = false;
+    if (width === 1280)
+      await page.screenshot({
+        path: "/opt/cursor/artifacts/google-reconnect-status-failed-desktop.png",
+        fullPage: false,
+      });
+    await notice.getByRole("button", { name: "Erneut prüfen" }).click();
+    await expect(
+      notice.getByRole("heading", { name: "Google-Verbindung von Martin" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Google-Verbindung erneuern" }),
+    ).toHaveCount(0);
+    expect(calls.some((call) => call.startsWith("POST /api/drive/connect"))).toBe(false);
+    expect(calls.some((call) => call.includes("/api/drive/disconnect"))).toBe(false);
+    expect(calls.some((call) => call.includes("/api/smtp"))).toBe(false);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    ).toBe(true);
+  });
+
+  test(`status timeout stays neutral at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const calls: string[] = [];
+    let fail = true;
+    await page.route("**/api/**", async (route) => {
+      const url = new URL(route.request().url());
+      calls.push(`${route.request().method()} ${url.pathname}`);
+      if (url.pathname === "/api/mail-assistant/history")
+        return route.fulfill({ json: [] });
+      if (url.pathname === "/api/state") {
+        return route.fulfill({
+          json: {
+            user: { id: "test", name: "Test" },
+            users: [],
+            contacts: [],
+            drafts: [],
+            deliveries: [],
+            suppressions: [],
+            audits: [],
+            generator: "disabled",
+            externalSending: false,
+            mailMode: "disabled",
+            smtpPort: null,
+            smtpSecure: false,
+          },
+        });
+      }
+      if (url.pathname === "/api/mail-schedule")
+        return route.fulfill({ json: schedule });
+      if (url.pathname === "/api/drive/status") {
+        if (fail) return route.abort("timedout");
+        return route.fulfill({
+          json: { role: "self", access: "ready", folderName: null },
+        });
+      }
+      if (
+        url.pathname.startsWith("/api/smtp") ||
+        url.pathname === "/api/drive/connect" ||
+        url.pathname === "/api/drive/disconnect"
+      )
+        return route.fulfill({ status: 500, json: { error: "unerlaubt" } });
+      return route.fulfill({ json: {} });
+    });
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "Was möchtest du heute erledigen?" }),
+    ).toBeVisible();
+    await page
+      .getByRole("navigation", { name: "Hauptnavigation" })
+      .getByRole("button", { name: "Akquise", exact: true })
+      .click();
+    const notice = page.locator(".google-reconnect");
+    await expect(
+      notice.getByRole("heading", { name: "Kontaktliste gerade nicht prüfbar" }),
+    ).toBeVisible();
+    await expect(notice).not.toContainText(/abgelaufen|Ordner|OAuth|Token/);
+    await expect(notice.getByRole("button")).toHaveText("Erneut prüfen");
+    fail = false;
+    await notice.getByRole("button").click();
+    await expect(page.locator(".google-reconnect")).toHaveCount(0);
+    expect(calls.some((call) => call.startsWith("POST /api/drive/connect"))).toBe(false);
+    expect(calls.some((call) => call.includes("/api/smtp"))).toBe(false);
+    expect(calls.some((call) => call.includes("/api/drive/disconnect"))).toBe(false);
+  });
+}
