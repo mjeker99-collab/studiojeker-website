@@ -1822,6 +1822,9 @@ export default function MailStudio({
                 />
               </details>
             </div>
+
+          </section>
+        )}
             {sendProgress && <p role="status">{sendProgress}</p>}
             {results.length > 0 && (
               <div role="status">
@@ -1841,7 +1844,7 @@ export default function MailStudio({
                   <ul>
                     {results.map((r) => (
                       <li key={r.id}>
-                        {rows.find((row) => row.id === r.id)?.recipient}:{" "}
+                        {reviewRows.find((row) => row.id === r.id)?.recipient}:{" "}
                         {r.message}
                       </li>
                     ))}
@@ -1852,8 +1855,6 @@ export default function MailStudio({
                 </button>
               </div>
             )}
-          </section>
-        )}
       <MailSchedule
         key={scheduleRevision}
         drafts={drafts}

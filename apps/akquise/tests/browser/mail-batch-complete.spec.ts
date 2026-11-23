@@ -416,7 +416,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   await expect(
     page
       .locator(".mail-open-notice")
-      .getByText(/1 Kontakte mit offenen Angaben/),
+      .getByText(/1 Kontakte benötigen eine Korrektur/),
   ).toBeVisible();
   expect(preparationCalls).toBe(1);
   expect(dispatchCalls).toBe(0);
@@ -560,7 +560,7 @@ test("mixed contact group advances only verified unchanged records without sendi
   await expect(
     page
       .locator(".mail-open-notice")
-      .getByText(/3 Kontakte mit offenen Angaben/),
+      .getByText(/3 Kontakte benötigen eine Korrektur/),
   ).toBeVisible();
   await checkout(page);
   await expect(
