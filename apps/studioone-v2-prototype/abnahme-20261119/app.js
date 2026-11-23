@@ -107,6 +107,8 @@
   }
 
   let state = fresh();
+  // A library choice is tentative until explicitly applied.
+  let pendingLibraryImage = null;
 
   function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -240,6 +242,7 @@
   function go(page, extra) {
     state.back.push({ page: state.page, content: state.content, step: state.akquise.step });
     state.page = page;
+    if (page === "library") { pendingLibraryImage = null; state.library.notice = ""; }
     if (extra) Object.assign(state, extra);
     if (page !== "home") markResume();
     save();
@@ -598,9 +601,9 @@
       <p class="note">${crumbs.map((item) => esc(item.name)).join(" / ")}. Ordner liegen beim Beispielkunden und beim Beispielprojekt.</p>
       <div class="actions">${current && current.parent ? button("Ordner darüber", "folder-up", "secondary") : ""}</div>
       <ul class="people">${children.map((item) => `<li class="line"><span class="who"><strong>${esc(item.name)}</strong><small>Ordner</small></span>${button("Öffnen", "folder-" + item.id, "secondary")}</li>`).join("")}</ul>
-      <fieldset class="thumbs"><legend>Medien</legend>${assets.map((asset) => `<label class="thumb"><input type="radio" name="libbild" data-image="${asset.id}" ${state.newsletter.current.imageId === asset.id ? "checked" : ""}><span class="swatch">${esc(asset.name)}</span></label>`).join("") || "<p>In diesem Ordner liegen noch keine Beispielbilder.</p>"}</fieldset>
+      <fieldset class="thumbs"><legend>Medien</legend>${assets.map((asset) => `<label class="thumb"><input type="radio" name="libbild" data-library-image="${asset.id}" ${pendingLibraryImage === asset.id ? "checked" : ""}><span class="swatch">${esc(asset.name)}</span></label>`).join("") || "<p>In diesem Ordner liegen noch keine Beispielbilder.</p>"}</fieldset>
       ${field("Neuer Ordner", "ordner", "library.draftName", state.library.draftName)}
-      <div class="actions">${button("Ordner anlegen", "create-folder", "secondary")}${button("Bild in den Newsletter übernehmen", "use-image", "primary")}</div>
+      <div class="actions">${button("Ordner anlegen", "create-folder", "secondary")}${button("Bild in den Newsletter übernehmen", "use-image", "primary", pendingLibraryImage ? "" : "disabled")}${button("Abbrechen", "cancel-library", "secondary")}</div>
       ${state.library.notice ? `<p class="saved" role="status">${esc(state.library.notice)}</p>` : ""}
     </section>`);
   }
@@ -798,8 +801,14 @@
       state.social.planned = true; save(); render(false); return;
     }
     if (act === "website-apply") { state.website.applied = true; save(); render(false); return; }
+    if (act === "cancel-library") { pendingLibraryImage = null; state.library.notice = ""; back(); return; }
     if (act === "image-to-newsletter" || act === "use-image") {
-      state.newsletter.current.imageId = state.imageWork.imageId || state.newsletter.current.imageId;
+      const imageId = act === "use-image" ? pendingLibraryImage : state.imageWork.imageId;
+      if (!state.library.assets.some((asset) => asset.id === imageId)) {
+        state.library.notice = "Wähle zuerst ein Bild aus."; render(false); return;
+      }
+      state.newsletter.current.imageId = imageId;
+      pendingLibraryImage = null;
       invalidate("newsletter.current.imageId");
       state.library.notice = imageName(state.newsletter.current.imageId) + " ist im Newsletter gewählt.";
       state.content = "newsletter";
@@ -876,6 +885,11 @@
       invalidate("akquise.selected");
       save();
       paintDerived();
+      return;
+    }
+    if (node.dataset.libraryImage) {
+      pendingLibraryImage = node.dataset.libraryImage;
+      render(false);
       return;
     }
     if (node.dataset.image) {
