@@ -40,6 +40,7 @@ type Row = {
   publicAuthority: boolean;
   needsLegal: boolean;
   issues: string[];
+  deliveryStatus?: string | null;
 };
 type Result = { id: string; ok: boolean; message: string; stopBatch?: boolean };
 const EMPTY_IDS: string[] = [];
@@ -114,7 +115,9 @@ export default function MailStudio({
   >([]);
   const [discardConfirmed, setDiscardConfirmed] = useState(false);
   const [discardNotice, setDiscardNotice] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
+  const [reviewRows, setRows] = useState<Row[]>([]);
+  const processedRows = reviewRows.filter((r) => r.deliveryStatus);
+  const rows = reviewRows.filter((r) => !r.deliveryStatus);
   const [included, setIncluded] = useState<string[]>([]);
   const [read, setRead] = useState(false);
   const [legal, setLegal] = useState(false);
@@ -213,12 +216,12 @@ export default function MailStudio({
     "";
   const openIds = [
     ...new Set([
-      ...deferredIds,
+      ...deferredIds.filter((id) => !processedRows.some((r) => r.contactId === id)),
       ...rows.filter((r) => r.issues.length).map(contactIdFor),
     ]),
   ].filter(Boolean);
   const pendingIds = deferredIds.filter(
-    (id) => !rows.some((r) => contactIdFor(r) === id),
+    (id) => !reviewRows.some((r) => contactIdFor(r) === id),
   );
   // Explain the actual review failures instead of presenting 99 mails as
   // selectable when the server has marked all of them as blocked.
@@ -339,6 +342,7 @@ export default function MailStudio({
       const data = await api("approve-and-enqueue", { ...common, items });
       completed.push(...data.results);
       setResults(completed);
+      setRows((old) => old.map((r) => completed.some((x) => x.id === r.id && x.ok) ? { ...r, deliveryStatus: "QUEUED" } : r));
       if (data.notice) setError(data.notice);
     } catch {
       throw new Error(
@@ -1147,10 +1151,16 @@ export default function MailStudio({
       </div>
       {step === 2 && !checkout && batchProposals.length === 0 && (
         <>
-          {(deferredIds.length > 0 || rows.some((r) => r.issues.length)) && (
+          {processedRows.length > 0 && (
+            <div className="panel-note" role="status">
+              <p>{processedRows.filter((r) => ["SENT", "REPLIED"].includes(r.deliveryStatus || "")).length} versandt · {processedRows.filter((r) => !["SENT", "REPLIED", "UNKNOWN"].includes(r.deliveryStatus || "")).length} eingeplant / in Bearbeitung · {processedRows.filter((r) => r.deliveryStatus === "UNKNOWN").length} Versandstatus unklar.</p>
+              <button className="secondary" onClick={onOpenShipping}>Versandverlauf öffnen</button>
+            </div>
+          )}
+          {openIds.length > 0 && (
             <div className="mail-open-notice">
               <p>
-                {openIds.length} Kontakte mit offenen Angaben.
+                {openIds.length} Kontakte benötigen eine Korrektur.{" "}
                 {chosen.length
                   ? " Bereite Mails können separat versendet werden."
                   : "Ergänze die Angaben, um Mails freizugeben."}

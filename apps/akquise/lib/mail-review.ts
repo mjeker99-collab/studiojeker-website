@@ -154,17 +154,15 @@ export async function mailReview(
         issues.push("Signatur geändert. Nachricht als neue Version speichern.");
       if (await db.suppression.findUnique({ where: { email: v.recipient } }))
         issues.push("Adresse auf Sperrliste.");
-      if (
-        await db.delivery.findFirst({
+      const existingDelivery = await db.delivery.findFirst({
           where: {
             recipient: v.recipient,
             status: {
               in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
             },
           },
-        })
-      )
-        issues.push("Bereits versandt oder Zustellung in Bearbeitung.");
+        });
+      if (existingDelivery) issues.push("Bereits versandt oder Zustellung in Bearbeitung.");
       let needsLegal = false;
       try {
         legalAllowed(
@@ -187,6 +185,7 @@ export async function mailReview(
         organisation: d.contact.organisation,
         publicAuthority: d.contact.publicAuthority,
         needsLegal,
+        deliveryStatus: existingDelivery?.status ?? null,
         issues,
       });
     }

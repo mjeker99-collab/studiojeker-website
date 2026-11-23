@@ -121,3 +121,20 @@ test("89 approved mails use the shared iPad review without a second queue select
   await page.getByLabel(/Ich gebe die 89 ausgewählten/).check();
   await expect(page.getByRole("button", { name: "89 Mails einplanen", exact: true })).toBeEnabled();
 });
+
+test("sent and uncertain deliveries are not missing contact details", async ({ page }) => {
+  await setup(page);
+  await page.route("**/api/mail-review/preview", async (route) => {
+    const response = await route.fetch();
+    const data = await response.json();
+    data.rows[0].deliveryStatus = "SENT";
+    data.rows[0].issues = ["Bereits versandt oder Zustellung in Bearbeitung."];
+    data.rows[1].deliveryStatus = "UNKNOWN";
+    data.rows[1].issues = ["Bereits versandt oder Zustellung in Bearbeitung."];
+    await route.fulfill({ json: data });
+  });
+  await page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (3)", exact: true }).click();
+  await expect(page.getByText("1 versandt · 0 eingeplant / in Bearbeitung · 1 Versandstatus unklar.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Offene Angaben bearbeiten", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("anna0@example.test für Versand auswählen")).toHaveCount(0);
+});
