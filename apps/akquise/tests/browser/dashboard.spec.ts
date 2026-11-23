@@ -123,7 +123,7 @@ for (const width of [390, 768, 1440]) {
     ).toBe(true);
     await approve.click();
     await expect(
-      panel
+      page
         .getByRole("status")
         .filter({ hasText: "2 freigegeben und eingeplant" }),
     ).toContainText("2 freigegeben und eingeplant · 0 noch offen.");
