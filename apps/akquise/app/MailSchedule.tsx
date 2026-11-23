@@ -644,17 +644,35 @@ export default function MailSchedule({
             </div>
           </details>
           {!compact && onReviewApproved && candidates.length > 0 && (
-            <section className="panel-note" aria-label="Freigegebene Mails versenden">
-              <h3>{candidates.length} freigegebene Mails warten auf den Versand</h3>
-              <p>Alle gemeinsam prüfen und mit einer Bestätigung einplanen. Einzelne Mails kannst du dort abwählen.</p>
-              <button type="button" disabled={busy || reviewBusy}
-                onClick={() => onReviewApproved(candidates.slice(0, 200).map((d) => d.id))}>
+            <section
+              className="panel-note"
+              aria-label="Freigegebene Mails versenden"
+            >
+              <h3>
+                {candidates.length} freigegebene Mails warten auf den Versand
+              </h3>
+              <p>
+                Alle gemeinsam prüfen und mit einer Bestätigung einplanen.
+                Einzelne Mails kannst du dort abwählen.
+              </p>
+              <button
+                type="button"
+                disabled={busy || reviewBusy}
+                onClick={() =>
+                  onReviewApproved(candidates.slice(0, 200).map((d) => d.id))
+                }
+              >
                 {Math.min(200, candidates.length)} Mails gemeinsam freigeben →
               </button>
-              {candidates.length > 200 && <p>Die ersten 200 Mails werden geöffnet. Weitere Mails bleiben für die nächste Gruppe erhalten.</p>}
+              {candidates.length > 200 && (
+                <p>
+                  Die ersten 200 Mails werden geöffnet. Weitere Mails bleiben
+                  für die nächste Gruppe erhalten.
+                </p>
+              )}
             </section>
           )}
-          {!compact && (
+          {!compact && !onReviewApproved && (
             <details>
               <summary>
                 Bereits freigegebene Mails einplanen ({candidates.length})

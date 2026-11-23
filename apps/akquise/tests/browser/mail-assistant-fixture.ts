@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 export async function setup(
   page: Page,
-  options: { queued?: boolean; failure?: "review" | "unknown"; count?: number } = {},
+  options: { queued?: boolean; failure?: "review" | "unknown"; count?: number; deliveryStatuses?: Record<string, string> } = {},
 ) {
   const sent: string[] = [];
   let addition = "";
@@ -135,7 +135,8 @@ export async function setup(
             organisation: `Atelier ${id.slice(1)}`,
             publicAuthority: false,
             needsLegal: false,
-            issues: [],
+            deliveryStatus: options.deliveryStatuses?.[id] ?? null,
+            issues: options.deliveryStatuses?.[id] ? ["Bereits versandt oder Zustellung in Bearbeitung."] : [],
           })),
         },
       });
