@@ -1,0 +1,27 @@
+OK Start zeigt den letzten Newsletter-Schritt: Newsletter «Sichtbarkeit im Dezember»
+OK Navigation Akquise
+OK Recherche-Simulation
+OK Dublette und fehlende E-Mail sichtbar
+OK Vollständige übernehmen
+OK Auswahlzahl 4: 4 vollständige Beispielkontakte ausgewählt.
+OK Auswahl leeren
+OK Auswahl ist leer
+OK Auswahl wieder setzen
+OK Weiter zum Briefing
+OK Entwürfe erstellen
+OK Persönliche Entwürfe mit Namen
+OK Vier Entwürfe einzeln geprüft: 4
+OK Änderung entwertet nur den betroffenen Entwurf
+OK Weiter zur Bestätigung
+OK Einzelresultate mit einem unklaren Fall
+OK Betreff und Vorschau sind synchron
+OK iPad hoch: Vorschau desselben Entwurfs, Eingabe bleibt
+OK Nach Neuladen bleibt der Betreff
+OK Prüfung bei fehlendem Link
+OK Fehlendes Linkziel stoppt die Prüfung
+OK Mailchimp und Testmail nur simuliert
+OK Ausgesetztes Merken zeigt keine Erfolgsmeldung
+OK Kein horizontaler Überlauf bei desktop
+OK Kein horizontaler Überlauf bei ipad_quer
+OK Kein horizontaler Überlauf bei ipad_hoch
+OK Bedienflächen unter 44px: []
