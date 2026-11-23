@@ -3,7 +3,11 @@ on:
   push:
     branches: ['feat/akquise-production-readiness']
   pull_request:
-    paths: ['apps/akquise/**', '.github/workflows/akquise-checks.yml']
+    paths:
+      - 'apps/akquise/**'
+      - '.github/workflows/akquise-checks.yml'
+      - '.github/workflows/studioone-express-automerge.yml'
+      - '.github/scripts/**'
   workflow_dispatch:
 permissions:
   contents: read
