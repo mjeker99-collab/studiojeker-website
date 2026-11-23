@@ -181,90 +181,45 @@ async function setup(
 }
 
 for (const width of [390, 768, 1024]) {
-  test(`queue action appears before the recipient list and selection changes require new confirmation at ${width}px`, async ({
+  test(`one shared selection and approval from shipping at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
     const draftCount = width === 768 ? 183 : 3;
     const state = await setup(page, { draftCount });
     await page.getByRole("button", { name: "Versand", exact: true }).click();
+    await expect(
+      page.getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
+        exact: true,
+      }),
+    ).toHaveCount(0);
     await page
-      .getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
+      .getByRole("button", {
+        name: `${draftCount} Mails gemeinsam freigeben →`,
         exact: true,
       })
       .click();
-
-    const panel = page.locator(".mail-schedule");
-    const action = panel.getByRole("button", {
-      name: /ausgewählte Mails einplanen$/,
+    await expect(
+      page.getByLabel("anna0@example.test für Versand auswählen"),
+    ).toBeChecked();
+    await page.getByLabel("anna0@example.test für Versand auswählen").uncheck();
+    await checkout(page);
+    const approval = page.getByRole("region", { name: "Versandfreigabe" });
+    const action = approval.getByRole("button", {
+      name: `${draftCount - 1} Mails einplanen`,
+      exact: true,
     });
     await expect(action).toBeDisabled();
-    await panel
-      .getByRole("button", { name: "Alle auswählen", exact: true })
-      .click();
+    await approval.getByRole("checkbox", { name: /Ich gebe die/ }).check();
+    await action.click();
     await expect(
-      panel.getByText(`${draftCount} von ${draftCount} Mails ausgewählt.`, {
-        exact: true,
-      }),
+      page.getByRole("button", { name: "Versand verfolgen", exact: true }),
     ).toBeVisible();
-    const buttonBox = await action.boundingBox();
-    const listBox = await panel.locator(".draft-list").boundingBox();
-    expect(buttonBox).not.toBeNull();
-    expect(listBox).not.toBeNull();
-    expect(buttonBox!.y).toBeLessThan(listBox!.y);
-
-    const confirmation = panel.getByRole("checkbox", {
-      name: /Nachrichten für den automatischen Versand einplanen/,
-    });
-    await expect(confirmation).not.toBeChecked();
-    await confirmation.check();
-    await expect(action).toBeEnabled();
-    await panel.getByLabel(/anna0@example.test/).uncheck();
-    await expect(
-      panel.getByText(`${draftCount - 1} von ${draftCount} Mails ausgewählt.`, {
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(confirmation).not.toBeChecked();
-    await expect(action).toBeDisabled();
-    expect(state.sent).toEqual([]);
+    expect(state.sent).toHaveLength(draftCount - 1);
+    expect(state.sent).not.toContain("d0");
+    expect(state.settingsCalls).toEqual([]);
   });
 }
-
-test("mail selection confirmation expires if a selected mail is queued elsewhere", async ({
-  page,
-}) => {
-  await page.clock.install();
-  const state = await setup(page);
-  await page.getByRole("button", { name: "Versand", exact: true }).click();
-  await page
-    .getByText("Bereits freigegebene Mails einplanen (3)", { exact: true })
-    .click();
-  const panel = page.locator(".mail-schedule");
-  await panel
-    .getByRole("button", { name: "Alle auswählen", exact: true })
-    .click();
-  const confirmation = panel.getByRole("checkbox", {
-    name: /Nachrichten für den automatischen Versand einplanen/,
-  });
-  const action = panel.getByRole("button", {
-    name: /ausgewählte Mails einplanen$/,
-  });
-  await confirmation.check();
-  await expect(action).toBeEnabled();
-
-  // Polling returns a recently queued item, making one selected draft unavailable.
-  state.markExternallyQueued();
-  await page.clock.fastForward(31_000);
-  await expect(
-    panel.getByText(
-      "Die Auswahl hat sich geändert. Bitte Auswahl leeren und erneut auswählen.",
-    ),
-  ).toBeVisible();
-  await expect(confirmation).not.toBeChecked();
-  await expect(action).toBeDisabled();
-  expect(state.sent).toEqual([]);
-});
 
 for (const width of [390, 1024]) {
   test(`all prepared mails can be planned with one approval at ${width}px`, async ({

@@ -206,7 +206,10 @@ export default function MailStudio({
     );
   });
   const readyRows = rows.filter(
-    (r) => !r.issues.length && !results.some((x) => x.id === r.id && x.ok),
+    (r) =>
+      !queuedIds.includes(r.id) &&
+      !r.issues.length &&
+      !results.some((x) => x.id === r.id && x.ok),
   );
   const chosen = readyRows.filter((r) => included.includes(r.id));
   const contactIdFor = (r: Row) =>
@@ -216,7 +219,9 @@ export default function MailStudio({
     "";
   const openIds = [
     ...new Set([
-      ...deferredIds.filter((id) => !processedRows.some((r) => r.contactId === id)),
+      ...deferredIds.filter(
+        (id) => !processedRows.some((r) => r.contactId === id),
+      ),
       ...rows.filter((r) => r.issues.length).map(contactIdFor),
     ]),
   ].filter(Boolean);
@@ -342,7 +347,13 @@ export default function MailStudio({
       const data = await api("approve-and-enqueue", { ...common, items });
       completed.push(...data.results);
       setResults(completed);
-      setRows((old) => old.map((r) => completed.some((x) => x.id === r.id && x.ok) ? { ...r, deliveryStatus: "QUEUED" } : r));
+      setRows((old) =>
+        old.map((r) =>
+          completed.some((x) => x.id === r.id && x.ok)
+            ? { ...r, deliveryStatus: "QUEUED" }
+            : r,
+        ),
+      );
       if (data.notice) setError(data.notice);
     } catch {
       throw new Error(
@@ -1153,8 +1164,31 @@ export default function MailStudio({
         <>
           {processedRows.length > 0 && (
             <div className="panel-note" role="status">
-              <p>{processedRows.filter((r) => ["SENT", "REPLIED"].includes(r.deliveryStatus || "")).length} versandt · {processedRows.filter((r) => !["SENT", "REPLIED", "UNKNOWN"].includes(r.deliveryStatus || "")).length} eingeplant / in Bearbeitung · {processedRows.filter((r) => r.deliveryStatus === "UNKNOWN").length} Versandstatus unklar.</p>
-              <button className="secondary" onClick={onOpenShipping}>Versandverlauf öffnen</button>
+              <p>
+                {
+                  processedRows.filter((r) =>
+                    ["SENT", "REPLIED"].includes(r.deliveryStatus || ""),
+                  ).length
+                }{" "}
+                versandt ·{" "}
+                {
+                  processedRows.filter(
+                    (r) =>
+                      !["SENT", "REPLIED", "UNKNOWN"].includes(
+                        r.deliveryStatus || "",
+                      ),
+                  ).length
+                }{" "}
+                eingeplant / in Bearbeitung ·{" "}
+                {
+                  processedRows.filter((r) => r.deliveryStatus === "UNKNOWN")
+                    .length
+                }{" "}
+                Versandstatus unklar.
+              </p>
+              <button className="secondary" onClick={onOpenShipping}>
+                Versandverlauf öffnen
+              </button>
             </div>
           )}
           {openIds.length > 0 && (
@@ -1245,6 +1279,8 @@ export default function MailStudio({
         !rows.length &&
         !pendingIds.length &&
         !batchProposals.length &&
+        !processedRows.length &&
+        !results.length &&
         !busy && (
           <div className="panel">
             <p>
@@ -1822,39 +1858,37 @@ export default function MailStudio({
                 />
               </details>
             </div>
-
           </section>
         )}
-            {sendProgress && <p role="status">{sendProgress}</p>}
-            {results.length > 0 && (
-              <div role="status">
-                <p>
-                  {results.filter((r) => r.ok).length} freigegeben und
-                  eingeplant
-                  {" · "}
-                  {included.length} noch offen.
-                </p>
-                <p>
-                  Erfolgreich eingeplante Mails werden im Hintergrund
-                  verarbeitet. Du kannst die Seite schliessen.
-                </p>
-                <button onClick={onOpenShipping}>Versand verfolgen</button>
-                <details>
-                  <summary>Ergebnisse anzeigen</summary>
-                  <ul>
-                    {results.map((r) => (
-                      <li key={r.id}>
-                        {reviewRows.find((row) => row.id === r.id)?.recipient}:{" "}
-                        {r.message}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-                <button className="secondary" onClick={resetSelection}>
-                  Weitere Mails vorbereiten
-                </button>
-              </div>
-            )}
+      {sendProgress && <p role="status">{sendProgress}</p>}
+      {results.length > 0 && (
+        <div role="status">
+          <p>
+            {results.filter((r) => r.ok).length} freigegeben und eingeplant
+            {" · "}
+            {included.length} noch offen.
+          </p>
+          <p>
+            Erfolgreich eingeplante Mails werden im Hintergrund verarbeitet. Du
+            kannst die Seite schliessen.
+          </p>
+          <button onClick={onOpenShipping}>Versand verfolgen</button>
+          <details>
+            <summary>Ergebnisse anzeigen</summary>
+            <ul>
+              {results.map((r) => (
+                <li key={r.id}>
+                  {reviewRows.find((row) => row.id === r.id)?.recipient}:{" "}
+                  {r.message}
+                </li>
+              ))}
+            </ul>
+          </details>
+          <button className="secondary" onClick={resetSelection}>
+            Weitere Mails vorbereiten
+          </button>
+        </div>
+      )}
       <MailSchedule
         key={scheduleRevision}
         drafts={drafts}
