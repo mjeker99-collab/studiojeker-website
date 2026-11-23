@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Enables squash auto-merge after StudioONE CI, then starts akquise-checks
-# on the squash commit. A merge performed with GITHUB_TOKEN does not emit a
-# push workflow, and Render checksPass waits for checks on that new commit.
+# on the deploy branch. A GITHUB_TOKEN merge does not emit a push workflow.
+# workflow_dispatch accepts a branch name, not the squash SHA (HTTP 422).
 set -euo pipefail
 
 : "${GH_REPO:?}"
 : "${PR_URL:?}"
 : "${HEAD_SHA:?}"
+: "${BASE_REF:?}"
 
 MAX_CI_ATTEMPTS="${MAX_CI_ATTEMPTS:-30}"
 MAX_MERGE_ATTEMPTS="${MAX_MERGE_ATTEMPTS:-30}"
@@ -41,8 +42,13 @@ gh pr merge --auto --squash "$PR_URL" || echo "Auto-merge command returned non-z
 for attempt in $(seq 1 "$MAX_MERGE_ATTEMPTS"); do
   merged="$(gh pr view "$PR_URL" --repo "$GH_REPO" --json state,mergeCommit --jq 'if .state == "MERGED" then .mergeCommit.oid else "" end')"
   if [ -n "$merged" ]; then
-    gh workflow run "$WORKFLOW_FILE" --repo "$GH_REPO" --ref "$merged"
-    echo "Dispatched ${WORKFLOW_FILE} for merge commit ${merged}."
+    tip="$(gh api "repos/${GH_REPO}/commits/${BASE_REF}" --jq .sha)"
+    if [ "$tip" != "$merged" ]; then
+      echo "Deploy branch ${BASE_REF} is ${tip}, not merge commit ${merged}; no check was started."
+      exit 1
+    fi
+    gh workflow run "$WORKFLOW_FILE" --repo "$GH_REPO" --ref "$BASE_REF"
+    echo "Dispatched ${WORKFLOW_FILE} on ${BASE_REF} at ${merged}."
     exit 0
   fi
   if [ "$attempt" = "$MAX_MERGE_ATTEMPTS" ]; then

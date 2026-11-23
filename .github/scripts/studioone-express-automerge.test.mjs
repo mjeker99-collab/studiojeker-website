@@ -33,6 +33,9 @@ case "$1 $2" in
   "pr view")
     printf '%s' "$MERGE_OID"
     ;;
+  "api "*)
+    printf '%s' "$BRANCH_TIP"
+    ;;
   "workflow run")
     exit 0
     ;;
@@ -59,11 +62,13 @@ function run(extra) {
       GH_REPO: "mjeker99-collab/studiojeker-website",
       PR_URL: "https://github.com/mjeker99-collab/studiojeker-website/pull/396",
       HEAD_SHA: "6d007b64348c3a6589bfd6c2e7eb3f57183e7e6c",
+      BASE_REF: "feat/akquise-production-readiness",
       MAX_CI_ATTEMPTS: "2",
       MAX_MERGE_ATTEMPTS: "2",
       SLEEP_SECONDS: "0",
       CI_RESULT: "",
       MERGE_OID: "",
+      BRANCH_TIP: "",
       ...extra,
     },
     encoding: "utf8",
@@ -71,18 +76,27 @@ function run(extra) {
   return { ...result, log: readFileSync(log, "utf8") };
 }
 
-test("successful PR CI dispatches checks for the squash commit, not the PR head", () => {
-  const result = run({
-    CI_RESULT: "success",
-    MERGE_OID: "56934a07b6209ddf140699fb54165b0de1d7fa8a",
-  });
+test("successful PR CI dispatches the deploy branch only when it is the squash commit", () => {
+  const merge = "56934a07b6209ddf140699fb54165b0de1d7fa8a";
+  const result = run({ CI_RESULT: "success", MERGE_OID: merge, BRANCH_TIP: merge });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.log, /pr merge --auto --squash/);
   assert.match(
     result.log,
-    /workflow run akquise-checks\.yml --repo mjeker99-collab\/studiojeker-website --ref 56934a07b6209ddf140699fb54165b0de1d7fa8a/,
+    /workflow run akquise-checks\.yml --repo mjeker99-collab\/studiojeker-website --ref feat\/akquise-production-readiness\n/,
   );
-  assert.equal(result.log.includes("--ref 6d007b64348c3a6589bfd6c2e7eb3f57183e7e6c"), false);
+  assert.equal(result.log.includes(`--ref ${merge}`), false);
+});
+
+test("a moved deploy branch does not receive a check for a different commit", () => {
+  const result = run({
+    CI_RESULT: "success",
+    MERGE_OID: "56934a07b6209ddf140699fb54165b0de1d7fa8a",
+    BRANCH_TIP: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /not merge commit/);
+  assert.equal(result.log.includes("workflow run"), false);
 });
 
 test("failed PR CI neither merges nor starts a deploy-branch check", () => {
@@ -112,6 +126,6 @@ test("auto-merge without a merge commit does not dispatch checks", () => {
 test("workflow can dispatch Actions and calls the checked script", () => {
   assert.match(workflow, /actions: write/);
   assert.match(workflow, /studioone-express-automerge\.sh/);
-  assert.match(workflow, /workflow_dispatch|akquise-checks\.yml/);
+  assert.match(workflow, /BASE_REF:/);
   assert.equal(workflow.includes("gh pr merge --auto --squash"), false);
 });
