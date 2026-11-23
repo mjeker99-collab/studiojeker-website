@@ -1,19 +1,19 @@
 import { requireUser } from "@/lib/auth";
+import { mailchimpConfiguration, mailchimpEndpoint } from "@/lib/hub/mailchimp";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     await requireUser();
-    const key = process.env.MAILCHIMP_API_KEY?.trim();
-    const dc = key?.match(/-([a-z]{2,4}\d{1,3})$/i)?.[1];
-    if (!key || !dc) {
+    const cfg = mailchimpConfiguration();
+    if (!cfg.ok) {
       return Response.json({ connected: false, templates: [] }, { headers: { "Cache-Control": "no-store" } });
     }
     const response = await fetch(
-      `https://${dc.toLowerCase()}.api.mailchimp.com/3.0/templates?count=100&fields=templates.id,templates.name,templates.type,templates.active,total_items`,
+      mailchimpEndpoint(cfg.serverPrefix, "/templates?count=100&fields=templates.id,templates.name,templates.type,templates.active,total_items"),
       {
-        headers: { Authorization: `Basic ${Buffer.from(`studioone:${key}`).toString("base64")}` },
+        headers: { Authorization: cfg.authorization },
         signal: AbortSignal.timeout(15000),
         cache: "no-store",
       },

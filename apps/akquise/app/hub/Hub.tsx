@@ -14,6 +14,7 @@ import {
 import MailchimpTemplates from "../newsletter/MailchimpTemplates";
 import NewsletterPreflight from "../newsletter/NewsletterPreflight";
 import StudioLayoutPreview from "../studio/StudioLayoutPreview";
+import MailchimpContactCheck from "./MailchimpContactCheck";
 import SocialConnections from "./SocialConnections";
 import SocialMediaField from "./SocialMediaField";
 import ChatGptIntegration from "./ChatGptIntegration";
@@ -1860,6 +1861,7 @@ export default function Hub({
         <>
           <SocialConnections userId={userId} />
           <ChatGptIntegration />
+          <MailchimpContactCheck />
           <section className="panel padded">
             <h2>Marketing-Verbindungen</h2>
             <p>
