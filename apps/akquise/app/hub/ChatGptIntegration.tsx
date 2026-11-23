@@ -20,6 +20,10 @@ const scopeLabels: Array<{ key: keyof GptScopes; label: string }> = [
   { key: "concepts", label: "Konzepte (lesen)" },
   { key: "content", label: "Redaktionelle Inhalte / Suche (lesen)" },
   {
+    key: "mailchimp",
+    label: "Mailchimp lesen (Audiences, Zählwerte, Kampagnen – standardmässig aus)",
+  },
+  {
     key: "write_drafts",
     label: "Entwürfe speichern (write_drafts – standardmässig aus)",
   },
@@ -112,6 +116,10 @@ export default function ChatGptIntegration() {
             <dd>
               <code>/api/integrations/gpt/openapi</code>
             </dd>
+            <dt>Mailchimp MCP</dt>
+            <dd>
+              <code>/api/integrations/gpt/mcp</code>
+            </dd>
           </dl>
 
           <fieldset disabled={busy}>
@@ -140,6 +148,12 @@ export default function ChatGptIntegration() {
               </label>
             ))}
           </fieldset>
+          {status.scopes.mailchimp && (
+            <p role="note">
+              Mailchimp wird nur gelesen: Audiences, Statuszählwerte und
+              Kampagnen. Keine Adressen, kein Speichern, kein Versand.
+            </p>
+          )}
           {status.scopes.write_drafts && (
             <p role="note">
               Schreibzugriff speichert nur Entwürfe (Status DRAFT). Freigabe,

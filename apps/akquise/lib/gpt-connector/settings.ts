@@ -242,11 +242,25 @@ const scopesSchema = z
     concepts: z.boolean(),
     content: z.boolean(),
     write_drafts: z.boolean(),
+    mailchimp: z.boolean().optional(),
   })
   .strict();
 
+/** Legacy settings payloads omit mailchimp and stay opted out. */
+export function parseGptScopesUpdate(body: unknown): GptScopes {
+  const parsed = scopesSchema.parse(body);
+  return {
+    projects: parsed.projects,
+    campaigns: parsed.campaigns,
+    concepts: parsed.concepts,
+    content: parsed.content,
+    write_drafts: parsed.write_drafts,
+    mailchimp: parsed.mailchimp === true,
+  };
+}
+
 export async function updateGptScopes(userId: string, body: unknown) {
-  const scopes = scopesSchema.parse(body) as GptScopes;
+  const scopes = parseGptScopesUpdate(body);
   return db.$transaction(async (tx) => {
     await ensureActor(tx, userId);
     await ensureSettings(tx);
