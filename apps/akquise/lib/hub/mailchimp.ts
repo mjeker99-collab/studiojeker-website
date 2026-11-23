@@ -4,6 +4,7 @@ import { audit } from "../workflow";
 import { approvedContent, hubActor } from "./workflow";
 import { newsletterHtml } from "./newsletter";
 import { newsletterText } from "./newsletter-template";
+import type { MailchimpErrorClass } from "./mailchimp-report";
 
 type Audience = {
   id: string;
@@ -11,24 +12,71 @@ type Audience = {
   campaign_defaults?: { from_name?: string; from_email?: string };
 };
 
-function config() {
+const SERVER_PREFIX = /^[a-z]{2,4}\d{1,3}$/;
+export const MAILCHIMP_TIMEOUT_MS = 15_000;
+
+export class MailchimpReadError extends PolicyError {
+  constructor(
+    message: string,
+    public errorClass: MailchimpErrorClass,
+    status = 502,
+  ) {
+    super(message, status);
+  }
+}
+
+// The datacenter is the suffix Mailchimp appends to the API key, for this
+// account `us17`. MAILCHIMP_SERVER_PREFIX may repeat that suffix and must
+// never point the same key at another host. The key stays server-side.
+export function mailchimpConfiguration():
+  | { ok: true; serverPrefix: string; authorization: string }
+  | { ok: false; errorClass: "not_configured" | "invalid_configuration" } {
   const key = process.env.MAILCHIMP_API_KEY?.trim() || "";
-  const match = key.match(/-([a-z]{2,4}\d{1,3})$/i);
-  if (!match) throw new PolicyError("Mailchimp-API-Key auf dem Server fehlt oder ist ungültig.", 503);
-  return { key, dc: match[1].toLowerCase() };
+  if (!key) return { ok: false, errorClass: "not_configured" };
+  const suffix = key.match(/-([a-z]{2,4}\d{1,3})$/i)?.[1]?.toLowerCase() || "";
+  const explicit = process.env.MAILCHIMP_SERVER_PREFIX?.trim().toLowerCase() || "";
+  if (!SERVER_PREFIX.test(suffix) || (explicit && explicit !== suffix))
+    return { ok: false, errorClass: "invalid_configuration" };
+  return {
+    ok: true,
+    serverPrefix: suffix,
+    authorization: `Basic ${Buffer.from(`studioone:${key}`).toString("base64")}`,
+  };
+}
+
+function config() {
+  const cfg = mailchimpConfiguration();
+  if (!cfg.ok)
+    throw new PolicyError("Mailchimp-API-Key auf dem Server fehlt oder ist ungültig.", 503);
+  return cfg;
+}
+
+export function mailchimpEndpoint(serverPrefix: string, path: string) {
+  return `https://${serverPrefix}.api.mailchimp.com/3.0${path}`;
+}
+
+function assertReadPath(path: string) {
+  if (
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    path.includes("://") ||
+    path.includes("..") ||
+    /[\s\\]/.test(path)
+  )
+    throw new MailchimpReadError("Mailchimp-Anfrage ist nicht erlaubt.", "http", 403);
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { key, dc } = config();
+  const cfg = config();
   let response: Response;
   try {
-    response = await fetch(`https://${dc}.api.mailchimp.com/3.0${path}`, {
+    response = await fetch(mailchimpEndpoint(cfg.serverPrefix, path), {
       ...init,
       headers: {
-        Authorization: `Basic ${Buffer.from(`studioone:${key}`).toString("base64")}`,
+        Authorization: cfg.authorization,
         "Content-Type": "application/json",
       },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(MAILCHIMP_TIMEOUT_MS),
       cache: "no-store",
     });
   } catch {
@@ -46,15 +94,78 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await response.json()) as T;
 }
 
+function transportClass(error: unknown): "timeout" | "unreachable" {
+  const name = error instanceof Error ? error.name : "";
+  return name === "TimeoutError" || name === "AbortError" ? "timeout" : "unreachable";
+}
+
+/** GET only. Campaign transfer keeps its own write path and is not used here. */
+export async function mailchimpGet<T>(path: string, attempt = 0): Promise<T> {
+  assertReadPath(path);
+  const cfg = mailchimpConfiguration();
+  if (!cfg.ok)
+    throw new MailchimpReadError(
+      cfg.errorClass === "not_configured"
+        ? "Mailchimp-API-Key auf dem Server fehlt oder ist ungültig."
+        : "Mailchimp-Serverpräfix fehlt oder widerspricht dem API-Key.",
+      cfg.errorClass,
+      503,
+    );
+  let response: Response;
+  try {
+    response = await fetch(mailchimpEndpoint(cfg.serverPrefix, path), {
+      method: "GET",
+      headers: { Authorization: cfg.authorization, Accept: "application/json" },
+      signal: AbortSignal.timeout(MAILCHIMP_TIMEOUT_MS),
+      cache: "no-store",
+      redirect: "error",
+    });
+  } catch (error) {
+    const errorClass = transportClass(error);
+    if (errorClass === "unreachable" && attempt < 1) return mailchimpGet<T>(path, attempt + 1);
+    throw new MailchimpReadError(
+      errorClass === "timeout"
+        ? "Mailchimp hat nicht rechtzeitig geantwortet."
+        : "Mailchimp ist derzeit nicht erreichbar.",
+      errorClass,
+    );
+  }
+  if (response.status === 429 && attempt < 1) {
+    const header = Number(response.headers.get("retry-after"));
+    const wait = Number.isFinite(header) && header >= 0 ? Math.min(header * 1000, 1000) : 250;
+    await new Promise((resolve) => setTimeout(resolve, wait));
+    return mailchimpGet<T>(path, attempt + 1);
+  }
+  if (!response.ok) {
+    const errorClass =
+      response.status === 401 || response.status === 403
+        ? "auth"
+        : response.status === 429
+          ? "rate_limited"
+          : "http";
+    throw new MailchimpReadError(
+      errorClass === "auth"
+        ? "Mailchimp hat den API-Key abgelehnt."
+        : `Mailchimp-Anfrage fehlgeschlagen (HTTP ${response.status}).`,
+      errorClass,
+    );
+  }
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new MailchimpReadError("Mailchimp-Antwort war ungültig.", "invalid_response");
+  }
+}
+
 export async function mailchimpAudiences(actor: string) {
   await db.$transaction((tx) => hubActor(tx, actor));
-  if (!process.env.MAILCHIMP_API_KEY) return { connected: false, audiences: [] };
-  const result = await request<{ lists: Audience[] }>(
+  if (!mailchimpConfiguration().ok) return { connected: false, audiences: [] };
+  const result = await mailchimpGet<{ lists?: Audience[] }>(
     "/lists?fields=lists.id,lists.name,lists.campaign_defaults&count=100",
   );
   return {
     connected: true,
-    audiences: result.lists.map(({ id, name }) => ({ id, name })),
+    audiences: (result.lists ?? []).map(({ id, name }) => ({ id, name })),
   };
 }
 
@@ -109,9 +220,9 @@ export async function transferNewsletter(actor: string, id: string, version: num
       await tx.mailchimpTransfer.update({ where: { id: transfer.id }, data: { status: "DRAFT" } });
       await audit(tx, actor, "MAILCHIMP_DRAFT_CREATED_NOT_SENT", id, { version, transferId: transfer.id, remoteId: campaign.id });
     });
-    const { dc } = config();
+    const { serverPrefix } = config();
     return { transferred: true, sent: false, campaignId: campaign.id,
-      url: campaign.web_id ? `https://${dc}.admin.mailchimp.com/campaigns/show/?id=${campaign.web_id}` : null };
+      url: campaign.web_id ? `https://${serverPrefix}.admin.mailchimp.com/campaigns/show/?id=${campaign.web_id}` : null };
   } catch (error) {
     await db.$transaction(async (tx) => {
       await tx.mailchimpTransfer.update({ where: { id: transfer.id }, data: { status: "UNKNOWN" } });

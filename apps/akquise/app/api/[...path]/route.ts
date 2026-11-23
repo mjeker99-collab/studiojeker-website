@@ -82,6 +82,10 @@ import {
   importCustomers,
 } from "@/lib/customers";
 import { mailchimpAudiences } from "@/lib/hub/mailchimp";
+import {
+  mailchimpContactCheck,
+  mailchimpDiagnosis,
+} from "@/lib/hub/mailchimp-readonly";
 import { readSheetContacts } from "@/lib/sheets";
 import {
   begin as beginSocial,
@@ -527,6 +531,14 @@ async function handler(
     if (route === "hub/mailchimp/audiences" && req.method === "GET")
       return NextResponse.json(await mailchimpAudiences(user.id), {
         headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "hub/mailchimp/diagnosis" && req.method === "GET")
+      return NextResponse.json(await mailchimpDiagnosis(user.id), {
+        headers: { "Cache-Control": "no-store, private" },
+      });
+    if (route === "hub/mailchimp/contacts" && req.method === "GET")
+      return NextResponse.json(await mailchimpContactCheck(user.id), {
+        headers: { "Cache-Control": "no-store, private" },
       });
     if (route === "integrations/gpt/status" && req.method === "GET")
       return NextResponse.json(await gptConnectorStatus(user.id), {

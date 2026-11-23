@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { mailchimpConfiguration, mailchimpEndpoint } from "@/lib/hub/mailchimp";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +24,13 @@ export async function POST(request: Request) {
   const recipient = user.email;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient))
     return Response.json({ error: "Benutzerkonto benötigt eine gültige Testadresse." }, { status: 400 });
-  const key = process.env.MAILCHIMP_API_KEY?.trim();
-  const dc = key?.match(/-([a-z]{2,4}\d{1,3})$/i)?.[1];
-  if (!key || !dc) return Response.json({ error: "Mailchimp ist nicht verbunden." }, { status: 503 });
+  const cfg = mailchimpConfiguration();
+  if (!cfg.ok) return Response.json({ error: "Mailchimp ist nicht verbunden." }, { status: 503 });
   try {
-    const response = await fetch(`https://${dc.toLowerCase()}.api.mailchimp.com/3.0/campaigns/${encodeURIComponent(transfer.remoteId)}/actions/test`, {
+    const response = await fetch(mailchimpEndpoint(cfg.serverPrefix, `/campaigns/${encodeURIComponent(transfer.remoteId)}/actions/test`), {
       method: "POST",
       headers: {
-        Authorization: `Basic ${Buffer.from(`studioone:${key}`).toString("base64")}`,
+        Authorization: cfg.authorization,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ test_emails: [recipient], send_type: "html" }),

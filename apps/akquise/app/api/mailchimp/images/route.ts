@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { mailchimpConfiguration, mailchimpEndpoint } from "@/lib/hub/mailchimp";
 
 export const dynamic = "force-dynamic";
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -9,9 +10,8 @@ export async function POST(request: Request) {
     if (request.headers.get("x-rights-confirmed") !== "true") {
       return Response.json({ error: "Nutzungsrechte müssen bestätigt werden." }, { status: 400 });
     }
-    const key = process.env.MAILCHIMP_API_KEY?.trim();
-    const dc = key?.match(/-([a-z]{2,4}\d{1,3})$/i)?.[1];
-    if (!key || !dc) return Response.json({ error: "Mailchimp ist nicht verbunden." }, { status: 503 });
+    const cfg = mailchimpConfiguration();
+    if (!cfg.ok) return Response.json({ error: "Mailchimp ist nicht verbunden." }, { status: 503 });
     const len = Number(request.headers.get("content-length") || "0");
     if (len > MAX_BYTES) return Response.json({ error: "Maximal 8 MB pro Bild." }, { status: 413 });
     const bytes = Buffer.from(await request.arrayBuffer());
@@ -27,10 +27,10 @@ export async function POST(request: Request) {
     try { requestedName = decodeURIComponent(raw); } catch { /* fallback */ }
     const clean = requestedName.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/\.(jpe?g|png|webp)$/i, "").slice(0, 90) || "newsletter";
     const filename = `${clean}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-    const response = await fetch(`https://${dc.toLowerCase()}.api.mailchimp.com/3.0/file-manager/files`, {
+    const response = await fetch(mailchimpEndpoint(cfg.serverPrefix, "/file-manager/files"), {
       method: "POST",
       headers: {
-        Authorization: `Basic ${Buffer.from(`studioone:${key}`).toString("base64")}`,
+        Authorization: cfg.authorization,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ name: filename, file_data: bytes.toString("base64") }),
