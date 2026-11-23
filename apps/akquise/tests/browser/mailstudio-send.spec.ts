@@ -221,6 +221,32 @@ for (const width of [390, 768, 1024]) {
   });
 }
 
+test("a mail queued elsewhere is excluded from the shared dispatch", async ({
+  page,
+}) => {
+  await page.clock.install();
+  const state = await setup(page);
+  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page
+    .getByRole("button", { name: "3 Mails gemeinsam freigeben →", exact: true })
+    .click();
+  await checkout(page);
+  state.markExternallyQueued();
+  await page.clock.fastForward(31000);
+  const approval = page.getByRole("region", { name: "Versandfreigabe" });
+  await expect(
+    approval.getByRole("button", { name: "2 Mails einplanen", exact: true }),
+  ).toBeVisible();
+  await approval.getByRole("checkbox", { name: /Ich gebe die/ }).check();
+  await approval
+    .getByRole("button", { name: "2 Mails einplanen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Versand verfolgen", exact: true }),
+  ).toBeVisible();
+  expect(state.sent).toEqual(["d1", "d2"]);
+});
+
 for (const width of [390, 1024]) {
   test(`all prepared mails can be planned with one approval at ${width}px`, async ({
     page,
