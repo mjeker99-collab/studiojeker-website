@@ -142,6 +142,9 @@
     return "Nicht gemerkt. Die Arbeit bleibt nur in diesem offenen Fenster.";
   }
   function save() {
+    // Keep the exact working step and preview pane, including in-page changes.
+    // Opening the overview must retain the previous task.
+    if (state.page !== "home") markResume();
     const status = document.getElementById("storage-status");
     if (state.storageBlocked) {
       state.persistent = false;
