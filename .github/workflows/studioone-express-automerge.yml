@@ -25,6 +25,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: bash .github/scripts/studioone-express-automerge.sh
