@@ -17,8 +17,9 @@ function parseScopes(raw: unknown): GptScopes {
     campaigns: o.campaigns !== false,
     concepts: o.concepts !== false,
     content: o.content !== false,
-    // Opt-in only — existing read-only rows without this key stay read-only.
+    // Opt-in only — existing rows without these keys stay disabled.
     write_drafts: o.write_drafts === true,
+    mailchimp: o.mailchimp === true,
   };
 }
 

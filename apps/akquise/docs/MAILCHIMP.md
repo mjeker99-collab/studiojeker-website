@@ -36,3 +36,9 @@ Diese Schritte sind erst nach Merge und Deploy sinnvoll. In diesem Branch wurden
 6. Keine Masterliste, keinen Google-Sheet-Tab und keinen Versand als Teil dieser Prüfung verändern.
 
 Ohne angemeldete Sitzung antwortet StudioONE mit 401. Ein erfolgreicher HTTP-Code allein beweist nicht, dass Kontakte übernommen wurden; `persisted` muss `false` bleiben.
+
+## GPT-Lesezugriff
+
+ChatGPT liest Audiences, Statuszählwerte und Kampagnen über den bestehenden Read-Bearer und den Schalter `mailchimp`. Der Schalter ist standardmässig aus. Der Server verwendet `MAILCHIMP_API_KEY` nur mit GET. Die Antwort ist ein Live-Stand mit Zeitpunkt, Quelle `mailchimp`, Fehler, Paging und bereinigten Feldern. Kontakte werden nicht zurückgegeben, nichts wird gespeichert oder versendet.
+
+Der bisherige Connector-Katalog ist das OpenAPI-Dokument. ChatGPT sieht `readMailchimp` erst nach erneutem Import. Ein app-gestützter MCP-Katalog existierte nicht. `POST /api/integrations/gpt/mcp` stellt das Werkzeug `read_mailchimp` bereit und verlangt die Anmeldung auch für `initialize` und `tools/list`. Tokens in der URL werden abgelehnt. Die konkrete Einrichtung steht in `CHATGPT_CONNECTOR.md`. Dieser Branch ist nicht gemergt und nicht deployt. Eine Live-Abfrage gegen das echte Mailchimp-Konto ist damit nicht ausgeführt.

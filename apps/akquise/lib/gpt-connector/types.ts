@@ -18,6 +18,8 @@ export type GptScopes = {
   content: boolean;
   /** Opt-in. Missing/false keeps the connector read-only. */
   write_drafts: boolean;
+  /** Opt-in live Mailchimp read. Missing/false exposes no audience or campaign data. */
+  mailchimp: boolean;
 };
 
 export const defaultScopes = (): GptScopes => ({
@@ -26,6 +28,7 @@ export const defaultScopes = (): GptScopes => ({
   concepts: true,
   content: true,
   write_drafts: false,
+  mailchimp: false,
 });
 
 export type GptConnectorStatus = {
