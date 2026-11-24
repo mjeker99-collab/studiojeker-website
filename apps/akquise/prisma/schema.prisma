@@ -413,6 +413,7 @@ model StudioOrganization {
   campaigns     Campaign[]
   contents      MarketingContent[]
   customers     Customer[]
+  leadResearchJobs LeadResearchJob[]
 }
 
 // Internal customer record. Customers are never User accounts and cannot sign in.
@@ -707,4 +708,23 @@ model GptIdempotency {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// Additive lead-research jobs. Existing contacts, drafts and deliveries are untouched.
+// The JSON state is the checkpoint. Lease columns keep a single worker.
+model LeadResearchJob {
+  id             String             @id
+  organizationId String             @default("studiojeker")
+  organization   StudioOrganization @relation(fields: [organizationId], references: [id])
+  idempotencyKey String             @unique
+  dayKey         String
+  status         String             @default("QUEUED")
+  revision       Int                @default(1)
+  leaseOwner     String             @default("")
+  leaseUntil     DateTime?
+  state          Json
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId, dayKey])
 }
