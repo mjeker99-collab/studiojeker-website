@@ -14,6 +14,7 @@ HTTP-Schnittstelle unter `/api/integrations/gpt/*` für ChatGPT Custom Actions:
 | GET | `/api/integrations/gpt/campaigns/:id` | Detail inkl. redaktioneller Entwürfe |
 | GET | `/api/integrations/gpt/content/search?q=` | Suche über freigegebene Inhalte |
 | GET | `/api/integrations/gpt/openapi` | OpenAPI 3.1 für Custom Actions |
+| GET | `/api/integrations/gpt/mailchimp` | Live Mailchimp: Audiences, Statuszählwerte, Kampagnen. Scope `mailchimp`, standardmässig aus. Keine Kontakte, kein Versand |
 
 ### Kontrolliertes Schreiben (opt-in)
 
@@ -152,3 +153,37 @@ CHATGPT_CONNECTOR_WRITE_TOKEN=  # draft writes only; leave empty to keep writes 
 ```
 
 `MARTIN_EMAIL` wird als Audit-/Actor-Konto für Connector-Schreibvorgänge genutzt.
+
+## 7. Mailchimp live lesen
+
+Der bestehende StudioONE-Connector ist eine Custom-Actions-Schnittstelle. Der Werkzeugkatalog ist das OpenAPI-Dokument unter `/api/integrations/gpt/openapi`. Eine neue Operation erscheint in ChatGPT erst nach erneutem Import. Im Repository gibt es kein App-Manifest und keinen MCP-`tools/list`-Katalog, den ein app-gestützter ChatGPT-Connector von selbst erweitern könnte.
+
+Deshalb gibt es zwei Lesepfade, beide nur mit dem vorhandenen Read-Bearer `CHATGPT_CONNECTOR_TOKEN` und dem zusätzlichen Serverbereich `mailchimp`. Der Bereich ist standardmässig aus. Der Schreib-Token gilt hier nicht. `MAILCHIMP_API_KEY` bleibt auf dem Server und wird nur für GET verwendet.
+
+| Pfad | Verwendung |
+| --- | --- |
+| `GET /api/integrations/gpt/mailchimp` | Custom Actions nach erneutem OpenAPI-Import |
+| `POST /api/integrations/gpt/mcp` | MCP Streamable HTTP, Werkzeug `read_mailchimp` |
+
+Die Antwort enthält `retrievedAt`, `source: mailchimp`, `error`, `paging`, Audiences und Kampagnen. Adressen, Schlüssel und `Basic` werden nicht zurückgegeben. `sent` und `persisted` bleiben falsch. Seitengrösse höchstens 20. Ein Token in der URL wird mit 401 abgelehnt und nicht gelesen.
+
+`initialize` und `tools/list` verlangen dieselbe Anmeldung. Ohne Bearer kommt keine Werkzeugliste. GET öffnet keinen Ereignisstrom.
+
+### Was ChatGPT heute tatsächlich kann
+
+Geprüft an den OpenAI-Seiten «Add custom MCP server» und «Authentication», Stand 23. November 2026:
+
+- Custom Actions übernehmen den bestehenden Bearer. Dafür OpenAPI neu importieren und in StudioONE **Mailchimp lesen** einschalten. Den Token nicht ins Plugin und nicht in die URL legen.
+- Die Web-Oberfläche für eigene MCP-Plugins bietet OAuth, keine Anmeldung oder gemischt an. Gemischt heisst: `initialize` und `tools/list` ohne Anmeldung. Das lehnt dieser Endpunkt ab.
+- Dieselbe Authentifizierungsseite sagt, ChatGPT könne keinen eigenen API-Key senden. Ein OAuth-Server ist in dieser Änderung nicht enthalten. Diesen Endpunkt deshalb nicht öffentlich schalten, nur damit «Scan Tools» ohne Anmeldung funktioniert.
+- Ein MCP-Client, der bei jedem Aufruf `Authorization: Bearer` mit dem Read-Token sendet, kann den Endpunkt nutzen. Nach einem später freigegebenen Deploy wäre die Adresse `https://studiojeker-akquise.onrender.com/api/integrations/gpt/mcp`. Sie ist mit diesem Branch nicht live.
+- Neue MCP-Werkzeuge übernimmt ChatGPT laut derselben Anleitung erst nach **Refresh** in den App-Einstellungen und einem neuen Gespräch.
+
+### Einrichtung, erst nach separater Freigabe für Merge und Deploy
+
+1. In Render nur bestätigen, dass `MAILCHIMP_API_KEY` und `CHATGPT_CONNECTOR_TOKEN` als Namen existieren. Werte nicht öffnen, kopieren oder protokollieren.
+2. In StudioONE unter **KI-Integrationen → ChatGPT** den Schalter **Mailchimp lesen** aktivieren. Ohne diesen Schalter antwortet die Abfrage mit 403.
+3. Für Custom Actions das OpenAPI-Dokument neu importieren. Authentication bleibt der bisherige Read-Bearer.
+4. Für einen MCP-Client die Adresse ohne Query-Parameter eintragen und den Read-Token nur als Authorization-Header hinterlegen.
+5. Eine Leseprobe ausführen. Die Antwort nennt Zählwerte und Kampagnenmetadaten, keine Adressen, und `sent` bleibt falsch.
+6. Logs dürfen den Key, `Basic` und E-Mail-Adressen nicht enthalten.

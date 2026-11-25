@@ -30,9 +30,9 @@ export function gptConnectorOpenApi() {
     openapi: "3.1.0",
     info: {
       title: "StudioONE ChatGPT Connector",
-      version: "1.3.0",
+      version: "1.4.0",
       description:
-        "Read access to explicitly shared StudioONE projects, campaigns, concepts and editorial drafts. Optional controlled write access for editorial drafts only (no publish, send, delete or CRM). Write endpoints require CHATGPT_CONNECTOR_WRITE_TOKEN, write_drafts scope, and explicit write grants. Tokens are never embedded in this document.",
+        "Read access to explicitly shared StudioONE projects, campaigns, concepts and editorial drafts. Optional live Mailchimp read (audiences, status counts, campaigns) requires the mailchimp scope and never returns contacts or sends mail. Optional controlled write access for editorial drafts only (no publish, send, delete or CRM). Write endpoints require CHATGPT_CONNECTOR_WRITE_TOKEN, write_drafts scope, and explicit write grants. Tokens are never embedded in this document.",
     },
     servers: [{ url: server }],
     paths: {
@@ -221,6 +221,24 @@ export function gptConnectorOpenApi() {
             "200": jsonObject,
             ...errorResponses,
           },
+        },
+      },
+      "/api/integrations/gpt/mailchimp": {
+        get: {
+          operationId: "readMailchimp",
+          summary:
+            "Read live Mailchimp audiences, status counts and campaigns. No contacts, no writes, no sending.",
+          description:
+            "Requires the read bearer and the opt-in mailchimp scope. Uses the server-side Mailchimp key with GET only. Results include retrievedAt, source, error, paging and sanitized audience and campaign fields.",
+          security: [{ connectorBearer: [] }],
+          parameters: [
+            { name: "audienceOffset", in: "query", required: false, schema: { type: "integer", minimum: 0, maximum: 10000 } },
+            { name: "audienceLimit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 20 } },
+            { name: "campaignOffset", in: "query", required: false, schema: { type: "integer", minimum: 0, maximum: 10000 } },
+            { name: "campaignLimit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 20 } },
+            { name: "audienceId", in: "query", required: false, schema: { type: "string", pattern: "^[A-Za-z0-9]{1,32}$" } },
+          ],
+          responses: { "200": jsonObject, ...errorResponses },
         },
       },
       "/api/integrations/gpt/drafts": {

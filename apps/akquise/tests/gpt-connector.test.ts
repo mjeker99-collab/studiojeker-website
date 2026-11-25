@@ -103,6 +103,7 @@ test("OpenAPI describes read and controlled draft write paths", () => {
     concepts: true,
     content: true,
     write_drafts: false,
+    mailchimp: false,
   });
 });
 
@@ -119,6 +120,9 @@ test("write_drafts is opt-in and legacy scopes stay read-only", () => {
     true,
   );
   assert.equal(parseScopes({ write_drafts: "yes" }).write_drafts, false);
+  assert.equal(parseScopes({ projects: true }).mailchimp, false);
+  assert.equal(parseScopes({ mailchimp: true }).mailchimp, true);
+  assert.equal(parseScopes({ mailchimp: "yes" }).mailchimp, false);
 });
 
 test("draft input allowlist rejects forbidden fields and status changes", () => {
