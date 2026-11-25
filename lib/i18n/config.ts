@@ -91,6 +91,11 @@ export function getAlternateLocalePath(
 ): string {
   const normalized = normalizePath(pathname);
 
+  // The German KMU campaign has no standalone English landing page.
+  if (normalized === "/kmu-videos" && targetLocale === "en") {
+    return "/en/services/business-communication/";
+  }
+
   for (const pair of translatedPathPairs) {
     if (normalized === pair.de || normalized === pair.en) {
       return localizePathname(
