@@ -1,5 +1,6 @@
 import type { Locale } from "@/types/i18n";
 import type { ServicePageContent } from "@/types/service-page";
+import { KmuVideosTeaser } from "@/components/kmu-videos/KmuVideosTeaser";
 import { AboutSection } from "@/components/home/AboutSection";
 import { ClientsSection } from "@/components/home/ClientsSection";
 import { FinalCtaSection } from "@/components/home/FinalCtaSection";
@@ -40,6 +41,9 @@ export function ServicePage({ content, locale }: ServicePageProps) {
         content={content.solutions}
         titleId={`${titleBase}-solutions`}
       />
+      {locale === "de" && content.slug === "business-communication" && (
+        <KmuVideosTeaser />
+      )}
       <ShowreelSection content={content.showreel} />
       <ServiceMediaSections
         label={content.media.label}

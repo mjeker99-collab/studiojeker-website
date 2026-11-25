@@ -152,5 +152,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
+  const kmuVideosDe = absolute("/kmu-videos/");
+  entries.push({
+    url: kmuVideosDe,
+    changeFrequency: "monthly",
+    priority: 0.7,
+    alternates: {
+      languages: { "de-CH": kmuVideosDe, "x-default": kmuVideosDe },
+    },
+  });
+
   return entries;
 }
