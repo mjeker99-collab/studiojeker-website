@@ -38,10 +38,20 @@ const empty: LeadResearchView = {
   exportReady: false,
 };
 
+function isView(value: unknown): value is LeadResearchView {
+  if (!value || typeof value !== "object") return false;
+  const view = value as Partial<LeadResearchView>;
+  return typeof view.status === "string" && !!view.metrics && typeof view.metrics === "object";
+}
+
 async function readJson(response: Response): Promise<LeadResearchView> {
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Die Anfrage ist fehlgeschlagen.");
-  return body as LeadResearchView;
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = body && typeof body === "object" && "error" in body ? String(body.error) : "";
+    throw new Error(message || "Die Anfrage ist fehlgeschlagen.");
+  }
+  if (!isView(body)) throw new Error("Status unvollständig.");
+  return body;
 }
 
 export function LeadResearchPanel({
@@ -77,7 +87,9 @@ export function LeadResearchPanel({
         setEmployeeMin(next.employeeMin);
         setEmployeeMax(next.employeeMax);
       } catch (error) {
-        if (!stop) setMessage(error instanceof Error ? error.message : "Status nicht geladen.");
+        if (stop) return;
+        const message = error instanceof Error ? error.message : "";
+        if (message && message !== "Status unvollständig.") setMessage(message);
       }
     }
     void load();
@@ -183,7 +195,7 @@ export function LeadResearchPanel({
       </p>
       <div className="lead-research-grid">
         <label>
-          Region
+          Suchregion
           <input value={region} onChange={(event) => setRegion(event.target.value)} autoComplete="off" />
         </label>
         <label>
