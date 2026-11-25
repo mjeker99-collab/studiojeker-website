@@ -16,6 +16,7 @@ import MailSchedule from "./MailSchedule";
 import GoogleReconnectNotice from "./GoogleReconnectNotice";
 import MailStudio from "./MailStudio";
 import MailAssistant from "./MailAssistant";
+import { LeadResearchPanel } from "./LeadResearchPanel";
 import { contactStage, contactStageLabels } from "../lib/contact-stage";
 import "./acquisition.css";
 import Hub from "./hub/Hub";
@@ -841,6 +842,7 @@ export default function App() {
                     Liste übernehmen.
                   </p>
                 </section>
+                <LeadResearchPanel />
                 <MailAssistant
                   mode="RESEARCH"
                   expanded

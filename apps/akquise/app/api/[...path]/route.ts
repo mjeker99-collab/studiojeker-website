@@ -88,6 +88,15 @@ import {
 } from "@/lib/hub/mailchimp-readonly";
 import { readSheetContacts } from "@/lib/sheets";
 import {
+  leadResearchAbort,
+  leadResearchExport,
+  leadResearchPause,
+  leadResearchResume,
+  leadResearchStart,
+  leadResearchStatus,
+  leadResearchTick,
+} from "@/lib/lead-research/service";
+import {
   begin as beginSocial,
   disconnect as disconnectSocial,
   status as socialStatus,
@@ -554,6 +563,21 @@ async function handler(
     }
     if (route === "mail-assistant/history" && req.method === "GET")
       return NextResponse.json(await mailAssistantHistory(user.id));
+    if (route === "lead-research/status" && req.method === "GET")
+      return NextResponse.json(await leadResearchStatus(), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    if (route === "lead-research/export" && req.method === "GET") {
+      const format = req.nextUrl.searchParams.get("format") === "csv" ? "csv" : "xlsx";
+      const file = await leadResearchExport(format);
+      return new NextResponse(new Uint8Array(file.body), {
+        headers: {
+          "Content-Type": file.type,
+          "Content-Disposition": `attachment; filename="${file.filename}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
     if (route === "state" && req.method === "GET") {
       const [contacts, drafts, deliveries, suppressions, audits, users] =
         await Promise.all([
@@ -642,6 +666,16 @@ async function handler(
     if (Number(req.headers.get("content-length")) > maxJsonBytes)
       throw new PolicyError("Anfrage zu gross.", 413);
     const body: unknown = await jsonBody(req, maxJsonBytes);
+    if (route === "lead-research/start")
+      return NextResponse.json(await leadResearchStart(user.id, body && typeof body === "object" ? body : {}));
+    if (route === "lead-research/pause")
+      return NextResponse.json(await leadResearchPause(user.id));
+    if (route === "lead-research/resume")
+      return NextResponse.json(await leadResearchResume(user.id));
+    if (route === "lead-research/abort")
+      return NextResponse.json(await leadResearchAbort(user.id));
+    if (route === "lead-research/tick")
+      return NextResponse.json(await leadResearchTick(user.id));
     if (path[0] === "websites")
       return NextResponse.json(await websiteMutation(user.id, path, body), {
         headers: { "Cache-Control": "no-store" },
