@@ -1,0 +1,60 @@
+.section {
+  padding-block: clamp(3rem, 7vw, 7rem);
+}
+
+.heading {
+  max-width: 24ch;
+  margin: 0 0 1rem;
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  line-height: 1.15;
+}
+
+.teaser {
+  border-block: 1px solid #e5e5e5;
+}
+
+.teaser p,
+.note {
+  max-width: 65ch;
+}
+
+.packages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.75rem, 5vw, 5rem);
+  margin-block: 2rem;
+}
+
+.package {
+  border-top: 3px solid var(--color-cyan);
+  padding-top: 1.3rem;
+}
+
+.package h3,
+.price {
+  margin: 0 0 .5rem;
+}
+
+.price strong {
+  font-size: 1.35rem;
+}
+
+.package ul {
+  padding-inline-start: 1.2rem;
+}
+
+.package li + li {
+  margin-top: .5rem;
+}
+
+.form {
+  max-width: 42rem;
+  margin-top: 2rem;
+  scroll-margin-top: 8rem;
+}
+
+@media (max-width: 680px) {
+  .packages {
+    grid-template-columns: 1fr;
+  }
+}

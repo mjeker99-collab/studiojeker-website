@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { VisibilityArticle } from "@/components/visibility/VisibilityArticle";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { KmuVideosTeaser } from "@/components/kmu-videos/KmuVideosTeaser";
 import { HomePage } from "@/components/home/HomePage";
 import { getResolvedHomepageContent } from "@/lib/content/homepage-sanity";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -23,6 +24,7 @@ export default async function GermanHomePage() {
   return (
     <SiteChrome locale="de">
       <HomePage locale="de" content={content} />
+      <KmuVideosTeaser />
       <VisibilityArticle teaser />
     </SiteChrome>
   );
