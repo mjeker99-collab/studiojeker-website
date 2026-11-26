@@ -1056,7 +1056,553 @@ export default function App() {
                           </small>
                           {d.error && <small>{d.error}</small>}
                         </td>
-         …5484 tokens truncated…                 setRead(false);
+                        <td>{date(d.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!data.deliveries.length && (
+                <p className="empty">Keine Nachrichten. {mailLabel}.</p>
+              )}
+            </details>
+          )}
+          {tab === "Einstellungen" && (
+            <>
+              <div className="settings-grid">
+                <section className="panel padded">
+                  <h2>Verbindungen & Sicherheit</h2>
+                  <dl>
+                    <dt>Metanet SMTP</dt>
+                    <dd>jovinus.metanet.ch</dd>
+                    <dt>Absender</dt>
+                    <dd>njeker@studiojeker.ch</dd>
+                    <dt>Port / Verschlüsselung</dt>
+                    <dd>
+                      {data.smtpPort
+                        ? `${data.smtpPort} / ${data.smtpSecure ? "TLS" : "STARTTLS"}`
+                        : "Noch durch Metanet zu bestätigen"}
+                    </dd>
+                    <dt>Externer Versand</dt>
+                    <dd>
+                      {data.externalSending ? (
+                        mailLabel
+                      ) : (
+                        <Badge value="BLOCKED" />
+                      )}
+                    </dd>
+                    <dt>IMAP</dt>
+                    <dd>Header-Zuordnung vorbereitet · nicht verbunden</dd>
+                    <dt>Google Sheets</dt>
+                    <dd>Manueller, lesender Import</dd>
+                  </dl>
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      action(
+                        () => post("contacts/sheets", {}),
+                        "Sheets-Import abgeschlossen; neue Kontakte bleiben ungeprüft.",
+                      )
+                    }
+                  >
+                    Google Sheets synchronisieren ↗
+                  </button>
+                  <p className="muted">
+                    Bestehende Dubletten werden übersprungen. Keine
+                    Statusübernahme, keine Versandwarteschlange.
+                  </p>
+                  <h3>Interne Testmail</h3>
+                  <p>
+                    Sendet einen neutralen Verbindungstest ausschliesslich an
+                    njeker@studiojeker.ch. Es wird kein Akquisekontakt
+                    freigegeben.
+                  </p>
+                  <button
+                    disabled={
+                      busy || data.mailMode !== "test" || !data.externalSending
+                    }
+                    onClick={() =>
+                      action(async () => {
+                        const result = await post("smtp/test", {
+                          confirmed: true,
+                          requestId: crypto.randomUUID(),
+                        });
+                        return result.message;
+                      })
+                    }
+                  >
+                    Testmail an njeker@studiojeker.ch senden
+                  </button>
+                  <p className="muted">
+                    Benötigt den internen SMTP-Testmodus. Höchstens ein Test pro
+                    Minute.
+                  </p>
+                  <h3>Berechtigte Konten</h3>
+                  {data.users.map((u) => (
+                    <p key={u.id}>{u.name} · Verwaltung & Freigabe</p>
+                  ))}
+                </section>
+                <section className="panel padded">
+                  <h2>Zentrale Sperrliste</h2>
+                  <p className="muted">
+                    Widersprüche sperren alle Entwürfe dieser Adresse sofort.
+                  </p>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const f = new FormData(e.currentTarget);
+                      action(
+                        () =>
+                          post("suppression", {
+                            email: f.get("email"),
+                            reason: f.get("reason"),
+                          }),
+                        "Adresse gesperrt.",
+                      );
+                    }}
+                  >
+                    <label>
+                      E-Mail
+                      <input name="email" type="email" required />
+                    </label>
+                    <label>
+                      Grund
+                      <input name="reason" minLength={3} required />
+                    </label>
+                    <button disabled={busy}>Adresse sperren</button>
+                  </form>
+                  {data.suppressions.map((s) => (
+                    <div className="suppression" key={s.email}>
+                      <strong>{s.email}</strong>
+                      <p>{s.reason}</p>
+                    </div>
+                  ))}
+                </section>
+              </div>
+              <section className="panel">
+                <div className="section-head">
+                  <h2>Audit-Protokoll</h2>
+                  <span>Letzte 100 Einträge</span>
+                </div>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Aktion</th>
+                        <th>Benutzer</th>
+                        <th>Zeitpunkt</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.audits.map((a) => (
+                        <tr key={a.id}>
+                          <td>{a.action}</td>
+                          <td>{a.user.name}</td>
+                          <td>{date(a.createdAt)}</td>
+                          <td className="mono">{JSON.stringify(a.detail)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
+          <footer>
+            STUDIOJEKER · WE CREATE VISIBILITY.{" "}
+            <span>StudioONE V1 / intern</span>
+          </footer>
+        </main>
+      </div>
+      {showContact && (
+        <div className="modal-backdrop">
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contact-title"
+          >
+            <div className="section-head">
+              <h2 id="contact-title">
+                {contact ? "Kontakt bearbeiten" : "Kontakt erfassen"}
+              </h2>
+              <button
+                className="quiet"
+                aria-label="Schliessen"
+                onClick={() => setShowContact(false)}
+              >
+                ✕
+              </button>
+            </div>
+            {contact && (
+              <details className="panel">
+                <summary>Bisherige Mails & Kontaktaktionen</summary>
+                {data.drafts
+                  .filter((d) => d.contactId === contact.id)
+                  .map((d) => (
+                    <p key={d.id}>
+                      {d.versions[0]?.subject} ·{" "}
+                      {data.deliveries
+                        .filter((delivery) => delivery.draftId === d.id)
+                        .map(
+                          (delivery) =>
+                            `${labels[delivery.status] || delivery.status} · ${date(delivery.createdAt)}`,
+                        )
+                        .join(" · ") || "Entwurf"}
+                    </p>
+                  ))}
+                {!data.drafts.some((d) => d.contactId === contact.id) && (
+                  <p>Noch keine Mails vorhanden.</p>
+                )}
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => archive(contact)}
+                  >
+                    {contact.archivedAt
+                      ? "Kontakt wiederherstellen"
+                      : "Kontakt archivieren"}
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={
+                      busy ||
+                      !contact.email ||
+                      contact.status === "DO_NOT_CONTACT"
+                    }
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `${contact.email} nicht mehr kontaktieren? Weitere Akquise-Mails an diese Adresse werden gesperrt.`,
+                        )
+                      )
+                        return;
+                      void action(async () => {
+                        await post("suppression", {
+                          email: contact.email,
+                          reason:
+                            "Im Kontakt ausdrücklich vom Versand ausgeschlossen",
+                        });
+                        setShowContact(false);
+                      }, "Kontakt vom Versand ausgeschlossen.");
+                    }}
+                  >
+                    Nicht mehr kontaktieren
+                  </button>
+                  <button
+                    className="danger"
+                    disabled={busy}
+                    onClick={() => removeContact(contact)}
+                  >
+                    Kontakt löschen
+                  </button>
+                </div>
+              </details>
+            )}
+            {contact && (
+              <ContactReply
+                key={contact.id + ":" + contact.revision}
+                contact={contact}
+                busy={busy}
+                save={(body) =>
+                  action(async () => {
+                    await post("contacts/" + contact.id + "/reply", body);
+                    setShowContact(false);
+                  }, "Antwort gespeichert. Weitere Akquise-Mails an diese Adresse sind gestoppt.")
+                }
+              />
+            )}
+            <form onSubmit={saveContact}>
+              <div className="form-grid">
+                {(
+                  [
+                    ["organisation", "Organisation"],
+                    ["industry", "Branche"],
+                    ["region", "Ort / Region"],
+                    ["firstName", "Vorname"],
+                    ["lastName", "Nachname"],
+                    ["position", "Aktuelle Funktion"],
+                    ["email", "Geschäftliche E-Mail-Adresse"],
+                    ["website", "Website"],
+                    ["sourceUrl", "Quellen-URL"],
+                    ["verifiedAt", "Letzte Verifikation"],
+                    ["service", "Empfohlene Dienstleistung"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      type={
+                        key === "email"
+                          ? "email"
+                          : key === "verifiedAt"
+                            ? "date"
+                            : ["website", "sourceUrl"].includes(key)
+                              ? "url"
+                              : "text"
+                      }
+                      value={form[key]}
+                      required={[
+                        "organisation",
+                        "firstName",
+                        "lastName",
+                      ].includes(key)}
+                      onChange={(e) =>
+                        setForm({ ...form, [key]: e.target.value })
+                      }
+                    />
+                  </label>
+                ))}
+                <label>
+                  Vertrauensstatus
+                  <select
+                    value={form.confidence}
+                    onChange={(e) =>
+                      setForm({ ...form, confidence: e.target.value })
+                    }
+                  >
+                    <option value="UNCONFIRMED">Unbestätigt</option>
+                    <option value="ESTIMATED">Geschätzt</option>
+                    <option value="GENERAL">Allgemeine Adresse</option>
+                    <option value="VERIFIED">
+                      Persönliche Adresse verifiziert
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Rechtliche Kontaktkategorie
+                  <select
+                    value={form.legalCategory}
+                    onChange={(e) =>
+                      setForm({ ...form, legalCategory: e.target.value })
+                    }
+                  >
+                    <option value="UNASSESSED">Ungeprüft</option>
+                    <option value="CONSENT_DOCUMENTED">
+                      Einwilligung dokumentiert
+                    </option>
+                    <option value="EXISTING_RELATIONSHIP">
+                      Bestehende Beziehung
+                    </option>
+                    <option value="OTHER_REVIEW_REQUIRED">
+                      Separate Prüfung erforderlich
+                    </option>
+                    <option value="PUBLIC_AUTHORITY">
+                      Öffentlicher Auftraggeber
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  Verantwortlich
+                  <select
+                    value={form.owner}
+                    onChange={(e) =>
+                      setForm({ ...form, owner: e.target.value })
+                    }
+                  >
+                    <option value="">Nicht zugewiesen</option>
+                    {data.users.map((u) => (
+                      <option key={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label>
+                Dokumentierter Anknüpfungspunkt
+                <textarea
+                  rows={3}
+                  value={form.hook}
+                  onChange={(e) => setForm({ ...form, hook: e.target.value })}
+                />
+              </label>
+              <label>
+                Interne Notizen
+                <textarea
+                  rows={2}
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </label>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={form.publicAuthority}
+                  onChange={(e) =>
+                    setForm({ ...form, publicAuthority: e.target.checked })
+                  }
+                />
+                Öffentlicher Auftraggeber · beschaffungsrechtliche Prüfung
+                erforderlich
+              </label>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={form.newsletterConsent}
+                  onChange={(e) =>
+                    setForm({ ...form, newsletterConsent: e.target.checked })
+                  }
+                />
+                Separate Newsletter-Einwilligung dokumentiert
+              </label>
+              <label>
+                Nachweis der Newsletter-Einwilligung
+                <input
+                  value={form.newsletterEvidence}
+                  onChange={(e) =>
+                    setForm({ ...form, newsletterEvidence: e.target.value })
+                  }
+                />
+              </label>
+              <p className="warning">
+                Jede Kontaktänderung macht bestehende Freigaben und die
+                rechtliche Prüfung ungültig.
+              </p>
+              <div className="actions">
+                <button disabled={busy}>Kontakt speichern</button>
+                {contact && (
+                  <button
+                    className="secondary"
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        await post("drafts", { contactId: contact.id });
+                        setShowContact(false);
+                        setMailContactIds([contact.id]);
+                        setMailDraftIds([]);
+                        setTab("Mail-Studio");
+                      }, "Lokaler Entwurf erstellt.")
+                    }
+                  >
+                    Entwurf vorbereiten ↗
+                  </button>
+                )}
+              </div>
+            </form>
+            {contact && (
+              <details className="legal">
+                <summary>Weitere Versandangaben</summary>
+                <p>
+                  Eine publizierte Geschäftsadresse ist keine Werbeeinwilligung.
+                  Die Kategorie allein erteilt keine Freigabe.
+                </p>
+                <p>
+                  Letzte Prüfung:{" "}
+                  {contact.legalReviews[0]
+                    ? contact.legalReviews[0].allowed
+                      ? "Zulässig"
+                      : "Nicht zulässig"
+                    : "Ausstehend"}
+                </p>
+                <label>
+                  Rechtsgrundlage und Nachweis
+                  <textarea
+                    minLength={15}
+                    rows={3}
+                    value={rationale}
+                    onChange={(e) => setRationale(e.target.value)}
+                  />
+                </label>
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={procurement}
+                    onChange={(e) => setProcurement(e.target.checked)}
+                  />
+                  Beschaffungsrecht separat geprüft
+                </label>
+                <div className="actions">
+                  <button
+                    disabled={busy || rationale.trim().length < 15}
+                    onClick={() =>
+                      action(async () => {
+                        await post("legal", {
+                          contactId: contact.id,
+                          revision: contact.revision,
+                          allowed: true,
+                          rationale,
+                          procurementReviewed: procurement,
+                        });
+                        setShowContact(false);
+                      }, "Rechtliche Prüfung dokumentiert.")
+                    }
+                  >
+                    Zulässigkeit dokumentieren
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={busy || rationale.trim().length < 15}
+                    onClick={() =>
+                      action(async () => {
+                        await post("legal", {
+                          contactId: contact.id,
+                          revision: contact.revision,
+                          allowed: false,
+                          rationale,
+                          procurementReviewed: procurement,
+                        });
+                        setShowContact(false);
+                      })
+                    }
+                  >
+                    Nicht zulässig
+                  </button>
+                </div>
+              </details>
+            )}
+            {error && (
+              <p role="alert" className="error">
+                {error}
+              </p>
+            )}
+          </section>
+        </div>
+      )}
+      {draft && (
+        <div className="modal-backdrop">
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="draft-title"
+          >
+            <div className="section-head">
+              <h2 id="draft-title">Nachricht prüfen · Version {version}</h2>
+              <button
+                className="quiet"
+                aria-label="Schliessen"
+                onClick={() => setDraft(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="muted">
+              {
+                data.contacts.find((c) => c.id === draft.contactId)
+                  ?.organisation
+              }{" "}
+              · Absender: Nora Jeker, njeker@studiojeker.ch
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                action(async () => {
+                  await post("drafts/" + draft.id, { version, ...message });
+                  setDraft(null);
+                }, "Neue Version gespeichert. Bisherige Freigaben sind ungültig.");
+              }}
+            >
+              <label>
+                Empfänger
+                <input
+                  type="email"
+                  required
+                  value={message.recipient}
+                  onChange={(e) => {
+                    setMessage({ ...message, recipient: e.target.value });
+                    setRead(false);
                   }}
                 />
               </label>
