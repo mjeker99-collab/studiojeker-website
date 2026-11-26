@@ -255,17 +255,20 @@ export async function stepJob(job: JobRecord, deps: StepDeps, now: Date): Promis
       if (score().verifiedNew >= next.config.target) break;
       const observation = observePages(pages, next.config.industries[next.cursor.industryIndex] || "", planned.label);
       if (!observation) continue;
+      const accepted = next.candidates.filter((item) => item.status === "QUALIFIED");
       const candidate = evaluateObservation(
         observation,
         next.config,
         next.dayKey,
-        [...deps.corpus, ...next.candidates.map(asRecord)],
+        [...deps.corpus, ...accepted.map(asRecord)],
         planned.label,
         now.toISOString(),
       );
       candidate.holdAdmission = !deps.reconciliationComplete;
-      if (!next.candidates.some((item) => item.idempotencyKey === candidate.idempotencyKey)) {
-        next.candidates.push(candidate);
+      const previous = next.candidates.findIndex((item) => item.idempotencyKey === candidate.idempotencyKey);
+      if (previous < 0) next.candidates.push(candidate);
+      else if (next.candidates[previous].status === "OPEN" && candidate.status !== "OPEN") {
+        next.candidates[previous] = candidate;
       }
     }
     next.cursor = advance(next.cursor, next.config);

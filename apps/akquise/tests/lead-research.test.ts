@@ -408,3 +408,14 @@ test("Ein unterbrochener Schreibschritt behält den qualifizierten Lead und wird
   assert.equal(failed.appended.length, 1);
   assert.equal(provider.calls.length, 1);
 });
+
+test("Ein späterer vollständiger Beleg ersetzt eine offene Prüfung desselben Leads", async () => {
+  const job = createJob(config(), now);
+  const open = goodPage();
+  open.text = open.text.split("\n").filter((line) => !line.startsWith("Anknüpfung:")).join("\n");
+  const first = await stepJob(job, deps(providerFor(open)), now);
+  assert.equal(first.job.candidates[0].status, "OPEN");
+  const second = await stepJob(first.job, deps(providerFor(goodPage())), now);
+  assert.equal(second.job.candidates.length, 1);
+  assert.equal(second.job.candidates[0].status, "QUALIFIED");
+});

@@ -22,7 +22,6 @@ import { toView } from "./view";
 import { zurichDay } from "./time";
 
 const loops = new Set<string>();
-const owners = new Map<string, string>();
 
 function store(): PrismaLeadStore {
   return new PrismaLeadStore();
@@ -202,8 +201,7 @@ async function loop(jobId: string, userId: string | null) {
 export function kickLeadResearch(jobId: string, userId: string | null) {
   if (!leadResearchEnabled() || loops.has(jobId)) return;
   loops.add(jobId);
-  if (userId) owners.set(jobId, userId);
-  void loop(jobId, userId ?? owners.get(jobId) ?? null);
+  void loop(jobId, userId);
 }
 
 export async function leadResearchStart(userId: string | null, raw: unknown) {
