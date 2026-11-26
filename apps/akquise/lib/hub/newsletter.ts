@@ -1,30 +1,9 @@
-import template from "../../templates/newsletter.json";
 import { db } from "../db";
 import { PolicyError } from "../policy";
 import { audit } from "../workflow";
 import { approvedContent, hubActor } from "./workflow";
-import {
-  escapeHtml,
-  renderNewsletter,
-  newsletterText,
-  type NewsletterSnapshot,
-} from "./newsletter-template";
-export function newsletterHtml(input: {
-  subject: string;
-  preheader: string;
-  body: string;
-  newsletter?: NewsletterSnapshot;
-}) {
-  if (input.newsletter)
-    return renderNewsletter({ ...input, newsletter: input.newsletter });
-  return template.html.replace(
-    /\{\{(subject|preheader|body)\}\}/g,
-    (_, key: "subject" | "preheader" | "body") =>
-      key === "body"
-        ? escapeHtml(input.body).replace(/\n/g, "<br>\n")
-        : escapeHtml(input[key]),
-  );
-}
+import { newsletterHtml, newsletterText } from "./newsletter-template";
+export { newsletterHtml } from "./newsletter-template";
 export async function exportNewsletter(
   actor: string,
   id: string,

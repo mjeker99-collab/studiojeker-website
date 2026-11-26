@@ -27,6 +27,13 @@ for (const width of [768, 1440]) {
       const card = page.locator("article[data-content-id]").filter({
         has: page.getByRole("heading", { name: title, exact: true }),
       }).first();
+      const previewButton = card.getByRole("button", { name: "Vorschau", exact: true });
+      await previewButton.click();
+      const dialog = page.getByRole("dialog", { name: "Newsletter-Vorschau" });
+      await expect(dialog.getByRole("heading", { name: title, exact: true })).toBeVisible();
+      await expect(dialog.frameLocator("iframe").locator("body")).toContainText(expected);
+      await dialog.getByRole("button", { name: "Schliessen" }).click();
+      await expect(previewButton).toBeFocused();
       await card.getByRole("button", { name: "Inhalt öffnen ↗" }).click();
       await expect(editor).toBeVisible();
       await expect(editor).toBeFocused();
@@ -91,3 +98,52 @@ for (const width of [768, 1440]) {
     expect(x).toBe(true);
   });
 }
+
+test("Textentwurf direkt von der Karte als Newsletter lesen", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto("/");
+  await page.getByLabel("E-Mail", { exact: true }).fill(credential[1]);
+  await page.getByLabel("Passwort", { exact: true }).fill(credential[2]);
+  await page.getByRole("button", { name: /Sicher anmelden/ }).click();
+  await expect(page.getByRole("navigation", { name: "Hauptnavigation" })).toBeVisible();
+  const { user } = await (await page.request.get("/api/state")).json();
+  const draft = {
+    kind: "NEWSLETTER", ownerId: user.id, title: "KMU-Videos – Vorschautest",
+    subject: "Ihre Arbeit im Film", preheader: "Unternehmerfilm und Reel Duo",
+    body: "Guten Tag\n\nEin Film für Ihren Betrieb.\nhttps://example.test/filmidee?utm_campaign=kmu_videos_unternehmerfilm_und_reel_duo_2026\nBeste Grüsse",
+    audience: "Test", variants: [], campaignId: null, scheduledAt: null,
+  };
+  const response = await page.request.post("/api/hub/contents", {
+    headers: { Origin: new URL(page.url()).origin }, data: draft,
+  });
+  expect(response.ok()).toBe(true);
+  const { id } = await response.json();
+  await openWorkspace(page, "Newsletter");
+  const card = page.locator(`article[data-content-id="${id}"]`);
+  const writes: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() !== "GET" && request.url().includes("/api/")) writes.push(request.url());
+  });
+  await card.getByRole("button", { name: "Vorschau", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Newsletter-Vorschau" });
+  await expect(dialog).toContainText(draft.subject);
+  await expect(dialog).toContainText(draft.preheader);
+  const body = dialog.frameLocator("iframe").locator("body");
+  await expect(body.getByText("Ein Film für Ihren Betrieb.", { exact: false })).toBeVisible();
+  await expect(dialog.frameLocator("iframe").locator("a[href]")).toHaveCount(0);
+  await dialog.getByRole("button", { name: /Mobil · 390/ }).click();
+  await expect(dialog.locator("iframe")).toHaveCSS("width", "390px");
+  await expect.poll(() => body.evaluate((node) => node.scrollWidth)).toBeLessThanOrEqual(390);
+  await dialog.getByRole("button", { name: "Schliessen" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(card.getByText("Entwurf", { exact: true })).toBeVisible();
+  await card.getByRole("button", { name: /Inhalt öffnen/ }).click();
+  const editor = page.getByRole("region", { name: "Inhaltseditor" });
+  await editor.getByLabel("Newsletter-Inhalt").fill("Lokal geänderter Text");
+  await expect(editor.frameLocator("iframe").locator("body")).toContainText("Lokal geänderter Text");
+  await card.getByRole("button", { name: "Vorschau", exact: true }).click();
+  await expect(body).toContainText("Ein Film für Ihren Betrieb.");
+  await page.keyboard.press("Escape");
+  await expect(editor.getByLabel("Newsletter-Inhalt")).toHaveValue("Lokal geänderter Text");
+  expect(writes).toEqual([]);
+});

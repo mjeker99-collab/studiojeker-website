@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import type { ContentInput } from "@/lib/hub/input";
 import NewsletterImageField from "./NewsletterImageField";
 import {
   getNewsletterTemplate,
-  renderNewsletter,
+  newsletterHtml,
   previewDocument,
   type NewsletterSnapshot,
 } from "@/lib/hub/newsletter-template";
@@ -94,29 +95,21 @@ export function NewsletterFields({
   );
 }
 export function NewsletterPreview({
-  subject,
-  preheader,
-  newsletter,
+  content,
   html: originalHtml,
-}: {
-  subject?: string;
-  preheader?: string;
-  newsletter?: NewsletterSnapshot;
-  html?: string;
-}) {
+}:
+  | { content: Pick<ContentInput, "subject" | "preheader" | "body" | "newsletter">; html?: never }
+  | { html: string; content?: never }
+) {
   const [width, setWidth] = useState(700);
   const viewport = useRef<HTMLDivElement>(null);
   const [availableWidth, setAvailableWidth] = useState(0);
   const scale = availableWidth > 0 ? Math.min(1, availableWidth / width) : 0;
   let html = originalHtml || "",
     error = "";
-  if (newsletter) {
+  if (content) {
     try {
-      html = renderNewsletter({
-        subject: subject || "",
-        preheader: preheader || "",
-        newsletter,
-      });
+      html = newsletterHtml(content);
     } catch {
       error =
         "Bitte die markierten Inhalte prüfen: Alle Bild- und Ziel-Links benötigen vollständige HTTPS-Adressen.";
