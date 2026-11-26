@@ -1,0 +1,137 @@
+name: Backup restore test (isolated, no production access)
+
+# Prüft, ob sich die neuesten Offsite-Backups aus Exoscale tatsächlich
+# wiederherstellen lassen. Es wird nur gelesen: Exoscale (Download) und eine
+# temporäre Wegwerf-Datenbank im GitHub-Runner. Produktivdaten werden nicht berührt.
+on:
+  schedule:
+    - cron: "30 4 * * 1" # Montag 04:30 UTC, nach den wöchentlichen Backups
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/backup-restore-test.yml
+
+permissions:
+  contents: read
+
+env:
+  S3_ENDPOINT: https://sos-ch-dk-2.exo.io
+  S3_BUCKET: studiojeker-backups
+  AWS_DEFAULT_REGION: ch-dk-2
+
+jobs:
+  postgres-restore:
+    name: StudioONE PostgreSQL wiederherstellen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: restore
+          POSTGRES_PASSWORD: restore
+          POSTGRES_DB: restore_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U restore"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.EXOSCALE_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.EXOSCALE_BACKUP_SECRET_ACCESS_KEY }}
+      PGPASSWORD: restore
+    steps:
+      - name: Install PostgreSQL 18 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+      - name: Neuestes Backup aus Exoscale laden
+        run: |
+          set -euo pipefail
+          latest=$(aws --endpoint-url "$S3_ENDPOINT" s3 ls "s3://$S3_BUCKET/studioone/postgres/" --recursive \
+            | sort | tail -n 1 | awk '{print $4}')
+          test -n "$latest" || { echo "::error::Kein PostgreSQL-Backup gefunden"; exit 1; }
+          echo "Backup: $latest"
+          echo "BACKUP_KEY=$latest" >> "$GITHUB_ENV"
+          aws --endpoint-url "$S3_ENDPOINT" s3 cp "s3://$S3_BUCKET/$latest" backup.dump --only-show-errors
+          ls -l backup.dump
+      - name: In leere Wegwerf-Datenbank wiederherstellen
+        run: |
+          set -euo pipefail
+          pg_restore --host=localhost --username=restore --dbname=restore_test \
+            --no-owner --no-privileges --exit-on-error backup.dump
+      - name: Stichproben prüfen
+        run: |
+          set -euo pipefail
+          psql -h localhost -U restore -d restore_test -v ON_ERROR_STOP=1 -At > counts.txt <<'SQL'
+          SELECT table_name || ': ' ||
+                 (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I', table_schema, table_name), false, true, '')))[1]::text
+          FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+          ORDER BY table_name;
+          SQL
+          tables=$(wc -l < counts.txt)
+          contacts=$(grep -E '^Contact: ' counts.txt | awk '{print $2}')
+          campaigns=$(grep -E '^Campaign: ' counts.txt | awk '{print $2}')
+          {
+            echo "## Wiederherstellungstest PostgreSQL"
+            echo ""
+            echo "- Backup: \`$BACKUP_KEY\`"
+            echo "- Wiederhergestellte Tabellen: $tables"
+            echo "- Kontakte: ${contacts:-0}, Kampagnen: ${campaigns:-0}"
+            echo ""
+            echo '```'
+            cat counts.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat counts.txt
+          [ "$tables" -ge 10 ] || { echo "::error::Zu wenige Tabellen wiederhergestellt ($tables)"; exit 1; }
+          [ "${contacts:-0}" -gt 0 ] || { echo "::error::Tabelle Contact ist leer"; exit 1; }
+          echo "Wiederherstellung erfolgreich: $tables Tabellen, $contacts Kontakte."
+
+  sanity-archive-check:
+    name: Sanity-Archiv prüfen
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.EXOSCALE_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.EXOSCALE_BACKUP_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Neuestes Backup laden und entpacken
+        run: |
+          set -euo pipefail
+          latest=$(aws --endpoint-url "$S3_ENDPOINT" s3 ls "s3://$S3_BUCKET/website/sanity/" --recursive \
+            | sort | tail -n 1 | awk '{print $4}')
+          test -n "$latest" || { echo "::error::Kein Sanity-Backup gefunden"; exit 1; }
+          echo "BACKUP_KEY=$latest" >> "$GITHUB_ENV"
+          aws --endpoint-url "$S3_ENDPOINT" s3 cp "s3://$S3_BUCKET/$latest" sanity.tar.gz --only-show-errors
+          mkdir extracted
+          tar -xzf sanity.tar.gz -C extracted
+      - name: Inhalt prüfen
+        run: |
+          set -euo pipefail
+          ndjson=$(find extracted -name 'data.ndjson' | head -n 1)
+          test -n "$ndjson" || { echo "::error::data.ndjson fehlt im Archiv"; exit 1; }
+          docs=$(wc -l < "$ndjson")
+          files=$(find extracted -type f | wc -l)
+          types=$(jq -r '._type' "$ndjson" | sort | uniq -c | sort -rn | head -n 15)
+          {
+            echo "## Prüfung Sanity-Archiv"
+            echo ""
+            echo "- Backup: \`$BACKUP_KEY\`"
+            echo "- Dokumente: $docs"
+            echo "- Dateien im Archiv (inkl. Medien): $files"
+            echo ""
+            echo '```'
+            echo "$types"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$types"
+          jq -e . "$ndjson" > /dev/null || { echo "::error::data.ndjson ist kein gültiges NDJSON"; exit 1; }
+          [ "$docs" -gt 0 ] || { echo "::error::Keine Dokumente im Archiv"; exit 1; }
+          echo "Sanity-Archiv lesbar: $docs Dokumente, $files Dateien."
