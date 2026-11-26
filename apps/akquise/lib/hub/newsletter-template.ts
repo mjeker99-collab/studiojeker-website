@@ -1,4 +1,5 @@
 import { z } from "zod";
+import template from "../../templates/newsletter.json";
 import library from "../../templates/newsletter-library.json";
 
 // Versions are immutable: when changing a source, add a new template ID.
@@ -188,6 +189,22 @@ export function newsletterText(snapshot: NewsletterSnapshot) {
     .filter((s) => !s.special && (s.kind === "text" || s.kind === "link"))
     .map((s) => snapshot.fields[s.key])
     .join("\n\n");
+}
+export function newsletterHtml(input: {
+  subject: string;
+  preheader: string;
+  body: string;
+  newsletter?: NewsletterSnapshot;
+}) {
+  if (input.newsletter)
+    return renderNewsletter({ ...input, newsletter: input.newsletter });
+  return template.html.replace(
+    /\{\{(subject|preheader|body)\}\}/g,
+    (_, key: "subject" | "preheader" | "body") =>
+      key === "body"
+        ? escapeHtml(input.body).replace(/\n/g, "<br>\n")
+        : escapeHtml(input[key]),
+  );
 }
 export function previewDocument(html: string) {
   // Opaque iframe origin; no scripts, forms, navigation permissions or referrer.

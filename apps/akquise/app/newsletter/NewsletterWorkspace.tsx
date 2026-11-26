@@ -111,7 +111,7 @@ export default function NewsletterWorkspace({ value, saved, save, reload, onBusy
         {value.newsletter && <NewsletterLinkTester
           key={value.newsletter.templateId + "|" + Object.entries(value.newsletter.fields).filter(([field]) => field.includes(".link.")).map(([field, url]) => field + "=" + url).join("|")}
           newsletter={value.newsletter} />}
-        <NewsletterPreview subject={value.subject} preheader={value.preheader} newsletter={value.newsletter} />
+        <NewsletterPreview content={value} />
       </div>
       <div className="newsletter-dialog-panel">
         <h3>Mit GPT bearbeiten</h3>

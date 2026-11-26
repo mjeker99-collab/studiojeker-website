@@ -156,6 +156,13 @@ export default function Hub({
   const [mailchimpError, setMailchimpError] = useState("");
   const [audienceId, setAudienceId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
+  const previewDialog = useRef<HTMLDialogElement>(null);
+  const [preview, setPreview] = useState<{ value: ContentInput; label: string } | null>(null);
+  function openPreview(button: HTMLButtonElement, value: ContentInput, label: string) {
+    setPreview({ value, label });
+    button.focus({ preventScroll: true });
+    previewDialog.current?.showModal();
+  }
   const editorRef = useRef<HTMLElement | null>(null);
   const [editorNavigation, setEditorNavigation] = useState(0);
   const [showNewsletterTrash, setShowNewsletterTrash] = useState(false);
@@ -282,8 +289,8 @@ export default function Hub({
     // Keep the template preview tied to the actual selected newsletter.
     if (selected.newsletter) {
       setTemplateId(selected.newsletter.templateId);
-      setShowOriginal(false);
     }
+    setShowOriginal(false);
     setEditing(c);
     setForm(selected);
     if (resetDialog) setEditorNavigation((n) => n + 1);
@@ -551,31 +558,40 @@ export default function Hub({
                     ? "Exportiert · nicht übertragen · nicht versandt"
                     : "Nicht exportiert · nicht übertragen · nicht versandt"}
               </p>
-              {(!c.archivedAt || c.kind !== "NEWSLETTER") && (
-                <button disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
-              )}
-              {c.kind === "NEWSLETTER" && !c.archivedAt && (
-                <button
-                  className="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    act(async () => {
-                      const copy = await post("newsletter-duplicate/" + c.id, {
-                        version: c.version,
-                      });
-                      const r = await fetch("/api/hub/state", {
-                        cache: "no-store",
-                      });
-                      if (!r.ok)
-                        throw new Error("Kopie gespeichert. Bitte neu laden.");
-                      const updated: HubState = await r.json();
-                      edit(updated.contents.find((x) => x.id === copy.id)!);
-                    }, "Kopie als neuer Entwurf erstellt.")
-                  }
-                >
-                  Duplizieren
-                </button>
-              )}
+              <div className="actions">
+                {c.kind === "NEWSLETTER" && !c.archivedAt && (
+                  <button type="button" aria-haspopup="dialog"
+                    onClick={(event) => openPreview(event.currentTarget, p, `Version ${c.version}`)}>
+                    Vorschau
+                  </button>
+                )}
+                {(!c.archivedAt || c.kind !== "NEWSLETTER") && (
+                  <button className={c.kind === "NEWSLETTER" ? "secondary" : undefined}
+                    disabled={busy} onClick={() => edit(c)}>Inhalt öffnen ↗</button>
+                )}
+                {c.kind === "NEWSLETTER" && !c.archivedAt && (
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      act(async () => {
+                        const copy = await post("newsletter-duplicate/" + c.id, {
+                          version: c.version,
+                        });
+                        const r = await fetch("/api/hub/state", {
+                          cache: "no-store",
+                        });
+                        if (!r.ok)
+                          throw new Error("Kopie gespeichert. Bitte neu laden.");
+                        const updated: HubState = await r.json();
+                        edit(updated.contents.find((x) => x.id === copy.id)!);
+                      }, "Kopie als neuer Entwurf erstellt.")
+                    }
+                  >
+                    Duplizieren
+                  </button>
+                )}
+              </div>
               {c.kind === "NEWSLETTER" && (
                 <div className="actions">
                   {c.archivedAt ? (
@@ -688,6 +704,22 @@ export default function Hub({
   start.setUTCDate(1 - ((first.getUTCDay() + 6) % 7));
   return (
     <div className="hub" aria-busy={busy}>
+      <dialog ref={previewDialog} className="newsletter-preview-dialog" aria-labelledby="newsletter-preview-title"
+        onClose={() => setPreview(null)}>
+        <div className="newsletter-preview-heading">
+          <h2 id="newsletter-preview-title">Newsletter-Vorschau</h2>
+          <button type="button" className="secondary" onClick={() => previewDialog.current?.close()}>Schliessen</button>
+        </div>
+        {preview && (
+          <div className="padded">
+            <h3>{preview.value.title}</h3>
+            <p className="muted">{preview.label}</p>
+            <p><strong>Betreff</strong> · {preview.value.subject}</p>
+            {preview.value.preheader && <p><strong>Vorschautext</strong> · {preview.value.preheader}</p>}
+            <NewsletterPreview content={preview.value} />
+          </div>
+        )}
+      </dialog>
       {error && (
         <p role="alert" className="error">
           {error}
@@ -1065,24 +1097,22 @@ export default function Hub({
                   }, "GitHub-Vorlagen importiert. Bereits vorhandene Ausgaben bleiben erhalten.")}>
                   Aus GitHub importieren
                 </button>
-                <button type="button" className="secondary" onClick={() => {
-                  if (form?.kind === "NEWSLETTER" && form.newsletter) {
-                    setShowOriginal(false);
-                    setEditorNavigation((n) => n + 1);
+                <button type="button" className="secondary" onClick={(event) => {
+                  if (form?.kind === "NEWSLETTER") {
+                    openPreview(event.currentTarget, form, dirty ? "Ungespeicherte Änderungen" : `Version ${editing?.version}`);
                   } else {
                     setShowOriginal(!showOriginal);
                   }
                 }}>
-                  {form?.kind === "NEWSLETTER" && form.newsletter
+                  {form?.kind === "NEWSLETTER"
                     ? "Gewählten Newsletter anzeigen"
                     : showOriginal ? "Vorschau schliessen" : "Vorlage ansehen"}
                 </button>
               </div>
-              {form?.kind === "NEWSLETTER" && form.newsletter && (
+              {form?.kind === "NEWSLETTER" && (
                 <p role="status" className="muted">
                   Ausgewählt: <strong>{form.title}</strong>
                   {editing ? ` · Version ${editing.version}` : " · neuer Entwurf"}.
-                  Die Vorschau und Bearbeitung erscheinen beim Öffnen direkt im Editor.
                 </p>
               )}
               {showOriginal && !form && (
@@ -1421,18 +1451,7 @@ export default function Hub({
                 </article>
               ))
             ) : form.newsletter ? null : (
-              <article>
-                <strong>studiojeker®</strong>
-                <p className="muted">{form.preheader}</p>
-                <h3>{form.subject}</h3>
-                <p className="preserve-lines">{form.body}</p>
-                <p>Zielgruppe: {form.audience}</p>
-                <small>
-                  HTML-Export mit Studiojeker-Gestaltung und
-                  Mailchimp-Abmeldetags. Adress-/Merge-Tags vor Versand in
-                  Mailchimp prüfen.
-                </small>
-              </article>
+              <NewsletterPreview content={form} />
             )}
           </section>
           {editing && canPromoteToSocial(editing) && (
