@@ -65,7 +65,9 @@ verfolgt denselben Branch. Die Recherche-Schalter dort deaktiviert lassen.
    gespeicherten Suchfortschritt wiederfinden. Die 200 zählen erst bei
    belegten und eindeutigen Datensätzen mit personalisierten Entwürfen,
    nachweislich gespeichertem Lauf und bestätigt rückgelesenen Zeilen.
-   Keine Kontaktdaten in PR oder Logs ablegen.
+   Der Render-App-Logeintrag `Lead-Recherche Laufnachweis` wird nach dem
+   Rücklesen des gespeicherten Laufzustands geschrieben. Er enthält Lauf-ID,
+   Status und Zähler. Kontaktdaten bleiben im vorgesehenen Speicher.
 
 Bei einem Fehler Recherche und Schreibschalter deaktivieren. Bei einer
 Deploy-Regression die zuvor verifizierte V1-Revision über Render wieder

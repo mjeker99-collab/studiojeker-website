@@ -11,6 +11,7 @@ import { toCsv, toXlsx } from "./export-file";
 import { createGoogleSheetsGateway } from "./google-sheets";
 import {
   createJob,
+  dailyScore,
   runStep,
   type ResearchProvider,
   type StepDeps,
@@ -187,6 +188,14 @@ async function loop(jobId: string, userId: string | null) {
       if (!existing || !["RUNNING", "QUEUED"].includes(existing.status)) break;
       const deps = await buildDeps(process.env, existing.id, userId, provider);
       const result = await runStep(store(), deps, jobId, owner, new Date());
+      if (result.saved && ["COMPLETED", "BLOCKED"].includes(result.job.status)) {
+        const { id, dayKey, status, candidates, config, legacyOpen } = result.job;
+        const metrics = dailyScore(candidates, dayKey, config.target, legacyOpen);
+        console.info("Lead-Recherche Laufnachweis", JSON.stringify({
+          id, dayKey, status, ...metrics,
+          blockers: result.job.blockers.map(({ id: blockerId }) => blockerId),
+        }));
+      }
       if (!result.continue) break;
       await new Promise((resolvePromise) => setTimeout(resolvePromise, Math.max(50, result.waitMs)));
     }
