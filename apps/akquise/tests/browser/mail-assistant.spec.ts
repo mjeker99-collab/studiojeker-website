@@ -1,3 +1,4 @@
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 for (const width of [390, 1024])
@@ -77,7 +78,7 @@ for (const width of [390, 1024])
       .getByRole("button", { name: "1 ausgewählte Kontakte übernehmen" })
       .click();
     await expect(page.getByText(/1 neue Kontakte übernommen/)).toBeVisible();
-    await page.getByRole("button", { name: "Mails", exact: true }).click();
+    await openAcquisitionTools(page, "Mails");
     await page
       .getByRole("button", { name: "Neue Mails erstellen", exact: true })
       .click();

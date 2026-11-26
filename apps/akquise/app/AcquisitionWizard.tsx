@@ -354,7 +354,7 @@ export default function AcquisitionWizard({
           !hasDrafts || nextStep === 1 ? 1 : nextStep === 2 ? 2 : 3;
         setStep(resume);
         const url = new URL(window.location.href);
-        url.searchParams.set("akquiseStep", String(resume));
+        if (url.searchParams.has("akquiseStep")) url.searchParams.set("akquiseStep", String(resume));
         window.history.replaceState({ akquiseStep: resume }, "", url);
         if (activeLoad) setRestored(true);
       })

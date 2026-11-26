@@ -11,9 +11,10 @@ for (const width of [390, 1024, 1440]) {
     await setup(page);
     const nav = page.getByRole("navigation", { name: "Akquise-Navigation" });
     await expect(nav.getByRole("button")).toHaveText([
+      "Mails vorbereiten",
       "Kontakte",
-      "Mails",
-      "Versand",
+      "Kontakte finden",
+      "Versandverlauf",
     ]);
     await expect(
       page.getByText("Zeitplan, Warteschlange und Verlauf"),
@@ -104,7 +105,7 @@ for (const width of [390, 1024, 1440]) {
     expect(calls).toBe(1);
     await page.getByRole("button", { name: "Versand verfolgen" }).click();
     await expect(
-      page.getByRole("heading", { name: "Versand", exact: true }),
+      page.getByRole("heading", { name: "Versandverlauf", exact: true }),
     ).toBeVisible();
   });
 }
@@ -112,7 +113,7 @@ for (const width of [390, 1024, 1440]) {
 test("89 approved mails use the shared iPad review without a second queue selection", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 960 });
   await setup(page, { count: 89 });
-  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Versand", exact: true }).click();
+  await page.getByRole("navigation", { name: "Akquise-Navigation" }).getByRole("button", { name: "Versandverlauf", exact: true }).click();
   await page.getByRole("button", { name: "89 Mails gemeinsam freigeben →" }).click();
   await expect(page.getByText("89 Mails vorbereitet", { exact: false }).first()).toBeVisible();
   await page.getByRole("button", { name: "Weiter zum Versand →" }).click();

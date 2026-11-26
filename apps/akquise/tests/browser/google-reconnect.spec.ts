@@ -113,7 +113,7 @@ for (const width of [390, 1280]) {
       "Google-Verbindung erneuern",
     );
     await page.screenshot({
-      path: `/opt/cursor/artifacts/google-reconnect-consent-${width}.png`,
+      path: `.local/google-reconnect-consent-${width}.png`,
       fullPage: false,
     });
     await notice.getByRole("button").click();
@@ -154,7 +154,7 @@ for (const width of [390, 1280]) {
     await expect(notice.getByRole("button")).toHaveCount(1);
     if (width === 390)
       await page.screenshot({
-        path: "/opt/cursor/artifacts/google-reconnect-unreachable-mobile.png",
+        path: ".local/google-reconnect-unreachable-mobile.png",
         fullPage: false,
       });
     markReady();
@@ -203,7 +203,7 @@ for (const width of [390, 1280]) {
       false,
     );
     await page.screenshot({
-      path: `/opt/cursor/artifacts/google-reconnect-other-account-${width}.png`,
+      path: `.local/google-reconnect-other-account-${width}.png`,
       fullPage: false,
     });
     expect(
@@ -319,7 +319,7 @@ for (const width of [390, 1280]) {
     fail = false;
     if (width === 1280)
       await page.screenshot({
-        path: "/opt/cursor/artifacts/google-reconnect-status-failed-desktop.png",
+        path: ".local/google-reconnect-status-failed-desktop.png",
         fullPage: false,
       });
     await notice.getByRole("button", { name: "Erneut prüfen" }).click();

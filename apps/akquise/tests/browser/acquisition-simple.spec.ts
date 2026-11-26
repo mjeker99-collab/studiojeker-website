@@ -1,3 +1,4 @@
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { checkout } from "./mail-checkout-helper";
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
@@ -9,17 +10,19 @@ for (const width of [390, 1024]) {
     const state = await setup(page);
     const nav = page.getByRole("navigation", { name: "Akquise-Navigation" });
     await expect(nav.getByRole("button")).toHaveText([
+      "Mails vorbereiten",
       "Kontakte",
-      "Mails",
-      "Versand",
+      "Kontakte finden",
+      "Versandverlauf",
     ]);
-    await nav.getByRole("button", { name: "Kontakte" }).click();
+    await nav.getByRole("button", { name: "Mails vorbereiten", exact: true }).click();
+    await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel("Atelier 1 auswählen", { exact: true }).check();
     await page
       .getByRole("button", { name: "1 Mails erstellen →", exact: true })
       .click();
     await expect(
-      page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
+      page.getByText("1 Kontakte ausgewählt.", { exact: true }),
     ).toBeVisible();
     await nav.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByText("Kontakte hinzufügen", { exact: true }).click();
@@ -30,10 +33,11 @@ for (const width of [390, 1024]) {
       .getByLabel("Wen möchtest du erreichen und was anbieten?")
       .fill("Industrieunternehmen für Businessfotografie finden");
     await page.getByLabel("Region", { exact: true }).fill("Solothurn");
-    await nav.getByRole("button", { name: "Mails" }).click();
+    await nav.getByRole("button", { name: "Mails vorbereiten", exact: true }).click();
     await expect(
-      page.getByRole("heading", { name: "1 Kontakte ausgewählt" }),
+      page.getByText("1 Kontakte ausgewählt.", { exact: true }),
     ).toBeVisible();
+    await openAcquisitionTools(page, "Mails");
     await page
       .getByRole("button", {
         name: "Gespeicherte Entwürfe öffnen (3)",

@@ -189,7 +189,7 @@ for (const width of [390, 768, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const draftCount = width === 768 ? 183 : 3;
     const state = await setup(page, { draftCount });
-    await page.getByRole("button", { name: "Versand", exact: true }).click();
+    await page.getByRole("button", { name: "Versandverlauf", exact: true }).click();
     await expect(
       page.getByText(`Bereits freigegebene Mails einplanen (${draftCount})`, {
         exact: true,
@@ -228,7 +228,7 @@ test("a mail queued elsewhere is excluded from the shared dispatch", async ({
 }) => {
   await page.clock.install();
   const state = await setup(page);
-  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page.getByRole("button", { name: "Versandverlauf", exact: true }).click();
   await page
     .getByRole("button", { name: "3 Mails gemeinsam freigeben →", exact: true })
     .click();
@@ -375,7 +375,7 @@ test("schedule starts directly from the overview after explicit approval", async
   page,
 }) => {
   const state = await setup(page);
-  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await page.getByRole("button", { name: "Versandverlauf", exact: true }).click();
   await page
     .getByRole("button", { name: "Zeitplan starten", exact: true })
     .click();

@@ -236,8 +236,17 @@ export default function App() {
       ? "Interner SMTP-Testmodus"
       : "Produktionsversand aktiv"
     : "Versand deaktiviert";
+  const [managedSelection, setManagedSelection] = useState<{
+    contacts: string[];
+    drafts: string[];
+  }>({ contacts: [], drafts: [] });
   function openMailSelection(selected: string[], draftIds: string[] = []) {
     if (!data) return;
+    if (!acquisitionWizard) {
+      setManagedSelection({ contacts: selected, drafts: draftIds });
+      setTab("Mail-Studio");
+      return;
+    }
     const step = draftIds.length ? 3 : 1;
     localStorage.setItem(
       `acquisition-wizard:${data.user.id}`,
@@ -799,28 +808,32 @@ export default function App() {
                   onOpenHistory={() => setTab("Versandhistorie")}
                 />
               )}
-              {tab === "Mail-Studio" && !acquisitionWizard && (
-                <MailStudio
-                  onOpenShipping={() => setTab("Versandhistorie")}
-                  persistenceKey={`mail-work:${data.user.id}`}
-                  filters={contactFilters}
-                  onFiltersChange={(value) => {
-                    setContactFilters(value);
-                    setSelected([]);
-                  }}
-                  drafts={data.drafts}
-                  contacts={data.contacts}
-                  refresh={refresh}
-                  onBusyChange={setBusy}
-                  openContact={(id) => {
-                    const c = data.contacts.find((c) => c.id === id);
-                    if (c) openContact(c);
-                  }}
-                  openDraft={(id) => {
-                    const d = data.drafts.find((d) => d.id === id);
-                    if (d) openDraft(d);
-                  }}
-                />
+              {!acquisitionWizard && (
+                <div hidden={tab !== "Mail-Studio"}>
+                  <MailStudio
+                    initialContactIds={managedSelection.contacts}
+                    initialDraftIds={managedSelection.drafts}
+                    onOpenShipping={() => setTab("Versandhistorie")}
+                    persistenceKey={`mail-work:${data.user.id}`}
+                    filters={contactFilters}
+                    onFiltersChange={(value) => {
+                      setContactFilters(value);
+                      setSelected([]);
+                    }}
+                    drafts={data.drafts}
+                    contacts={data.contacts}
+                    refresh={refresh}
+                    onBusyChange={setBusy}
+                    openContact={(id) => {
+                      const c = data.contacts.find((c) => c.id === id);
+                      if (c) openContact(c);
+                    }}
+                    openDraft={(id) => {
+                      const d = data.drafts.find((d) => d.id === id);
+                      if (d) openDraft(d);
+                    }}
+                  />
+                </div>
               )}
             </>
           )}
@@ -1061,6 +1074,7 @@ export default function App() {
                   <h2>Verbindungen & Sicherheit</h2>
                   <button className="secondary" onClick={() => {
                     navigate({ section: "Mail-Studio" });
+                    setManagedSelection({ contacts: [], drafts: [] });
                     setAcquisitionWizard(false);
                   }}>
                     Mail-Studio verwalten
