@@ -419,3 +419,17 @@ test("Ein späterer vollständiger Beleg ersetzt eine offene Prüfung desselben 
   assert.equal(second.job.candidates.length, 1);
   assert.equal(second.job.candidates[0].status, "QUALIFIED");
 });
+
+test("Robots-Weiterleitungen zwischen www und Hauptdomain werden geprüft", async () => {
+  const requests: string[] = [];
+  const page = await fetchPublicText("https://www.betrieb.example/", async (url) => {
+    requests.push(url);
+    if (url === "https://www.betrieb.example/robots.txt") {
+      return new Response(null, { status: 301, headers: { location: "https://betrieb.example/robots.txt" } });
+    }
+    if (url === "https://betrieb.example/robots.txt") return new Response("User-agent: *\nDisallow: /");
+    throw new Error("Gesperrte Seite wurde abgerufen.");
+  }, async () => ["93.184.216.34"]);
+  assert.match(page.blockedReason ?? "", /untersagt/);
+  assert.equal(requests.length, 2);
+});

@@ -120,11 +120,17 @@ export async function fetchPublicText(
   }
   const robotsUrl = `https://${url.host}/robots.txt`;
   try {
-    const robots = await fetchImpl(robotsUrl, {
-      redirect: "manual",
+    const robotOptions = {
+      redirect: "manual" as const,
       headers: { "User-Agent": "StudiojekerLeadResearch/1.0" },
       signal: AbortSignal.timeout(8000),
-    });
+    };
+    let robots = await fetchImpl(robotsUrl, robotOptions);
+    const robotsLocation = robots.headers.get("location");
+    if (robots.status >= 300 && robots.status < 400 && robotsLocation) {
+      const target = await assertPublicHttpsUrl(new URL(robotsLocation, robotsUrl).href, lookupHost);
+      if (hostOf(target.href) === hostOf(robotsUrl)) robots = await fetchImpl(target.href, robotOptions);
+    }
     if (!robots.ok && robots.status !== 404 && robots.status !== 410) {
       return { url: url.toString(), text: "", blockedReason: "robots.txt ist nicht lesbar. Die Seite wird nicht abgerufen." };
     }
