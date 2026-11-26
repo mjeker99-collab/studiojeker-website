@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
-mkdirSync("/opt/cursor/artifacts", { recursive: true });
+mkdirSync(".local/acquisition-previews", { recursive: true });
 
 function contacts(count: number) {
   return Array.from({ length: count + 1 }, (_, index) => ({
@@ -42,28 +42,41 @@ async function install(page: Page, count: number) {
   });
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    const body = route.request().method() === "POST" ? route.request().postDataJSON() : {};
-    if (path === "/api/mail-assistant/history") return route.fulfill({ json: [] });
+    const body =
+      route.request().method() === "POST" ? route.request().postDataJSON() : {};
+    if (path === "/api/mail-assistant/history")
+      return route.fulfill({ json: [] });
     if (path === "/api/state" || path === "/api/hub/state") {
       return route.fulfill({
-        json: path === "/api/hub/state"
-          ? { campaigns: [], contents: [], users: [], drafts: [], customers: [], integrations: {}, events: [] }
-          : {
-              user: { id: "test", name: "Nora Jeker" },
-              users: [],
-              contacts: people,
-              drafts: [],
-              deliveries: [],
-              suppressions: [],
-              audits: [],
-              generator: "disabled",
-              externalSending: false,
-              mailMode: "disabled",
-            },
+        json:
+          path === "/api/hub/state"
+            ? {
+                campaigns: [],
+                contents: [],
+                users: [],
+                drafts: [],
+                customers: [],
+                integrations: {},
+                events: [],
+              }
+            : {
+                user: { id: "test", name: "Nora Jeker" },
+                users: [],
+                contacts: people,
+                drafts: [],
+                deliveries: [],
+                suppressions: [],
+                audits: [],
+                generator: "disabled",
+                externalSending: false,
+                mailMode: "disabled",
+              },
       });
     }
     if (path.startsWith("/api/drive/status"))
-      return route.fulfill({ json: { role: "self", access: "ready", folderName: "Adressen" } });
+      return route.fulfill({
+        json: { role: "self", access: "ready", folderName: "Adressen" },
+      });
     if (path === "/api/contacts/preparation/preview") {
       return route.fulfill({
         json: {
@@ -95,7 +108,9 @@ async function install(page: Page, count: number) {
     if (path === "/api/mail-review/preview") {
       return route.fulfill({
         json: {
-          rows: body.ids.map((id: string) => rows.find((row) => row.id === id)).filter(Boolean),
+          rows: body.ids
+            .map((id: string) => rows.find((row) => row.id === id))
+            .filter(Boolean),
         },
       });
     }
@@ -104,7 +119,12 @@ async function install(page: Page, count: number) {
         json: {
           results: body.items.map((item: { id: string }) => {
             const row = rows.find((entry) => entry.id === item.id);
-            const nextBody = row?.body.split(body.find).join(body.replace) || "";
+            const nextBody = body.append
+              ? row!.body.replace(
+                  "Beste Grüsse",
+                  `${body.append}\n\nBeste Grüsse`,
+                )
+              : row?.body.split(body.find).join(body.replace) || "";
             if (body.confirmed && row) {
               row.version += 1;
               row.hash = "b".repeat(64);
@@ -116,7 +136,9 @@ async function install(page: Page, count: number) {
               subject: row?.subject,
               body: nextBody,
               organisation: row?.organisation,
-              message: body.confirmed ? "Gespeichert. Die frühere Freigabe gilt nicht mehr." : "Vorschau der Änderung",
+              message: body.confirmed
+                ? "Gespeichert. Die frühere Freigabe gilt nicht mehr."
+                : "Vorschau der Änderung",
             };
           }),
         },
@@ -139,7 +161,10 @@ async function install(page: Page, count: number) {
       if (plans === 1) await planGate;
       return route.fulfill({
         json: {
-          results: body.items.map((item: { id: string }) => ({ id: item.id, ok: true })),
+          results: body.items.map((item: { id: string }) => ({
+            id: item.id,
+            ok: true,
+          })),
           summary: {
             queued: body.items.length,
             started: body.mode === "immediate" ? 1 : 0,
@@ -148,7 +173,10 @@ async function install(page: Page, count: number) {
               body.mode === "immediate"
                 ? "1 Mail ist in den Versand gegangen. Weitere warten."
                 : `${body.items.length} Mails sind für ${body.localDate} ${body.localTime} Uhr (Europe/Zurich) eingeplant.`,
-            whenLabel: body.mode === "scheduled" ? `${body.localDate} ${body.localTime} Uhr (Europe/Zurich)` : null,
+            whenLabel:
+              body.mode === "scheduled"
+                ? `${body.localDate} ${body.localTime} Uhr (Europe/Zurich)`
+                : null,
           },
         },
       });
@@ -166,15 +194,26 @@ async function install(page: Page, count: number) {
 }
 
 for (const count of [1, 97, 183]) {
-  test(`selects ${count} filtered contacts and keeps contacted people visible`, async ({ page }) => {
+  test(`selects ${count} filtered contacts and keeps contacted people visible`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1024, height: 900 });
     await install(page, count);
     await page.goto("/");
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await page.getByRole("button", { name: `Alle ${count} Suchergebnisse auswählen` }).click();
+    await page.getByRole("button", { name: "Alle" }).click();
     await expect(page.getByText(`${count} Kontakte ausgewählt.`)).toBeVisible();
-    await expect(page.getByText("Bereits kontaktiert").first()).toBeVisible();
-    const checked = page.locator('.contact-choice input[type="checkbox"]:checked');
+    await page
+      .getByRole("checkbox", {
+        name: /Bereits kontaktierte und gesperrte Kontakte anzeigen/,
+      })
+      .check();
+    await expect(
+      page.getByText("Bereits kontaktiert", { exact: false }).last(),
+    ).toBeVisible();
+    const checked = page.locator(
+      '.contact-choice input[type="checkbox"]:checked',
+    );
     await expect(checked).toHaveCount(count);
   });
 }
@@ -190,66 +229,113 @@ for (const [width, height] of [
     const state = await install(page, 4);
     await page.goto("/");
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await expect(page.getByRole("heading", { name: "Kontakte auswählen" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Mails prüfen", exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Kontakte auswählen" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Mails prüfen", exact: true }),
+    ).toHaveCount(0);
     await page.screenshot({
-      path: `/opt/cursor/artifacts/akquise-step1-${width}.png`,
+      path: `.local/acquisition-previews/akquise-step1-${width}.png`,
       fullPage: true,
     });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole("button", { name: "Alle 4 Suchergebnisse auswählen" }).click();
-    await page.getByRole("button", { name: "Personalisierte Mails erstellen", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Personalisierte Mails erstellen" })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.getByRole("button", { name: "Alle" }).click();
+    await page
+      .getByRole("button", {
+        name: "Personalisierte Mails erstellen",
+        exact: true,
+      })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Personalisierte Mails erstellen" }),
+    ).toBeVisible();
     await expect(page.getByText("Anfrage 0")).toBeVisible();
     await page.screenshot({
-      path: `/opt/cursor/artifacts/akquise-step2-${width}.png`,
+      path: `.local/acquisition-previews/akquise-step2-${width}.png`,
       fullPage: true,
     });
-    await page.getByRole("button", { name: "Mails prüfen", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Mails prüfen", exact: true })
+      .click();
     await expect(page.getByText("Quellen-URL fehlt.")).toBeVisible();
-    await expect(page.getByText(/bereits versendet oder eingeplant/i)).toBeVisible();
-    const sendBox = page.getByRole("checkbox", { name: "Firma 0 mitversenden" });
+    await expect(
+      page.getByText(/bereits versendet oder eingeplant/i).last(),
+    ).toBeVisible();
+    const sendBox = page.getByRole("checkbox", {
+      name: "Firma 0 mitversenden",
+    });
     await expect(sendBox).toBeChecked();
-    await expect(page.getByRole("checkbox", { name: "Firma 1 mitversenden" })).toBeDisabled();
-    await expect(page.getByRole("checkbox", { name: "Firma 2 mitversenden" })).toBeDisabled();
+    await expect(
+      page.getByRole("checkbox", { name: "Firma 1 mitversenden" }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("checkbox", { name: "Firma 2 mitversenden" }),
+    ).toBeDisabled();
     await page.getByRole("button", { name: /Firma 0/ }).click();
-    await expect(page.locator(".mail-review-body")).toContainText("Beste Grüsse");
+    await expect(page.locator(".mail-review-body")).toContainText(
+      "Beste Grüsse",
+    );
+    await page.getByLabel("Änderung", { exact: true }).selectOption("replace");
     await page.getByLabel("Text suchen").fill("Synthetischer");
     await page.getByLabel("Ersetzen durch").fill("Persönlicher");
     await page.getByRole("button", { name: "Änderung anzeigen" }).click();
     await expect(page.getByText("Persönlicher Text 0.")).toBeVisible();
     await page.getByRole("button", { name: "Änderung übernehmen" }).click();
-    await expect(page.getByText("Die frühere Freigabe gilt nicht mehr.").first()).toBeVisible();
+    await expect(
+      page.getByText("Die frühere Freigabe gilt nicht mehr.").first(),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Text bearbeiten" }).click();
-    await page.getByLabel("Betreff", { exact: true }).fill("Korrigierte Anfrage");
+    await page
+      .getByLabel("Betreff", { exact: true })
+      .fill("Korrigierte Anfrage");
     await expect(page.getByText("Gespeichert", { exact: true })).toBeVisible();
     await page.screenshot({
-      path: `/opt/cursor/artifacts/akquise-step3-${width}.png`,
+      path: `.local/acquisition-previews/akquise-step3-${width}.png`,
       fullPage: true,
     });
     await page.reload();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await expect(page.getByRole("heading", { name: "Mails prüfen und bearbeiten" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Mails prüfen und bearbeiten" }),
+    ).toBeVisible();
+    await page
+      .getByRole("checkbox", { name: /ausgewählten Mails geprüft/ })
+      .check();
     await page.getByRole("button", { name: "Weiter zum Versand" }).click();
-    await expect(page.getByRole("checkbox", { name: /gebe genau diesen Versand frei/ })).not.toBeChecked();
+    await expect(
+      page.getByRole("checkbox", { name: /gebe genau diesen Versand frei/ }),
+    ).not.toBeChecked();
     await page.getByLabel("Sofort senden").check();
     await page.getByLabel("Versand planen").check();
     await page.getByLabel("Datum (Europe/Zurich)").fill("2026-12-01");
     await page.getByLabel("Uhrzeit (Europe/Zurich)").fill("10:30");
-    await page.getByRole("checkbox", { name: /gebe genau diesen Versand frei/ }).check();
-    const scheduleLabel = page.getByRole("button", { name: /Mails für 2026-12-01 um 10:30 Uhr einplanen/ });
+    await page
+      .getByRole("checkbox", { name: /gebe genau diesen Versand frei/ })
+      .check();
+    const scheduleLabel = page.getByRole("button", {
+      name: /Mails für 2026-12-01 um 10:30 Uhr einplanen/,
+    });
     await expect(scheduleLabel).toBeEnabled();
     if (width !== 1024) {
       await page.getByLabel("Sofort senden").check();
       await page.screenshot({
-        path: `/opt/cursor/artifacts/akquise-step4-${width}.png`,
+        path: `.local/acquisition-previews/akquise-step4-${width}.png`,
         fullPage: true,
       });
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
       return;
     }
     await page.screenshot({
-      path: `/opt/cursor/artifacts/akquise-step4-${width}.png`,
+      path: `.local/acquisition-previews/akquise-step4-${width}.png`,
       fullPage: true,
     });
     await scheduleLabel.evaluate((button: HTMLButtonElement) => {
@@ -258,7 +344,9 @@ for (const [width, height] of [
     });
     await expect.poll(() => state.plans()).toBe(1);
     state.release();
-    await expect(page.getByRole("heading", { name: "Versand erfasst" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Versand erfasst" }),
+    ).toBeVisible();
     await expect(page.getByRole("status")).toContainText("2026-12-01 10:30");
     const sent = state.planBody();
     expect(sent?.mode).toBe("scheduled");
@@ -270,6 +358,68 @@ for (const [width, height] of [
     ]);
     expect(state.plans()).toBe(1);
     await page.getByRole("button", { name: "Neue Mails erstellen" }).click();
-    await expect(page.getByRole("heading", { name: "Kontakte auswählen" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Kontakte auswählen" }),
+    ).toBeVisible();
   });
 }
+
+test("quick selection, individual toggles, global addition and no empty checkout", async ({
+  page,
+}) => {
+  await install(page, 215);
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Akquise$/ }).click();
+  for (const count of [10, 20, 50, 100]) {
+    await page
+      .getByRole("button", { name: String(count), exact: true })
+      .click();
+    await expect(page.getByText(`${count} Kontakte ausgewählt.`)).toBeVisible();
+  }
+  const first = page.getByRole("checkbox", {
+    name: "Firma 0 auswählen",
+    exact: true,
+  });
+  await first.uncheck();
+  await expect(page.getByText("99 Kontakte ausgewählt.")).toBeVisible();
+  await first.check();
+  await page.getByRole("button", { name: "Alle", exact: true }).click();
+  await expect(page.getByText("215 Kontakte ausgewählt.")).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "Personalisierte Mails erstellen",
+      exact: true,
+    })
+    .click();
+  await page.getByRole("button", { name: "Mails prüfen", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "4 Versand", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: /Firma 1\b/ }).click();
+  await expect(
+    page.getByRole("button", { name: "Text bearbeiten" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Text bearbeiten" }).click();
+  await page
+    .getByLabel("Betreff", { exact: true })
+    .fill("Korrigierbar trotz fehlender Quelle");
+  await expect(page.getByText("Gespeichert", { exact: true })).toBeVisible();
+  await page.getByLabel("Ergänzung für alle").fill("Unser gemeinsamer Zusatz.");
+  await page.getByRole("button", { name: "Änderung anzeigen" }).click();
+  await expect(
+    page.getByText(/Unser gemeinsamer Zusatz\./).first(),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Änderung übernehmen" }).click();
+  await expect(
+    page
+      .getByText("Gespeichert. Die frühere Freigabe gilt nicht mehr.")
+      .first(),
+  ).toBeVisible();
+  await page
+    .getByRole("checkbox", { name: /ausgewählten Mails geprüft/ })
+    .check();
+  await page.getByRole("button", { name: "Weiter zum Versand" }).click();
+  await expect(
+    page.getByText("213 Mails in der angezeigten Version."),
+  ).toBeVisible();
+});

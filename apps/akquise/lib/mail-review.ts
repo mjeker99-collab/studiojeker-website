@@ -17,7 +17,12 @@ import {
 } from "./policy";
 import { appendMailContent, mailImageIds } from "./mail-content";
 import { mailImageAttachments } from "./mail-images";
-import { editDraft, reviewDraft, discardDrafts, correctNoraSender } from "./workflow";
+import {
+  editDraft,
+  reviewDraft,
+  discardDrafts,
+  correctNoraSender,
+} from "./workflow";
 import { assertNoraMailText, noraSenderText } from "./generation";
 
 const ids = z
@@ -113,12 +118,18 @@ export async function mailReview(
   if (action === "preview") {
     const input = z.object({ ids }).strict().parse(raw);
     const candidates = await db.draft.findMany({
-      where: { id: { in: input.ids }, versions: { some: { body: { contains: "Martin", mode: "insensitive" } } } },
+      where: {
+        id: { in: input.ids },
+        versions: {
+          some: { body: { contains: "Martin", mode: "insensitive" } },
+        },
+      },
       include: { versions: { orderBy: { version: "desc" }, take: 1 } },
     });
     for (const d of candidates) {
       const body = d.versions[0]?.body;
-      if (body && noraSenderText(body) !== body) await correctNoraSender(userId, d.id);
+      if (body && noraSenderText(body) !== body)
+        await correctNoraSender(userId, d.id);
     }
     const drafts = await db.draft.findMany({
       where: { id: { in: input.ids } },
@@ -149,7 +160,9 @@ export async function mailReview(
       try {
         assertNoraMailText(v.body);
       } catch (error) {
-        issues.push(error instanceof Error ? error.message : "Absendertext prüfen.");
+        issues.push(
+          error instanceof Error ? error.message : "Absendertext prüfen.",
+        );
       }
       if (
         v.contactRevision !== d.contact.revision ||
@@ -161,22 +174,25 @@ export async function mailReview(
       if (await db.suppression.findUnique({ where: { email: v.recipient } }))
         issues.push("Adresse auf Sperrliste.");
       const existingDelivery = await db.delivery.findFirst({
-          where: {
-            recipient: v.recipient,
-            status: {
-              in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
-            },
+        where: {
+          recipient: v.recipient,
+          status: {
+            in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
           },
-        });
+        },
+      });
       const queued = await db.mailQueueItem.findFirst({
         where: {
           draftId: id,
           status: { in: ["QUEUED", "SENDING", "UNKNOWN"] },
         },
       });
-      if (existingDelivery) issues.push("Bereits versandt oder Zustellung in Bearbeitung.");
+      if (existingDelivery)
+        issues.push("Bereits versandt oder Zustellung in Bearbeitung.");
       else if (queued)
-        issues.push("Bereits eingeplant. Nicht als neues Versandziel verwendbar.");
+        issues.push(
+          "Bereits eingeplant. Nicht als neues Versandziel verwendbar.",
+        );
       let needsLegal = false;
       try {
         legalAllowed(
@@ -220,13 +236,14 @@ export async function mailReview(
           )
           .min(1)
           .max(200),
-        find: z.string().min(1).max(500),
+        find: z.string().max(500),
+        append: z.string().trim().min(1).max(2000).optional(),
         replace: z.string().max(2000),
         confirmed: z.boolean(),
       })
       .strict()
       .parse(raw);
-    if (input.find === input.replace)
+    if (!input.append && (!input.find || input.find === input.replace))
       throw new PolicyError("Der neue Text unterscheidet sich nicht.");
     const results = [];
     for (const entry of input.items) {
@@ -250,7 +267,9 @@ export async function mailReview(
         const sent = await db.delivery.findFirst({
           where: {
             recipient: v.recipient,
-            status: { in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"] },
+            status: {
+              in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"],
+            },
           },
         });
         if (sent || blocked)
@@ -259,12 +278,29 @@ export async function mailReview(
               ? "Bereits versandt oder in Bearbeitung. Diese Mail wird nicht verändert."
               : "Bereits eingeplant. Diese Mail wird nicht als neues Versandziel verändert.",
           );
-        if (!v.body.includes(input.find) && !v.subject.includes(input.find))
-          throw new PolicyError("Der gesuchte Text steht in dieser Mail nicht.");
-        const subject = v.subject.split(input.find).join(input.replace);
-        const body = v.body.split(input.find).join(input.replace);
-        if (!subject.trim() || subject.length > 250 || !body.trim() || body.length > 12000)
-          throw new PolicyError("Betreff oder Nachricht ist nach der Änderung ungültig.");
+        if (
+          !input.append &&
+          !v.body.includes(input.find) &&
+          !v.subject.includes(input.find)
+        )
+          throw new PolicyError(
+            "Der gesuchte Text steht in dieser Mail nicht.",
+          );
+        const subject = input.append
+          ? v.subject
+          : v.subject.split(input.find).join(input.replace);
+        const body = input.append
+          ? appendMailContent(v.body, input.append)
+          : v.body.split(input.find).join(input.replace);
+        if (
+          !subject.trim() ||
+          subject.length > 250 ||
+          !body.trim() ||
+          body.length > 12000
+        )
+          throw new PolicyError(
+            "Betreff oder Nachricht ist nach der Änderung ungültig.",
+          );
         assertNoraMailText(body);
         if (!input.confirmed) {
           results.push({
@@ -294,7 +330,10 @@ export async function mailReview(
         results.push({
           id: entry.id,
           ok: false,
-          message: error instanceof Error ? error.message : "Änderung nicht gespeichert",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Änderung nicht gespeichert",
         });
       }
     }
@@ -307,8 +346,14 @@ export async function mailReview(
         read: z.literal(true),
         confirmDispatch: z.literal(true),
         mode: z.enum(["immediate", "scheduled"]),
-        localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        localTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+        localDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        localTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .optional(),
         legal: z
           .object({
             confirmed: z.literal(true),
@@ -365,7 +410,9 @@ export async function mailReview(
         });
       }
     }
-    const queuedIds = results.filter((result) => result.ok).map((result) => result.id);
+    const queuedIds = results
+      .filter((result) => result.ok)
+      .map((result) => result.id);
     if (input.mode === "immediate" && queuedIds.length) {
       try {
         await runMailSchedule(sender, { explicitOnly: true });

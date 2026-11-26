@@ -633,7 +633,12 @@ test("archive cancels pending mail and restore never restores approval", async (
 
 function asPlan(value: unknown) {
   const result = value as {
-    summary?: { queued: number; started: number; capped: boolean; message: string };
+    summary?: {
+      queued: number;
+      started: number;
+      capped: boolean;
+      message: string;
+    };
     results?: { ok: boolean; message: string; body?: string }[];
   };
   if (!result.results) throw new Error("Unvollständige Versandantwort");
@@ -647,9 +652,14 @@ function asPlan(value: unknown) {
     results: result.results,
   };
 }
-async function planItem(entry: { c: { revision: number }; d: { id: string; version: number } }) {
+async function planItem(entry: {
+  c: { revision: number };
+  d: { id: string; version: number };
+}) {
   const version = await db.draftVersion.findUniqueOrThrow({
-    where: { draftId_version: { draftId: entry.d.id, version: entry.d.version } },
+    where: {
+      draftId_version: { draftId: entry.d.id, version: entry.d.version },
+    },
   });
   return {
     id: entry.d.id,
@@ -668,26 +678,30 @@ test("Versand planen speichert die Zürcher Uhrzeit und wartet nicht auf das Tag
     data: { enabled: false, weekdaysOnly: true, startHour: 9, endHour: 10 },
   });
   const fields = zurichFields(new Date(Date.now() + 3 * 86400000));
-  const planned = asPlan(await mailReview(
-    user,
-    "approve-and-plan",
-    {
-      items: [await planItem(entry)],
-      read: true,
-      confirmDispatch: true,
-      mode: "scheduled",
-      localDate: fields.date,
-      localTime: fields.time,
-    },
-    sender,
-  ));
+  const planned = asPlan(
+    await mailReview(
+      user,
+      "approve-and-plan",
+      {
+        items: [await planItem(entry)],
+        read: true,
+        confirmDispatch: true,
+        mode: "scheduled",
+        localDate: fields.date,
+        localTime: fields.time,
+      },
+      sender,
+    ),
+  );
   assert.equal(calls, 0);
   assert.equal(planned.summary.queued, 1);
   assert.match(planned.summary.message, /eingeplant/);
   const stored = await db.mailQueueItem.findFirstOrThrow({
     where: { draftId: entry.d.id },
   });
-  assert.ok(stored.sendAfter && stored.sendAfter.getTime() > Date.now() + 86400000);
+  assert.ok(
+    stored.sendAfter && stored.sendAfter.getTime() > Date.now() + 86400000,
+  );
   await runMailSchedule(sender);
   assert.equal(calls, 0);
   await db.mailQueueItem.update({
@@ -735,23 +749,34 @@ test("Sofort senden startet eine Mail und ein fehlerhafter Kontakt blockiert die
   const badDraft = await newDraft(user, badContact.id);
   await db.mailSchedule.update({
     where: { id: "studiojeker" },
-    data: { enabled: false, weekdaysOnly: true, startHour: 9, endHour: 10, dailyLimit: 25 },
-  });
-  const result = asPlan(await mailReview(
-    user,
-    "approve-and-plan",
-    {
-      items: [
-        await planItem(good),
-        await planItem({ c: badContact, d: badDraft }),
-      ],
-      read: true,
-      confirmDispatch: true,
-      mode: "immediate",
+    data: {
+      enabled: false,
+      weekdaysOnly: true,
+      startHour: 9,
+      endHour: 10,
+      dailyLimit: 25,
     },
-    sender,
-  ));
-  assert.equal(result.results.filter((item: { ok: boolean }) => item.ok).length, 1);
+  });
+  const result = asPlan(
+    await mailReview(
+      user,
+      "approve-and-plan",
+      {
+        items: [
+          await planItem(good),
+          await planItem({ c: badContact, d: badDraft }),
+        ],
+        read: true,
+        confirmDispatch: true,
+        mode: "immediate",
+      },
+      sender,
+    ),
+  );
+  assert.equal(
+    result.results.filter((item: { ok: boolean }) => item.ok).length,
+    1,
+  );
   const failed = result.results.find((item) => !item.ok);
   if (!failed) throw new Error("Fehlerhafter Kontakt wurde nicht gemeldet");
   assert.match(failed.message, /rechtliche Versandprüfung/);
@@ -765,7 +790,13 @@ test("Tageslimit lässt weitere Sofortmails warten und nennt den nächsten Zeitp
   const first = await prepared();
   await db.mailSchedule.update({
     where: { id: "studiojeker" },
-    data: { enabled: false, dailyLimit: 1, weekdaysOnly: false, startHour: 0, endHour: 24 },
+    data: {
+      enabled: false,
+      dailyLimit: 1,
+      weekdaysOnly: false,
+      startHour: 0,
+      endHour: 24,
+    },
   });
   await mailReview(
     user,
@@ -780,23 +811,27 @@ test("Tageslimit lässt weitere Sofortmails warten und nennt den nächsten Zeitp
   );
   assert.equal(calls, 1);
   const second = await prepared();
-  const capped = asPlan(await mailReview(
-    user,
-    "approve-and-plan",
-    {
-      items: [await planItem(second)],
-      read: true,
-      confirmDispatch: true,
-      mode: "immediate",
-    },
-    sender,
-  ));
+  const capped = asPlan(
+    await mailReview(
+      user,
+      "approve-and-plan",
+      {
+        items: [await planItem(second)],
+        read: true,
+        confirmDispatch: true,
+        mode: "immediate",
+      },
+      sender,
+    ),
+  );
   assert.equal(calls, 1);
   assert.equal(capped.summary.started, 0);
   assert.equal(capped.summary.capped, true);
   assert.match(capped.summary.message, /Tageslimit von 1/);
   assert.equal(
-    await db.mailQueueItem.count({ where: { draftId: second.d.id, status: "QUEUED" } }),
+    await db.mailQueueItem.count({
+      where: { draftId: second.d.id, status: "QUEUED" },
+    }),
     1,
   );
 });
@@ -804,28 +839,39 @@ test("Tageslimit lässt weitere Sofortmails warten und nennt den nächsten Zeitp
 test("Globale Textänderung entwertet die Freigabe und lässt versendete Mails stehen", async () => {
   const { mailReview } = await import("../../lib/mail-review");
   const entry = await prepared();
-  const preview = asPlan(await mailReview(user, "revise", {
-    items: [{ id: entry.d.id, version: entry.d.version }],
-    find: "unverbindlichen",
-    replace: "kurzen",
-    confirmed: false,
-  }));
+  const preview = asPlan(
+    await mailReview(user, "revise", {
+      items: [{ id: entry.d.id, version: entry.d.version }],
+      find: "unverbindlichen",
+      replace: "kurzen",
+      confirmed: false,
+    }),
+  );
   assert.equal(preview.results[0].ok, true);
   assert.match(preview.results[0].body || "", /kurzen/);
   assert.equal(
-    await db.approval.count({ where: { draftId: entry.d.id, status: "APPROVED" } }),
+    await db.approval.count({
+      where: { draftId: entry.d.id, status: "APPROVED" },
+    }),
     1,
   );
-  const applied = asPlan(await mailReview(user, "revise", {
-    items: [{ id: entry.d.id, version: entry.d.version }],
-    find: "unverbindlichen",
-    replace: "kurzen",
-    confirmed: true,
-  }));
+  const applied = asPlan(
+    await mailReview(user, "revise", {
+      items: [{ id: entry.d.id, version: entry.d.version }],
+      find: "unverbindlichen",
+      replace: "kurzen",
+      confirmed: true,
+    }),
+  );
   assert.equal(applied.results[0].ok, true);
-  assert.equal((await db.draft.findUniqueOrThrow({ where: { id: entry.d.id } })).version, 2);
   assert.equal(
-    await db.approval.count({ where: { draftId: entry.d.id, status: "APPROVED" } }),
+    (await db.draft.findUniqueOrThrow({ where: { id: entry.d.id } })).version,
+    2,
+  );
+  assert.equal(
+    await db.approval.count({
+      where: { draftId: entry.d.id, status: "APPROVED" },
+    }),
     0,
   );
   const sent = await prepared();
@@ -844,12 +890,51 @@ test("Globale Textänderung entwertet die Freigabe und lässt versendete Mails s
     },
     sender,
   );
-  const blocked = asPlan(await mailReview(user, "revise", {
-    items: [{ id: sent.d.id, version: sent.d.version }],
-    find: "unverbindlichen",
-    replace: "kurzen",
-    confirmed: true,
-  }));
+  const blocked = asPlan(
+    await mailReview(user, "revise", {
+      items: [{ id: sent.d.id, version: sent.d.version }],
+      find: "unverbindlichen",
+      replace: "kurzen",
+      confirmed: true,
+    }),
+  );
   assert.equal(blocked.results[0].ok, false);
   assert.match(blocked.results[0].message, /versandt|eingeplant/i);
+});
+
+test("Globale Ergänzung hat Vorschau, neue Version und keine alte Freigabe", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const entry = await prepared();
+  const change = {
+    items: [{ id: entry.d.id, version: entry.d.version }],
+    find: "",
+    replace: "",
+    append: "Zusätzliche gemeinsame Information.",
+  };
+  const preview = asPlan(
+    await mailReview(user, "revise", { ...change, confirmed: false }),
+  );
+  assert.equal(preview.results[0].ok, true);
+  assert.match(
+    preview.results[0].body || "",
+    /Zusätzliche gemeinsame Information/,
+  );
+  assert.equal(
+    (await db.draft.findUniqueOrThrow({ where: { id: entry.d.id } })).version,
+    entry.d.version,
+  );
+  const applied = asPlan(
+    await mailReview(user, "revise", { ...change, confirmed: true }),
+  );
+  assert.equal(applied.results[0].ok, true);
+  assert.equal(
+    (await db.draft.findUniqueOrThrow({ where: { id: entry.d.id } })).version,
+    entry.d.version + 1,
+  );
+  assert.equal(
+    await db.approval.count({
+      where: { draftId: entry.d.id, status: "APPROVED" },
+    }),
+    0,
+  );
 });
