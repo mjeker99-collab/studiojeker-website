@@ -611,9 +611,29 @@ async function handler(
           }),
           db.user.findMany({ select: { id: true, name: true } }),
         ]);
+      // The history shown on screen is paginated. Check all active queue entries
+      // and deliveries for the contacts actually offered in the picker.
+      const recipients = contacts.map((contact) => contact.email);
+      const [prior, pending, blocked] = await Promise.all([
+        db.delivery.findMany({
+          where: { recipient: { in: recipients }, status: { in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"] } },
+          distinct: ["recipient"], select: { recipient: true },
+        }),
+        db.mailQueueItem.findMany({
+          where: { recipient: { in: recipients }, status: { in: ["QUEUED", "SENDING", "UNKNOWN"] } },
+          distinct: ["recipient"], select: { recipient: true },
+        }),
+        db.suppression.findMany({ where: { email: { in: recipients } }, select: { email: true } }),
+      ]);
+      const unavailable = new Set([...prior, ...pending].map((item) => item.recipient));
+      const suppressed = new Set(blocked.map((item) => item.email));
       return NextResponse.json({
         user: { id: user.id, name: user.name },
-        contacts,
+        contacts: contacts.map((contact) => ({
+          ...contact,
+          deliveryBlocked: unavailable.has(contact.email),
+          suppressed: suppressed.has(contact.email),
+        })),
         drafts: drafts.map((d) => ({
           ...d,
           versions: d.versions.map((v) => ({

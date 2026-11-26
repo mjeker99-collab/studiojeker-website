@@ -8,11 +8,13 @@ export type AcquisitionContact = {
   email: string;
   status: string;
   deliveryBlocked?: boolean;
+  suppressed?: boolean;
   replyOutcome?: string | null;
   archivedAt?: unknown;
 };
 
 export function contactSendBlock(contact: AcquisitionContact) {
+  if (contact.suppressed) return "Adresse auf Sperrliste";
   if (contact.deliveryBlocked) return "Bereits kontaktiert oder in Bearbeitung";
   if (contact.archivedAt) return "Archiviert";
   if (contact.replyOutcome) return "Antwort erfasst";

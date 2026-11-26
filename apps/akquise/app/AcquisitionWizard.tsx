@@ -154,9 +154,10 @@ export default function AcquisitionWizard({
   const [summary, setSummary] = useState<Summary | null>(null);
   const [restored, setRestored] = useState(false);
   const visible = visibleAcquisitionContacts(contacts, search);
-  const selectedEligible = selected.filter((id) =>
-    contacts.some((c) => c.id === id && !contactSendBlock(c)),
+  const selectableIds = new Set(
+    contacts.filter((c) => !contactSendBlock(c)).map((c) => c.id),
   );
+  const selectedEligible = selected.filter((id) => selectableIds.has(id));
   const eligible = visible.filter((contact) => !contactSendBlock(contact));
   const includedRows = rows.filter(
     (row) =>
@@ -165,16 +166,11 @@ export default function AcquisitionWizard({
       !row.deliveryStatus &&
       !row.queueStatus,
   );
-  const evidenceReady =
-    rationale.trim().length >= 15 &&
-    (!includedRows.some((row) => row.needsLegal && row.publicAuthority) ||
-      procurement);
-  const sendRows = includedRows.filter(
-    (row) => !row.needsLegal || evidenceReady,
-  );
-  const heldBack = includedRows.filter(
-    (row) => row.needsLegal && !evidenceReady,
-  );
+  const evidenceReady = rationale.trim().length >= 15;
+  const maySend = (row: Row) =>
+    !row.needsLegal || (evidenceReady && (!row.publicAuthority || procurement));
+  const sendRows = includedRows.filter(maySend);
+  const heldBack = includedRows.filter((row) => !maySend(row));
   const active =
     rows.find((row) => row.id === activeId) || sendRows[0] || rows[0];
   const locked = (row?: Row) =>
@@ -182,6 +178,8 @@ export default function AcquisitionWizard({
 
   function chooseContacts(ids: string[]) {
     setSelected(ids);
+    setRationale("");
+    setProcurement(false);
     setRows([]);
     setExcluded([]);
     setProposals([]);
@@ -282,8 +280,14 @@ export default function AcquisitionWizard({
         (item: { ok: boolean; draftId?: string }) => item.ok && item.draftId,
       )
       .map((item) => item.draftId!);
+    await loadPreview(draftIds);
     await refresh();
-    if (draftIds.length) await loadPreview(draftIds);
+  }
+  function startPreparation() {
+    void run(async () => {
+      go(2);
+      await createDrafts();
+    });
   }
   useEffect(() => {
     const onPop = (event: PopStateEvent) => {
@@ -302,9 +306,7 @@ export default function AcquisitionWizard({
   }, []);
   useEffect(() => {
     let activeLoad = true;
-    const saved = JSON.parse(
-      localStorage.getItem(persistenceKey) || "null",
-    ) as {
+    type SavedWork = {
       step?: Step;
       selected?: string[];
       excluded?: string[];
@@ -313,9 +315,13 @@ export default function AcquisitionWizard({
       mode?: "" | "immediate" | "scheduled";
       localDate?: string;
       localTime?: string;
-      confirmed?: boolean;
-      hashes?: Record<string, string>;
-    } | null;
+    };
+    let saved: SavedWork | null = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(persistenceKey) || "null");
+    } catch {
+      // A damaged or obsolete entry must not prevent a fresh selection.
+    }
     const urlStep = new URL(window.location.href).searchParams.get(
       "akquiseStep",
     );
@@ -331,6 +337,7 @@ export default function AcquisitionWizard({
         if (saved?.mode) setMode(saved.mode);
         if (saved?.localDate) setLocalDate(saved.localDate);
         if (saved?.localTime) setLocalTime(saved.localTime);
+        let hasDrafts = false;
         if (saved?.draftIds?.length) {
           const data = await batchPost(
             "/api/mail-review/preview",
@@ -341,32 +348,25 @@ export default function AcquisitionWizard({
           const nextRows = (data.rows || []) as Row[];
           setRows(nextRows);
           setActiveId(nextRows[0]?.id || "");
-          const same = nextRows.every(
-            (row) => saved.hashes?.[row.id] === `${row.version}:${row.hash}`,
-          );
-          setConfirmed(Boolean(saved.confirmed && same));
+          hasDrafts = nextRows.length > 0;
         }
-        setStep(
-          nextStep === 4 || nextStep === "done"
-            ? 3
-            : nextStep === 2 || nextStep === 3
-              ? nextStep
-              : 1,
-        );
-        window.history.replaceState(
-          { akquiseStep: nextStep },
-          "",
-          window.location.href,
-        );
+        const resume =
+          !hasDrafts || nextStep === 1 ? 1 : nextStep === 2 ? 2 : 3;
+        setStep(resume);
+        const url = new URL(window.location.href);
+        url.searchParams.set("akquiseStep", String(resume));
+        window.history.replaceState({ akquiseStep: resume }, "", url);
         if (activeLoad) setRestored(true);
       })
       .catch((reason) => {
-        if (activeLoad)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "Gespeicherte Auswahl konnte nicht geladen werden.",
-          );
+        if (!activeLoad) return;
+        setStep(1);
+        setRestored(true);
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : "Gespeicherte Auswahl konnte nicht geladen werden.",
+        );
       });
     return () => {
       activeLoad = false;
@@ -374,9 +374,6 @@ export default function AcquisitionWizard({
   }, [persistenceKey]);
   useEffect(() => {
     if (!restored) return;
-    const hashes = Object.fromEntries(
-      rows.map((row) => [row.id, `${row.version}:${row.hash}`]),
-    );
     localStorage.setItem(
       persistenceKey,
       JSON.stringify({
@@ -388,8 +385,6 @@ export default function AcquisitionWizard({
         mode,
         localDate,
         localTime,
-        confirmed,
-        hashes,
       }),
     );
   }, [
@@ -403,7 +398,6 @@ export default function AcquisitionWizard({
     mode,
     localDate,
     localTime,
-    confirmed,
   ]);
 
   const planLabel =
@@ -412,6 +406,7 @@ export default function AcquisitionWizard({
       : `${sendRows.length} Mails sofort senden`;
   const planDisabled =
     busy ||
+    !reviewed ||
     !confirmed ||
     !sendRows.length ||
     (mode !== "immediate" &&
@@ -433,12 +428,17 @@ export default function AcquisitionWizard({
               disabled={
                 busy ||
                 editorDirty ||
-                (item.id === 4
-                  ? !sendRows.length || !reviewed
-                  : item.id !== 1 && !rows.length && item.id !== step)
+                (item.id === 2
+                  ? !selectedEligible.length && !rows.length
+                  : item.id === 3
+                    ? !rows.length
+                    : item.id === 4
+                      ? !sendRows.length || !reviewed
+                      : false)
               }
               onClick={() => {
-                if (item.id === 1 || rows.length) go(item.id);
+                if (item.id === 2 && !rows.length) startPreparation();
+                else go(item.id);
               }}
             >
               {item.label}
@@ -455,8 +455,8 @@ export default function AcquisitionWizard({
         <div>
           <h2>Kontakte auswählen</h2>
           <p>
-            Suche, filtere und wähle die Personen. Bereits kontaktierte Einträge
-            kannst du bei Bedarf einblenden; sie sind nicht erneut wählbar.
+            Tippe auf eine Adresse oder wähle die ersten 10, 20, 50, 100 oder
+            alle Treffer.
           </p>
           <label>
             Kontakte suchen
@@ -479,7 +479,6 @@ export default function AcquisitionWizard({
                       .slice(0, typeof amount === "number" ? amount : undefined)
                       .map((c) => c.id),
                   );
-                  setReviewed(false);
                 }}
               >
                 {amount}
@@ -533,7 +532,9 @@ export default function AcquisitionWizard({
                 </label>
               );
             })}
-            {!visible.length && <p>Keine Kontakte für diese Suche.</p>}
+            {!eligible.length && !showBlocked && (
+              <p>Keine wählbaren Kontakte für diese Suche.</p>
+            )}
           </div>
         </div>
       )}
@@ -545,7 +546,10 @@ export default function AcquisitionWizard({
             Grüsse», direkt vor der bestehenden Nora-Signatur.
           </p>
           {busy && <p role="status">Mails werden erstellt …</p>}
-          <ul>
+          {rows.length > 0 && (
+            <p role="status">{rows.length} Entwürfe zur Prüfung bereit.</p>
+          )}
+          <ul className="wizard-draft-list">
             {rows.map((row) => (
               <li key={row.id}>
                 {row.organisation}: {row.subject}
@@ -622,6 +626,7 @@ export default function AcquisitionWizard({
             disabled={busy || editorDirty}
             onClick={() => {
               setExcluded([]);
+              setGlobalPreview([]);
               setReviewed(false);
               setConfirmed(false);
             }}
@@ -780,8 +785,9 @@ export default function AcquisitionWizard({
                       setConfirmed(false);
                       setReviewed(false);
                       setGlobalPreview([]);
+                      const checked = event.currentTarget.checked;
                       setExcluded((current) =>
-                        event.target.checked
+                        checked
                           ? current.filter((id) => id !== row.id)
                           : [...current, row.id],
                       );
@@ -859,7 +865,7 @@ export default function AcquisitionWizard({
                 Andere Mails bleiben unabhängig davon bereit.
               </p>
               <label>
-                Grundlage der Kontaktaufnahme
+                Grundlage der Kontaktaufnahme (mindestens 15 Zeichen)
                 <textarea
                   value={rationale}
                   onChange={(event) => {
@@ -870,7 +876,9 @@ export default function AcquisitionWizard({
                   rows={3}
                 />
               </label>
-              {includedRows.some((row) => row.publicAuthority) && (
+              {includedRows.some(
+                (row) => row.needsLegal && row.publicAuthority,
+              ) && (
                 <label className="choice">
                   <input
                     type="checkbox"
@@ -886,12 +894,19 @@ export default function AcquisitionWizard({
               )}
             </div>
           )}
-          {heldBack.map((row) => (
-            <p key={row.id} role="status">
-              {row.organisation}: Separate, aktuelle rechtliche Versandprüfung
-              fehlt. Diese Mail wird nicht mitgesendet.
-            </p>
-          ))}
+          {heldBack.length > 0 && (
+            <details>
+              <summary>
+                {heldBack.length} Mails warten auf die Grundlage der
+                Kontaktaufnahme
+              </summary>
+              <ul className="wizard-draft-list">
+                {heldBack.map((row) => (
+                  <li key={row.id}>{row.organisation}</li>
+                ))}
+              </ul>
+            </details>
+          )}
           <label className="choice">
             <input
               type="checkbox"
@@ -985,18 +1000,25 @@ export default function AcquisitionWizard({
             übernommen: {summary.failed}.
             {summary.whenLabel ? ` Zeitpunkt: ${summary.whenLabel}.` : ""}
           </p>
+          {problems.length > 0 && (
+            <details>
+              <summary>
+                Gründe für zurückgestellte Mails anzeigen ({problems.length})
+              </summary>
+              <ul className="wizard-draft-list">
+                {problems.map((message, index) => (
+                  <li key={index}>{message}</li>
+                ))}
+              </ul>
+            </details>
+          )}
           <div className="wizard-actions">
             <button
               type="button"
               onClick={() => {
-                setSelected([]);
-                setRows([]);
-                setExcluded([]);
-                setProblems([]);
+                chooseContacts([]);
                 setSummary(null);
                 setMode("");
-                setConfirmed(false);
-                setGlobalPreview([]);
                 go(1);
               }}
             >
@@ -1024,12 +1046,7 @@ export default function AcquisitionWizard({
             <button
               type="button"
               disabled={busy || !selectedEligible.length}
-              onClick={() =>
-                void run(async () => {
-                  go(2);
-                  await createDrafts();
-                })
-              }
+              onClick={startPreparation}
             >
               Personalisierte Mails erstellen
             </button>
@@ -1058,6 +1075,7 @@ export default function AcquisitionWizard({
               disabled={planDisabled}
               onClick={() =>
                 void run(async () => {
+                  const failures: string[] = [];
                   const totals: Summary = {
                     queued: 0,
                     started: 0,
@@ -1098,15 +1116,38 @@ export default function AcquisitionWizard({
                           : {}),
                       },
                     );
+                    for (const result of data.results || []) {
+                      if (!result.ok) {
+                        const row = sendRows.find(
+                          (item) => item.id === result.id,
+                        );
+                        failures.push(
+                          `${row?.organisation || "Mail"}: ${result.message}`,
+                        );
+                      }
+                    }
+                    totals.message = data.summary.message;
                     totals.queued += data.summary.queued;
                     totals.started += data.summary.started;
                     totals.failed += data.summary.failed;
                     totals.whenLabel = data.summary.whenLabel;
                   }
-                  totals.message = `${totals.queued} Mails eingeplant, ${totals.started} gestartet, ${totals.failed} nicht übernommen.${totals.whenLabel ? ` Zeitpunkt: ${totals.whenLabel}.` : ""}`;
-                  setSummary(totals);
+                  if (sendRows.length > acquisitionBatchLimit)
+                    totals.message = `${totals.queued} Mails eingeplant, ${totals.started} gestartet, ${totals.failed} nicht übernommen.${totals.whenLabel ? ` Zeitpunkt: ${totals.whenLabel}.` : ""}`;
+                  setProblems(failures);
                   setConfirmed(false);
-                  go("done");
+                  if (!totals.queued) {
+                    await loadPreview(rows.map((row) => row.id));
+                    setReviewed(false);
+                    go(3);
+                    setError(
+                      failures[0] ||
+                        "Keine Mail eingeplant. Bitte prüfe die Empfänger und ihre Angaben.",
+                    );
+                  } else {
+                    setSummary(totals);
+                    go("done");
+                  }
                   await refresh();
                 })
               }

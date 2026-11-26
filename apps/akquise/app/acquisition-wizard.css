@@ -136,3 +136,8 @@
   cursor: pointer;
   font-weight: bold;
 }
+
+.acquisition-wizard .wizard-draft-list {
+  max-height: 12rem;
+  overflow: auto;
+}

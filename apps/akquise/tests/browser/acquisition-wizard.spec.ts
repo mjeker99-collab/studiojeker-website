@@ -16,7 +16,7 @@ function contacts(count: number) {
   }));
 }
 
-async function install(page: Page, count: number) {
+async function install(page: Page, count: number, allReady = false) {
   const people = contacts(count);
   const rows = people.slice(0, count).map((person, index) => ({
     id: `d${index}`,
@@ -30,8 +30,8 @@ async function install(page: Page, count: number) {
     organisation: person.organisation,
     publicAuthority: false,
     needsLegal: false,
-    issues: index === 1 && count > 2 ? ["Quellen-URL fehlt."] : [],
-    deliveryStatus: index === 2 && count > 2 ? "SENT" : null,
+    issues: !allReady && index === 1 && count > 2 ? ["Quellen-URL fehlt."] : [],
+    deliveryStatus: !allReady && index === 2 && count > 2 ? "SENT" : null,
     queueStatus: null,
   }));
   let plans = 0;
@@ -429,4 +429,75 @@ test("quick selection, individual toggles, global addition and no empty checkout
   await expect(
     page.getByText("213 Mails in der angezeigten Version."),
   ).toBeVisible();
+});
+
+test.describe("Akquise auf dem Touchscreen", () => {
+  test.use({ hasTouch: true, viewport: { width: 1024, height: 768 } });
+
+  for (const mode of ["immediate", "scheduled"] as const) {
+    test(`147 Adressen per Touch prüfen und ${mode} übergeben`, async ({
+      page,
+    }) => {
+      const state = await install(page, 147, true);
+      await page.goto("/");
+      await page.getByRole("button", { name: "Akquise", exact: true }).tap();
+      await expect(
+        page.getByRole("button", { name: "Erweiterte Mail-Werkzeuge" }),
+      ).toHaveCount(0);
+      const first = page.getByRole("checkbox", {
+        name: "Firma 0 auswählen",
+        exact: true,
+      });
+      await first.tap();
+      await expect(first).toBeChecked();
+      await page.locator("label.contact-choice").first().tap();
+      await expect(first).not.toBeChecked();
+      for (const count of [10, 20, 50, 100]) {
+        await page
+          .getByRole("button", { name: String(count), exact: true })
+          .tap();
+        await expect(page.locator(".wizard-list :checked")).toHaveCount(count);
+      }
+      await page.getByRole("button", { name: "Alle", exact: true }).tap();
+      await expect(page.locator(".wizard-list :checked")).toHaveCount(147);
+      await page
+        .getByRole("button", { name: "2 Personalisierte Mails erstellen" })
+        .tap();
+      await page.getByRole("button", { name: "3 Mails prüfen" }).tap();
+      const last = page.getByRole("checkbox", {
+        name: "Firma 146 mitversenden",
+      });
+      await last.tap();
+      await expect(last).not.toBeChecked();
+      await page
+        .getByRole("button", { name: "Alle ungesendeten Mails auswählen" })
+        .tap();
+      await expect(last).toBeChecked();
+      await page
+        .getByRole("checkbox", { name: /Alle 147 ausgewählten Mails geprüft/ })
+        .tap();
+      await page.getByRole("button", { name: "Weiter zum Versand" }).tap();
+      await page
+        .getByLabel(mode === "immediate" ? "Sofort senden" : "Versand planen")
+        .tap();
+      if (mode === "scheduled") {
+        await page.getByLabel("Datum (Europe/Zurich)").fill("2032-12-01");
+        await page.getByLabel("Uhrzeit (Europe/Zurich)").fill("10:30");
+      }
+      const send = page.getByRole("button", { name: /^147 Mails/ });
+      await expect(send).toBeDisabled();
+      expect(state.plans()).toBe(0);
+      await page
+        .getByRole("checkbox", { name: /gebe genau diesen Versand frei/ })
+        .tap();
+      await send.tap();
+      await expect.poll(() => state.plans()).toBe(1);
+      state.release();
+      await expect(
+        page.getByRole("heading", { name: "Versand erfasst" }),
+      ).toBeVisible();
+      expect(state.planBody()?.items).toHaveLength(147);
+      expect(state.planBody()?.mode).toBe(mode);
+    });
+  }
 });

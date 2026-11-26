@@ -236,8 +236,18 @@ export default function App() {
       ? "Interner SMTP-Testmodus"
       : "Produktionsversand aktiv"
     : "Versand deaktiviert";
-  const [mailContactIds, setMailContactIds] = useState<string[]>([]);
-  const [mailDraftIds, setMailDraftIds] = useState<string[]>([]);
+  function openMailSelection(selected: string[], draftIds: string[] = []) {
+    if (!data) return;
+    const step = draftIds.length ? 3 : 1;
+    localStorage.setItem(
+      `acquisition-wizard:${data.user.id}`,
+      JSON.stringify({ step, selected, draftIds }),
+    );
+    const url = new URL(window.location.href);
+    url.searchParams.set("akquiseStep", String(step));
+    window.history.replaceState({ akquiseStep: step }, "", url);
+    navigate({ section: "Mail-Studio" });
+  }
   async function refresh() {
     const r = await fetch("/api/state", { cache: "no-store" });
     if (r.status === 401) {
@@ -360,7 +370,6 @@ export default function App() {
         });
         setShowContact(false);
         setSelected((ids) => ids.filter((id) => id !== c.id));
-        setMailContactIds((ids) => ids.filter((id) => id !== c.id));
       },
       archived
         ? "Kontakt archiviert. Verlauf bleibt erhalten."
@@ -381,7 +390,6 @@ export default function App() {
       });
       setShowContact(false);
       setSelected((ids) => ids.filter((id) => id !== c.id));
-      setMailContactIds((ids) => ids.filter((id) => id !== c.id));
     }, "Kontakt und ungesendete Entwürfe gelöscht.");
   }
   function openContact(c: C | null) {
@@ -783,32 +791,15 @@ export default function App() {
                   onOpenContacts={() => setTab("Kontakte")}
                 />
               </div>
-              {tab === "Mail-Studio" && (
-                <>
-                  <button
-                    className="secondary"
-                    onClick={() => setAcquisitionWizard(!acquisitionWizard)}
-                  >
-                    {acquisitionWizard
-                      ? "Erweiterte Mail-Werkzeuge"
-                      : "Zum geführten Ablauf"}
-                  </button>
-                  {acquisitionWizard && (
-                    <AcquisitionWizard
-                      persistenceKey={`acquisition-wizard:${data.user.id}`}
-                      contacts={data.contacts.map((contact) => ({
-                        ...contact,
-                        deliveryBlocked: data.deliveries.some((delivery) =>
-                          delivery.recipient.toLowerCase() === contact.email.toLowerCase() &&
-                          ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"].includes(delivery.status)),
-                      }))}
-                      refresh={refresh}
-                      onOpenHistory={() => setTab("Versandhistorie")}
-                    />
-                  )}
-                </>
+              {tab === "Mail-Studio" && acquisitionWizard && (
+                <AcquisitionWizard
+                  persistenceKey={`acquisition-wizard:${data.user.id}`}
+                  contacts={data.contacts}
+                  refresh={refresh}
+                  onOpenHistory={() => setTab("Versandhistorie")}
+                />
               )}
-              <div hidden={tab !== "Mail-Studio" || acquisitionWizard}>
+              {tab === "Mail-Studio" && !acquisitionWizard && (
                 <MailStudio
                   onOpenShipping={() => setTab("Versandhistorie")}
                   persistenceKey={`mail-work:${data.user.id}`}
@@ -817,8 +808,6 @@ export default function App() {
                     setContactFilters(value);
                     setSelected([]);
                   }}
-                  initialDraftIds={mailDraftIds}
-                  initialContactIds={mailContactIds}
                   drafts={data.drafts}
                   contacts={data.contacts}
                   refresh={refresh}
@@ -832,7 +821,7 @@ export default function App() {
                     if (d) openDraft(d);
                   }}
                 />
-              </div>
+              )}
             </>
           )}
           {tab === "Kontakte" && (
@@ -953,9 +942,7 @@ export default function App() {
                   <button
                     disabled={busy || selected.length > 200}
                     onClick={() => {
-                      setMailDraftIds([]);
-                      setMailContactIds([...selected]);
-                      setTab("Mail-Studio");
+                      openMailSelection(selected);
                     }}
                   >
                     {selected.length} Mails erstellen →
@@ -1014,9 +1001,7 @@ export default function App() {
           {tab === "Versandhistorie" && (
             <MailSchedule
               onReviewApproved={(ids) => {
-                setMailContactIds([]);
-                setMailDraftIds(ids);
-                setTab("Mail-Studio");
+                openMailSelection(data.drafts.filter((d) => ids.includes(d.id)).map((d) => d.contactId), ids);
               }}
               drafts={data.drafts}
               openDraft={(id) => {
@@ -1074,6 +1059,12 @@ export default function App() {
               <div className="settings-grid">
                 <section className="panel padded">
                   <h2>Verbindungen & Sicherheit</h2>
+                  <button className="secondary" onClick={() => {
+                    navigate({ section: "Mail-Studio" });
+                    setAcquisitionWizard(false);
+                  }}>
+                    Mail-Studio verwalten
+                  </button>
                   <dl>
                     <dt>Metanet SMTP</dt>
                     <dd>jovinus.metanet.ch</dd>
@@ -1470,11 +1461,9 @@ export default function App() {
                     disabled={busy}
                     onClick={() =>
                       action(async () => {
-                        await post("drafts", { contactId: contact.id });
+                        const created = await post("drafts", { contactId: contact.id });
                         setShowContact(false);
-                        setMailContactIds([contact.id]);
-                        setMailDraftIds([]);
-                        setTab("Mail-Studio");
+                        openMailSelection([contact.id], [created.id]);
                       }, "Lokaler Entwurf erstellt.")
                     }
                   >
