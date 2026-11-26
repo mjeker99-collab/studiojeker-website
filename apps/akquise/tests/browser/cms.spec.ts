@@ -12,8 +12,13 @@ test("Website CMS overview and newsletter editing without Sanity administration"
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/mailchimp/templates")
       return route.fulfill({ json: { connected: false, templates: [] } });
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/studio/state")
-      return route.fulfill({ json: { campaigns: [], series: [] } });
+      return route.fulfill({ json: {
+        campaigns: [], series: [], assets: [], customers: [], jobs: [],
+        organization: { name: "Testfirma" },
+        config: { connected: false, storage: "DISCONNECTED", textReserve: 0.1, imageReserve: 0.5 },
+      } });
     if (path === "/api/state")
       return route.fulfill({
         json: {

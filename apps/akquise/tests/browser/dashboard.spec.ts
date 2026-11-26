@@ -644,7 +644,8 @@ test("Dashboard und Kontaktformular bestehen WCAG-AA-Automatikprüfung", async (
     .analyze();
   expect(dashboard.violations).toEqual([]);
   await openWorkspace(page, "Kontakte");
-  await page.getByRole("button", { name: /Kontakt erfassen/ }).click();
+  await page.getByText("Kontakte hinzufügen", { exact: true }).click();
+  await page.getByRole("button", { name: "Kontakt erfassen", exact: true }).click();
   const form = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
