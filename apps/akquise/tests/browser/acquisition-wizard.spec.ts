@@ -181,7 +181,7 @@ async function install(page: Page, count: number) {
         },
       });
     }
-    return route.fulfill({ json: {} });
+    return route.fulfill({ status: 503, json: { error: "Isolierter Test" } });
   });
   return {
     rows,
@@ -262,6 +262,7 @@ for (const [width, height] of [
     await page
       .getByRole("button", { name: "Mails prüfen", exact: true })
       .click();
+    await page.getByRole("button", { name: /Firma 1 / }).click();
     await expect(page.getByText("Quellen-URL fehlt.")).toBeVisible();
     await expect(
       page.getByText(/bereits versendet oder eingeplant/i).last(),
@@ -280,7 +281,7 @@ for (const [width, height] of [
     await expect(page.locator(".mail-review-body")).toContainText(
       "Beste Grüsse",
     );
-    await page.getByLabel("Änderung", { exact: true }).selectOption("replace");
+    await page.getByRole("combobox", { name: "Änderung", exact: true }).selectOption("replace");
     await page.getByLabel("Text suchen").fill("Synthetischer");
     await page.getByLabel("Ersetzen durch").fill("Persönlicher");
     await page.getByRole("button", { name: "Änderung anzeigen" }).click();

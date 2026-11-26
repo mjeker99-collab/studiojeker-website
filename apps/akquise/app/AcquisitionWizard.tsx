@@ -768,6 +768,7 @@ export default function AcquisitionWizard({
                     onChange={(event) => {
                       setConfirmed(false);
                       setReviewed(false);
+                      setGlobalPreview([]);
                       setExcluded((current) =>
                         event.target.checked
                           ? current.filter((id) => id !== row.id)
