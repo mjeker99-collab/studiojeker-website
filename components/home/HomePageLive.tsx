@@ -99,6 +99,11 @@ export function HomePageLive({ locale, content }: HomePageLiveProps) {
       <HeroSection
         key={`hero-${resolved.hero.headline}-${resolved.hero.media.src}-${resolved.hero.videoId ?? "image"}`}
         content={resolved.hero}
+        campaignCta={
+          locale === "de"
+            ? { href: "/kmu-videos/", label: "KMU-Videos entdecken" }
+            : undefined
+        }
       />
       <ServicesSection content={resolved.services} />
       <ShowreelSection
