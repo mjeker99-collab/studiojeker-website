@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect, type Page } from "@playwright/test";
 
 const user = {
@@ -163,10 +164,7 @@ test("Social Media list hides GPT dialogs until promote", async ({ page }) => {
   ];
   await mockHub(page, items);
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Social Media/ })
-    .click();
+  await openWorkspace(page, "Social Media");
   await expect(
     page.getByRole("heading", { name: "Beiträge planen, prüfen und freigeben" }),
   ).toBeVisible();
@@ -201,10 +199,7 @@ test("Dialogverwaltung iPad: Löschen-Button und Mehrfachauswahl sichtbar", asyn
   ];
   await mockHub(page, items);
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Social Media/ })
-    .click();
+  await openWorkspace(page, "Social Media");
   const promote = page.getByRole("region", {
     name: "Zur Übernahme in Social Media",
   });
@@ -227,10 +222,7 @@ test("Dialogverwaltung: löschen mit Sicherheitsabfrage und Archivfilter", async
   ];
   await mockHub(page, items);
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Social Media/ })
-    .click();
+  await openWorkspace(page, "Social Media");
   const promote = page.getByRole("region", {
     name: "Zur Übernahme in Social Media",
   });
@@ -338,10 +330,7 @@ for (const width of [390, 1024, 1440]) {
       return route.fulfill({ json: { ok: true } });
     });
     await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Hauptnavigation" })
-      .getByRole("button", { name: /Social Media/ })
-      .click();
+    await openWorkspace(page, "Social Media");
     const panel = page.getByRole("region", { name: "Social-Media-Konten" });
     await expect(
       panel.getByText(/Anmeldung erfolgt – Unternehmensseite noch auswählen/),

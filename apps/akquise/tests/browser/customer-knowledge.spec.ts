@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -10,8 +11,7 @@ test("Customer knowledge persists and is usable on mobile and desktop", async ({
   await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  const navigation = page.getByRole("navigation", { name: "Hauptnavigation" });
-  await navigation.getByRole("button", { name: /Kunden/ }).click();
+  await openWorkspace(page, "Kunden");
   await page.getByRole("button", { name: /Kunde erfassen/ }).click();
   const name = `Synthetisches Wissensprofil ${Date.now()}`;
   await page.getByLabel("Firma / Kundenname").fill(name);
@@ -26,7 +26,7 @@ test("Customer knowledge persists and is usable on mobile and desktop", async ({
     page.getByText("Kunde gespeichert.", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await navigation.getByRole("button", { name: /Kunden/ }).click();
+  await openWorkspace(page, "Kunden");
   await page
     .getByRole("article")
     .filter({ has: page.getByRole("heading", { name, exact: true }) })

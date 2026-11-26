@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -13,10 +14,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
   await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Strategie & Konzepte/ })
-    .click();
+  await openWorkspace(page, "Strategie & Konzepte");
   const editor = page.getByRole("region", { name: "Konzeptentwicklung" });
   await expect(
     editor.getByRole("heading", { name: "1. Thema und Auftrag" }),
@@ -46,10 +44,7 @@ test("Concept editor persists, approves, exports and hands off on desktop, iPad 
     editor.getByRole("heading", { name: "2. Dein Konzept · Version 1" }),
   ).toBeVisible();
   await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Strategie & Konzepte/ })
-    .click();
+  await openWorkspace(page, "Strategie & Konzepte");
   await editor.getByLabel("Konzept auswählen").selectOption({
     label: "Synthetisches Kommunikationskonzept · V1 · Entwurf",
   });

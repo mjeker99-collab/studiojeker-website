@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
@@ -185,10 +186,7 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     });
   });
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Website/ })
-    .click();
+  await openWorkspace(page, "Website");
   await page
     .getByRole("navigation", { name: "Website-Bereiche" })
     .getByRole("button", { name: "Neue Website / Landingpage erstellen" })

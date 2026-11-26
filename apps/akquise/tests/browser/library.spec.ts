@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { browserCredentials } from "./credentials";
 import { test, expect } from "@playwright/test";
 import { mkdirSync } from "node:fs";
@@ -127,7 +128,7 @@ test("Bibliothek: Upload, Dublette, Texte, Links, Filter, Medienauswahl und iPad
     return { ok: r.ok, body: await r.json() };
   });
   expect(result.ok).toBe(true);
-  await nav.getByRole("button", { name: /Content Studio/ }).click();
+  await openWorkspace(page, "Content-Studio");
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();

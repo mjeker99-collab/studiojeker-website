@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -11,10 +12,7 @@ test("Project save restores an unsent campaign after reload and keeps conflicts 
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   const open = async () => {
-    await page
-      .getByRole("navigation", { name: "Hauptnavigation" })
-      .getByRole("button", { name: "Kampagnen", exact: true })
-      .click();
+    await openWorkspace(page, "Kampagnen");
     await page
       .getByRole("button", { name: "GPT beauftragen", exact: true })
       .click();
@@ -108,11 +106,7 @@ for (const workspace of [
       .getByLabel("Passwort", { exact: true })
       .fill(credentials.password);
     await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-    const open = () =>
-      page
-        .getByRole("navigation", { name: "Hauptnavigation" })
-        .getByRole("button", { name: workspace.nav, exact: true })
-        .click();
+    const open = () => openWorkspace(page, workspace.nav);
     await open();
     if (workspace.area === "Konzepte") {
       await page.locator("details.concept-advanced-save").evaluate((el) => {

@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -45,10 +46,7 @@ test("customer master selection survives filtering and GPT is reachable from the
       ],
     }),
   );
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kunden/ })
-    .click();
+  await openWorkspace(page, "Kunden");
   await page
     .getByRole("button", { name: "Aus Masterliste importieren", exact: true })
     .click();

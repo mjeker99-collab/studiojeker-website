@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { mkdir } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -12,10 +13,7 @@ test("GPT customer assistant previews sourced fields, preserves manual text and 
   await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kunden/ })
-    .click();
+  await openWorkspace(page, "Kunden");
   await page.getByRole("button", { name: /Kunde erfassen/ }).click();
   const research = page.getByRole("button", {
     name: "Mit GPT recherchieren & ausfüllen",

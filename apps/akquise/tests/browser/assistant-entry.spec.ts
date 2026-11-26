@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
@@ -74,10 +75,7 @@ test("GPT entry points preserve input and require an explicit confirmed request"
   });
   await page.goto("/");
   for (const section of ["Kampagnen", "Social Media"]) {
-    await page
-      .getByRole("navigation", { name: "Hauptnavigation" })
-      .getByRole("button", { name: new RegExp(section) })
-      .click();
+    await openWorkspace(page, section);
     const entry = page.getByRole("region", { name: `GPT für ${section}` });
     const button = entry.getByRole("button", {
       name: "GPT beauftragen",

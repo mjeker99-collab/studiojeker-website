@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -11,10 +12,7 @@ test("Content tasks are directly available and preserve drafts when GPT and edit
   await page.getByLabel("E-Mail", { exact: true }).fill(credentials.email);
   await page.getByLabel("Passwort", { exact: true }).fill(credentials.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   const picker = page.getByRole("region", {
     name: "Aufgaben im Content-Studio",
   });
