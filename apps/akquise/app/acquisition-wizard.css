@@ -1,0 +1,113 @@
+.acquisition-wizard {
+  min-width: 0;
+  max-width: 980px;
+}
+.acquisition-wizard * {
+  min-width: 0;
+}
+.acquisition-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.acquisition-steps button {
+  min-height: 44px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  white-space: normal;
+}
+.acquisition-steps button[aria-current="step"] {
+  border-color: var(--cyan);
+  box-shadow: inset 0 -3px var(--cyan);
+}
+.acquisition-wizard h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+.acquisition-wizard .wizard-list {
+  max-height: min(52vh, 520px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 4px 12px;
+}
+.acquisition-wizard .contact-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.acquisition-wizard .contact-choice input {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+.acquisition-wizard .contact-choice span {
+  overflow-wrap: anywhere;
+}
+.acquisition-wizard input,
+.acquisition-wizard textarea,
+.acquisition-wizard select {
+  width: 100%;
+  max-width: 100%;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+.acquisition-wizard .wizard-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+  gap: 16px;
+}
+.acquisition-wizard label,
+.acquisition-wizard p,
+.acquisition-wizard pre,
+.acquisition-wizard button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.acquisition-wizard pre {
+  white-space: pre-wrap;
+}
+.acquisition-wizard button {
+  white-space: normal;
+  height: auto;
+}
+.acquisition-wizard .choice {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  min-height: 44px;
+  max-width: 100%;
+}
+.acquisition-wizard .wizard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.acquisition-wizard .wizard-actions button {
+  min-height: 44px;
+}
+.acquisition-secondary {
+  margin-top: 28px;
+}
+.acquisition-secondary > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+@media (max-width: 800px) {
+  .acquisition-wizard .wizard-grid {
+    grid-template-columns: 1fr;
+  }
+}

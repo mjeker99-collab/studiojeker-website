@@ -630,3 +630,226 @@ test("archive cancels pending mail and restore never restores approval", async (
     0,
   );
 });
+
+function asPlan(value: unknown) {
+  const result = value as {
+    summary?: { queued: number; started: number; capped: boolean; message: string };
+    results?: { ok: boolean; message: string; body?: string }[];
+  };
+  if (!result.results) throw new Error("Unvollständige Versandantwort");
+  return {
+    summary: result.summary ?? {
+      queued: 0,
+      started: 0,
+      capped: false,
+      message: "",
+    },
+    results: result.results,
+  };
+}
+async function planItem(entry: { c: { revision: number }; d: { id: string; version: number } }) {
+  const version = await db.draftVersion.findUniqueOrThrow({
+    where: { draftId_version: { draftId: entry.d.id, version: entry.d.version } },
+  });
+  return {
+    id: entry.d.id,
+    version: entry.d.version,
+    hash: version.hash,
+    contactRevision: entry.c.revision,
+  };
+}
+
+test("Versand planen speichert die Zürcher Uhrzeit und wartet nicht auf das Tagesfenster", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { zurichFields } = await import("../../lib/mail-clock");
+  const entry = await prepared();
+  await db.mailSchedule.update({
+    where: { id: "studiojeker" },
+    data: { enabled: false, weekdaysOnly: true, startHour: 9, endHour: 10 },
+  });
+  const fields = zurichFields(new Date(Date.now() + 3 * 86400000));
+  const planned = asPlan(await mailReview(
+    user,
+    "approve-and-plan",
+    {
+      items: [await planItem(entry)],
+      read: true,
+      confirmDispatch: true,
+      mode: "scheduled",
+      localDate: fields.date,
+      localTime: fields.time,
+    },
+    sender,
+  ));
+  assert.equal(calls, 0);
+  assert.equal(planned.summary.queued, 1);
+  assert.match(planned.summary.message, /eingeplant/);
+  const stored = await db.mailQueueItem.findFirstOrThrow({
+    where: { draftId: entry.d.id },
+  });
+  assert.ok(stored.sendAfter && stored.sendAfter.getTime() > Date.now() + 86400000);
+  await runMailSchedule(sender);
+  assert.equal(calls, 0);
+  await db.mailQueueItem.update({
+    where: { id: stored.id },
+    data: { sendAfter: new Date(Date.now() - 1000) },
+  });
+  await runMailSchedule(sender);
+  assert.equal(calls, 1);
+  const stale = await planItem(entry);
+  await assert.rejects(
+    () =>
+      mailReview(
+        user,
+        "approve-and-plan",
+        {
+          items: [stale],
+          read: true,
+          confirmDispatch: true,
+          mode: "scheduled",
+          localDate: "2020-01-01",
+          localTime: "08:00",
+        },
+        sender,
+      ),
+    /Vergangenheit/,
+  );
+});
+
+test("Sofort senden startet eine Mail und ein fehlerhafter Kontakt blockiert die anderen nicht", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const { saveContact, newDraft } = await import("../../lib/workflow");
+  const good = await prepared();
+  const suffix = randomBytes(4).toString("hex");
+  const badContact = await saveContact(user, {
+    organisation: "Unvollständig " + suffix,
+    firstName: "Eva",
+    lastName: suffix,
+    email: `${suffix}@example.test`,
+    sourceUrl: "https://example.test/team",
+    verifiedAt: new Date().toISOString(),
+    confidence: "VERIFIED",
+    hook: "Synthetischer dokumentierter Bedarf an Architekturbildern.",
+    service: "Architekturfotografie",
+  });
+  const badDraft = await newDraft(user, badContact.id);
+  await db.mailSchedule.update({
+    where: { id: "studiojeker" },
+    data: { enabled: false, weekdaysOnly: true, startHour: 9, endHour: 10, dailyLimit: 25 },
+  });
+  const result = asPlan(await mailReview(
+    user,
+    "approve-and-plan",
+    {
+      items: [
+        await planItem(good),
+        await planItem({ c: badContact, d: badDraft }),
+      ],
+      read: true,
+      confirmDispatch: true,
+      mode: "immediate",
+    },
+    sender,
+  ));
+  assert.equal(result.results.filter((item: { ok: boolean }) => item.ok).length, 1);
+  const failed = result.results.find((item) => !item.ok);
+  if (!failed) throw new Error("Fehlerhafter Kontakt wurde nicht gemeldet");
+  assert.match(failed.message, /rechtliche Versandprüfung/);
+  assert.equal(calls, 1);
+  assert.equal(result.summary.started, 1);
+  assert.match(result.summary.message, /in den Versand gegangen/);
+});
+
+test("Tageslimit lässt weitere Sofortmails warten und nennt den nächsten Zeitpunkt", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const first = await prepared();
+  await db.mailSchedule.update({
+    where: { id: "studiojeker" },
+    data: { enabled: false, dailyLimit: 1, weekdaysOnly: false, startHour: 0, endHour: 24 },
+  });
+  await mailReview(
+    user,
+    "approve-and-plan",
+    {
+      items: [await planItem(first)],
+      read: true,
+      confirmDispatch: true,
+      mode: "immediate",
+    },
+    sender,
+  );
+  assert.equal(calls, 1);
+  const second = await prepared();
+  const capped = asPlan(await mailReview(
+    user,
+    "approve-and-plan",
+    {
+      items: [await planItem(second)],
+      read: true,
+      confirmDispatch: true,
+      mode: "immediate",
+    },
+    sender,
+  ));
+  assert.equal(calls, 1);
+  assert.equal(capped.summary.started, 0);
+  assert.equal(capped.summary.capped, true);
+  assert.match(capped.summary.message, /Tageslimit von 1/);
+  assert.equal(
+    await db.mailQueueItem.count({ where: { draftId: second.d.id, status: "QUEUED" } }),
+    1,
+  );
+});
+
+test("Globale Textänderung entwertet die Freigabe und lässt versendete Mails stehen", async () => {
+  const { mailReview } = await import("../../lib/mail-review");
+  const entry = await prepared();
+  const preview = asPlan(await mailReview(user, "revise", {
+    items: [{ id: entry.d.id, version: entry.d.version }],
+    find: "unverbindlichen",
+    replace: "kurzen",
+    confirmed: false,
+  }));
+  assert.equal(preview.results[0].ok, true);
+  assert.match(preview.results[0].body || "", /kurzen/);
+  assert.equal(
+    await db.approval.count({ where: { draftId: entry.d.id, status: "APPROVED" } }),
+    1,
+  );
+  const applied = asPlan(await mailReview(user, "revise", {
+    items: [{ id: entry.d.id, version: entry.d.version }],
+    find: "unverbindlichen",
+    replace: "kurzen",
+    confirmed: true,
+  }));
+  assert.equal(applied.results[0].ok, true);
+  assert.equal((await db.draft.findUniqueOrThrow({ where: { id: entry.d.id } })).version, 2);
+  assert.equal(
+    await db.approval.count({ where: { draftId: entry.d.id, status: "APPROVED" } }),
+    0,
+  );
+  const sent = await prepared();
+  await db.mailSchedule.update({
+    where: { id: "studiojeker" },
+    data: { enabled: false, dailyLimit: 25 },
+  });
+  await mailReview(
+    user,
+    "approve-and-plan",
+    {
+      items: [await planItem(sent)],
+      read: true,
+      confirmDispatch: true,
+      mode: "immediate",
+    },
+    sender,
+  );
+  const blocked = asPlan(await mailReview(user, "revise", {
+    items: [{ id: sent.d.id, version: sent.d.version }],
+    find: "unverbindlichen",
+    replace: "kurzen",
+    confirmed: true,
+  }));
+  assert.equal(blocked.results[0].ok, false);
+  assert.match(blocked.results[0].message, /versandt|eingeplant/i);
+});

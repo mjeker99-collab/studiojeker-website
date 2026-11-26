@@ -21,6 +21,7 @@ import { replyLabels } from "../lib/contact-reply-input";
 import MailSchedule from "./MailSchedule";
 import GoogleReconnectNotice from "./GoogleReconnectNotice";
 import MailStudio from "./MailStudio";
+import AcquisitionWizard from "./AcquisitionWizard";
 import MailAssistant from "./MailAssistant";
 import { LeadResearchPanel } from "./LeadResearchPanel";
 import { contactStage, contactStageLabels } from "../lib/contact-stage";
@@ -145,6 +146,7 @@ export default function App() {
     [loaded, setLoaded] = useState(false),
     [conceptDirty, setConceptDirty] = useState(false),
     [tab, setTab] = useState("Übersicht"),
+    [acquisitionWizard, setAcquisitionWizard] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -216,6 +218,11 @@ export default function App() {
     const group = workspaceGroup(target.section);
     if (group)
       setLastWorkspace((previous) => ({ ...previous, [group.label]: target }));
+    if (
+      target.section === "Kontakte/Akquise" ||
+      target.section === "Mail-Studio"
+    )
+      setAcquisitionWizard(true);
     setDashboardTarget(target);
     setTab(
       target.section === "Kontakte/Akquise" ? "Mail-Studio" : target.section,
@@ -776,7 +783,27 @@ export default function App() {
                   onOpenContacts={() => setTab("Kontakte")}
                 />
               </div>
-              <div hidden={tab !== "Mail-Studio"}>
+              {tab === "Mail-Studio" && (
+                <>
+                  <button
+                    className="secondary"
+                    onClick={() => setAcquisitionWizard(!acquisitionWizard)}
+                  >
+                    {acquisitionWizard
+                      ? "Erweiterte Mail-Werkzeuge"
+                      : "Zum geführten Ablauf"}
+                  </button>
+                  {acquisitionWizard && (
+                    <AcquisitionWizard
+                      persistenceKey={`acquisition-wizard:${data.user.id}`}
+                      contacts={data.contacts}
+                      refresh={refresh}
+                      onOpenHistory={() => setTab("Versandhistorie")}
+                    />
+                  )}
+                </>
+              )}
+              <div hidden={tab !== "Mail-Studio" || acquisitionWizard}>
                 <MailStudio
                   onOpenShipping={() => setTab("Versandhistorie")}
                   persistenceKey={`mail-work:${data.user.id}`}

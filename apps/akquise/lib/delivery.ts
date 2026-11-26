@@ -83,10 +83,16 @@ export async function dispatchApproved(
         const item = await tx.mailQueueItem.findUniqueOrThrow({
           where: { id: queueId },
         });
+        const explicit = item.sendAfter != null;
+        if (explicit && item.sendAfter!.getTime() > now.getTime())
+          throw new PolicyError(
+            "Geplanter Zeitpunkt ist noch nicht erreicht.",
+            409,
+          );
         if (
-          !schedule.enabled ||
+          (!explicit &&
+            (!schedule.enabled || !insideMailWindow(schedule, now))) ||
           mode !== "PRODUCTION" ||
-          !insideMailWindow(schedule, now) ||
           item.status !== "QUEUED" ||
           item.draftId !== draftId ||
           item.version !== version ||
@@ -99,12 +105,15 @@ export async function dispatchApproved(
             "Zeitplan pausiert, ausserhalb Versandzeit oder bereits bearbeitet.",
             409,
           );
-        const activator = schedule.activatedBy
-          ? await tx.user.findUnique({ where: { id: schedule.activatedBy } })
+        const actorId = explicit ? item.userId : schedule.activatedBy;
+        const activator = actorId
+          ? await tx.user.findUnique({ where: { id: actorId } })
           : null;
         if (!activator?.active || !allowedAccount(activator))
           throw new PolicyError(
-            "Aktivierung durch berechtigte Person fehlt.",
+            explicit
+              ? "Auftraggeber ist nicht mehr berechtigt."
+              : "Aktivierung durch berechtigte Person fehlt.",
             403,
           );
       }
@@ -215,10 +224,15 @@ export async function dispatchApproved(
           const schedule = await tx.mailSchedule.findUniqueOrThrow({
             where: { id: "studiojeker" },
           });
-          if (!schedule.enabled || !insideMailWindow(schedule))
+          const item = await tx.mailQueueItem.findUniqueOrThrow({
+            where: { id: queueId },
+          });
+          const explicit = item.sendAfter != null;
+          if (!explicit && (!schedule.enabled || !insideMailWindow(schedule)))
             throw new PolicyError("Automatik pausiert.");
-          const activator = schedule.activatedBy
-            ? await tx.user.findUnique({ where: { id: schedule.activatedBy } })
+          const actorId = explicit ? item.userId : schedule.activatedBy;
+          const activator = actorId
+            ? await tx.user.findUnique({ where: { id: actorId } })
             : null;
           if (!activator?.active || !allowedAccount(activator))
             throw new PolicyError("Aktivierung ungültig.");

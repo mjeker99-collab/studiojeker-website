@@ -1,4 +1,5 @@
 import { checkout } from "./mail-checkout-helper";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
@@ -57,6 +58,7 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await openAcquisitionTools(page, "Mails");
 
     await page.getByLabel("Mails suchen", { exact: true }).fill(suffix);
     await page
@@ -180,6 +182,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "We create visibility.", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await openAcquisitionTools(page);
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
@@ -281,6 +284,7 @@ for (const width of [390, 768, 1440]) {
       .getByRole("heading", { name: "We create visibility.", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await openAcquisitionTools(page, "Mails");
     await page
       .getByRole("button", { name: "Neue Mails erstellen", exact: true })
       .click();
@@ -401,6 +405,7 @@ for (const width of [390, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await signIn(page);
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await openAcquisitionTools(page);
     const [scheduleResponse] = await Promise.all([
       page.waitForResponse(
         (response) =>
@@ -506,6 +511,7 @@ for (const [name, width, height] of [
           .getByRole("navigation", { name: "Hauptnavigation" })
           .getByRole("button", { name: /^Akquise$/ })
           .click();
+        await openAcquisitionTools(page);
       await page
         .getByRole("navigation", {
           name:
@@ -563,6 +569,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /^Akquise$/ })
     .click();
+  await openAcquisitionTools(page);
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   const dialog = page.getByRole("dialog");
@@ -597,6 +604,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /^Akquise$/ })
     .click();
+  await openAcquisitionTools(page);
   await page.getByRole("button", { name: "Kontakte", exact: true }).click();
   await page.getByRole("button", { name: organisation, exact: true }).click();
   await dialog.getByText("Weitere Versandangaben", { exact: true }).click();

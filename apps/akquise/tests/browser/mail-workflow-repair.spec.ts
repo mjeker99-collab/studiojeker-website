@@ -1,4 +1,5 @@
 import { checkout } from "./mail-checkout-helper";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect } from "@playwright/test";
 import { setup } from "./mail-assistant-fixture";
 
@@ -86,6 +87,7 @@ for (const allBlocked of [false, true]) {
       ).toBeVisible();
       await page.reload();
       await page.getByRole("button", { name: /^Akquise$/ }).click();
+      await openAcquisitionTools(page, "Mails");
       await expect(
         page.getByText("2 Mails vorbereitet · 0 Angaben offen · 2 ausgewählt", {
           exact: true,
@@ -181,6 +183,7 @@ test("99 ready mails proceed with one incomplete contact, without releasing the 
   });
   await page.reload();
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   // The KMU-first default is 25. Explicitly select all 100 for this
   // existing larger-batch / incomplete-recipient regression.
   await page
