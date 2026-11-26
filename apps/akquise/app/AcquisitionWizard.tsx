@@ -180,6 +180,17 @@ export default function AcquisitionWizard({
   const locked = (row?: Row) =>
     !row || Boolean(row.deliveryStatus || row.queueStatus);
 
+  function chooseContacts(ids: string[]) {
+    setSelected(ids);
+    setRows([]);
+    setExcluded([]);
+    setProposals([]);
+    setProblems([]);
+    setGlobalPreview([]);
+    setReviewed(false);
+    setConfirmed(false);
+  }
+
   async function run(work: () => Promise<void>) {
     if (lock.current) return;
     lock.current = true;
@@ -445,7 +456,7 @@ export default function AcquisitionWizard({
           <h2>Kontakte auswählen</h2>
           <p>
             Suche, filtere und wähle die Personen. Bereits kontaktierte Einträge
-            bleiben sichtbar und sind nicht erneut wählbar.
+            kannst du bei Bedarf einblenden; sie sind nicht erneut wählbar.
           </p>
           <label>
             Kontakte suchen
@@ -463,7 +474,7 @@ export default function AcquisitionWizard({
                 className="secondary"
                 disabled={busy || !eligible.length}
                 onClick={() => {
-                  setSelected(
+                  chooseContacts(
                     eligible
                       .slice(0, typeof amount === "number" ? amount : undefined)
                       .map((c) => c.id),
@@ -478,7 +489,7 @@ export default function AcquisitionWizard({
               type="button"
               className="secondary"
               disabled={busy || !selected.length}
-              onClick={() => setSelected([])}
+              onClick={() => chooseContacts([])}
             >
               Auswahl aufheben
             </button>
@@ -507,10 +518,10 @@ export default function AcquisitionWizard({
                     checked={!block && selectedEligible.includes(contact.id)}
                     aria-label={`${contact.organisation} auswählen`}
                     onChange={(event) =>
-                      setSelected((current) =>
+                      chooseContacts(
                         event.target.checked
-                          ? [...new Set([...current, contact.id])]
-                          : current.filter((id) => id !== contact.id),
+                          ? [...new Set([...selected, contact.id])]
+                          : selected.filter((id) => id !== contact.id),
                       )
                     }
                   />
@@ -1092,7 +1103,7 @@ export default function AcquisitionWizard({
                     totals.failed += data.summary.failed;
                     totals.whenLabel = data.summary.whenLabel;
                   }
-                  totals.message = `${totals.queued} Mails eingeplant, ${totals.started} gestartet, ${totals.failed} nicht übernommen.`;
+                  totals.message = `${totals.queued} Mails eingeplant, ${totals.started} gestartet, ${totals.failed} nicht übernommen.${totals.whenLabel ? ` Zeitpunkt: ${totals.whenLabel}.` : ""}`;
                   setSummary(totals);
                   setConfirmed(false);
                   go("done");

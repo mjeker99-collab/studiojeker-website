@@ -281,9 +281,15 @@ for (const [width, height] of [
     await expect(page.locator(".mail-review-body")).toContainText(
       "Beste Grüsse",
     );
-    await page.getByRole("combobox", { name: "Änderung", exact: true }).selectOption("replace");
-    await page.getByLabel("Text suchen").fill("Synthetischer");
-    await page.getByLabel("Ersetzen durch").fill("Persönlicher");
+    await page
+      .getByRole("combobox", { name: "Änderung", exact: true })
+      .selectOption("replace");
+    await page
+      .getByRole("textbox", { name: "Text suchen", exact: true })
+      .fill("Synthetischer");
+    await page
+      .getByRole("textbox", { name: "Ersetzen durch", exact: true })
+      .fill("Persönlicher");
     await page.getByRole("button", { name: "Änderung anzeigen" }).click();
     await expect(page.getByText("Persönlicher Text 0.")).toBeVisible();
     await page.getByRole("button", { name: "Änderung übernehmen" }).click();
