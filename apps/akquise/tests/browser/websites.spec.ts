@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
@@ -57,7 +58,11 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
       path = new URL(request.url()).pathname;
     if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/studio/state")
-      return route.fulfill({ json: { campaigns: [], series: [] } });
+      return route.fulfill({ json: {
+        campaigns: [], series: [], assets: [], customers: [], jobs: [],
+        organization: { name: "Testfirma" },
+        config: { connected: false, storage: "DISCONNECTED", textReserve: 0.1, imageReserve: 0.5 },
+      } });
     if (path === "/api/state")
       return route.fulfill({
         json: {
@@ -185,10 +190,7 @@ test("Create, edit, GPT proposal preview/adoption, restore, reopen, responsive a
     });
   });
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Website/ })
-    .click();
+  await openWorkspace(page, "Website");
   await page
     .getByRole("navigation", { name: "Website-Bereiche" })
     .getByRole("button", { name: "Neue Website / Landingpage erstellen" })

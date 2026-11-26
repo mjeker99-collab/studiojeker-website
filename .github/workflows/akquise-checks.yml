@@ -14,7 +14,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: apps/akquise
@@ -58,8 +58,14 @@ jobs:
           ALLOW_SYNTHETIC_SEED=true npm run db:seed
       - name: Browser checks (no SMTP)
         run: |
-          npm run dev > /tmp/akquise-dev.log 2>&1 &
-          trap 'kill $! 2>/dev/null || true' EXIT
+          # Keep Playwright traces and screenshots outside the watched application.
+          git worktree add --detach "$RUNNER_TEMP/studioone-browser" HEAD
+          server_dir="$RUNNER_TEMP/studioone-browser/apps/akquise"
+          ln -s "$PWD/node_modules" "$server_dir/node_modules"
+          cp .env "$server_dir/.env"
+          (cd "$server_dir" && exec node node_modules/next/dist/bin/next dev --webpack --hostname 127.0.0.1 --port 3100) > /tmp/akquise-dev.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for n in $(seq 1 60); do
             if curl -fsS http://localhost:3100/api/health/ready >/dev/null; then break; fi
             sleep 1

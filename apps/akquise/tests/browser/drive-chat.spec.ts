@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -134,10 +135,7 @@ test("Drive picker browses, paginates, previews and confirms images on iPad and 
   });
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   const chat = page.locator(".studio-chat");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
     await chat

@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -11,8 +12,13 @@ test("Website CMS overview and newsletter editing without Sanity administration"
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/mailchimp/templates")
       return route.fulfill({ json: { connected: false, templates: [] } });
+    if (path === "/api/project-drafts") return route.fulfill({ json: [] });
     if (path === "/api/studio/state")
-      return route.fulfill({ json: { campaigns: [], series: [] } });
+      return route.fulfill({ json: {
+        campaigns: [], series: [], assets: [], customers: [], jobs: [],
+        organization: { name: "Testfirma" },
+        config: { connected: false, storage: "DISCONNECTED", textReserve: 0.1, imageReserve: 0.5 },
+      } });
     if (path === "/api/state")
       return route.fulfill({
         json: {
@@ -101,10 +107,7 @@ test("Website CMS overview and newsletter editing without Sanity administration"
     }),
   );
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Website/ })
-    .click();
+  await openWorkspace(page, "Website");
   const areas = page.getByRole("navigation", { name: "Website-Bereiche" });
   await expect(
     areas.getByRole("button", { name: "Bestehende Website verwalten" }),
@@ -137,10 +140,7 @@ test("Website CMS overview and newsletter editing without Sanity administration"
   await expect(
     page.getByRole("region", { name: "Website-Studio", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Newsletter/ })
-    .click();
+  await openWorkspace(page, "Newsletter");
   // The newsletter is edited in StudioONE; Sanity administration was removed
   // from this area. Keep the Website/Sanity provider stub to detect regressions.
   await expect(page.getByRole("region", { name: "Sanity-Verwaltung" })).toHaveCount(0);

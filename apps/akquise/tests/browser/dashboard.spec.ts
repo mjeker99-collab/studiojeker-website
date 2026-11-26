@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { checkout } from "./mail-checkout-helper";
 import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect } from "@playwright/test";
@@ -22,7 +23,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await expect(
-    page.getByRole("heading", { name: "We create visibility.", exact: true }),
+    page.getByRole("heading", { name: "Was möchtest du heute erledigen?", exact: true }),
   ).toBeVisible();
 }
 for (const width of [390, 768, 1440]) {
@@ -179,10 +180,10 @@ for (const width of [390, 768, 1440]) {
     expect(incomplete.ok()).toBe(true);
     await page.reload();
     await page
-      .getByRole("heading", { name: "We create visibility.", exact: true })
+      .getByRole("heading", { name: "Was möchtest du heute erledigen?", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
-    await openAcquisitionTools(page);
+    await openAcquisitionTools(page, "Mails");
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByLabel(`${organisation} auswählen`, { exact: true }).check();
     await page
@@ -281,7 +282,7 @@ for (const width of [390, 768, 1440]) {
     }
     await page.reload();
     await page
-      .getByRole("heading", { name: "We create visibility.", exact: true })
+      .getByRole("heading", { name: "Was möchtest du heute erledigen?", exact: true })
       .waitFor();
     await page.getByRole("button", { name: /^Akquise$/ }).click();
     await openAcquisitionTools(page, "Mails");
@@ -412,10 +413,10 @@ for (const width of [390, 768, 1440]) {
           response.url().endsWith("/api/mail-schedule") &&
           response.request().method() === "GET",
       ),
-      page.getByRole("button", { name: "Versand", exact: true }).click(),
+      openAcquisitionTools(page, "Versand"),
     ]);
     expect(scheduleResponse.status(), await scheduleResponse.text()).toBe(200);
-    await expect(page.getByRole("heading", { name: "Versand" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Versand", exact: true })).toBeVisible();
     const schedule = page.getByRole("region", {
       name: "Versand",
       exact: true,
@@ -494,7 +495,7 @@ for (const [name, width, height] of [
     await page.setViewportSize({ width, height });
     await signIn(page);
     await expect(
-      page.getByRole("heading", { name: "Schnellzugriff" }),
+      page.getByRole("heading", { name: "Was möchtest du heute erledigen?" }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -505,32 +506,12 @@ for (const [name, width, height] of [
       path: `.local/dashboard-${width}.png`,
       fullPage: true,
     });
-    for (const section of ["Kontakte", "Mails", "Versand", "Einstellungen"]) {
-      if (section !== "Einstellungen")
-        await page
-          .getByRole("navigation", { name: "Hauptnavigation" })
-          .getByRole("button", { name: /^Akquise$/ })
-          .click();
-        await openAcquisitionTools(page);
-      await page
-        .getByRole("navigation", {
-          name:
-            section === "Einstellungen"
-              ? "Hauptnavigation"
-              : "Akquise-Navigation",
-        })
-        .getByRole("button", { name: section, exact: true })
-        .click();
-      await expect(
-        page.getByRole("heading", {
-          name:
-            section === "Einstellungen"
-              ? "Einstellungen"
-              : "Kontakte & Akquise",
-          level: 1,
-          exact: true,
-        }),
-      ).toBeVisible();
+    for (const [section, label] of [
+      ["Kontakte", "Kontakte"], ["Mail-Studio", "Mails vorbereiten"],
+      ["Versandhistorie", "Versandverlauf"], ["Einstellungen", "Einstellungen"],
+    ]) {
+      await openWorkspace(page, section);
+      await expect(page.getByRole("heading", { name: label, level: 1, exact: true })).toBeVisible();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -563,7 +544,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   // Refresh the app snapshot after the synthetic fixture is created via the API.
   await page.reload();
   await page
-    .getByRole("heading", { name: "We create visibility.", exact: true })
+    .getByRole("heading", { name: "Was möchtest du heute erledigen?", exact: true })
     .waitFor();
   await page
     .getByRole("navigation", { name: "Hauptnavigation" })
@@ -576,7 +557,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
   await expect(dialog).toBeFocused();
   await dialog.getByRole("button", { name: /Entwurf vorbereiten/ }).click();
   await expect(dialog).not.toBeVisible();
-  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await openAcquisitionTools(page, "Versand");
   await page
     .getByText("Frühere Entwürfe und Versionen", { exact: true })
     .click();
@@ -617,8 +598,7 @@ test("Kontakt, Rechtsprüfung, versionierter Entwurf und Freigabe sind bedienbar
     .getByRole("button", { name: "Zulässigkeit dokumentieren" })
     .click();
   await expect(dialog).not.toBeVisible();
-  await page.getByRole("button", { name: "Mails", exact: true }).click();
-  await page.getByRole("button", { name: "Versand", exact: true }).click();
+  await openAcquisitionTools(page, "Versand");
   await page
     .getByText("Frühere Entwürfe und Versionen", { exact: true })
     .click();
@@ -663,7 +643,9 @@ test("Dashboard und Kontaktformular bestehen WCAG-AA-Automatikprüfung", async (
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   expect(dashboard.violations).toEqual([]);
-  await page.getByRole("button", { name: /Kontakt erfassen/ }).click();
+  await openWorkspace(page, "Kontakte");
+  await page.getByText("Kontakte hinzufügen", { exact: true }).click();
+  await page.getByRole("button", { name: "Kontakt erfassen", exact: true }).click();
   const form = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
@@ -687,23 +669,13 @@ test("Dashboard opens each work area and keeps navigation available after projec
     0,
   );
   const main = page.getByRole("navigation", { name: "Hauptnavigation" });
-  for (const [button, heading] of [
-    ["Content Studio öffnen", "Content-Studio"],
-    ["Kampagnen öffnen", "Kampagnen"],
-    ["Social Media öffnen", "Social Media"],
-    ["Newsletter öffnen", "Newsletter"],
-    ["Websites öffnen", "Website"],
-    ["Kontakte öffnen", "Kontakte & Akquise"],
-    ["Kunden", "Kunden"],
-    ["Strategie & Konzepte", "Strategie & Konzepte"],
-    ["Bibliothek", "Bibliothek"],
-    ["Kalender", "Kalender"],
-    ["Einstellungen", "Einstellungen"],
+  for (const [section, heading] of [
+    ["Content-Studio", "Bilder, Videos & Texte"], ["Kampagnen", "Kampagnen"],
+    ["Social Media", "Social Media"], ["Newsletter", "Newsletter"], ["Website", "Website"],
+    ["Kontakte", "Kontakte"], ["Kunden", "Kunden"], ["Strategie & Konzepte", "Konzepte"],
+    ["Bibliothek", "Bibliothek"], ["Kalender", "Kalender"], ["Einstellungen", "Einstellungen"],
   ]) {
-    await page
-      .locator(".dashboard-home")
-      .getByRole("button", { name: button, exact: true })
-      .click();
+    await openWorkspace(page, section);
     await expect(
       page.getByRole("heading", { name: heading, level: 1, exact: true }),
     ).toBeVisible();
@@ -770,6 +742,7 @@ test("Dashboard opens the selected campaign, content conversation and website wi
     if (request.method() !== "GET") writes.push(request.url());
   });
   await page.reload();
+  await page.getByText("Weitere Projekte finden", { exact: true }).click();
   await page.getByLabel("Projekt suchen").fill(titles[0]);
   await expect(page.locator(".dashboard-project-list li")).toHaveCount(1);
   await page
@@ -782,6 +755,7 @@ test("Dashboard opens the selected campaign, content conversation and website wi
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Übersicht/ })
     .click();
+  await page.getByText("Weitere Projekte finden", { exact: true }).click();
   await page
     .getByRole("button", {
       name: `Content-Projekt ${titles[1]} öffnen`,
@@ -795,6 +769,7 @@ test("Dashboard opens the selected campaign, content conversation and website wi
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: /Übersicht/ })
     .click();
+  await page.getByText("Weitere Projekte finden", { exact: true }).click();
   await page
     .getByRole("button", { name: `Website ${titles[2]} öffnen`, exact: true })
     .click();

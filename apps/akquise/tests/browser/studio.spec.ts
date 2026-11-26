@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import { mkdirSync, readFileSync } from "node:fs";
 import sharp from "sharp";
@@ -23,10 +24,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
   await page.getByLabel("E-Mail", { exact: true }).fill(fixture[0]);
   await page.getByLabel("Passwort", { exact: true }).fill(fixture[1]);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();
@@ -142,10 +140,7 @@ test("StudioONE Desktop: eigener Beitrag, Wiederladen, Freigabe, Export und Entw
     fullPage: true,
   });
   await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   await page
     .getByRole("button", { name: "Beiträge bearbeiten", exact: true })
     .click();

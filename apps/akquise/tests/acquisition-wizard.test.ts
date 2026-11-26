@@ -22,3 +22,17 @@ test("1, 97 und 183 Suchergebnisse bleiben wählbar, bereits Kontaktierte sind m
     assert.equal(contactSendBlock(contacts[count]), "Bereits kontaktiert");
   }
 });
+
+test("Versandprotokoll sperrt auch einen veralteten Kontaktstatus", () => {
+  assert.ok(
+    contactSendBlock({
+      id: "c",
+      organisation: "Firma",
+      firstName: "Anna",
+      lastName: "Test",
+      email: "anna@example.test",
+      status: "DRAFT",
+      deliveryBlocked: true,
+    }),
+  );
+});

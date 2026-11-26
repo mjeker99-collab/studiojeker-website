@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -99,10 +100,7 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
     return route.fulfill({ json: { connections: [], configured: {} } });
   });
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kampagnen/ })
-    .click();
+  await openWorkspace(page, "Kampagnen");
   await page
     .getByRole("button", { name: "Mit GPT weiterarbeiten", exact: true })
     .click();
@@ -155,10 +153,7 @@ test("find an unassigned campaign project, reopen its GPT history and save its a
     ).toEqual([]);
   }
   await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Kampagnen/ })
-    .click();
+  await openWorkspace(page, "Kampagnen");
   await page.getByRole("button", { name: "Mit GPT weiterarbeiten", exact: true }).click();
   await expect(entry.getByLabel("Gespeichertes GPT-Projekt")).toHaveValue("series");
   await entry

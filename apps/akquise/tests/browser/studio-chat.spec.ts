@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { browserCredentials } from "./credentials";
@@ -10,10 +11,7 @@ test("Content chat is accessible on iPad and phone and disabled without provider
   await page.getByLabel("E-Mail", { exact: true }).fill(c.email);
   await page.getByLabel("Passwort", { exact: true }).fill(c.password);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   for (const width of [1024, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByLabel("Deine Nachricht", { exact: true }).fill("");
@@ -59,10 +57,7 @@ test("Content chat is accessible on iPad and phone and disabled without provider
     page.locator(".studio-knowledge").getByRole("status"),
   ).toContainText("Deine Vorgaben sind gespeichert");
   await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   await page
     .getByText("Was GPT über dich und die Firma weiss", { exact: true })
     .click();

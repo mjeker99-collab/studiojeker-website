@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync, mkdirSync } from "node:fs";
@@ -14,14 +15,11 @@ async function signIn(page: Page) {
   await page.getByLabel("Passwort", { exact: true }).fill(credential[2]);
   await page.getByRole("button", { name: /Sicher anmelden/ }).click();
   await expect(
-    page.getByRole("heading", { name: "We create visibility.", exact: true }),
+    page.getByRole("heading", { name: "Was möchtest du heute erledigen?", exact: true }),
   ).toBeVisible();
 }
 async function go(page: Page, name: string) {
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: new RegExp(name) })
-    .click();
+  await openWorkspace(page, name);
 }
 async function api(page: Page, path: string, data: unknown) {
   const r = await page.request.post("/api/hub/" + path, {

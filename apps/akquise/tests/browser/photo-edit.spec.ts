@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
@@ -151,10 +152,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
     });
   });
   await page.goto("/");
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   const chat = page.locator(".studio-chat");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
     await chat
@@ -269,10 +267,7 @@ test("Direct photo edit: device, library, Drive, comparison and explicit adoptio
   ).toBeVisible();
   expect(applied).toBe(1);
   await page.reload();
-  await page
-    .getByRole("navigation", { name: "Hauptnavigation" })
-    .getByRole("button", { name: /Content Studio/ })
-    .click();
+  await openWorkspace(page, "Content-Studio");
   if (!(await chat.getByLabel("Gespräch / Content-Serie").isVisible())) {
     await chat
       .getByText("Projekte öffnen oder neues Gespräch beginnen", {

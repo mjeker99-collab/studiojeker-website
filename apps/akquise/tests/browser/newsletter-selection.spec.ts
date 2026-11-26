@@ -1,3 +1,4 @@
+import { openWorkspace } from "./open-workspace";
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
@@ -14,8 +15,7 @@ for (const width of [768, 1440]) {
     await page.getByLabel("E-Mail", { exact: true }).fill(credential[1]);
     await page.getByLabel("Passwort", { exact: true }).fill(credential[2]);
     await page.getByRole("button", { name: /Sicher anmelden/ }).click();
-    await page.getByRole("navigation", { name: "Hauptnavigation" })
-      .getByRole("button", { name: /Newsletter/ }).click();
+    await openWorkspace(page, "Newsletter");
     await page.getByRole("button", { name: "Aus GitHub importieren", exact: true }).click();
     const editor = page.getByRole("region", { name: "Inhaltseditor" });
     const selection = page.getByRole("region", { name: "Newsletter-Vorlage auswählen" });
