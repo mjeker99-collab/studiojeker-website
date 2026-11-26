@@ -13,6 +13,7 @@ import ProjectSave from "../projects/ProjectSave";
 import DriveImagePicker, { type SelectedDriveImage } from "./DriveImagePicker";
 import StudioKnowledge from "./StudioKnowledge";
 import StudioProjects from "./StudioProjects";
+import { socialBatchPlan } from "@/lib/studio/social-batch-plan";
 import DialogManager, {
   type DialogManagerItem,
 } from "../dialogs/DialogManager";
@@ -211,6 +212,42 @@ export default function StudioChat({
   >(initialRequest?.intent || "TEXT");
   const [contentId, setContentId] = useState(initialRequest?.contentId || "");
   const [busy, setBusy] = useState(false);
+  const [batchRequestKey, setBatchRequestKey] = useState("");
+  const [batchRequestSignature, setBatchRequestSignature] = useState("");
+  useEffect(() => {
+    if (projectArea !== "Content-Studio" || initialRequest?.seriesId) return;
+    try {
+      const raw = window.sessionStorage.getItem("studioone:content-batch");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        requestKey?: unknown;
+        message?: unknown;
+        signature?: unknown;
+      };
+      if (
+        typeof saved.requestKey === "string" &&
+        typeof saved.message === "string" &&
+        typeof saved.signature === "string"
+      ) {
+        const frame = window.requestAnimationFrame(() => {
+          setBatchRequestKey(saved.requestKey as string);
+          setBatchRequestSignature(saved.signature as string);
+          setMessage((current) => current.trim() ? current : saved.message as string);
+        });
+        return () => window.cancelAnimationFrame(frame);
+      }
+    } catch {
+      try {
+        window.sessionStorage.removeItem("studioone:content-batch");
+      } catch {
+        // Storage may be unavailable in a restricted browser context.
+      }
+    }
+  }, [projectArea, initialRequest?.seriesId]);
+  const batchPlan =
+    projectArea === "Content-Studio" && !seriesId && mediaIntent === "TEXT"
+      ? socialBatchPlan(message)
+      : null;
 
   const [projectNotice, setProjectNotice] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -355,8 +392,85 @@ export default function StudioChat({
     document.getElementById("studio-chat-message")?.focus();
   }
   async function send() {
-    if (busy || !message.trim() || !confirmed || !state.config.connected)
+    if (busy || !message.trim()) return;
+    if (batchPlan) {
+      // One deliberate click creates draft-only series. No GPT job, provider
+      // expense, social publication or email dispatch is triggered.
+      setBusy(true);
+      setError("");
+      setProjectNotice("");
+      const messageText = message.trim();
+      const signature = JSON.stringify({
+        message: messageText,
+        campaignId: campaignId || null,
+        customerId: customerId || null,
+      });
+      const requestKey =
+        batchRequestKey && batchRequestSignature === signature
+          ? batchRequestKey
+          : crypto.randomUUID();
+      setBatchRequestKey(requestKey);
+      setBatchRequestSignature(signature);
+      try {
+        window.sessionStorage.setItem(
+          "studioone:content-batch",
+          JSON.stringify({ requestKey, message: messageText, signature }),
+        );
+      } catch {
+        // In-memory retry still works if this browser blocks session storage.
+      }
+      try {
+        const result = await post("series/batch", {
+          requestKey,
+          items: Array.from({ length: batchPlan.areaCount }, (_, index) => ({
+            title: `${state.campaigns.find((c) => c.id === campaignId)?.title || "Social-Media-Beiträge"} · Bereich ${index + 1}/${batchPlan.areaCount}`.slice(0, 200),
+            topic: message.trim().slice(0, 2000),
+            offer: "",
+            goal: "Social-Media-Beiträge für mehrere Servicebereiche vorbereiten",
+            audience: "Im Gespräch klären",
+            tone: "Persönlich, professionell, Schweizer Hochdeutsch",
+            channels: batchPlan.channels,
+            count: batchPlan.postsPerArea,
+            formats: ["4:5"],
+            campaignId: campaignId || null,
+            customerId: customerId || null,
+            referenceAssetIds: [],
+            brandRules: ["tone", "services", "audiences"],
+            workspace: "CONTENT_DRAFT",
+          })),
+        });
+        await refresh();
+        setSeriesId(result.series[0].id);
+        setBatchRequestKey("");
+        setBatchRequestSignature("");
+        try {
+          window.sessionStorage.removeItem("studioone:content-batch");
+        } catch {
+          // The saved server-side series remains available in the project list.
+        }
+        setMessage("");
+        setConfirmed(false);
+        setProjectNotice(
+          `${batchPlan.areaCount} Serien mit ${batchPlan.totalPosts} Beitragsentwürfen für ${batchPlan.channels.length} Kanäle gespeichert. Die Bereichsnamen und Texte müssen vor einer Veröffentlichung geprüft und ausgearbeitet werden.`,
+        );
+      } catch (e) {
+        // The server uses the same request key to return the saved batch if
+        // the response was lost after commit. Never auto-retry a new key.
+        setError(
+          (e instanceof Error ? e.message : "Vorbereitung fehlgeschlagen.") +
+            " Der Auftrag kann mit derselben Kennung sicher erneut geprüft werden. Es wurde nichts veröffentlicht.",
+        );
+        try {
+          await refresh();
+        } catch {
+          // Keep the original user request visible for recovery.
+        }
+      } finally {
+        setBusy(false);
+      }
       return;
+    }
+    if (!confirmed || !state.config.connected) return;
     if (editingImage && (!storageReady || referenceCount !== 1)) {
       setError(
         "Bitte genau ein Bild auswählen. Der private Speicher muss verbunden sein.",
@@ -1033,7 +1147,29 @@ export default function StudioChat({
             ))}
           </div>
         )}
-        {!editingImage && submission}
+        {batchPlan && (
+          <div className="panel-note" role="status">
+            <p><strong>So habe ich deinen Auftrag verstanden:</strong></p>
+            <p>
+              {batchPlan.areaCount} Bereiche mit je {batchPlan.postsPerArea} Beiträgen
+              – insgesamt {batchPlan.totalPosts} Entwürfe für{" "}
+              {batchPlan.channels.join(", ")}.
+            </p>
+            <p>
+              Zuerst werden nur Entwürfe gespeichert. Die Bereiche erhalten
+              vorläufig neutrale Namen; GPT-Texte und Medien entstehen erst im
+              nächsten Arbeitsschritt. Es wird nichts veröffentlicht.
+            </p>
+          </div>
+        )}
+        {!editingImage &&
+          (batchPlan ? (
+            <button type="submit" disabled={busy}>
+              {busy
+                ? "Entwürfe werden gespeichert …"
+                : `${batchPlan.totalPosts} Beitragsentwürfe vorbereiten`}
+            </button>
+          ) : submission)}
         <details open={editingImage}>
           <summary>Weitere Auftragsoptionen</summary>
           <label htmlFor="studio-chat-intent">Auftrag</label>
