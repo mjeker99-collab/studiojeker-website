@@ -43,19 +43,43 @@ export class PrismaLeadStore implements LeadStore {
     });
     return rows.map(fromRow);
   }
+  async active() {
+    const row = await db.leadResearchJob.findFirst({
+      where: { organizationId: ORG, status: { in: ["RUNNING", "QUEUED"] } },
+      orderBy: { createdAt: "asc" },
+    });
+    return row ? fromRow(row) : null;
+  }
+
   async insert(job: JobRecord) {
-    await db.leadResearchJob.create({
-      data: {
-        id: job.id,
-        organizationId: ORG,
-        idempotencyKey: job.idempotencyKey,
-        dayKey: job.dayKey,
-        status: job.status,
-        revision: job.revision,
-        leaseOwner: job.leaseOwner,
-        leaseUntil: job.leaseUntil ? new Date(job.leaseUntil) : null,
-        state: job as unknown as Prisma.InputJsonValue,
-      },
+    await this.start(job);
+  }
+
+  async start(job: JobRecord) {
+    return db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(40120261126)`;
+      const existing = await tx.leadResearchJob.findFirst({
+        where: {
+          organizationId: ORG,
+          OR: [{ idempotencyKey: job.idempotencyKey }, { status: { in: ["RUNNING", "QUEUED"] } }],
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      if (existing) return fromRow(existing);
+      await tx.leadResearchJob.create({
+        data: {
+          id: job.id,
+          organizationId: ORG,
+          idempotencyKey: job.idempotencyKey,
+          dayKey: job.dayKey,
+          status: job.status,
+          revision: job.revision,
+          leaseOwner: job.leaseOwner,
+          leaseUntil: job.leaseUntil ? new Date(job.leaseUntil) : null,
+          state: job as unknown as Prisma.InputJsonValue,
+        },
+      });
+      return job;
     });
   }
   async save(job: JobRecord, expectedRevision: number) {

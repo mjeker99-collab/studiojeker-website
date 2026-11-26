@@ -345,3 +345,66 @@ test("Private Netze, robots und die bestehende V1-Prüfung bleiben wirksam", asy
   assert.ok(SOURCE_FAMILIES.map((source) => source.label).join(" ").includes("HESO"));
   assert.match(buildQuery(config(), { sourceIndex: 1, industryIndex: 0, placeIndex: 0, pass: 0 })?.text ?? "", /HESO/);
 });
+
+test("HTML-Quellen belegen Kontakt, Ort und zwei firmenspezifische Aussagen", async () => {
+  const html = `
+    <script>Firma: Falscher Firmenname AG</script>
+    <h1>Sicher Holz AG</h1>
+    <address>Industriestrasse 1<br>4528 Zuchwil</address>
+    <h2>Lena Holz</h2><p>Gesch&auml;ftsf&uuml;hrerin</p>
+    <a href="mailto:Lena.Holz@sicherholz.example">Lena.Holz@sicherholz.example</a>
+    <p>In unserer Werkstatt in Zuchwil fertigen wir Treppen aus regionalem Holz.</p>
+    <p>Das Projekt Schulhaus Zuchwil umfasst eine Garderobe aus massiver Eiche.</p>
+    <a href="/kontakt">Kontakt</a><a href="https://fremd.example/kontakt">Fremd</a>
+  `;
+  const page = await fetchPublicText("https://sicherholz.example/", async (url) =>
+    url.endsWith("/robots.txt")
+      ? new Response(null, { status: 404 })
+      : new Response(html, { headers: { "content-type": "text/html" } }),
+  async () => ["93.184.216.34"]);
+  assert.deepEqual(page.links, ["https://sicherholz.example/kontakt"]);
+  const observation = observePages([page], "Holz- und Metallbau", "Unternehmenswebsite");
+  assert.ok(observation);
+  const candidate = evaluateObservation(observation, config(), "2026-11-24", [], "Unternehmenswebsite", now.toISOString());
+  assert.equal(candidate.status, "QUALIFIED", candidate.reason);
+  assert.equal(candidate.email, "lena.holz@sicherholz.example");
+  assert.equal(candidate.sources.length, 3);
+  assert.ok(candidate.sources.every((source) => source.url === page.url));
+  assert.equal(candidate.sendBlocked, true);
+});
+
+test("Sheets zählt eine vorhandene Recherche-ID mit verändertem Entwurf nicht als gespeichert", async () => {
+  const job = createJob(config(), now);
+  const candidate = evaluateObservation(observePages([goodPage()], "Holz- und Metallbau", "HESO")!, config(), job.dayKey, [], "HESO", now.toISOString());
+  const changed = toSheetRow(candidate);
+  changed[12] = "Anderer Entwurf";
+  const gateway = memorySheets([{ title: "Kontakte", rows: [[...SHEET_HEADERS], changed] }]);
+  job.candidates = [candidate];
+  await syncSheets(job, gateway);
+  assert.equal(candidate.sheetsConfirmed, false);
+  assert.equal(job.sheetsPhase, "stopped");
+  assert.equal(gateway.appended.length, 0);
+});
+
+test("Ein unterbrochener Schreibschritt behält den qualifizierten Lead und wird nach der Lease fortgesetzt", async () => {
+  const store = new MemoryLeadStore();
+  const job = createJob(config({ target: 1 }), now);
+  await store.insert(job);
+  const provider = providerFor(goodPage());
+  const failed = memorySheets([{ title: "Kontakte", rows: [[...SHEET_HEADERS]] }]);
+  const append = failed.appendRows.bind(failed);
+  failed.appendRows = async (rows) => {
+    await append(rows);
+    throw new Error("Verbindung unterbrochen");
+  };
+  await assert.rejects(runStep(store, deps(provider, { sheets: failed }), job.id, "first", now), /unterbrochen/);
+  assert.equal((await store.get(job.id))?.candidates.length, 1);
+  assert.equal((await runStep(store, deps(provider), job.id, "second", now)).saved, false);
+  const recovered = await runStep(
+    store, deps(provider, { sheets: failed }), job.id, "second", new Date(now.getTime() + 181_000),
+  );
+  assert.equal(recovered.job.status, "COMPLETED");
+  assert.equal(recovered.job.candidates[0].sheetsConfirmed, true);
+  assert.equal(failed.appended.length, 1);
+  assert.equal(provider.calls.length, 1);
+});

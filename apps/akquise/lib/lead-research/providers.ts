@@ -1,7 +1,12 @@
+import { request } from "node:https";
+import { isIP } from "node:net";
+import { hostOf } from "./normalize";
 import { SOURCE_FAMILIES } from "./sources";
 import {
   assertPublicHttpsUrl,
   htmlToText,
+  defaultLookup,
+  isPrivateAddress,
   robotsAllows,
   type HostLookup,
 } from "./safety";
@@ -10,6 +15,46 @@ import type { ProviderResult, ResearchProvider } from "./pipeline";
 export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
 
 const AGENT = "studiojekerleadresearch";
+
+// Resolve once per connection and pin the checked address while preserving TLS hostname validation.
+const fetchCompanyPage: FetchLike = async (rawUrl, init) => {
+  const url = new URL(rawUrl);
+  const addresses = await defaultLookup(url.hostname.replace(/^\[|\]$/g, ""));
+  if (!addresses.length || addresses.some(isPrivateAddress)) throw new Error("Nicht öffentliche Adresse.");
+  const address = addresses[0];
+  return new Promise((resolve, reject) => {
+    const req = request(url, {
+      agent: false,
+      headers: init?.headers as Record<string, string>,
+      signal: init?.signal ?? undefined,
+      lookup(_hostname, options, callback) {
+        const family = isIP(address);
+        if (options.all) callback(null, [{ address, family }]);
+        else callback(null, address, family);
+      },
+    }, (response) => {
+      let size = 0;
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > 1_000_000) req.destroy(new Error("Website überschreitet das Grössenlimit."));
+        else chunks.push(chunk);
+      });
+      response.on("error", reject);
+      response.on("end", () => {
+        const status = response.statusCode ?? 502;
+        const headers = new Headers();
+        for (const key of ["location", "content-type"]) {
+          const value = response.headers[key];
+          if (typeof value === "string") headers.set(key, value);
+        }
+        resolve(new Response([204, 205, 304].includes(status) ? null : Buffer.concat(chunks), { status, headers }));
+      });
+    });
+    req.on("error", reject);
+    req.end();
+  });
+};
 
 export function mapProvider(
   handler: (query: string) => ProviderResult,
@@ -61,7 +106,8 @@ export async function fetchPublicText(
   rawUrl: string,
   fetchImpl: FetchLike,
   lookupHost?: HostLookup,
-): Promise<{ url: string; text: string; blockedReason?: string }> {
+  redirects = 0,
+): Promise<{ url: string; text: string; blockedReason?: string; websiteText?: boolean; links?: string[] }> {
   let url: URL;
   try {
     url = await assertPublicHttpsUrl(rawUrl, lookupHost);
@@ -79,10 +125,10 @@ export async function fetchPublicText(
       headers: { "User-Agent": "StudiojekerLeadResearch/1.0" },
       signal: AbortSignal.timeout(8000),
     });
-    if (!robots.ok) {
+    if (!robots.ok && robots.status !== 404 && robots.status !== 410) {
       return { url: url.toString(), text: "", blockedReason: "robots.txt ist nicht lesbar. Die Seite wird nicht abgerufen." };
     }
-    const rules = (await robots.text()).slice(0, 100_000);
+    const rules = robots.ok ? (await robots.text()).slice(0, 100_000) : "";
     if (!robotsAllows(rules, url.pathname, AGENT)) {
       return { url: url.toString(), text: "", blockedReason: "robots.txt untersagt diesen Pfad." };
     }
@@ -93,12 +139,11 @@ export async function fetchPublicText(
     });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location") ?? "";
-      try {
-        await assertPublicHttpsUrl(new URL(location, url).toString(), lookupHost);
-      } catch {
-        return { url: url.toString(), text: "", blockedReason: "Weiterleitung auf eine nicht öffentliche Adresse ist blockiert." };
+      const target = location ? new URL(location, url) : null;
+      if (target && redirects < 2 && hostOf(target.href) === hostOf(url.href)) {
+        return fetchPublicText(target.href, fetchImpl, lookupHost, redirects + 1);
       }
-      return { url: url.toString(), text: "", blockedReason: "Weiterleitungen werden nicht automatisch verfolgt." };
+      return { url: url.href, text: "", blockedReason: "Weiterleitung ausserhalb der Unternehmenswebsite." };
     }
     if (!response.ok) {
       return { url: url.toString(), text: "", blockedReason: `Abruf fehlgeschlagen (HTTP ${response.status}).` };
@@ -108,7 +153,21 @@ export async function fetchPublicText(
       return { url: url.toString(), text: "", blockedReason: "Der Inhaltstyp ist nicht als Text freigegeben." };
     }
     const body = await response.text();
-    return { url: url.toString(), text: htmlToText(body) };
+    const links = new Set<string>();
+    for (const match of body.matchAll(/<a\b[^>]*\bhref=["']([^"']+)["']/gi)) {
+      if (links.size >= 2) break;
+      try {
+        const link = new URL(match[1], url);
+        if (link.protocol === "https:" && !link.username && !link.password && hostOf(link.href) === hostOf(url.href) &&
+            /kontakt|impressum|ueber-uns|über-uns|team|referenzen|projekte/i.test(link.pathname)) {
+          link.hash = "";
+          if (link.href !== url.href) links.add(link.href);
+        }
+      } catch {
+        continue;
+      }
+    }
+    return { url: url.href, text: htmlToText(body), websiteText: true, links: [...links] };
   } catch (error) {
     return {
       url: url.toString(),
@@ -121,6 +180,7 @@ export async function fetchPublicText(
 export function createLiveProvider(options: {
   fetchImpl: FetchLike;
   lookupHost?: HostLookup;
+  websiteFetch?: FetchLike;
   apiKey: string;
   model: string;
   allowFetch: boolean;
@@ -188,10 +248,11 @@ export function createLiveProvider(options: {
         if (family?.homepage) urls.add(family.homepage);
       }
       if (!options.allowFetch) return { pages: [], estimatedCostUsd: cost };
-      const pages = [];
-      for (const url of [...urls].slice(0, 2)) {
-        pages.push(await fetchPublicText(url, options.fetchImpl, options.lookupHost));
-      }
+      const fetchWebsite = (url: string) => fetchPublicText(url, options.websiteFetch ?? options.fetchImpl, options.lookupHost);
+      const initial = await Promise.all([...urls].slice(0, 3).map(fetchWebsite));
+      const fetched = new Set(initial.map((page) => page.url));
+      const links = [...new Set(initial.flatMap((page) => page.links ?? []))].filter((url) => !fetched.has(url));
+      const pages = [...initial, ...await Promise.all(links.map(fetchWebsite))];
       return { pages, estimatedCostUsd: cost };
     },
   };
@@ -211,8 +272,12 @@ export function createProvider(env: NodeJS.ProcessEnv = process.env): ResearchPr
   }
   const allowSearch = env.CONTENT_AI_ENABLED === "true" && Boolean(env.OPENAI_API_KEY);
   const allowFetch = env.LEAD_RESEARCH_FETCH === "live";
+  if (!allowSearch || !allowFetch) {
+    return unconfiguredProvider("Live-Recherche braucht einen eingerichteten Suchzugang und freigegebenen Website-Abruf.");
+  }
   return createLiveProvider({
     fetchImpl: (url, init) => fetch(url, init),
+    websiteFetch: fetchCompanyPage,
     apiKey: env.OPENAI_API_KEY || "",
     model: env.CONTENT_TEXT_MODEL || "gpt-4.1-mini",
     allowSearch,

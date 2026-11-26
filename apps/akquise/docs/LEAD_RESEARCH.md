@@ -32,3 +32,41 @@ Ein Cron darf `POST /api/internal/lead-research-tick` mit `Authorization: Bearer
 ## Tests
 
 Automatisierte Tests arbeiten mit synthetischen `.example`-Adressen und einem Speicher im Arbeitsspeicher. Sie schreiben nicht nach Google und versenden nichts. Die Prisma-Migration `20261124170000_lead_research_agent` ist additiv und wird in diesem Entwicklungsstand nicht auf eine produktive Datenbank angewendet.
+
+## Render-Aktivierung und Abnahme
+
+Der bestehende V1-Dienst `studiojeker-akquise` verwendet den Branch
+`feat/akquise-production-readiness`. Vor dem Merge die effektive
+Auto-Deploy-Einstellung im Render-Dashboard prüfen. Der Testpersonen-Dienst
+verfolgt denselben Branch. Die Recherche-Schalter dort deaktiviert lassen.
+
+1. Den Entwurfs-PR und die V1-Checks gegen den effektiven Deploy-Branch prüfen.
+   Den verwendeten Next.js-Sicherheitsstand über Lockdatei und Audit bestätigen.
+   Vor einer ausstehenden Migration das Datenbankbackup und dessen
+   Wiederherstellbarkeit prüfen. Die bestehende Lead-Tabelle ist additiv.
+2. Die Zielrevision zunächst mit deaktivierter Recherche ausrollen. Die
+   tatsächlich laufende Revision, `/api/health/ready` und den bestehenden
+   Akquise-Ablauf prüfen. V2 verwendet seine eigene Codebasis.
+3. Suchzugang und vollständigen Lesezugriff auf die Masterliste serverseitig
+   prüfen. Auf dem V1-Dienst zuerst `LEAD_RESEARCH_ENABLED=true`,
+   `LEAD_RESEARCH_PROVIDER=live` und `LEAD_RESEARCH_FETCH=live` setzen.
+   `LEAD_RESEARCH_DAILY=true` startet beim ersten erfolgreichen Takt des
+   Zürcher Kalendertags einen Standardlauf. Der Produktionseinstieg ruft die
+   interne Route minütlich mit einem eigenen Token auf. Dies nimmt auch
+   einen aktiven Lauf vom Vortag wieder auf. Das Laufzeitlimit gilt weiter.
+4. Nach vollständigem Abgleich Schreibzugriff auf das Zielblatt prüfen.
+   Nur mit `LEAD_RESEARCH_SHEETS_WRITE=true` werden bestätigbare Zeilen
+   angehängt. `LEAD_RESEARCH_ADMIT_CONTACTS` ist ein separater Schalter
+   für eine manuelle, authentifizierte Aufnahme. Der Zeitplan übergibt
+   keinen StudioONE-Benutzer.
+5. Für die Abnahme Revision, Lauf-ID, Zürcher Datum, Anzahl qualifizierter
+   Entwürfe, Dubletten und bestätigte Rücklesungen protokollieren. Einen
+   kontrollierten Neustart durchführen und denselben Lauf mit seinem
+   gespeicherten Suchfortschritt wiederfinden. Die 200 zählen erst bei
+   belegten und eindeutigen Datensätzen mit personalisierten Entwürfen,
+   nachweislich gespeichertem Lauf und bestätigt rückgelesenen Zeilen.
+   Keine Kontaktdaten in PR oder Logs ablegen.
+
+Bei einem Fehler Recherche und Schreibschalter deaktivieren. Bei einer
+Deploy-Regression die zuvor verifizierte V1-Revision über Render wieder
+bereitstellen. Gespeicherte Läufe und Tabellenzeilen zur Prüfung erhalten.

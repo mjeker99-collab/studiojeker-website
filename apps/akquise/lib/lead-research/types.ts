@@ -154,6 +154,7 @@ export interface JobRecord {
 }
 
 export interface FetchedPage {
+  websiteText?: boolean;
   url: string;
   text: string;
   blockedReason?: string;
