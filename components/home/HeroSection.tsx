@@ -11,6 +11,7 @@ import styles from "./HeroSection.module.css";
 
 type HeroSectionProps = {
   content: HomepageContent["hero"];
+  campaignCta?: HomepageContent["hero"]["primaryCta"];
 };
 
 /**
@@ -26,7 +27,7 @@ function colorOnLightHero(
   return color;
 }
 
-export function HeroSection({ content }: HeroSectionProps) {
+export function HeroSection({ content, campaignCta }: HeroSectionProps) {
   const headlineColor = colorOnLightHero(content.headlineColor);
 
   return (
@@ -61,6 +62,11 @@ export function HeroSection({ content }: HeroSectionProps) {
             ))}
           </div>
           <div className={styles.actions}>
+            {campaignCta && (
+              <Button href={campaignCta.href} variant="cyan" fullWidthMobile>
+                {campaignCta.label}
+              </Button>
+            )}
             <Button href={content.primaryCta.href} variant="outline" fullWidthMobile>
               {content.primaryCta.label}
             </Button>
