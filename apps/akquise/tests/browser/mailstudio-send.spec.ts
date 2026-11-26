@@ -1,4 +1,5 @@
 import { checkout } from "./mail-checkout-helper";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect, type Page } from "@playwright/test";
 
 async function setup(
@@ -170,6 +171,7 @@ async function setup(
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   return {
     sent,
     previews,

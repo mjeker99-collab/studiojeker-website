@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 
 /**
  * Safety regression on synthetic contacts only: 25, 97 and 100 drafts reach a shared
@@ -141,6 +142,7 @@ for (const contactCount of [25, 97, 100]) {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto("/");
     await page.getByRole("button", { name: "Akquise", exact: false }).click();
+    await openAcquisitionTools(page, "Mails");
     await page
       .getByRole("button", { name: "Neue Mails erstellen", exact: true })
       .click();

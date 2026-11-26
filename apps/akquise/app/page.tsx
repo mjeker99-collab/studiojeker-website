@@ -15,6 +15,7 @@ import { replyLabels } from "../lib/contact-reply-input";
 import MailSchedule from "./MailSchedule";
 import GoogleReconnectNotice from "./GoogleReconnectNotice";
 import MailStudio from "./MailStudio";
+import AcquisitionWizard from "./AcquisitionWizard";
 import MailAssistant from "./MailAssistant";
 import { LeadResearchPanel } from "./LeadResearchPanel";
 import { contactStage, contactStageLabels } from "../lib/contact-stage";
@@ -153,6 +154,7 @@ export default function App() {
     [loaded, setLoaded] = useState(false),
     [conceptDirty, setConceptDirty] = useState(false),
     [tab, setTab] = useState("Übersicht"),
+    [acquisitionWizard, setAcquisitionWizard] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -222,6 +224,7 @@ export default function App() {
     setTab(
       target.section === "Kontakte/Akquise" ? "Mail-Studio" : target.section,
     );
+    if (target.section === "Kontakte/Akquise") setAcquisitionWizard(true);
     setNotice("");
     setError("");
     setSelected([]);
@@ -701,27 +704,32 @@ export default function App() {
             </section>
           )}
           {acquisitionTabs.includes(tab) && (
-            <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {["Kontakte", "Mail-Studio", "Versandhistorie"].map((n) => (
-                <button
-                  className="secondary"
-                  aria-current={
-                    tab === n || (n === "Kontakte" && tab === "Kontakte finden")
-                      ? "page"
-                      : undefined
-                  }
-                  key={n}
-                  disabled={busy}
-                  onClick={() => {
-                    setTab(n);
-                    setError("");
-                    setNotice("");
-                  }}
-                >
-                  {acquisitionLabels[n] || n}
-                </button>
-              ))}
-            </nav>
+            <details className="acquisition-secondary">
+              <summary>Kontakte, Recherche und Verlauf</summary>
+              <nav className="hub-subnav" aria-label="Akquise-Navigation">
+                {["Kontakte", "Mail-Studio", "Versandhistorie"].map((n) => (
+                  <button
+                    className="secondary"
+                    aria-current={
+                      !acquisitionWizard &&
+                      (tab === n || (n === "Kontakte" && tab === "Kontakte finden"))
+                        ? "page"
+                        : undefined
+                    }
+                    key={n}
+                    disabled={busy}
+                    onClick={() => {
+                      setAcquisitionWizard(false);
+                      setTab(n);
+                      setError("");
+                      setNotice("");
+                    }}
+                  >
+                    {acquisitionLabels[n] || n}
+                  </button>
+                ))}
+              </nav>
+            </details>
           )}
           {(tab === "Kampagnen" ||
             tab === "Social Media" ||
@@ -824,10 +832,8 @@ export default function App() {
           {acquisitionTabs.includes(tab) && (
             <>
               <GoogleReconnectNotice />
-              <div
-                hidden={tab !== "Kontakte finden"}
-                className="acquisition-research"
-              >
+              {tab === "Kontakte finden" && (
+              <div className="acquisition-research">
                 <button
                   className="secondary"
                   onClick={() => setTab("Kontakte")}
@@ -852,7 +858,19 @@ export default function App() {
                   onOpenContacts={() => setTab("Kontakte")}
                 />
               </div>
-              <div hidden={tab !== "Mail-Studio"}>
+              )}
+              {tab === "Mail-Studio" && acquisitionWizard && (
+                <AcquisitionWizard
+                  persistenceKey={`acquisition-wizard:${data.user.id}`}
+                  contacts={data.contacts}
+                  refresh={refresh}
+                  onOpenHistory={() => {
+                    setAcquisitionWizard(false);
+                    setTab("Versandhistorie");
+                  }}
+                />
+              )}
+              {tab === "Mail-Studio" && !acquisitionWizard && (
                 <MailStudio
                   onOpenShipping={() => setTab("Versandhistorie")}
                   persistenceKey={`mail-work:${data.user.id}`}
@@ -876,7 +894,7 @@ export default function App() {
                     if (d) openDraft(d);
                   }}
                 />
-              </div>
+              )}
             </>
           )}
           {tab === "Kontakte" && (

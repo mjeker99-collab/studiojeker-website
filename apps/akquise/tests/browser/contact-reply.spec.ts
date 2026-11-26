@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 for (const width of [390, 1024]) {
   test("Antwort erfassen und Wiedervorlage anzeigen " + width, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -25,6 +26,7 @@ for (const width of [390, 1024]) {
     });
     await page.goto("/");
     await page.getByRole("button", { name: /^Akquise$/ }).click();
+    await openAcquisitionTools(page);
     await page.getByRole("button", { name: "Kontakte", exact: true }).click();
     await page.getByRole("button", { name: "Beispielfirma", exact: true }).click();
     const panel = page.getByRole("region", { name: "Antwort erfassen" });

@@ -213,10 +213,13 @@ model MailQueueItem {
   status String @default("QUEUED")
   error String?
   deliveryId String?
+  // Explicit wizard slot in UTC. Null keeps the legacy daily window.
+  sendAfter DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([draftId, version])
   @@index([status, createdAt])
+  @@index([status, sendAfter])
 }
 
 model MailSchedule {

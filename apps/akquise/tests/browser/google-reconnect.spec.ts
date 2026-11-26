@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 
 const schedule = {
   schedule: {
@@ -79,6 +80,7 @@ async function openAkquise(
     .getByRole("navigation", { name: "Hauptnavigation" })
     .getByRole("button", { name: "Akquise", exact: true })
     .click();
+  await openAcquisitionTools(page);
   await expect(page.getByRole("navigation", { name: "Akquise-Navigation" })).toBeVisible();
   return {
     calls,
