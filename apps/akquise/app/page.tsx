@@ -796,7 +796,12 @@ export default function App() {
                   {acquisitionWizard && (
                     <AcquisitionWizard
                       persistenceKey={`acquisition-wizard:${data.user.id}`}
-                      contacts={data.contacts}
+                      contacts={data.contacts.map((contact) => ({
+                        ...contact,
+                        deliveryBlocked: data.deliveries.some((delivery) =>
+                          delivery.recipient.toLowerCase() === contact.email.toLowerCase() &&
+                          ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"].includes(delivery.status)),
+                      }))}
                       refresh={refresh}
                       onOpenHistory={() => setTab("Versandhistorie")}
                     />
@@ -815,10 +820,7 @@ export default function App() {
                   initialDraftIds={mailDraftIds}
                   initialContactIds={mailContactIds}
                   drafts={data.drafts}
-                  contacts={data.contacts.map((contact) => ({
-                    ...contact,
-                    deliveryBlocked: data.deliveries.some((delivery) => delivery.recipient === contact.email && ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"].includes(delivery.status)),
-                  }))}
+                  contacts={data.contacts}
                   refresh={refresh}
                   onBusyChange={setBusy}
                   openContact={(id) => {
