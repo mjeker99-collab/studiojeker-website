@@ -1,6 +1,12 @@
 "use client";
 import ContactFilters from "./ContactFilters";
 import {
+  workspaceGroups,
+  workspaceGroup,
+  workspaceLabel,
+} from "../lib/workspace-navigation";
+import "./studioone-simple.css";
+import {
   matchesContactFilters,
   emptyContactFilters,
 } from "../lib/contact-filters";
@@ -62,20 +68,6 @@ type State = {
   smtpPort: number | null;
   smtpSecure: boolean;
 };
-const nav = [
-  "Übersicht",
-  "Kontakte/Akquise",
-  "Kunden",
-  "Strategie & Konzepte",
-  "Kampagnen",
-  "Content-Studio",
-  "Social Media",
-  "Bibliothek",
-  "Newsletter",
-  "Website",
-  "Kalender",
-  "Einstellungen",
-];
 const acquisitionTabs = [
   "Kontakte finden",
   "Mail-Studio",
@@ -175,6 +167,9 @@ export default function App() {
     id: string;
     request: number;
   }>();
+  const [lastWorkspace, setLastWorkspace] = useState<
+    Record<string, DashboardTarget>
+  >({});
   const [projectRevision, setProjectRevision] = useState(0);
   const [dashboardTask, setDashboardTask] = useState<{
     prompt: string;
@@ -218,22 +213,17 @@ export default function App() {
       !window.confirm("Ungespeicherte Konzeptänderungen verwerfen?")
     )
       return;
+    const group = workspaceGroup(target.section);
+    if (group)
+      setLastWorkspace((previous) => ({ ...previous, [group.label]: target }));
     setDashboardTarget(target);
     setTab(
       target.section === "Kontakte/Akquise" ? "Mail-Studio" : target.section,
     );
     setNotice("");
     setError("");
-    setSelected([]);
-    setSearch("");
-    setFilter("");
     window.scrollTo({ top: 0 });
   }
-  const acquisitionLabels: Record<string, string> = {
-    "Mail-Studio": "Mails",
-    Kontakte: "Kontakte",
-    Versandhistorie: "Versand",
-  };
   const mailLabel = data?.externalSending
     ? data.mailMode === "test"
       ? "Interner SMTP-Testmodus"
@@ -544,39 +534,27 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar" inert={showContact || !!draft}>
         <AppLogo />
-        <p className="eyebrow">Workspace</p>
         <nav aria-label="Hauptnavigation">
-          {nav.map((n, i) => (
+          {workspaceGroups.map((group) => (
             <button
-              key={n}
+              key={group.label}
               aria-current={
-                tab === n ||
-                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
-                  ? "page"
-                  : undefined
+                workspaceGroup(tab)?.label === group.label ? "page" : undefined
               }
               className={
-                tab === n ||
-                (n === "Kontakte/Akquise" && acquisitionTabs.includes(tab))
-                  ? "active"
-                  : ""
+                workspaceGroup(tab)?.label === group.label ? "active" : ""
               }
               disabled={busy}
-              onClick={() => navigate({ section: n })}
+              onClick={() => {
+                if (workspaceGroup(tab)?.label !== group.label)
+                  navigate(
+                    lastWorkspace[group.label] || {
+                      section: group.sections[0].section,
+                    },
+                  );
+              }}
             >
-              <span className="nav-index" aria-hidden="true">
-                0{i + 1}
-              </span>
-              {n === "Kontakte/Akquise"
-                ? "Akquise"
-                : n === "Content-Studio"
-                  ? "Content Studio"
-                  : n}
-              {n === "Freigaben" && (
-                <small>
-                  {data.drafts.filter((d) => latest(d) === "PENDING").length}
-                </small>
-              )}
+              {group.label}
             </button>
           ))}
         </nav>
@@ -584,7 +562,14 @@ export default function App() {
           <p>
             <span className="dot" /> {mailLabel}
           </p>
-          <p>Persönliche Mails gemeinsam prüfen</p>
+          <button
+            className="quiet"
+            disabled={busy}
+            aria-current={tab === "Einstellungen" ? "page" : undefined}
+            onClick={() => navigate({ section: "Einstellungen" })}
+          >
+            Einstellungen
+          </button>
           <div className="profile">
             <span className="avatar">
               {data.user.name
@@ -601,7 +586,7 @@ export default function App() {
             className="quiet"
             onClick={() => action(() => post("logout", {}), "Abgemeldet.")}
           >
-            Abmelden ↗
+            Abmelden
           </button>
         </div>
       </aside>
@@ -617,10 +602,10 @@ export default function App() {
             <div>
               {tab !== "Übersicht" && (
                 <>
-                  <p className="eyebrow">ÜBERSICHT & KONTROLLE</p>
-                  <h1>
-                    {acquisitionTabs.includes(tab) ? "Kontakte & Akquise" : tab}
-                  </h1>
+                  <p className="eyebrow">
+                    {workspaceGroup(tab)?.label || "StudioONE"}
+                  </p>
+                  <h1>{workspaceLabel(tab)}</h1>
                 </>
               )}
             </div>
@@ -632,11 +617,6 @@ export default function App() {
                   year: "numeric",
                 })}
               </span>
-              {tab === "Übersicht" && (
-                <button className="secondary" onClick={() => openContact(null)}>
-                  Kontakt erfassen <span>＋</span>
-                </button>
-              )}
             </div>
           </div>
           {error && (
@@ -649,76 +629,20 @@ export default function App() {
               {notice}
             </div>
           )}
-          {tab !== "Übersicht" && !acquisitionTabs.includes(tab) && (
-            <section
-              className="studioone-area-intro"
-              aria-label={`Einführung ${tab}`}
+          {(workspaceGroup(tab)?.sections.length || 0) > 1 && (
+            <nav
+              className="hub-subnav simple-subnav"
+              aria-label={`${workspaceGroup(tab)!.label}-Navigation`}
             >
-              <p className="studioone-area-kicker">
-                STUDIOONE · {tab.toLocaleUpperCase("de-CH")}
-              </p>
-              <h2>
-                {(
-                  {
-                    Kunden: "Deine Kunden. Alles im Blick.",
-                    "Strategie & Konzepte": "Was möchtest du heute entwickeln?",
-                    Kampagnen: "Was möchtest du heute bekannt machen?",
-                    "Social Media": "Was möchtest du heute veröffentlichen?",
-                    "Content-Studio": "Was möchtest du heute gestalten?",
-                    Bibliothek: "Deine Inhalte. Schnell gefunden.",
-                    Newsletter: "Was möchtest du heute mitteilen?",
-                    Website: "Was möchtest du an deiner Website ändern?",
-                    Kalender: "Was steht als Nächstes an?",
-                    Einstellungen: "StudioONE einfach verwalten.",
-                  } as Record<string, string>
-                )[tab] || "Was möchtest du heute erledigen?"}
-              </h2>
-              <p>
-                {(
-                  {
-                    Kunden:
-                      "Kundeninformationen übersichtlich verwalten und gemeinsam weiterbearbeiten.",
-                    "Strategie & Konzepte":
-                      "Beschreibe deine Idee. StudioONE unterstützt dich bei Konzept und Umsetzung.",
-                    Kampagnen:
-                      "Von der Idee zur Kampagne – einfach planen, erstellen und freigeben.",
-                    "Social Media":
-                      "Beiträge für deine Kanäle vorbereiten und übersichtlich verwalten.",
-                    "Content-Studio":
-                      "Bilder, Videos und Inhalte gestalten – mit Unterstützung durch KI.",
-                    Bibliothek: "Bilder, Dokumente und Vorlagen an einem Ort.",
-                    Newsletter:
-                      "Newsletter erstellen, bearbeiten und für den Versand vorbereiten.",
-                    Website:
-                      "Inhalte und Projekte deiner Website an einem Ort bearbeiten.",
-                    Kalender:
-                      "Deine geplanten Aktivitäten und Termine auf einen Blick.",
-                    Einstellungen:
-                      "Die wichtigsten Einstellungen übersichtlich an einem Ort.",
-                  } as Record<string, string>
-                )[tab] || "Starte direkt mit deiner Aufgabe."}
-              </p>
-            </section>
-          )}
-          {acquisitionTabs.includes(tab) && (
-            <nav className="hub-subnav" aria-label="Akquise-Navigation">
-              {["Kontakte", "Mail-Studio", "Versandhistorie"].map((n) => (
+              {workspaceGroup(tab)!.sections.map((item) => (
                 <button
+                  key={item.section}
                   className="secondary"
-                  aria-current={
-                    tab === n || (n === "Kontakte" && tab === "Kontakte finden")
-                      ? "page"
-                      : undefined
-                  }
-                  key={n}
                   disabled={busy}
-                  onClick={() => {
-                    setTab(n);
-                    setError("");
-                    setNotice("");
-                  }}
+                  aria-current={tab === item.section ? "page" : undefined}
+                  onClick={() => navigate({ section: item.section })}
                 >
-                  {acquisitionLabels[n] || n}
+                  {item.label}
                 </button>
               ))}
             </nav>

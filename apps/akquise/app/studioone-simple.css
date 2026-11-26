@@ -1,0 +1,37 @@
+/* V2's task-first hierarchy, using the existing V1 workspaces. */
+.shell .sidebar nav button {
+  min-height: 44px;
+  font-size: 15px;
+}
+.shell .sidebar .quiet {
+  min-height: 44px;
+}
+.simple-subnav {
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.simple-subnav button {
+  min-height: 44px;
+}
+.simple-subnav button[aria-current="page"] {
+  border-color: #3a535c;
+  background: #e5eff2;
+  color: #17272e;
+}
+.shell .sidebar .quiet {
+  font-size: 14px;
+}
+@media (max-width: 700px) {
+  .shell .sidebar {
+    padding: 12px;
+  }
+  .shell .sidebar > .app-brand {
+    max-width: 160px;
+  }
+  .shell .sidebar nav {
+    margin-top: 8px;
+  }
+  .shell .sidebar-bottom {
+    padding-top: 4px;
+  }
+}
