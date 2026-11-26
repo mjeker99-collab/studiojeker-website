@@ -291,16 +291,34 @@ jobs:
       - name: Verify staging website after FTPS
         env:
           STAGING_URL: https://staging2026.studiojeker.ch
+          # Optional: "benutzer:passwort" für den Passwortschutz von Staging.
+          # Ist das Secret gesetzt, wird der Inhalt geprüft (HTTP 200 nötig).
+          # Fehlt es, gilt eine HTTP-401-Antwort mit Basic-Auth-Abfrage als
+          # «erreichbar, aber geschützt» und erzeugt nur eine Warnung.
+          STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
         run: |
           set -euo pipefail
           echo "Checking deployed staging website after FTPS upload"
+          auth_args=()
+          if [ -n "${STAGING_BASIC_AUTH:-}" ]; then
+            auth_args=(--user "$STAGING_BASIC_AUTH")
+            echo "Using STAGING_BASIC_AUTH for password-protected staging"
+          fi
+          protected_only=0
           for route in / /content-abo/; do
             verified=0
             for attempt in 1 2 3 4 5; do
-              status="$(curl --silent --show-error --location --output /tmp/staging-response.html --write-out '%{http_code}' --connect-timeout 15 --max-time 45 "${STAGING_URL}${route}" || true)"
+              status="$(curl --silent --show-error --location ${auth_args[@]+"${auth_args[@]}"} --dump-header /tmp/staging-headers.txt --output /tmp/staging-response.html --write-out '%{http_code}' --connect-timeout 15 --max-time 45 "${STAGING_URL}${route}" || true)"
               if [ "$status" = "200" ] && [ -s /tmp/staging-response.html ]; then
                 echo "Verified ${route}: HTTP 200 and nonempty HTML"
                 verified=1
+                break
+              fi
+              if [ "$status" = "401" ] && [ -z "${STAGING_BASIC_AUTH:-}" ] \
+                && grep -qi '^www-authenticate: *basic' /tmp/staging-headers.txt; then
+                echo "Reachable ${route}: HTTP 401 with Basic-Auth prompt (staging is password-protected)"
+                verified=1
+                protected_only=1
                 break
               fi
               echo "Attempt ${attempt}/5 failed for ${route}: HTTP ${status}"
@@ -311,6 +329,9 @@ jobs:
               exit 1
             fi
           done
+          if [ "$protected_only" = "1" ]; then
+            echo "::warning::Staging ist passwortgeschützt; erreichbar, Inhalt aber nicht geprüft. Secret STAGING_BASIC_AUTH (benutzer:passwort) setzen, um den Inhalt mitzuprüfen."
+          fi
           echo "Staging deployment verification completed successfully"
 
       - name: Publish verified deployment status
