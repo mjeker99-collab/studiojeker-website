@@ -1,7 +1,13 @@
 import { z } from "zod";
 import type { SmtpSender } from "./mail";
 import { dispatchApproved } from "./delivery";
-import { mailScheduleMutation } from "./mail-schedule";
+import {
+  explicitDispatchOutlook,
+  explicitPlanMessage,
+  mailScheduleMutation,
+  runMailSchedule,
+} from "./mail-schedule";
+import { futureZurichInstant, formatZurich } from "./mail-clock";
 import { db } from "./db";
 import {
   legalAllowed,
@@ -162,7 +168,15 @@ export async function mailReview(
             },
           },
         });
+      const queued = await db.mailQueueItem.findFirst({
+        where: {
+          draftId: id,
+          status: { in: ["QUEUED", "SENDING", "UNKNOWN"] },
+        },
+      });
       if (existingDelivery) issues.push("Bereits versandt oder Zustellung in Bearbeitung.");
+      else if (queued)
+        issues.push("Bereits eingeplant. Nicht als neues Versandziel verwendbar.");
       let needsLegal = false;
       try {
         legalAllowed(
@@ -186,10 +200,216 @@ export async function mailReview(
         publicAuthority: d.contact.publicAuthority,
         needsLegal,
         deliveryStatus: existingDelivery?.status ?? null,
+        queueStatus: queued?.status ?? null,
         issues,
       });
     }
     return { rows, unavailable };
+  }
+  if (action === "revise") {
+    const input = z
+      .object({
+        items: z
+          .array(
+            z
+              .object({
+                id: z.string().min(1).max(100),
+                version: z.number().int().positive(),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(200),
+        find: z.string().min(1).max(500),
+        replace: z.string().max(2000),
+        confirmed: z.boolean(),
+      })
+      .strict()
+      .parse(raw);
+    if (input.find === input.replace)
+      throw new PolicyError("Der neue Text unterscheidet sich nicht.");
+    const results = [];
+    for (const entry of input.items) {
+      try {
+        const draft = await db.draft.findUnique({
+          where: { id: entry.id },
+          include: {
+            contact: true,
+            versions: { orderBy: { version: "desc" }, take: 1 },
+          },
+        });
+        const v = draft?.versions[0];
+        if (!draft || !v || draft.version !== entry.version)
+          throw new PolicyError("Entwurf wurde geändert. Neu laden.", 409);
+        const blocked = await db.mailQueueItem.findFirst({
+          where: {
+            draftId: draft.id,
+            status: { in: ["QUEUED", "SENDING", "UNKNOWN"] },
+          },
+        });
+        const sent = await db.delivery.findFirst({
+          where: {
+            recipient: v.recipient,
+            status: { in: ["SENT", "SENDING", "UNKNOWN", "SEND_READY", "REPLIED"] },
+          },
+        });
+        if (sent || blocked)
+          throw new PolicyError(
+            sent
+              ? "Bereits versandt oder in Bearbeitung. Diese Mail wird nicht verändert."
+              : "Bereits eingeplant. Diese Mail wird nicht als neues Versandziel verändert.",
+          );
+        if (!v.body.includes(input.find) && !v.subject.includes(input.find))
+          throw new PolicyError("Der gesuchte Text steht in dieser Mail nicht.");
+        const subject = v.subject.split(input.find).join(input.replace);
+        const body = v.body.split(input.find).join(input.replace);
+        if (!subject.trim() || subject.length > 250 || !body.trim() || body.length > 12000)
+          throw new PolicyError("Betreff oder Nachricht ist nach der Änderung ungültig.");
+        assertNoraMailText(body);
+        if (!input.confirmed) {
+          results.push({
+            id: entry.id,
+            ok: true,
+            preview: true,
+            subject,
+            body,
+            organisation: draft.contact.organisation,
+            message: "Vorschau der Änderung",
+          });
+          continue;
+        }
+        await editDraft(userId, entry.id, entry.version, {
+          recipient: v.recipient,
+          subject,
+          body,
+        });
+        results.push({
+          id: entry.id,
+          ok: true,
+          subject,
+          body,
+          message: "Gespeichert. Die frühere Freigabe gilt nicht mehr.",
+        });
+      } catch (error) {
+        results.push({
+          id: entry.id,
+          ok: false,
+          message: error instanceof Error ? error.message : "Änderung nicht gespeichert",
+        });
+      }
+    }
+    return { results };
+  }
+  if (action === "approve-and-plan") {
+    const input = z
+      .object({
+        items: z.array(item).min(1).max(200),
+        read: z.literal(true),
+        confirmDispatch: z.literal(true),
+        mode: z.enum(["immediate", "scheduled"]),
+        localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        localTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+        legal: z
+          .object({
+            confirmed: z.literal(true),
+            rationale: z.string().trim().min(15).max(4000),
+            procurementReviewed: z.boolean(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .parse(raw);
+    let sendAfter: Date;
+    try {
+      sendAfter =
+        input.mode === "scheduled"
+          ? futureZurichInstant(input.localDate || "", input.localTime || "")
+          : new Date();
+    } catch (error) {
+      throw new PolicyError(
+        error instanceof Error ? error.message : "Zeitpunkt ungültig.",
+      );
+    }
+    const results = [];
+    for (const entry of input.items) {
+      let approved = false;
+      try {
+        await reviewDraft(userId, entry.id, entry.version, "APPROVED", true, {
+          ...entry,
+          legal: input.legal,
+        });
+        approved = true;
+        const queued = await mailScheduleMutation(userId, "enqueue", {
+          confirmDispatch: true,
+          sendAfter: sendAfter.toISOString(),
+          items: [{ draftId: entry.id, version: entry.version }],
+        });
+        const result = "results" in queued ? queued.results?.[0] : undefined;
+        results.push({
+          id: entry.id,
+          ok: Boolean(result?.ok),
+          message: result?.ok
+            ? "Freigegeben und eingeplant"
+            : `Freigegeben; nicht eingeplant: ${result?.reason || "Status prüfen"}`,
+        });
+      } catch (error) {
+        results.push({
+          id: entry.id,
+          ok: false,
+          stopBatch: approved || !(error instanceof PolicyError),
+          message:
+            error instanceof PolicyError
+              ? error.message
+              : "Freigabe fehlgeschlagen. Vorschau neu laden.",
+        });
+      }
+    }
+    const queuedIds = results.filter((result) => result.ok).map((result) => result.id);
+    if (input.mode === "immediate" && queuedIds.length) {
+      try {
+        await runMailSchedule(sender, { explicitOnly: true });
+      } catch {
+        /* The queue remains. The summary reports that nothing new was handed off. */
+      }
+    }
+    const started = queuedIds.length
+      ? await db.mailQueueItem.count({
+          where: {
+            draftId: { in: queuedIds },
+            status: { in: ["SENT", "SENDING", "TEST_SENT"] },
+          },
+        })
+      : 0;
+    const waiting = queuedIds.length
+      ? await db.mailQueueItem.count({
+          where: { draftId: { in: queuedIds }, status: "QUEUED" },
+        })
+      : 0;
+    const queued = started + waiting;
+    const outlook = await explicitDispatchOutlook();
+    const when = input.mode === "scheduled" ? sendAfter : null;
+    return {
+      results,
+      summary: {
+        queued,
+        started,
+        failed: results.length - queued,
+        mode: input.mode,
+        when: when?.toISOString() ?? null,
+        whenLabel: when ? `${formatZurich(when)} Uhr (Europe/Zurich)` : null,
+        nextAt: outlook.next.toISOString(),
+        capped: outlook.capped,
+        message: explicitPlanMessage({
+          queued,
+          started,
+          failed: results.length - queued,
+          mode: input.mode,
+          when,
+          outlook,
+        }),
+      },
+    };
   }
   if (
     action === "approve" ||

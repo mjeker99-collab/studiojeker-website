@@ -4,7 +4,12 @@ import { allowedAccount, readMailConfig } from "./config.mjs";
 import { PolicyError } from "./policy";
 import { audit } from "./workflow";
 import { checked, dispatchApproved } from "./delivery";
-import { insideMailWindow, mailDayStart } from "./mail-clock";
+import {
+  formatZurich,
+  insideMailWindow,
+  mailDayStart,
+  nextZurichMidnight,
+} from "./mail-clock";
 import type { SmtpSender } from "./mail";
 
 export const scheduleInput = z
@@ -160,7 +165,7 @@ export async function mailScheduleMutation(
         return { ok: true };
       }
       if (action === "enqueue") {
-        const { items, confirmDispatch } = z
+        const { items, confirmDispatch, sendAfter: sendAfterRaw } = z
           .object({
             items: z
               .array(
@@ -174,9 +179,17 @@ export async function mailScheduleMutation(
               .min(1)
               .max(200),
             confirmDispatch: z.literal(true),
+            sendAfter: z.string().datetime().optional(),
           })
           .strict()
           .parse(body);
+        const sendAfter = sendAfterRaw ? new Date(sendAfterRaw) : null;
+        if (
+          sendAfter &&
+          (Number.isNaN(sendAfter.getTime()) ||
+            sendAfter.getTime() + 60000 <= Date.now())
+        )
+          throw new PolicyError("Der Zeitpunkt liegt in der Vergangenheit.");
         const results: { draftId: string; ok: boolean; reason?: string }[] = [];
         for (const item of items) {
           try {
@@ -196,6 +209,15 @@ export async function mailScheduleMutation(
               where: { draftId_version: item },
             });
             if (existing?.status === "QUEUED" && existing.hash === v.hash) {
+              if (
+                sendAfter &&
+                existing.sendAfter?.getTime() !== sendAfter.getTime()
+              ) {
+                await tx.mailQueueItem.update({
+                  where: { id: existing.id },
+                  data: { sendAfter },
+                });
+              }
               results.push({ draftId: item.draftId, ok: true });
               continue;
             }
@@ -211,6 +233,7 @@ export async function mailScheduleMutation(
               userId,
               status: "QUEUED",
               error: null,
+              ...(sendAfter ? { sendAfter } : {}),
             };
             await tx.mailQueueItem.upsert({
               where: { draftId_version: item },
@@ -282,9 +305,57 @@ export async function mailScheduleMutation(
   );
 }
 
+export async function explicitDispatchOutlook(now = new Date()) {
+  const schedule = await ensureSchedule();
+  const config = readMailConfig();
+  const limit = Math.min(schedule.dailyLimit, config.dailyLimit);
+  const todayCount = await db.delivery.count({
+    where: { mode: "PRODUCTION", createdAt: { gte: mailDayStart(now) } },
+  });
+  const capped = todayCount >= limit;
+  const intervalAt = schedule.lastClaimAt
+    ? new Date(
+        schedule.lastClaimAt.getTime() + schedule.intervalMinutes * 60000,
+      )
+    : now;
+  let next = new Date(Math.max(now.getTime(), intervalAt.getTime()));
+  if (capped) next = new Date(Math.max(next.getTime(), nextZurichMidnight(now).getTime()));
+  return {
+    next,
+    capped,
+    limit,
+    todayCount,
+    intervalMinutes: schedule.intervalMinutes,
+    production: config.smtpAllowed && config.mode === "production",
+  };
+}
+export function explicitPlanMessage(input: {
+  queued: number;
+  started: number;
+  failed: number;
+  mode: "immediate" | "scheduled";
+  when: Date | null;
+  outlook: Awaited<ReturnType<typeof explicitDispatchOutlook>>;
+}) {
+  const when = input.when ? formatZurich(input.when) : "";
+  if (!input.outlook.production)
+    return `${input.queued} Mails sind eingeplant. Der Produktionsversand ist nicht aktiv, deshalb wurde nichts zugestellt.`;
+  if (input.mode === "scheduled" && when)
+    return input.outlook.capped
+      ? `${input.queued} Mails sind für ${when} Uhr (Europe/Zurich) gespeichert. Das Tageslimit von ${input.outlook.limit} ist erreicht. Nächster Versand frühestens ${formatZurich(input.outlook.next)} Uhr.`
+      : `${input.queued} Mails sind für ${when} Uhr (Europe/Zurich) eingeplant. Der Versand startet zu diesem Zeitpunkt, im Abstand von ${input.outlook.intervalMinutes} Minuten und höchstens ${input.outlook.limit} pro Tag.`;
+  if (input.outlook.capped)
+    return `${input.queued} Mails warten in der Warteschlange. Das Tageslimit von ${input.outlook.limit} ist erreicht. Nächster Versand frühestens ${formatZurich(input.outlook.next)} Uhr (Europe/Zurich).`;
+  if (input.started > 0)
+    return `${input.started} ${input.started === 1 ? "Mail ist" : "Mails sind"} in den Versand gegangen. ${Math.max(input.queued - input.started, 0)} weitere warten. Nächste Mail frühestens ${formatZurich(input.outlook.next)} Uhr.`;
+  return `${input.queued} Mails sind für den sofortigen Versand eingeplant. Die nächste Mail geht frühestens ${formatZurich(input.outlook.next)} Uhr in die Warteschlange.`;
+}
 // One item per tick. The durable claim + global delivery lock enforce spacing/limits
 // even if multiple server instances tick concurrently. Never replay a claim.
-export async function runMailSchedule(sender?: SmtpSender) {
+export async function runMailSchedule(
+  sender?: SmtpSender,
+  scope: { explicitOnly?: boolean } = {},
+) {
   await ensureSchedule();
   await db.mailSchedule.update({
     where: { id: "studiojeker" },
@@ -348,13 +419,14 @@ export async function runMailSchedule(sender?: SmtpSender) {
     });
     return;
   }
-  if (
-    !schedule.enabled ||
-    !config.smtpAllowed ||
-    config.mode !== "production" ||
-    !insideMailWindow(schedule)
-  )
-    return;
+  if (!config.smtpAllowed || config.mode !== "production") return;
+  const now = new Date();
+  const legacyOpen =
+    !scope.explicitOnly && schedule.enabled && insideMailWindow(schedule, now);
+  const explicitDue = await db.mailQueueItem.count({
+    where: { status: "QUEUED", sendAfter: { lte: now } },
+  });
+  if (!legacyOpen && !explicitDue) return;
   if (
     schedule.lastClaimAt &&
     Date.now() - schedule.lastClaimAt.getTime() <
@@ -366,8 +438,13 @@ export async function runMailSchedule(sender?: SmtpSender) {
   });
   if (count >= Math.min(schedule.dailyLimit, config.dailyLimit)) return;
   const item = await db.mailQueueItem.findFirst({
-    where: { status: "QUEUED" },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    where: legacyOpen
+      ? {
+          status: "QUEUED",
+          OR: [{ sendAfter: null }, { sendAfter: { lte: now } }],
+        }
+      : { status: "QUEUED", sendAfter: { lte: now } },
+    orderBy: [{ sendAfter: "asc" }, { createdAt: "asc" }, { id: "asc" }],
   });
   if (!item) return;
   try {

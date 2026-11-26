@@ -88,7 +88,7 @@ export function renderMailContent(body: string, preview = false) {
 }
 export function appendMailContent(body: string, addition: string) {
   const closing =
-    /(?:^|\n)(?:Freundliche Grüsse|Freundliche Grüße|Mit freundlichen Grüssen|Mit freundlichen Grüßen)/i.exec(
+    /(?:^|\n)(?:Beste Grüsse|Beste Grüße|Freundliche Grüsse|Freundliche Grüße|Mit freundlichen Grüssen|Mit freundlichen Grüßen)/i.exec(
       body,
     );
   const at = closing ? closing.index : body.length;

@@ -18,6 +18,22 @@ test("personal mail closing contains only Beste Grüsse above Nora's portrait", 
   }
 });
 
+test("new drafts place Beste Grüsse before Nora's signature", async () => {
+  const { localGenerator } = await import("../lib/generation");
+  const mail = await localGenerator.generate({
+    rules: "",
+    facts: {
+      greeting: "Guten Tag Anna",
+      hook: "Dokumentiertes Projekt",
+      organisation: "Atelier",
+      service: "Film",
+    },
+  });
+  assert.match(mail.body, /Beste Grüsse\nNora Jeker/);
+  const { html } = signedMessage(mail.body, true);
+  assert.ok(html.indexOf("Beste Grüsse") < html.indexOf('alt="Nora Jeker"'));
+});
+
 test("known Nora closing is normalized without changing message text", () => {
   assert.deepEqual(signatureParts("Text\n\nBeste Grüsse\nNora Jeker\nStudiojeker GmbH\nstudiojeker.ch"), {
     before: "Text\n\nBeste Grüsse", after: "",

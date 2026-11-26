@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 
 export async function setup(
   page: Page,
@@ -176,5 +177,6 @@ export async function setup(
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   return { sent, previews, settingsCalls };
 }

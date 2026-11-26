@@ -1,4 +1,5 @@
 import { checkout } from "./mail-checkout-helper";
+import { openAcquisitionTools } from "./open-acquisition-tools";
 import { test, expect } from "@playwright/test";
 
 test("50 selected contacts stay together through shared completion and review", async ({
@@ -157,6 +158,7 @@ test("50 selected contacts stay together through shared completion and review", 
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   await page
     .getByRole("button", { name: "Neue Mails erstellen", exact: true })
     .click();
@@ -400,6 +402,7 @@ test("partly prepared group reviews successful drafts without retrying or sendin
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   await page
     .getByRole("button", { name: "Neue Mails erstellen", exact: true })
     .click();
@@ -545,6 +548,7 @@ test("mixed contact group advances only verified unchanged records without sendi
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   await page
     .getByRole("button", { name: "Neue Mails erstellen", exact: true })
     .click();
@@ -684,6 +688,7 @@ test("bulk selection skips info@ addresses while retaining other valid contacts"
 
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   await page
     .getByRole("button", { name: "Neue Mails erstellen", exact: true })
     .click();
@@ -814,6 +819,7 @@ test("saved info@ drafts cannot enter bulk mail approval", async ({ page }) => {
   });
   await page.goto("/");
   await page.getByRole("button", { name: /^Akquise$/ }).click();
+  await openAcquisitionTools(page, "Mails");
   await expect(
     page.getByRole("button", { name: "Gespeicherte Entwürfe öffnen (1)" }),
   ).toBeVisible();

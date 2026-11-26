@@ -4,6 +4,9 @@ import {
   mailDayStart,
   insideMailWindow,
   localMailTime,
+  zurichInstant,
+  futureZurichInstant,
+  nextZurichMidnight,
 } from "../lib/mail-clock";
 test("Schweizer Kalendertag, Sommerzeit und Winterzeit", () => {
   assert.equal(
@@ -65,5 +68,20 @@ test("Nächster Slot berücksichtigt Tageslimit, Wochenende, Intervall und Zeitu
       new Date("2026-10-26T09:01:00Z"),
     )?.toISOString(),
     "2026-10-26T09:05:00.000Z",
+  );
+});
+
+test("Gewähltes Datum bleibt über Sommer-, Winter- und Umstellungszeit erhalten", () => {
+  assert.equal(zurichInstant("2026-07-01", "14:30").toISOString(), "2026-07-01T12:30:00.000Z");
+  assert.equal(zurichInstant("2026-12-01", "14:30").toISOString(), "2026-12-01T13:30:00.000Z");
+  assert.equal(zurichInstant("2026-10-25", "02:30").toISOString(), "2026-10-25T00:30:00.000Z");
+  assert.throws(() => zurichInstant("2026-03-29", "02:30"), /gibt es in der Schweiz/);
+  assert.throws(
+    () => futureZurichInstant("2020-01-01", "10:00", new Date("2026-11-26T08:00:00Z")),
+    /Vergangenheit/,
+  );
+  assert.equal(
+    nextZurichMidnight(new Date("2026-10-24T22:30:00Z")).toISOString(),
+    "2026-10-25T23:00:00.000Z",
   );
 });
