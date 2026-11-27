@@ -21,14 +21,32 @@ Ergänzend gilt für Claude:
 | `feat/akquise-production-readiness` | StudioONE-Produktion `studiojeker-akquise` (nach bestandenen Checks) **und** Testdienst `studioone-testpersonen` (bei jedem Commit) |
 
 Darum: Claude arbeitet immer auf einem eigenen Branch (`claude/…`) und öffnet einen Pull Request.
-Ein Merge in `main` oder `feat/akquise-production-readiness` ist ein Release und braucht Martins ausdrücklichen Auftrag («mergen und deployen»).
 
-## Nie ohne ausdrückliche Freigabe
+## Freigaberahmen (von Martin erteilt am 27.11.2026)
 
-- E-Mails versenden (SMTP Metanet oder Mailchimp), Social-Posts oder Website-Inhalte veröffentlichen
+Innerhalb dieses Rahmens arbeitet Claude ohne Rückfrage bis zum Ergebnis und meldet danach den Stand.
+
+**Ohne Rückfrage erlaubt**
+
+- Branch, Code, Tests, Pull Request
+- Mergen und deployen (Website und StudioONE V1) von Fehlerbehebungen, Workflows, Dokumentation, Barrierefreiheit, Performance und kleinen UX-Verbesserungen – nur wenn alle Prüfungen grün sind
+- Nach einem Deploy die betroffene Funktion prüfen; bei Fehlern sofort auf den letzten funktionierenden Stand zurückrollen und Martin informieren
+- Testdienst `studioone-testpersonen` und Testdatenbank betreiben, neu anlegen und zurücksetzen
+- Entwürfe in Sanity und Mailchimp anlegen (nicht veröffentlichen, nicht versenden)
+
+**Weiterhin nur mit Martins Freigabe**
+
+- E-Mails an echte Empfänger versenden (SMTP Metanet oder Mailchimp)
+- Inhalte veröffentlichen (Sanity publizieren, Social Media, neue Website-Texte)
 - Produktive Daten löschen oder überschreiben (PostgreSQL, Sanity `tgx6e6jg` / `production`, Google-Masterliste)
 - Secrets, Zugriffsrechte oder kostenpflichtige Pläne ändern
-- Branch-Schutz oder Pflicht-Checks umgehen
+- Navigation, Informationsarchitektur, Branding, Typografie, Farben, neue Bibliotheken (siehe «APPROVAL REQUIRED» in `AGENTS.md`)
+- Änderungen an StudioONE V2
+
+**Immer**
+
+- Branch-Schutz und Pflicht-Checks nie umgehen
+- Nichts als live melden, was nicht geprüft ist
 
 ## StudioONE V1 – Technik
 
