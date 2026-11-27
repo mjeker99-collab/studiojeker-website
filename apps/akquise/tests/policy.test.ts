@@ -548,11 +548,48 @@ test("CSV importiert nur Kontakte und keine Einwilligungen oder Versandstatus", 
       ),
     );
 });
-test("Import blockiert Dubletten, Formeln, unerlaubte URLs und Übergrösse", async () => {
-  await assert.rejects(
-    parseImport(Buffer.from(csv + csv.split("\n")[1] + "\n"), "test.csv"),
-    /Dublette/,
+test("Import erkennt deutsche Spaltennamen mit Semikolon und lehnt Statusspalten weiter ab", async () => {
+  const rows = await parseImport(
+    Buffer.from(
+      "Firma;Vorname;Nachname;E-Mail;Branche;Ort\nTest AG;Anna;Muster;anna.muster@example.test;Architektur;Solothurn\n",
+    ),
+    "kontakte.csv",
   );
+  assert.equal(rows[0].organisation, "Test AG");
+  assert.equal(rows[0].firstName, "Anna");
+  assert.equal(rows[0].email, "anna.muster@example.test");
+  assert.equal(rows[0].industry, "Architektur");
+  assert.equal(rows[0].region, "Solothurn");
+  await assert.rejects(
+    parseImport(
+      Buffer.from("Firma;Vorname;Nachname;Status\nTest AG;Anna;Muster;SENT\n"),
+      "kontakte.csv",
+    ),
+    /Spalte «Status» kann nicht importiert werden/,
+  );
+  await assert.rejects(
+    parseImport(
+      Buffer.from("Firma;Unternehmen;Vorname;Nachname\nA;B;Anna;Muster\n"),
+      "kontakte.csv",
+    ),
+    /doppelt/,
+  );
+  await assert.rejects(
+    parseImport(
+      Buffer.from("Firma;Vorname;Nachname;E-Mail\nTest AG;;Muster;keine-adresse\n"),
+      "kontakte.csv",
+    ),
+    /Zeile 2: «Vorname» fehlt, Die E-Mail-Adresse ist ungültig/,
+  );
+});
+test("Import blockiert Formeln, unerlaubte URLs und Übergrösse; Dubletten in der Datei brechen nicht ab", async () => {
+  // Eine doppelte Zeile verwirft nicht mehr die ganze Datei. Die Datenbank
+  // übernimmt jede Person einmal und zählt den Rest als übersprungen.
+  const repeated = await parseImport(
+    Buffer.from(csv + csv.split("\n")[1] + "\n"),
+    "test.csv",
+  );
+  assert.equal(repeated.length, 2);
   await assert.rejects(
     parseImport(
       Buffer.from(csv.replace("Test AG", '=HYPERLINK("bad")')),

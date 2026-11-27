@@ -72,7 +72,7 @@ export default function MailchimpTemplates() {
       </div>
 
       {error && <p role="alert">{error}</p>}
-      {connected === false && <p>Mailchimp ist nicht verbunden. Den API-Schlüssel nur auf Render hinterlegen.</p>}
+      {connected === false && <p>Mailchimp ist noch nicht verbunden. Bitte die Betreuung informieren.</p>}
       {connected && templates.length === 0 && <p>Keine aktiven Vorlagen gefunden.</p>}
 
       {connected && templates.length > 0 && (

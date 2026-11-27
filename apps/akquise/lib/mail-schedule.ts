@@ -339,7 +339,7 @@ export function explicitPlanMessage(input: {
 }) {
   const when = input.when ? formatZurich(input.when) : "";
   if (!input.outlook.production)
-    return `${input.queued} Mails sind eingeplant. Der Produktionsversand ist nicht aktiv, deshalb wurde nichts zugestellt.`;
+    return `${input.queued} Mails sind eingeplant. Der Produktionsversand ist nicht aktiv, deshalb wurde nichts zugestellt. Sobald der Versand eingeschaltet wird, gehen diese Mails ohne weitere Rückfrage hinaus. Im Versandverlauf kannst du sie vorher aus der Warteschlange entfernen.`;
   if (input.mode === "scheduled" && when)
     return input.outlook.capped
       ? `${input.queued} Mails sind für ${when} Uhr (Europe/Zurich) gespeichert. Das Tageslimit von ${input.outlook.limit} ist erreicht. Nächster Versand frühestens ${formatZurich(input.outlook.next)} Uhr.`

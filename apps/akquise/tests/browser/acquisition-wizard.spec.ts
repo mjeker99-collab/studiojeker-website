@@ -325,7 +325,7 @@ for (const [width, height] of [
       .getByRole("checkbox", { name: /gebe genau diesen Versand frei/ })
       .check();
     const scheduleLabel = page.getByRole("button", {
-      name: /Mails für 2026-12-01 um 10:30 Uhr einplanen/,
+      name: /Mails für 01\.12\.2026 um 10:30 Uhr einplanen/,
     });
     await expect(scheduleLabel).toBeEnabled();
     if (width !== 1024) {

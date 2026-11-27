@@ -61,6 +61,18 @@
   font-size: 16px;
   box-sizing: border-box;
 }
+/* Checkboxen und Radios behalten ihre eigene Grösse. Mit voller Breite
+   verdrängen sie in Flex-Beschriftungen den Text auf ein Zeichen pro Zeile. */
+.acquisition-wizard input[type="checkbox"],
+.acquisition-wizard input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+.acquisition-wizard label.check {
+  align-items: flex-start;
+  min-height: 44px;
+}
 .acquisition-wizard .wizard-grid {
   display: grid;
   grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);

@@ -239,7 +239,7 @@ export default function MailSchedule({
               ? "Keine weiteren Mails eingeplant."
               : !insideMailWindow(data.schedule)
                 ? "Wartet auf das nächste Versandfenster."
-                : `Versand läuft im Abstand von ${data.schedule.intervalMinutes} Minute(n). Der Status wird alle 30 Sekunden aktualisiert.`;
+                : `Versand läuft im Abstand von ${data.schedule.intervalMinutes === 1 ? "1 Minute" : `${data.schedule.intervalMinutes} Minuten`}. Der Status wird alle 30 Sekunden aktualisiert.`;
   const nextSlot =
     data &&
     data.schedule.enabled &&
@@ -350,8 +350,16 @@ export default function MailSchedule({
             täglich ·{" "}
             {data.schedule.weekdaysOnly ? "Montag bis Freitag" : "Jeden Tag"},{" "}
             {String(data.schedule.startHour).padStart(2, "0")}:00–
-            {String(data.schedule.endHour).padStart(2, "0")}:00 Uhr · alle{" "}
-            {data.schedule.intervalMinutes} Minute(n).
+            {String(data.schedule.endHour).padStart(2, "0")}:00 Uhr ·{" "}
+            {data.schedule.intervalMinutes === 1
+              ? "jede Minute eine Mail"
+              : `alle ${data.schedule.intervalMinutes} Minuten eine Mail`}
+            .
+          </p>
+          <p className="panel-note">
+            Das Zeitfenster gilt für den laufenden Zeitplan. Mails, die du in
+            Schritt 4 sofort sendest oder auf einen Zeitpunkt planst, gehen zum
+            gewählten Zeitpunkt hinaus, auch ausserhalb dieses Fensters.
           </p>
           <div className="actions">
             {onSendNow && count("QUEUED") > 0 && (
@@ -468,9 +476,9 @@ export default function MailSchedule({
           )}
           {staleWorker && (
             <p className="panel-note">
-              Hintergrunddienst noch nicht bestätigt. Nach dem Deployment bis zu
-              einer Minute warten. Bleibt dieser Hinweis bestehen,
-              Produktionsstart prüfen.
+              Der Versanddienst hat sich noch nicht gemeldet. Bitte warte eine
+              Minute und tippe auf «Status aktualisieren». Bleibt der Hinweis
+              bestehen, informiere die technische Betreuung.
             </p>
           )}
           {data.schedule.pauseReason && (

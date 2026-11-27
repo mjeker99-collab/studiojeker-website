@@ -3,7 +3,7 @@ import { parse } from "csv-parse/sync";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { z } from "zod";
-import { normalizeEmail, personKey, PolicyError } from "./policy";
+import { normalizeEmail, PolicyError } from "./policy";
 export const MAX_IMPORT_CONTACTS = 5000;
 export const MAX_IMPORT_BYTES = 8 * 1024 * 1024;
 const text = z.string().trim().max(4000).default("");
@@ -286,29 +286,107 @@ export async function parseImport(buffer: Buffer, filename: string) {
   } else throw new PolicyError("Nur CSV und XLSX erlaubt.");
   return validateRows(rows);
 }
+// Alltagsnamen der Spalten, wie sie in Excel-Listen üblich sind. Es werden nur
+// Kontaktfelder zugeordnet; Status-, Einwilligungs- und Freigabespalten bleiben
+// unbekannt und damit abgelehnt.
+const columnAliases: Record<string, string> = {
+  organisation: "organisation",
+  organization: "organisation",
+  firma: "organisation",
+  firmenname: "organisation",
+  unternehmen: "organisation",
+  firstname: "firstName",
+  vorname: "firstName",
+  lastname: "lastName",
+  nachname: "lastName",
+  email: "email",
+  "e-mail": "email",
+  mail: "email",
+  "e-mail-adresse": "email",
+  emailadresse: "email",
+  industry: "industry",
+  branche: "industry",
+  region: "region",
+  ort: "region",
+  position: "position",
+  funktion: "position",
+  website: "website",
+  webseite: "website",
+  sourceurl: "sourceUrl",
+  quelle: "sourceUrl",
+  "quellen-url": "sourceUrl",
+  hook: "hook",
+  anknüpfungspunkt: "hook",
+  service: "service",
+  dienstleistung: "service",
+  owner: "owner",
+  verantwortlich: "owner",
+  notes: "notes",
+  notizen: "notes",
+  bemerkungen: "notes",
+  legalcategory: "legalCategory",
+};
+const columnLabels: Record<string, string> = {
+  organisation: "Firma",
+  firstName: "Vorname",
+  lastName: "Nachname",
+  email: "E-Mail",
+  industry: "Branche",
+  region: "Ort",
+  position: "Funktion",
+  website: "Website",
+  sourceUrl: "Quelle",
+  hook: "Anknüpfungspunkt",
+  service: "Dienstleistung",
+  owner: "Verantwortlich",
+  notes: "Notizen",
+  legalCategory: "legalCategory",
+};
+const allowedColumnNames =
+  "Firma, Vorname, Nachname, E-Mail, Branche, Ort, Funktion, Website, Quelle, Anknüpfungspunkt, Dienstleistung, Verantwortlich, Notizen";
+function canonicalRow(row: Record<string, unknown>, line: number) {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    const column = columns.includes(key)
+      ? key
+      : columnAliases[key.trim().toLowerCase()];
+    if (!column)
+      throw new PolicyError(
+        `Die Spalte «${key}» kann nicht importiert werden. Mögliche Spalten: ${allowedColumnNames}. Status-, Einwilligungs- und Freigabespalten setzt der Import nie.`,
+      );
+    if (column in result)
+      throw new PolicyError(
+        `Zeile ${line}: Die Spalte «${columnLabels[column]}» kommt doppelt vor.`,
+      );
+    result[column] = value;
+  }
+  return result;
+}
 export function validateRows(rows: Record<string, unknown>[]) {
   if (!rows.length || rows.length > MAX_IMPORT_CONTACTS)
     throw new PolicyError(`Import benötigt 1 bis ${MAX_IMPORT_CONTACTS} Kontakte.`);
-  const people = new Set<string>();
-  return rows.map((row, index) => {
-    for (const [key, value] of Object.entries(row)) {
-      if (!columns.includes(key))
-        throw new PolicyError(
-          `Zeile ${index + 2}: Unzulässige Spalte ${key}. Import darf keine Status-, Einwilligungs- oder Freigabefelder setzen.`,
-        );
+  // Dubletten innerhalb der Datei brechen den Import nicht mehr ab: jede
+  // Person wird einmal übernommen, importContacts zählt den Rest als übersprungen.
+  return rows.map((raw, index) => {
+    const row = canonicalRow(raw, index + 2);
+    for (const value of Object.values(row))
       if (typeof value !== "string" || /^[=+@\-\t\r]/.test(value.trim()))
         throw new PolicyError(`Zeile ${index + 2}: Unsicherer Zellinhalt.`);
-    }
     const parsed = contactInput.safeParse(row);
     if (!parsed.success)
       throw new PolicyError(
-        `Zeile ${index + 2}: ${parsed.error.issues.map((i) => i.path.join(".") + ": " + i.message).join(", ")}`,
+        `Zeile ${index + 2}: ${parsed.error.issues
+          .map((issue) => {
+            const field = String(issue.path[0] ?? "");
+            const label = columnLabels[field] || field;
+            return ["organisation", "firstName", "lastName"].includes(field)
+              ? `«${label}» fehlt`
+              : field === "email"
+                ? "Die E-Mail-Adresse ist ungültig"
+                : `«${label}» ist ungültig`;
+          })
+          .join(", ")}. Bitte in der Datei korrigieren und erneut importieren.`,
       );
-    const c = parsed.data;
-    const key = personKey(c.firstName, c.lastName, c.organisation);
-    if (people.has(key))
-      throw new PolicyError(`Zeile ${index + 2}: Dublette im Import.`);
-    people.add(key);
-    return c;
+    return parsed.data;
   });
 }

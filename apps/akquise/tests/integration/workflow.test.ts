@@ -710,6 +710,18 @@ test("Import legt ungeprüfte Kontakte an, überspringt Dubletten und erstellt k
   assert.equal(c.newsletterConsent, false);
   assert.equal(c.verifiedAt, null);
   assert.equal(await db.draft.count(), before);
+  // Eine doppelte Zeile in der Datei verwirft nicht den ganzen Import; auch
+  // deutsche Spaltennamen mit Semikolon werden erkannt.
+  const twice = await parseImport(
+    Buffer.from(
+      "Firma;Vorname;Nachname;E-Mail\nDoppelt Import AG;Dora;Doppelt;dora.doppelt@example.test\nDoppelt Import AG;Dora;Doppelt;dora.doppelt@example.test\n",
+    ),
+    "doppelt.csv",
+  );
+  assert.deepEqual(await importContacts(martin, twice), {
+    imported: 1,
+    duplicates: 1,
+  });
   await assert.rejects(
     saveContact(martin, {
       ...input("dup-person"),
