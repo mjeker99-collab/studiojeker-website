@@ -315,6 +315,7 @@ export default function AcquisitionWizard({
       mode?: "" | "immediate" | "scheduled";
       localDate?: string;
       localTime?: string;
+      rationale?: string;
     };
     let saved: SavedWork | null = null;
     try {
@@ -337,6 +338,8 @@ export default function AcquisitionWizard({
         if (saved?.mode) setMode(saved.mode);
         if (saved?.localDate) setLocalDate(saved.localDate);
         if (saved?.localTime) setLocalTime(saved.localTime);
+        if (typeof saved?.rationale === "string")
+          setRationale(saved.rationale);
         let hasDrafts = false;
         if (saved?.draftIds?.length) {
           const data = await batchPost(
@@ -385,6 +388,7 @@ export default function AcquisitionWizard({
         mode,
         localDate,
         localTime,
+        rationale,
       }),
     );
   }, [
@@ -398,11 +402,12 @@ export default function AcquisitionWizard({
     mode,
     localDate,
     localTime,
+    rationale,
   ]);
 
   const planLabel =
     mode === "scheduled"
-      ? `${sendRows.length} Mails für ${localDate || "…"} um ${localTime || "…"} Uhr einplanen`
+      ? `${sendRows.length} Mails für ${localDate ? localDate.split("-").reverse().join(".") : "…"} um ${localTime || "…"} Uhr einplanen`
       : `${sendRows.length} Mails sofort senden`;
   const planDisabled =
     busy ||
@@ -547,7 +552,11 @@ export default function AcquisitionWizard({
           </p>
           {busy && <p role="status">Mails werden erstellt …</p>}
           {rows.length > 0 && (
-            <p role="status">{rows.length} Entwürfe zur Prüfung bereit.</p>
+            <p role="status">
+              {rows.length === 1
+                ? "1 Entwurf zur Prüfung bereit."
+                : `${rows.length} Entwürfe zur Prüfung bereit.`}
+            </p>
           )}
           <ul className="wizard-draft-list">
             {rows.map((row) => (
@@ -808,7 +817,9 @@ export default function AcquisitionWizard({
                         ? "Bereits versendet oder eingeplant"
                         : row.issues.length
                           ? "Angaben ergänzen – Bearbeiten möglich"
-                          : "Bereit"}
+                          : row.needsLegal && !evidenceReady
+                            ? "Grundlage fehlt noch"
+                            : "Bereit"}
                     </small>
                   </button>
                 </div>
@@ -866,6 +877,13 @@ export default function AcquisitionWizard({
               </p>
               <label>
                 Grundlage der Kontaktaufnahme (mindestens 15 Zeichen)
+                <small>
+                  Schreibe in einem Satz, woher du die Person kennst oder
+                  weshalb du sie anschreiben darfst. Zum Beispiel: «Bestehende
+                  Kundin seit 2024», «Persönliches Gespräch an der Gewerbeschau
+                  im Mai» oder «Anfrage über unser Kontaktformular». Die Angabe
+                  bleibt bis zum Versand gespeichert.
+                </small>
                 <textarea
                   value={rationale}
                   onChange={(event) => {

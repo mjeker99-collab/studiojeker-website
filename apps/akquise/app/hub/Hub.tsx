@@ -1057,7 +1057,7 @@ export default function Hub({
             disabled={busy} onClick={() => { setShowNewsletterTrash(true); setForm(null); setEditing(null); }}>
             Papierkorb ({data.contents.filter((item) => item.kind === "NEWSLETTER" && !!item.archivedAt).length})
           </button>
-          <p className="muted">Eigene Entwürfe und importierte Kopien lassen sich entfernen. GitHub-Grundvorlagen und Mailchimp-Vorlagen bleiben erhalten.</p>
+          <p className="muted">Eigene Entwürfe und importierte Kopien lassen sich entfernen. Grundvorlagen und Mailchimp-Vorlagen bleiben erhalten.</p>
         </div>
       )}
       {["Social Media", "Newsletter"].includes(section) && (

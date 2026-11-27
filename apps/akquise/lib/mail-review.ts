@@ -324,6 +324,7 @@ export async function mailReview(
           ok: true,
           subject,
           body,
+          organisation: draft.contact.organisation,
           message: "Gespeichert. Die frühere Freigabe gilt nicht mehr.",
         });
       } catch (error) {

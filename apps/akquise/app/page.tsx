@@ -868,7 +868,7 @@ export default function App() {
                           body.set("file", f);
                           action(async () => {
                             const r = await post("contacts/import", body);
-                            return `${r.imported} importiert, ${r.duplicates} bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
+                            return `${r.imported} ${r.imported === 1 ? "Kontakt" : "Kontakte"} importiert, ${r.duplicates} ${r.duplicates === 1 ? "Dublette" : "Dubletten"} oder bereits vorhandene Personen übersprungen. Kontakte ohne E-Mail werden ebenfalls übernommen.`;
                           }, "Import abgeschlossen.");
                         }
                         e.target.value = "";
@@ -1011,6 +1011,48 @@ export default function App() {
               </section>
             </details>
           )}
+          {tab === "Versandhistorie" &&
+            (() => {
+              // Erfolgskontrolle: Wie viele der angeschriebenen Kontakte haben
+              // geantwortet? Antworten werden beim Kontakt erfasst.
+              const contacted = data.contacts.filter(
+                (c) =>
+                  !c.archivedAt &&
+                  (["SENT", "REPLIED", "DO_NOT_CONTACT"].includes(c.status) ||
+                    Boolean(c.replyOutcome)),
+              );
+              const replied = contacted.filter(
+                (c) => c.replyOutcome || c.status === "REPLIED",
+              ).length;
+              const stopped = contacted.filter(
+                (c) => c.status === "DO_NOT_CONTACT",
+              ).length;
+              const rate = contacted.length
+                ? Math.round((replied / contacted.length) * 100)
+                : 0;
+              return (
+                <section className="panel" aria-label="Antworten">
+                  <h2>Antworten</h2>
+                  <p role="status">
+                    {contacted.length === 0
+                      ? "Noch kein Kontakt angeschrieben."
+                      : `${replied} von ${contacted.length} angeschriebenen Kontakten haben geantwortet (${rate} %). ${stopped} möchten nicht mehr kontaktiert werden.`}
+                  </p>
+                  <p className="panel-note">
+                    Trage jede Antwort beim Kontakt ein, auch ein «Kein
+                    Interesse». So siehst du, was die Akquise bringt, und
+                    niemand wird ungewollt nochmals angeschrieben.
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setTab("Kontakte")}
+                  >
+                    Antwort bei einem Kontakt erfassen
+                  </button>
+                </section>
+              );
+            })()}
           {tab === "Versandhistorie" && (
             <MailSchedule
               onReviewApproved={(ids) => {
@@ -1325,18 +1367,84 @@ export default function App() {
               <div className="form-grid">
                 {(
                   [
-                    ["organisation", "Organisation"],
-                    ["industry", "Branche"],
-                    ["region", "Ort / Region"],
+                    ["organisation", "Firma / Organisation"],
                     ["firstName", "Vorname"],
                     ["lastName", "Nachname"],
-                    ["position", "Aktuelle Funktion"],
                     ["email", "Geschäftliche E-Mail-Adresse"],
+                  ] as [
+                    (
+                      | "organisation"
+                      | "industry"
+                      | "region"
+                      | "firstName"
+                      | "lastName"
+                      | "position"
+                      | "email"
+                      | "website"
+                      | "sourceUrl"
+                      | "verifiedAt"
+                      | "service"
+                    ),
+                    string,
+                  ][]
+                ).map(([key, label]) => (
+                  <label key={key}>
+                    {label}
+                    <input
+                      type={
+                        key === "email"
+                          ? "email"
+                          : key === "verifiedAt"
+                            ? "date"
+                            : ["website", "sourceUrl"].includes(key)
+                              ? "url"
+                              : "text"
+                      }
+                      value={form[key]}
+                      required={[
+                        "organisation",
+                        "firstName",
+                        "lastName",
+                      ].includes(key)}
+                      onChange={(e) =>
+                        setForm({ ...form, [key]: e.target.value })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+              {/* Für den ersten Kontakt genügen vier Angaben. Recherche- und
+                  Rechtsfelder bleiben vollständig erhalten, aber eingeklappt. */}
+              <details className="panel" open={Boolean(contact)}>
+                <summary>
+                  Weitere Angaben: Branche, Quelle und rechtliche Einordnung
+                </summary>
+              <div className="form-grid">
+                {(
+                  [
+                    ["industry", "Branche"],
+                    ["region", "Ort / Region"],
+                    ["position", "Aktuelle Funktion"],
                     ["website", "Website"],
                     ["sourceUrl", "Quellen-URL"],
                     ["verifiedAt", "Letzte Verifikation"],
                     ["service", "Empfohlene Dienstleistung"],
-                  ] as const
+                  ] as [
+                    (
+                      | "organisation"
+                      | "industry"
+                      | "region"
+                      | "firstName"
+                      | "lastName"
+                      | "position"
+                      | "email"
+                      | "website"
+                      | "sourceUrl"
+                      | "verifiedAt"
+                      | "service"
+                    ),
+                    string,
+                  ][]
                 ).map(([key, label]) => (
                   <label key={key}>
                     {label}
@@ -1462,6 +1570,7 @@ export default function App() {
                   }
                 />
               </label>
+              </details>
               <p className="warning">
                 Jede Kontaktänderung macht bestehende Freigaben und die
                 rechtliche Prüfung ungültig.
@@ -1892,6 +2001,10 @@ function ContactTable({
                 {c.replyOutcome && (
                   <small>{replyLabels[c.replyOutcome] || c.replyOutcome}</small>
                 )}
+                {contactStage(c) === "NEW" &&
+                  (c as C & { deliveryBlocked?: boolean }).deliveryBlocked && (
+                    <small>Mail eingeplant oder in Bearbeitung</small>
+                  )}
                 {c.followUpOn && (
                   <small>
                     Wiedervorlage: {c.followUpOn.split("-").reverse().join(".")}
@@ -1910,6 +2023,15 @@ function ContactTable({
                   >
                     Bearbeiten
                   </button>
+                  {["SENT", "REPLIED"].includes(c.status) && (
+                    <button
+                      className="quiet"
+                      disabled={busy}
+                      onClick={() => open(c)}
+                    >
+                      Antwort erfassen
+                    </button>
+                  )}
                   <button
                     className="quiet"
                     disabled={busy}
