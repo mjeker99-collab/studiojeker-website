@@ -1,19 +1,18 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import { contactInput } from "../import";
 import { PolicyError } from "../policy";
 import { importContacts } from "../workflow";
 import { db } from "../db";
 import { ORG } from "../studio/input";
-import { emailDomain, normalizeEmail } from "./normalize";
+import { emailDomain, hostOf, normalizeEmail } from "./normalize";
 import { assessTabs, type DedupeRecord } from "./dedupe";
 import { leadResearchEnabled, researchConfig } from "./config";
 import { toCsv, toXlsx } from "./export-file";
 import { createGoogleSheetsGateway } from "./google-sheets";
 import {
   createJob,
+  dailyScore,
   runStep,
-  type LeadStore,
   type ResearchProvider,
   type StepDeps,
 } from "./pipeline";
@@ -24,13 +23,12 @@ import { toView } from "./view";
 import { zurichDay } from "./time";
 
 const loops = new Set<string>();
-const owners = new Map<string, string>();
 
-function store(): LeadStore {
+function store(): PrismaLeadStore {
   return new PrismaLeadStore();
 }
 
-async function localRecords(dayKey: string): Promise<{ records: DedupeRecord[]; legacyOpen: number }> {
+async function localRecords(jobId: string | null): Promise<{ records: DedupeRecord[]; legacyOpen: number }> {
   const [contacts, customers, suppressions, previous] = await Promise.all([
     db.contact.findMany({
       where: { organizationId: ORG },
@@ -42,7 +40,7 @@ async function localRecords(dayKey: string): Promise<{ records: DedupeRecord[]; 
     }),
     db.suppression.findMany({ select: { email: true, reason: true } }),
     db.leadResearchJob.findMany({
-      where: { organizationId: ORG, dayKey: { not: dayKey } },
+      where: { organizationId: ORG, ...(jobId ? { id: { not: jobId } } : {}) },
       select: { state: true },
     }),
   ]);
@@ -51,7 +49,7 @@ async function localRecords(dayKey: string): Promise<{ records: DedupeRecord[]; 
       email: contact.email,
       organisation: contact.organisation,
       person: `${contact.firstName} ${contact.lastName}`,
-      domain: emailDomain(contact.email) || emailDomain(contact.website),
+      domain: emailDomain(contact.email) || hostOf(contact.website),
       source: "contact" as const,
       label: "StudioONE-Kontakte",
     })),
@@ -59,7 +57,7 @@ async function localRecords(dayKey: string): Promise<{ records: DedupeRecord[]; 
       email: customer.contactEmail,
       organisation: customer.name,
       person: "",
-      domain: emailDomain(customer.contactEmail) || emailDomain(customer.website),
+      domain: emailDomain(customer.contactEmail) || hostOf(customer.website),
       source: "customer" as const,
       label: "Bestandskunden",
     })),
@@ -90,8 +88,8 @@ async function localRecords(dayKey: string): Promise<{ records: DedupeRecord[]; 
   return { records, legacyOpen };
 }
 
-async function buildDeps(env: NodeJS.ProcessEnv, dayKey: string, userId: string | null, provider: ResearchProvider): Promise<StepDeps> {
-  const local = await localRecords(dayKey).catch((error) => {
+async function buildDeps(env: NodeJS.ProcessEnv, jobId: string, userId: string | null, provider: ResearchProvider): Promise<StepDeps> {
+  const local = await localRecords(jobId).catch((error) => {
     const message = storageMessage(error);
     if (message) throw new Error(message);
     throw error;
@@ -142,14 +140,6 @@ async function buildDeps(env: NodeJS.ProcessEnv, dayKey: string, userId: string 
   };
 }
 
-async function persistExport(job: JobRecord) {
-  if (!job.candidates.length) return;
-  const directory = resolve(process.cwd(), ".local/lead-research");
-  await mkdir(directory, { recursive: true });
-  await writeFile(resolve(directory, "lead-recherche.xlsx"), await toXlsx(job.candidates));
-  await writeFile(resolve(directory, "lead-recherche.csv"), toCsv(job.candidates), "utf8");
-}
-
 function disabledView(): LeadResearchView {
   return toView(null, {
     enabled: false,
@@ -158,6 +148,8 @@ function disabledView(): LeadResearchView {
 }
 
 async function currentJob(now = new Date()): Promise<JobRecord | null> {
+  const active = await store().active();
+  if (active) return active;
   const jobs = await store().listDay(zurichDay(now));
   return jobs.find((job) => job.status === "RUNNING" || job.status === "PAUSED" || job.status === "QUEUED")
     ?? jobs.at(-1)
@@ -188,31 +180,28 @@ export async function leadResearchStatus(): Promise<LeadResearchView> {
 }
 
 async function loop(jobId: string, userId: string | null) {
-  const owner = `worker:${process.pid}`;
+  const owner = `worker:${randomUUID()}`;
   try {
     for (let step = 0; step < 5000; step += 1) {
       const provider = createProvider();
       const existing = await store().get(jobId);
-      if (!existing || existing.status !== "RUNNING") break;
-      const deps = await buildDeps(process.env, existing.dayKey, userId, provider);
+      if (!existing || !["RUNNING", "QUEUED"].includes(existing.status)) break;
+      const deps = await buildDeps(process.env, existing.id, userId, provider);
       const result = await runStep(store(), deps, jobId, owner, new Date());
-      if (result.saved) await persistExport(result.job).catch(() => undefined);
+      if (result.saved && ["COMPLETED", "BLOCKED"].includes(result.job.status)) {
+        const { id, dayKey, status, candidates, config, legacyOpen } = result.job;
+        const metrics = dailyScore(candidates, dayKey, config.target, legacyOpen);
+        console.info("Lead-Recherche Laufnachweis", JSON.stringify({
+          id, dayKey, status, ...metrics,
+          blockers: result.job.blockers.map(({ id: blockerId }) => blockerId),
+        }));
+      }
       if (!result.continue) break;
       await new Promise((resolvePromise) => setTimeout(resolvePromise, Math.max(50, result.waitMs)));
     }
-  } catch (error) {
-    const message = storageMessage(error) ?? (error instanceof Error ? error.message : "Lauf unterbrochen.");
-    const existing = await store().get(jobId).catch(() => null);
-    if (existing && existing.status === "RUNNING") {
-      await store().save({
-        ...existing,
-        status: "BLOCKED",
-        lastError: message,
-        blockers: [...existing.blockers, { id: "runtime", message }],
-        leaseOwner: "",
-        leaseUntil: null,
-      }, existing.revision).catch(() => undefined);
-    }
+  } catch {
+    // Keep the checkpoint and let the next scheduler tick retry after the lease.
+    console.error("Lead-Recherche unterbrochen. Der gespeicherte Lauf wird erneut aufgenommen.");
   } finally {
     loops.delete(jobId);
   }
@@ -221,18 +210,16 @@ async function loop(jobId: string, userId: string | null) {
 export function kickLeadResearch(jobId: string, userId: string | null) {
   if (!leadResearchEnabled() || loops.has(jobId)) return;
   loops.add(jobId);
-  if (userId) owners.set(jobId, userId);
-  void loop(jobId, userId ?? owners.get(jobId) ?? null);
+  void loop(jobId, userId);
 }
 
-export async function leadResearchStart(userId: string, raw: unknown) {
+export async function leadResearchStart(userId: string | null, raw: unknown) {
   if (!leadResearchEnabled()) {
     throw new PolicyError("Die Recherche ist nicht eingeschaltet.", 403);
   }
   const override = raw && typeof raw === "object" ? raw as Partial<ResearchConfig> : {};
   const config = researchConfig(process.env, override);
   const now = new Date();
-  const dayKey = zurichDay(now);
   const draft = createJob(config, now);
   const existing = await store().getByKey(draft.idempotencyKey);
   if (existing) {
@@ -242,14 +229,14 @@ export async function leadResearchStart(userId: string, raw: unknown) {
   }
   let local: Awaited<ReturnType<typeof localRecords>>;
   try {
-    local = await localRecords(dayKey);
+    local = await localRecords(null);
   } catch (error) {
     throw new PolicyError(error instanceof Error ? error.message : "Speichern nicht möglich.", 503);
   }
-  const job = createJob(config, now, local.legacyOpen);
+  let job = createJob(config, now, local.legacyOpen);
   job.providerMode = createProvider().mode;
   try {
-    await store().insert(job);
+    job = await store().start(job);
   } catch (error) {
     const message = storageMessage(error) ?? "Der Lauf konnte nicht gespeichert werden. Es wurde nichts überschrieben.";
     throw new PolicyError(message, 503);
@@ -262,7 +249,9 @@ async function setStatus(userId: string, status: JobRecord["status"]) {
   if (!leadResearchEnabled()) throw new PolicyError("Die Recherche ist nicht eingeschaltet.", 403);
   const job = await currentJob();
   if (!job) return leadResearchStatus();
-  const saved = await store().save({ ...job, status, leaseOwner: "", leaseUntil: null }, job.revision);
+  if (status === "RUNNING" && !["PAUSED", "BLOCKED"].includes(job.status)) return leadResearchStatus();
+  if (status !== "RUNNING" && !["RUNNING", "QUEUED", "PAUSED"].includes(job.status)) return leadResearchStatus();
+  const saved = await store().save({ ...job, status }, job.revision);
   if (!saved) return leadResearchStatus();
   if (status === "RUNNING") kickLeadResearch(job.id, userId);
   const fresh = await store().get(job.id);
@@ -282,7 +271,14 @@ export function leadResearchAbort(userId: string) {
 export async function leadResearchTick(userId: string | null) {
   if (!leadResearchEnabled()) return leadResearchStatus();
   const job = await currentJob();
-  if (job?.status === "RUNNING") kickLeadResearch(job.id, userId);
+  if (job && (job.status === "RUNNING" || job.status === "QUEUED")) {
+    kickLeadResearch(job.id, userId);
+  } else if (
+    userId === null && process.env.LEAD_RESEARCH_DAILY === "true" &&
+    !createProvider().blocker
+  ) {
+    return leadResearchStart(null, {});
+  }
   return leadResearchStatus();
 }
 

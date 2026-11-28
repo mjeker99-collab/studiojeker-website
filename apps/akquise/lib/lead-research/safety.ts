@@ -14,7 +14,15 @@ export function htmlToText(html: string, limit = 150_000): string {
   const without = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<\/?(?:address|article|br|dd|div|dl|dt|footer|h[1-6]|header|li|main|p|section|td|tr)\b[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&#(x[0-9a-f]+|\d+);/gi, (_entity, value: string) => {
+      const code = value[0].toLowerCase() === "x" ? parseInt(value.slice(1), 16) : Number(value);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : " ";
+    })
+    .replace(/&(auml|ouml|uuml|Auml|Ouml|Uuml|szlig);/g, (_entity, key: string) =>
+      ({ auml: "ä", ouml: "ö", uuml: "ü", Auml: "Ä", Ouml: "Ö", Uuml: "Ü", szlig: "ß" })[key] ?? " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
@@ -57,7 +65,7 @@ export function isPrivateAddress(ip: string): boolean {
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(normalized);
   if (mapped) return ipv4Private(mapped[1]);
   if (normalized.includes(":")) {
-    if (normalized === "::" || normalized === "::1") return true;
+    if (!/^[23][0-9a-f]{3}:/i.test(normalized)) return true;
     if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true;
     if (/^fe[89ab]/.test(normalized)) return true;
     if (normalized.startsWith("2001:db8")) return true;

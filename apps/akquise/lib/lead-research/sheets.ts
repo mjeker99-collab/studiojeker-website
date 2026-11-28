@@ -86,7 +86,8 @@ export function confirmRows(expected: string[][], actual: string[][]): {
   const uncertain: string[] = [];
   for (const row of expected) {
     const id = marker(row);
-    const found = actual.find((candidate) => marker(candidate) === id);
+    const matches = actual.filter((candidate) => marker(candidate) === id);
+    const found = matches.length === 1 ? matches[0] : null;
     const same = found &&
       found[4] === row[4] &&
       found[9] === row[9] &&
@@ -126,16 +127,22 @@ export async function syncSheets(job: JobRecord, gateway: SheetsGateway): Promis
     job.sheetsPhase = "stopped";
     return;
   }
-  const already = new Set(readFirst.rows.map(marker).filter(Boolean));
-  for (const candidate of pending) {
-    if (already.has(candidate.idempotencyKey)) candidate.sheetsConfirmed = true;
+  const existing = pending.filter((candidate) =>
+    readFirst.rows.some((row) => marker(row) === candidate.idempotencyKey));
+  const checked = confirmRows(existing.map(toSheetRow), readFirst.rows);
+  for (const candidate of existing) {
+    candidate.sheetsConfirmed = checked.confirmed.includes(candidate.idempotencyKey);
+  }
+  if (checked.uncertain.length || (job.sheetsPhase === "reread" && !existing.length)) {
+    addBlocker(job, "sheets_uncertain", "Vorheriger Schreibversuch ist unklar. Keine weiteren Anhänge ohne Abgleich.");
+    job.sheetsPhase = "stopped";
+    return;
   }
   const toWrite = pending.filter((candidate) => !candidate.sheetsConfirmed).slice(0, job.config.blockSize);
   if (!toWrite.length) {
     job.sheetsPhase = "idle";
     return;
   }
-  const reread = job.sheetsPhase === "reread";
   const rows = toWrite.map(toSheetRow);
   const appended = await gateway.appendRows(rows);
   if (appended.failure) {
@@ -158,11 +165,9 @@ export async function syncSheets(job: JobRecord, gateway: SheetsGateway): Promis
     addBlocker(
       job,
       "sheets_uncertain",
-      reread
-        ? "Auch nach Rücklesen und einem Wiederholungsversuch ist das Schreiben unklar. Keine weiteren Anhänge."
-        : "Schreiben ist unklar. Zuerst Rücklesen, kein blindes erneutes Anhängen.",
+      "Schreiben ist unklar. Zuerst Rücklesen, kein blindes erneutes Anhängen.",
     );
-    job.sheetsPhase = reread ? "stopped" : "reread";
+    job.sheetsPhase = "reread";
     return;
   }
   job.sheetsPhase = "idle";

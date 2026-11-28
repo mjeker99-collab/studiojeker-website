@@ -2,11 +2,13 @@ import { createHash, randomBytes } from "node:crypto";
 import { evaluateObservation, observePages, toContactInput } from "./candidate";
 import { syncSheets, type SheetsGateway } from "./sheets";
 import { buildQuery, planPlaces, SOURCE_FAMILIES } from "./sources";
+import { groupWebsitePages } from "./website";
 import { zurichDay } from "./time";
 import type {
   Blocker,
   Candidate,
   Cursor,
+  FetchedPage,
   JobRecord,
   LeadResearchMetrics,
   ResearchConfig,
@@ -14,7 +16,7 @@ import type {
 import type { DedupeRecord } from "./dedupe";
 
 export interface ProviderResult {
-  pages: { url: string; text: string; blockedReason?: string }[];
+  pages: FetchedPage[];
   estimatedCostUsd: number;
   transient?: boolean;
   error?: string;
@@ -248,35 +250,30 @@ export async function stepJob(job: JobRecord, deps: StepDeps, now: Date): Promis
     next.attempts = 0;
     next.nextAttemptAt = null;
     if (result.error) next.lastError = result.error;
-    const observation = observePages(result.pages, next.config.industries[next.cursor.industryIndex] || "", planned.label);
-    if (observation) {
+    const pageGroups = deps.provider.mode === "live" ? groupWebsitePages(result.pages) : [result.pages];
+    for (const pages of pageGroups) {
+      if (score().verifiedNew >= next.config.target) break;
+      const observation = observePages(pages, next.config.industries[next.cursor.industryIndex] || "", planned.label);
+      if (!observation) continue;
+      const accepted = next.candidates.filter((item) => item.status === "QUALIFIED");
       const candidate = evaluateObservation(
         observation,
         next.config,
         next.dayKey,
-        [...deps.corpus, ...next.candidates.map(asRecord)],
+        [...deps.corpus, ...accepted.map(asRecord)],
         planned.label,
         now.toISOString(),
       );
       candidate.holdAdmission = !deps.reconciliationComplete;
-      if (!next.candidates.some((item) => item.idempotencyKey === candidate.idempotencyKey)) {
-        next.candidates.push(candidate);
+      const previous = next.candidates.findIndex((item) => item.idempotencyKey === candidate.idempotencyKey);
+      if (previous < 0) next.candidates.push(candidate);
+      else if (next.candidates[previous].status === "OPEN" && candidate.status !== "OPEN") {
+        next.candidates[previous] = candidate;
       }
     }
     next.cursor = advance(next.cursor, next.config);
   }
-  if (deps.reconciliationComplete && deps.sheets && next.sheetsPhase !== "stopped") {
-    await syncSheets(next, deps.sheets);
-  }
-  if (deps.reconciliationComplete && deps.admit) {
-    for (const candidate of next.candidates) {
-      if (candidate.status !== "QUALIFIED" || candidate.admitted || candidate.holdAdmission || candidate.legacy) continue;
-      const row = toContactInput(candidate);
-      if (row.newsletterConsent !== false) throw new Error("Versandfreigabe ist blockiert.");
-      await deps.admit(candidate);
-      candidate.admitted = true;
-    }
-  }
+  await persistCandidates(next, deps);
   if (score().verifiedNew >= next.config.target || next.cursor.exhausted) {
     return finish(
       next,
@@ -290,6 +287,21 @@ export async function stepJob(job: JobRecord, deps: StepDeps, now: Date): Promis
     );
   }
   return { job: next, continue: true, waitMs: next.config.minIntervalMs };
+}
+
+async function persistCandidates(next: JobRecord, deps: StepDeps) {
+  if (deps.reconciliationComplete && deps.sheets && next.sheetsPhase !== "stopped") {
+    await syncSheets(next, deps.sheets);
+  }
+  if (deps.reconciliationComplete && deps.admit) {
+    for (const candidate of next.candidates) {
+      if (candidate.status !== "QUALIFIED" || candidate.admitted || candidate.holdAdmission || candidate.legacy) continue;
+      const row = toContactInput(candidate);
+      if (row.newsletterConsent !== false) throw new Error("Versandfreigabe ist blockiert.");
+      await deps.admit(candidate);
+      candidate.admitted = true;
+    }
+  }
 }
 
 function asRecord(candidate: Candidate): DedupeRecord {
@@ -362,24 +374,31 @@ export async function runStep(
   const leased: JobRecord = {
     ...loaded,
     leaseOwner: owner,
-    leaseUntil: new Date(now.getTime() + 30_000).toISOString(),
+    leaseUntil: new Date(now.getTime() + 180_000).toISOString(),
   };
   const locked = await store.save(leased, loaded.revision);
   if (!locked) return { job: loaded, continue: false, waitMs: 200, saved: false };
   const lockedJob = await store.get(jobId);
   if (!lockedJob) return { job: loaded, continue: false, waitMs: 0, saved: false };
-  const stepped = await stepJob({ ...lockedJob, status: lockedJob.status === "QUEUED" ? "RUNNING" : lockedJob.status }, deps, now);
-  const fresh = await store.get(jobId);
-  if (!fresh || fresh.revision !== lockedJob.revision || (fresh.status !== "RUNNING" && fresh.status !== "QUEUED")) {
-    return { job: fresh ?? loaded, continue: false, waitMs: 0, saved: false };
-  }
+  const stepped = await stepJob(
+    { ...lockedJob, status: "RUNNING" },
+    { ...deps, sheets: null, admit: null },
+    now,
+  );
+  const checkpoint = { ...stepped.job, status: "RUNNING" as const };
+  const checkpointed = await store.save(checkpoint, lockedJob.revision);
+  if (!checkpointed) return { job: (await store.get(jobId)) ?? loaded, continue: false, waitMs: 0, saved: false };
+
+  await persistCandidates(stepped.job, deps);
+  const waitingForReadback = stepped.job.sheetsPhase === "reread";
   const stored: JobRecord = {
     ...stepped.job,
-    revision: fresh.revision,
+    status: waitingForReadback ? "RUNNING" : stepped.job.status,
+    revision: lockedJob.revision + 1,
     leaseOwner: "",
     leaseUntil: null,
   };
-  const saved = await store.save(stored, fresh.revision);
+  const saved = await store.save(stored, stored.revision);
   const after = (await store.get(jobId)) ?? stored;
-  return { job: after, continue: saved && stepped.continue && after.status === "RUNNING", waitMs: stepped.waitMs, saved };
+  return { job: after, continue: saved && (stepped.continue || waitingForReadback) && after.status === "RUNNING", waitMs: waitingForReadback ? 5000 : stepped.waitMs, saved };
 }

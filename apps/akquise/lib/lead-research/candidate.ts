@@ -9,6 +9,7 @@ import {
   sameOrganisationHost,
   spreadsheetLiteral,
 } from "./normalize";
+import { websiteFields } from "./website";
 import { splitCleanLines } from "./safety";
 import { promoActive, swissDate } from "./time";
 import {
@@ -74,6 +75,18 @@ export function observePages(pages: FetchedPage[], industry: string, origin: str
       url: page.url,
       excerpt: split.clean.slice(0, 2).join(" ").slice(0, 240),
     });
+  }
+  if (usable.some((page) => page.websiteText)) {
+    const fields = websiteFields(usable, industry);
+    if (!fields.organisation && !fields.email) return null;
+    return {
+      ...fields,
+      ...splitName(fields.person),
+      employees: null,
+      coordinates: null,
+      injection: quarantined.length > 0,
+      text: cleanLines.join("\n"),
+    };
   }
   const organisation = field(cleanLines, "Firma") || field(cleanLines, "Organisation");
   const place = field(cleanLines, "Ort");
@@ -179,7 +192,7 @@ export function buildDraft(
     body.startsWith(`Guten Tag ${input.firstName} ${input.lastName}`) &&
     body.includes("Beste Grüsse\nNora Jeker") &&
     !/gratis-monat/i.test(body) &&
-    !new RegExp(`${input.organisation}.{0,40}fehlen`, "i").test(body);
+    !body.toLowerCase().includes(`${input.organisation.toLowerCase()} fehlen`);
   return { subject, body, opening: complete ? opening : opening, complete };
 }
 
@@ -277,7 +290,7 @@ export function evaluateObservation(
     return fail("OPEN", "Firma oder Name ist nicht belegt. Keine Anrede erfunden.");
   }
   if (!ROLE.test(observation.role)) return fail("OPEN", "Rolle Geschäftsführung oder Inhaberschaft ist nicht belegt.");
-  if (!observation.text.includes(observation.email) || !observation.text.includes(observation.organisation)) {
+  if (!observation.text.toLowerCase().includes(observation.email) || !observation.text.includes(observation.organisation)) {
     return fail("OPEN", "E-Mail oder Firma steht nicht im belegten Quellentext.");
   }
   if (observation.website && !sameOrganisationHost(observation.email, observation.website)) {

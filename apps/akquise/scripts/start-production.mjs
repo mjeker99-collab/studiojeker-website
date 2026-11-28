@@ -29,6 +29,8 @@ const tickToken = randomBytes(32).toString("hex");
 const contactSyncToken = randomBytes(32).toString("hex");
 const contactSyncEnabled = Boolean(process.env.GOOGLE_SHEET_ID) &&
   process.env.DISABLE_CONTACT_SYNC !== "true";
+const researchToken = process.env.LEAD_RESEARCH_TICK_TOKEN || randomBytes(32).toString("hex");
+const researchEnabled = process.env.LEAD_RESEARCH_ENABLED === "true";
 const child = spawn(
   process.execPath,
   standalone
@@ -48,6 +50,7 @@ const child = spawn(
       HOSTNAME: "0.0.0.0",
       PORT: process.env.PORT || "3100",
       INTERNAL_MAIL_TICK_TOKEN: tickToken,
+      LEAD_RESEARCH_TICK_TOKEN: researchToken,
       INTERNAL_CONTACT_SYNC_TOKEN: contactSyncToken,
     },
   },
@@ -121,9 +124,26 @@ const contactSyncTimer = contactSyncEnabled
   ? setInterval(syncMasterContacts, 30 * 60000)
   : null;
 contactSyncTimer?.unref();
+const researchTimer = researchEnabled ? setInterval(async () => {
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${process.env.PORT || "3100"}/api/internal/lead-research-tick`,
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${researchToken}` },
+        signal: AbortSignal.timeout(25_000),
+      },
+    );
+    if (!response.ok) console.error("Lead-Recherche-Tick:", response.status);
+  } catch {
+    console.error("Lead-Recherche-Tick vorübergehend nicht erreichbar.");
+  }
+}, 60_000) : null;
+researchTimer?.unref();
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
     clearInterval(timer);
+    if (researchTimer) clearInterval(researchTimer);
     if (firstContactSync) clearTimeout(firstContactSync);
     if (contactSyncTimer) clearInterval(contactSyncTimer);
     child.kill(signal);
